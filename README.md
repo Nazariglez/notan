@@ -29,21 +29,22 @@ fn main() {}
 Instructions to init and build a project
 
 ## Current state
-- [ ] Targets
+- Targets
     - [ ] HTML
     - [ ] iOS
     - [ ] Android
     - [ ] MacOS
     - [ ] Linux 
     - [ ] Windows
-- [ ] 2D renderer
+- 2D renderer
     - [ ] Primitives
     - [ ] Polylines
     - [ ] SVGs
     - [ ] Sprites
     - [ ] Patterns
     - [ ] Masking
-- [ ] Drivers
+    - [ ] Custom Shaders
+- Drivers
     - [ ] WebGL
     - [ ] WebGL 2
     - [ ] Metal
@@ -56,6 +57,7 @@ Instructions to init and build a project
     - [ ] Window
     - [ ] Keyboard
     - [ ] Mouse
+    - [ ] Touch
     - [ ] Gamepad
     - [ ] Audio
 
