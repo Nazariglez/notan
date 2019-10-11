@@ -1,10 +1,10 @@
 use glow::*;
 
 //add #[cfg(target_arch = "wasm32")]
+use crate::graphics;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys;
-use crate::graphics;
 
 pub struct Window {
     canvas: web_sys::HtmlCanvasElement,
@@ -23,12 +23,11 @@ impl Window {
             .dyn_into::<web_sys::HtmlCanvasElement>()
             .unwrap();
 
-        let ctx = graphics::Context::new(&canvas);
+        let ctx = graphics::Context::new(&canvas).unwrap(); //TODO manage error
 
         Window {
             canvas: canvas,
-            ctx: ctx
-            //gl: glow::Context::from_webgl2_context(gl)
+            ctx: ctx, //gl: glow::Context::from_webgl2_context(gl)
         }
     }
 }

@@ -29,19 +29,35 @@ fn main() {}
 Instructions to init and build a project
 
 ## Current state
-- [ ] HTML target
-- [ ] iOS target
-- [ ] Android target
-- [ ] MacOS target
-- [ ] Linux target
-- [ ] Windows target
-- [ ] 2D renderer (OpenGL-WebGL)
-- [ ] WebGPU renderer
-- [ ] Window API
-- [ ] Keyboard API
-- [ ] Mouse API
-- [ ] Gamepad API
-- [ ] Audio API
+- [ ] Targets
+    - [ ] HTML
+    - [ ] iOS
+    - [ ] Android
+    - [ ] MacOS
+    - [ ] Linux 
+    - [ ] Windows
+- [ ] 2D renderer
+    - [ ] Primitives
+    - [ ] Polylines
+    - [ ] SVGs
+    - [ ] Sprites
+    - [ ] Patterns
+    - [ ] Masking
+- [ ] Drivers
+    - [ ] WebGL
+    - [ ] WebGL 2
+    - [ ] Metal
+    - [ ] Dx11
+    - [ ] Dx12
+    - [ ] Vulkan
+    - [ ] OpenGL
+    - [ ] OpenGL ES
+- API 
+    - [ ] Window
+    - [ ] Keyboard
+    - [ ] Mouse
+    - [ ] Gamepad
+    - [ ] Audio
 
 ## License
 ...
