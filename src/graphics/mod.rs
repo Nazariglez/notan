@@ -5,6 +5,7 @@ use wasm_bindgen::JsCast;
 use web_sys;
 
 pub mod shaders;
+pub mod renderer;
 
 pub type GlContext = Rc<glow::Context>;
 enum Driver {

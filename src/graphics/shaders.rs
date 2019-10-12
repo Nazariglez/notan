@@ -12,7 +12,7 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn new(ctx: Context, vertex: &str, fragment: &str) -> Result<Self, String> {
+    pub fn new(ctx: &Context, vertex: &str, fragment: &str) -> Result<Self, String> {
         let gl = ctx.gl.clone();
         let vertex = create_shader(&gl, glow::VERTEX_SHADER, vertex)?;
         let fragment = create_shader(&gl, glow::FRAGMENT_SHADER, fragment)?;
@@ -74,6 +74,42 @@ fn create_program(gl: &GlContext, vertex: ShaderKey, fragment: ShaderKey) -> Res
 
 pub struct ColorBatcher {
     shader: Shader,
+}
+
+impl ColorBatcher {
+    pub fn new(ctx: &Context) -> Result<Self, String> {
+        Ok(Self {
+            shader: create_color_shader(ctx)?
+        })
+    }
+}
+
+const COLOR_VERTEX:&str = r#"#version 300 es
+in vec2 a_position;
+in vec4 a_color;
+out vec4 v_color;
+
+uniform mat3 u_matrix;
+
+void main() {
+  v_color = a_color;
+  gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+}
+"#;
+
+const COLOR_FRAGMENT:&str = r#"#version 300 es
+precision mediump float;
+
+in vec4 v_color;
+out vec4 outColor;
+
+void main() {
+    outColor = v_color;
+}
+"#;
+
+fn create_color_shader(ctx: &Context) -> Result<Shader, String> {
+    Ok(Shader::new(ctx, COLOR_VERTEX, COLOR_FRAGMENT)?)
 }
 
 pub struct SpriteBatcher {

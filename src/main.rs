@@ -6,6 +6,7 @@ use wasm_bindgen::prelude::*;
 
 pub struct App {
     window: window::Window,
+    renderer: graphics::renderer::Renderer,
 }
 
 pub struct AppBuilder<S> {
@@ -15,8 +16,12 @@ pub struct AppBuilder<S> {
 impl<S> AppBuilder<S> {
     pub fn build(&self) -> Result<App, String> {
         let win = window::Window::new();
+        let renderer = graphics::renderer::Renderer::new(win.window())?;
 
-        Ok(App { window: win })
+        Ok(App {
+            window: win,
+            renderer: renderer
+        })
     }
 }
 
