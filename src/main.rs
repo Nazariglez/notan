@@ -6,7 +6,7 @@ use wasm_bindgen::prelude::*;
 
 pub struct App {
     window: window::Window,
-    renderer: graphics::renderer::Renderer,
+    graphics: graphics::Context,
 }
 
 pub struct AppBuilder<S> {
@@ -16,11 +16,14 @@ pub struct AppBuilder<S> {
 impl<S> AppBuilder<S> {
     pub fn build(&self) -> Result<App, String> {
         let win = window::Window::new();
-        let renderer = graphics::renderer::Renderer::new(win.window())?;
+        let mut gfx = graphics::Context::new(win.window())?;
+
+        gfx.begin(Some(graphics::color::rgba(0.1, 0.2, 0.3, 1.0)));
+        gfx.end();
 
         Ok(App {
             window: win,
-            renderer: renderer
+            graphics: gfx,
         })
     }
 }

@@ -8,7 +8,7 @@ use web_sys;
 
 pub struct Window {
     canvas: web_sys::HtmlCanvasElement,
-//    ctx: graphics::Context,
+    //    ctx: graphics::Context,
     //gl: glow::Context
 }
 
@@ -23,15 +23,15 @@ impl Window {
             .dyn_into::<web_sys::HtmlCanvasElement>()
             .unwrap();
 
-//        let ctx = graphics::Context::new(&canvas).unwrap(); //TODO manage error
+        //        let ctx = graphics::Context::new(&canvas).unwrap(); //TODO manage error
 
         Window {
             canvas: canvas,
-//            ctx: ctx, //gl: glow::Context::from_webgl2_context(gl)
+            //            ctx: ctx, //gl: glow::Context::from_webgl2_context(gl)
         }
     }
 
     pub fn window(&self) -> &web_sys::HtmlCanvasElement {
-        return &self.canvas
+        return &self.canvas;
     }
 }
