@@ -44,15 +44,29 @@ struct AttributeData {
 //https://github.com/17cupsofcoffee/tetra/pull/75/files
 
 fn mult_vec(m: &glm::Mat3, x: f32, y: f32) -> glm::Vec2 {
-    let w = m[6] * x + m[7] * y + m[8] * 1.0;
-    let xx = (m[0] * x + m[1] * y + m[2] * 1.0) / w;
-    let yy = (m[3] * x + m[4] * y + m[5] * 1.0) / w;
+    /*  0, 1, 2,
+        3, 4, 5,
+        6, 7, 8 */
+
+//    let w = m[6] * x + m[7] * y + m[8] * 1.0;
+//    let xx = (m[0] * x + m[1] * y + m[2] * 1.0) / w;
+//    let yy = (m[3] * x + m[4] * y + m[5] * 1.0) / w;
+
+
+    /*  0, 3, 6,
+        1, 4, 7,
+        2, 5, 8 */
+
+    let w = m[2] * x + m[5] * y + m[8] * 1.0;
+    let xx = (m[0] * x + m[3] * y + m[6] * 1.0) / w;
+    let yy = (m[1] * x + m[4] * y + m[7] * 1.0) / w;
+
 
     glm::vec2(xx, yy)
 }
 
 fn projection(w: f32, h: f32) -> glm::Mat3 {
-    glm::mat3(2.0 / w, 0.0, 0.0, 0.0, -2.0 / h, 0.0, -1.0, 1.0, 1.0)
+    glm::mat3(2.0 / w, 0.0, -1.0, 0.0, -2.0 / h, 1.0, 0.0, 0.0, 1.0)
 }
 
 trait UniformType {
@@ -243,18 +257,16 @@ fn vf_to_u8(v: &[f32]) -> &[u8] {
 pub struct ColorBatcher {
     shader: Shader,
     vao: glow::WebVertexArrayKey,
-    data: Rc<DrawData>,
     index: i32,
     vertex: Vec<f32>,
     vertex_color: Vec<f32>,
 }
 
 impl ColorBatcher {
-    pub fn new(gl: &GlContext, data: Rc<DrawData>) -> Result<Self, String> {
+    pub fn new(gl: &GlContext, data: &DrawData) -> Result<Self, String> {
         let vao = create_vao(gl)?;
         let shader = create_color_shader(gl)?;
         Ok(Self {
-            data,
             shader,
             vao,
             index: 0,
@@ -267,7 +279,7 @@ impl ColorBatcher {
         self.index = 0;
     }
 
-    pub fn flush(&mut self, gl: &GlContext) {
+    pub fn flush(&mut self, gl: &GlContext, data: &DrawData) {
         log("pre flush");
         if self.index == 0 {
             return;
@@ -275,7 +287,7 @@ impl ColorBatcher {
 
         log(&format!("Flush, {} {}", self.index, self.vertex.len()));
 
-        self.use_shader();
+        self.use_shader(data);
         unsafe {
             gl.bind_vertex_array(Some(self.vao));
 
@@ -298,13 +310,13 @@ impl ColorBatcher {
         self.index = 0;
     }
 
-    fn use_shader(&self) {
-        let shader = match &self.data.shader {
+    fn use_shader(&self, data: &DrawData) {
+        let shader = match &data.shader {
             Some(s) => s,
             _ => &self.shader
         };
         shader.useme();
-        shader.set_uniform("u_matrix", projection(self.data.width as f32, self.data.height as f32));
+        shader.set_uniform("u_matrix", projection(data.width as f32, data.height as f32));
     }
 
     fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], offset: usize) {
@@ -321,18 +333,18 @@ impl ColorBatcher {
         }
     }
 
-    pub fn draw(&mut self, gl: &GlContext, vertex: &[f32], color: Option<&[f32]>) {
+    pub fn draw(&mut self, gl: &GlContext, data: &DrawData, vertex: &[f32], color: Option<&[f32]>) {
         let count = (vertex.len() / 6) as i32; //vertex.len() / (vertices*size)
         let next = self.index + count;
 
         if next >= (MAX_PER_BATCH as i32) {
-            self.flush(gl);
+            self.flush(gl, data);
         }
 
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
         for (i, _) in vertex.iter().enumerate().step_by(2) {
             if let (Some(v1), Some(v2)) = (vertex.get(i), vertex.get(i + 1)) {
-                let vec = mult_vec(self.data.transform.matrix(), *v1, *v2);
+                let vec = mult_vec(data.transform.matrix(), *v1, *v2);
                 self.vertex[offset] = vec.x;
                 offset += 1;
                 self.vertex[offset] = vec.y;
@@ -343,7 +355,7 @@ impl ColorBatcher {
         let color = match color {
             Some(c) => c.to_vec(),
             None => {
-                let (r, g, b, a) = self.data.color.to_rgba();
+                let (r, g, b, a) = data.color.to_rgba();
                 let mut color = vec![];
                 (0..VERTICES * count as usize).for_each(|_| {
                     color.push(r);
@@ -358,7 +370,7 @@ impl ColorBatcher {
         let mut offset = self.index as usize * VERTICES * COLOR_VERTICE_SIZE;
         color.iter().enumerate().for_each(|(i, c)| {
             let is_alpha = (i + 1) % 4 == 0;
-            self.vertex_color[offset] = if is_alpha { *c * self.data.alpha } else { *c };
+            self.vertex_color[offset] = if is_alpha { *c * data.alpha } else { *c };
             offset += 1;
         });
 

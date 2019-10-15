@@ -4,6 +4,7 @@ mod window;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+use crate::graphics::color::Color;
 
 pub struct App {
     window: window::Window,
@@ -54,9 +55,28 @@ pub fn wasm_main() {
 fn my_draw_cb(app: &mut App) {
     let mut gfx = &mut app.graphics;
     gfx.begin(Some(graphics::color::rgba(0.1, 0.2, 0.3, 1.0)));
+    gfx.set_color(Color::Red);
+    gfx.push_transform(glm::scaling2d(&glm::vec2(2.0, 2.0)));
     gfx.fill_rect(0.0, 0.0, 100.0, 100.0);
+    gfx.pop_transform();
+
+    gfx.set_color(Color::Green);
+    gfx.push_transform(glm::translation2d(&glm::vec2(-000.0, 0.0)));
+    gfx.push_transform(glm::scaling2d(&glm::vec2(2.0, 2.0)));
         gfx.fill_triangle(200.0, 200.0, 300.0, 300.0, 100.0, 300.0);
 //    gfx.fill_triangle(0.0, 0.0, 0.0, 0.5, 0.7, 0.0);
+    gfx.pop_transform();
+
+    let len = 50;
+    for i in (0..len) {
+        let n = i as f32;
+        let r = (1.0/len as f32) * n;
+        let g = 0.5;
+        let b = 1.0 - (1.0/len as f32) * n;
+        let a = 1.0;
+        gfx.set_color(graphics::color::rgba(r, b, g, a));
+        gfx.fill_rect(10.0 * n, 10.0 * n, (100.0/len as f32) * n, (100.0/len as f32) * n);
+    }
     gfx.end();
 }
 

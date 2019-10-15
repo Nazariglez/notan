@@ -39,7 +39,7 @@ impl Transform {
     }
 
     pub fn push(&mut self, matrix: glm::Mat3) {
-        self.0.push(matrix);
+        self.0.push(self.matrix() * matrix);
     }
 
     pub fn pop(&mut self) {
@@ -86,7 +86,7 @@ pub struct Context {
     color_batcher: shaders::ColorBatcher,
     is_drawing: bool,
     render_target: Option<RenderTarget>,
-    data: Rc<DrawData>,
+    data: DrawData,
 }
 
 impl Context {
@@ -95,8 +95,8 @@ impl Context {
         let height = win.height() as i32;
         let (gl, driver) = create_gl_context(win)?;
 
-        let data = Rc::new(DrawData::new(width, height));
-        let color_batcher = ColorBatcher::new(&gl, data.clone())?;
+        let data = DrawData::new(width, height);
+        let color_batcher = ColorBatcher::new(&gl, &data)?;
 
         //2d
         unsafe {
@@ -124,6 +124,14 @@ impl Context {
 
     pub fn set_color(&mut self, color: Color) {
         self.data.set_color(color);
+    }
+
+    pub fn push_transform(&mut self, matrix: glm::Mat3) {
+        self.data.transform.push(matrix);
+    }
+
+    pub fn pop_transform(&mut self) {
+        self.data.transform.pop();
     }
 
     pub fn begin(&mut self, clear_color: Option<color::Color>) {
@@ -165,11 +173,11 @@ impl Context {
     }
 
     fn flush_color(&mut self) {
-        self.color_batcher.flush(&self.gl);
+        self.color_batcher.flush(&self.gl, &self.data);
     }
 
     fn draw_color(&mut self, vertex: &[f32]) {
-        self.color_batcher.draw(&self.gl, vertex, None);
+        self.color_batcher.draw(&self.gl, &self.data, vertex, None);
     }
 
     pub fn fill_triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
