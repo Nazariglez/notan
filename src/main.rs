@@ -1,6 +1,6 @@
+mod glm;
 mod graphics;
 mod window;
-mod glm;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -12,13 +12,11 @@ pub struct App {
 
 pub struct AppBuilder<S> {
     state: Option<S>,
-    draw_callback: Option<fn(&mut App)>
+    draw_callback: Option<fn(&mut App)>,
 }
 
 impl<S> AppBuilder<S> {
     pub fn build(&self) -> Result<App, String> {
-        web_sys::console::log_1(&wasm_bindgen::JsValue::from_str("here"));
-
         let win = window::Window::new();
         let mut gfx = graphics::Context::new(win.window())?;
 
@@ -31,7 +29,7 @@ impl<S> AppBuilder<S> {
             cb(&mut app);
         }
 
-//        Err("".to_string())
+        //        Err("".to_string())
         Ok(app)
     }
 
@@ -44,7 +42,7 @@ impl<S> AppBuilder<S> {
 pub fn init<S>(state: S) -> AppBuilder<S> {
     AppBuilder {
         state: Some(state),
-        draw_callback: None
+        draw_callback: None,
     }
 }
 
@@ -56,16 +54,16 @@ pub fn wasm_main() {
 fn my_draw_cb(app: &mut App) {
     let mut gfx = &mut app.graphics;
     gfx.begin(Some(graphics::color::rgba(0.1, 0.2, 0.3, 1.0)));
+    gfx.fill_rect(0.0, 0.0, 100.0, 100.0);
+        gfx.fill_triangle(200.0, 200.0, 300.0, 300.0, 100.0, 300.0);
+//    gfx.fill_triangle(0.0, 0.0, 0.0, 0.5, 0.7, 0.0);
     gfx.end();
 }
 
 fn main() {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
     println!("Hello, world!");
-    let app = init({})
-        .draw(my_draw_cb)
-        .build()
-        .unwrap();
+    let app = init({}).draw(my_draw_cb).build().unwrap();
 }
 
 pub fn log(msg: &str) {

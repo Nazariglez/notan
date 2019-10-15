@@ -1,1 +1,3 @@
-pub use nalgebra_glm as glm;
+use nalgebra_glm as glm;
+
+pub use glm::*;
