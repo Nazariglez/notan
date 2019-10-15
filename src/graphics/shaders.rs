@@ -48,13 +48,14 @@ impl Shader {
         let gl = gl.clone();
         let vertex = create_shader(&gl, glow::VERTEX_SHADER, vertex)?;
         let fragment = create_shader(&gl, glow::FRAGMENT_SHADER, fragment)?;
+
         let program = create_program(&gl, vertex, fragment)?;
 
+
         let mut attrs = HashMap::new();
-        let mut uniformList = HashMap::new();
+        let mut uniform_list = HashMap::new();
         unsafe {
-            while let attr_opt = attributes.pop() {
-                if let Some(attr) = attr_opt {
+            while let Some(attr) = attributes.pop() {
                     let location = gl.get_attrib_location(program, &attr.name) as u32;
                     let buffer = gl.create_buffer()?;
                     gl.bind_buffer(glow::ARRAY_BUFFER, Some(buffer));
@@ -70,14 +71,13 @@ impl Shader {
                         location,
                         buffer
                     });
-                }
             }
 
             for uniform in uniforms {
                 let u = gl.get_uniform_location(program, uniform)
                     .ok_or(format!("Invalid uniform name: {}", uniform))?;
 
-                uniformList.insert(uniform.to_string(), u);
+                uniform_list.insert(uniform.to_string(), u);
             }
         }
 
@@ -87,7 +87,7 @@ impl Shader {
             program: program,
             gl: gl,
             attributes: attrs,
-            uniforms: uniformList
+            uniforms: uniform_list
         })
     }
 
@@ -211,7 +211,7 @@ fn create_color_shader(gl: &GlContext) -> Result<Shader, String> {
         Attribute::new("a_color", 4, glow::FLOAT),
     ];
 
-    let uniforms = vec!["u_resolution", "u_color", "u_matrix"];
+    let uniforms = vec!["u_matrix"];
     Ok(Shader::new(gl, COLOR_VERTEX, COLOR_FRAGMENT, attrs, uniforms)?)
 }
 
