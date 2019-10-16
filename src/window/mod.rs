@@ -34,4 +34,9 @@ impl Window {
     pub fn window(&self) -> &web_sys::HtmlCanvasElement {
         return &self.canvas;
     }
+
+    //window_rect()? top_right, top_left, center, etc...
+//    pub fn top_right(&self) -> (f32, f32) {
+//        (self.canvas.width() as f32 * -0.5, self.canvas.height() as f32 * -0.5)
+//    }
 }

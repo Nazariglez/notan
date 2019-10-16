@@ -52,11 +52,24 @@ pub fn wasm_main() {
     main();
 }
 
+//TODO think about this:
+// - draw_2d() -> API easy like nannou api
+//     draw_2d().sprite(image)
+//              .anchor(0.5, 0.5)
+//              .rotation(1)
+//              .scale(2, 2)
+//              .pos(100, 100);
+// - draw() (or draw_raw())-> Stateful API like kha
+//      gfx.begin(Some(Color::Red));
+//      gfx.transform().push(matrix::scale(2, 2));
+//      gfx.draw_image(image, 100, 100);
+//      gfx.transform().pop();
+
 fn my_draw_cb(app: &mut App) {
     let mut gfx = &mut app.graphics;
     gfx.begin(Some(graphics::color::rgba(0.1, 0.2, 0.3, 1.0)));
     gfx.set_color(Color::Red);
-    gfx.push_transform(glm::scaling2d(&glm::vec2(2.0, 2.0)));
+    gfx.push_transform(glm::scaling2d(&glm::vec2(0.5, 0.5)));
     gfx.fill_rect(0.0, 0.0, 100.0, 100.0);
     gfx.pop_transform();
 

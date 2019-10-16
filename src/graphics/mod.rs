@@ -14,13 +14,15 @@ pub type GlContext = Rc<glow::Context>;
 enum Driver {
     WebGL,
     WebGL2,
-    OpenGL,
-    OpenGLES,
-    Metal,
-    Dx11,
-    Dx12,
-    Vulkan,
+//    OpenGL,
+//    OpenGLES,
+//    Metal,
+//    Dx11,
+//    Dx12,
+//    Vulkan,
 }
+
+//TODO check this nannout beatiful API https://github.com/nannou-org/nannou/blob/master/examples/simple_draw.rs
 
 pub struct RenderTarget {
     fbo: glow::WebFramebufferKey,
@@ -29,6 +31,7 @@ pub struct RenderTarget {
 }
 
 use crate::glm;
+use nalgebra_glm::mat4_to_mat3;
 
 //TODO use generic to be able to use with Mat2, Mat3, Mat4
 pub struct Transform(Vec<glm::Mat3>);
@@ -61,10 +64,12 @@ pub struct DrawData {
     transform: Transform,
     width: i32,
     height: i32,
+    projection: glm::Mat3,
 }
 
 impl DrawData {
     pub fn new(width: i32, height: i32) -> Self {
+        let projection = get_projection(width, height);
         Self {
             width,
             height,
@@ -72,12 +77,24 @@ impl DrawData {
             shader: None,
             transform: Transform::new(),
             color: Color::White,
+            projection,
         }
     }
 
     pub fn set_color(&mut self, color:Color) {
         self.color = color;
     }
+
+    pub fn set_size(&mut self, width: i32, height:i32)  {
+        self.width = width;
+        self.height = height;
+        self.projection = get_projection(self.width, self.height);
+
+    }
+}
+
+fn get_projection(width: i32, height: i32) -> glm::Mat3 {
+    mat4_to_mat3(&glm::ortho(0.0, width as f32, 0.0, height as f32 * -1.0, -1.0, 1.0))
 }
 
 pub struct Context {
@@ -114,6 +131,18 @@ impl Context {
         })
     }
 
+//    pub fn set_width(&mut self, width: i32) {
+//        self.data.set_width(width);
+//    }
+//
+//    pub fn set_height(&mut self, height: i32) {
+//        self.data.set_height(height);
+//    }
+
+    pub fn set_size(&mut self, width: i32, height: i32) {
+        self.data.set_size(width, height);
+    }
+
     pub fn width(&self) -> i32 {
         self.data.width
     }
@@ -140,24 +169,30 @@ impl Context {
         }
         self.is_drawing = true;
 
-        unsafe {
-            let (fbo, ww, hh) = if let Some(rt) = &self.render_target {
-                (Some(rt.fbo), rt.width, rt.height)
-            } else {
-                (None, self.width(), self.height())
-            };
+        let (fbo, ww, hh) = if let Some(rt) = &self.render_target {
+            (Some(rt.fbo), rt.width, rt.height)
+        } else {
+            (None, self.width(), self.height())
+        };
 
+        unsafe {
             self.gl.bind_framebuffer(glow::FRAMEBUFFER, fbo);
             self.gl.viewport(0, 0, ww, hh);
+        }
 
-            if let Some(c) = clear_color {
-                let (r, g, b, a) = c.to_rgba();
-                self.gl.clear_color(r, g, b, a);
-                self.gl.clear(glow::COLOR_BUFFER_BIT);
-            }
+        if let Some(c) = clear_color {
+            self.clear(c);
         }
 
         self.color_batcher.begin();
+    }
+
+    pub fn clear(&mut self, color: Color) {
+        let (r, g, b, a) = color.to_rgba();
+        unsafe {
+            self.gl.clear_color(r, g, b, a);
+            self.gl.clear(glow::COLOR_BUFFER_BIT);
+        }
     }
 
     pub fn end(&mut self) {

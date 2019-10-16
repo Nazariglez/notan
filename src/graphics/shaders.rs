@@ -31,40 +31,6 @@ struct AttributeData {
     buffer: glow::WebBufferKey,
 }
 
-//#[shader_data]
-//struct ShaderData {
-//    u_color: [f32; 4],
-//}
-//
-//pub struct Shader<ShaderData> {}
-//
-//let s = Shader<ShaderData>::new();
-//s.u_color = [1.0, 2.0, 3.0, 4.0];
-
-//https://github.com/17cupsofcoffee/tetra/pull/75/files
-
-fn mult_vec(m: &glm::Mat3, x: f32, y: f32) -> glm::Vec2 {
-    /*  0, 1, 2,
-        3, 4, 5,
-        6, 7, 8 */
-
-//    let w = m[6] * x + m[7] * y + m[8] * 1.0;
-//    let xx = (m[0] * x + m[1] * y + m[2] * 1.0) / w;
-//    let yy = (m[3] * x + m[4] * y + m[5] * 1.0) / w;
-
-
-    /*  0, 3, 6,
-        1, 4, 7,
-        2, 5, 8 */
-
-    let w = m[2] * x + m[5] * y + m[8] * 1.0;
-    let xx = (m[0] * x + m[3] * y + m[6] * 1.0) / w;
-    let yy = (m[1] * x + m[4] * y + m[7] * 1.0) / w;
-
-
-    glm::vec2(xx, yy)
-}
-
 fn projection(w: f32, h: f32) -> glm::Mat3 {
     glm::mat3(2.0 / w, 0.0, -1.0, 0.0, -2.0 / h, 1.0, 0.0, 0.0, 1.0)
 }
@@ -81,7 +47,7 @@ impl UniformType for i32 {
     }
 }
 
-impl UniformType for (f32, f32) /*[f32; 2]*/ {
+impl UniformType for (f32, f32) {
     fn set_uniform_value(&self, gl: &GlContext, location: WebUniformLocationKey) {
         unsafe {
             gl.uniform_2_f32(Some(location), self.0, self.1);
@@ -89,7 +55,7 @@ impl UniformType for (f32, f32) /*[f32; 2]*/ {
     }
 }
 
-impl UniformType for crate::glm::Mat3 {
+impl UniformType for glm::Mat3 {
     fn set_uniform_value(&self, gl: &GlContext, location: WebUniformLocationKey) {
         unsafe {
             gl.uniform_matrix_3_f32_slice(Some(location), false, &*m3_to_slice(self));
@@ -248,7 +214,7 @@ fn create_program(
 const VERTICES: usize = 3;
 const VERTICE_SIZE: usize = 2;
 const COLOR_VERTICE_SIZE: usize = 4;
-const MAX_PER_BATCH: usize = 2;
+const MAX_PER_BATCH: usize = 2000;
 
 fn vf_to_u8(v: &[f32]) -> &[u8] {
     unsafe { std::slice::from_raw_parts(v.as_ptr() as *const u8, v.len() * 4) }
@@ -290,20 +256,11 @@ impl ColorBatcher {
         self.use_shader(data);
         unsafe {
             gl.bind_vertex_array(Some(self.vao));
-
             self.bind_buffer(gl, "a_position", &self.vertex, 0);
             self.bind_buffer(gl, "a_color", &self.vertex_color, 0);
-            //            gl.bind_buffer(glow::ARRAY_BUFFER, self.shader.buffer("a_position"));
-            //            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vf_to_u8(&self.vertex), glow::STATIC_DRAW);
-            //
-            //            gl.bind_buffer(glow::ARRAY_BUFFER, self.shader.buffer("a_color"));
-            //            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vf_to_u8(&self.vertex_color), glow::STATIC_DRAW);
-
             let primitives = glow::TRIANGLES;
             let offset = 0;
             let count = self.index * 3;
-            //            log(&format!("{} pos: {:?}", count, self.vertex));
-            //            log(&format!("color: {:?}", self.vertex_color));
             gl.draw_arrays(primitives, offset, count);
         }
 
@@ -316,20 +273,17 @@ impl ColorBatcher {
             _ => &self.shader
         };
         shader.useme();
-        shader.set_uniform("u_matrix", projection(data.width as f32, data.height as f32));
+//        let ortho = glm::ortho(0.0, data.width as f32, 0.0, -data.height as f32, -1.0, 1.0);
+//        shader.set_uniform("u_matrix", projection(data.width as f32, data.height as f32)); //0.0 is top-right
+        log(&format!("{:?}", data.projection));
+        shader.set_uniform("u_matrix", data.projection);
     }
 
     fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], offset: usize) {
         unsafe {
             gl.bind_buffer(glow::ARRAY_BUFFER, self.shader.buffer(name));
             let buff = vf_to_u8(&data);
-            log(&format!("{:?}", buff));
             gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, buff, glow::STATIC_DRAW);
-//            let len = std::mem::size_of_val(data) / std::mem::size_of::<u8>();
-//            let data = std::slice::from_raw_parts(data.as_ptr() as *const u8, len);
-//            let offset = offset * std::mem::size_of::<f32>();
-//            log(&format!("{} {} {:?} ", len, offset, data));
-//            gl.buffer_sub_data_u8_slice(glow::ARRAY_BUFFER, offset as i32, data);
         }
     }
 
@@ -344,11 +298,10 @@ impl ColorBatcher {
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
         for (i, _) in vertex.iter().enumerate().step_by(2) {
             if let (Some(v1), Some(v2)) = (vertex.get(i), vertex.get(i + 1)) {
-                let vec = mult_vec(data.transform.matrix(), *v1, *v2);
-                self.vertex[offset] = vec.x;
-                offset += 1;
-                self.vertex[offset] = vec.y;
-                offset += 1;
+                let v = data.transform.matrix() * glm::vec3(*v1, *v2, 1.0);
+                self.vertex[offset] = v.x;
+                self.vertex[offset+1] = v.y;
+                offset += 2;
             }
         }
 
