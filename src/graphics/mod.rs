@@ -30,7 +30,7 @@ pub struct RenderTarget {
     height: i32,
 }
 
-use crate::glm;
+use crate::{glm, log};
 use nalgebra_glm::mat4_to_mat3;
 
 //TODO use generic to be able to use with Mat2, Mat3, Mat4
@@ -94,7 +94,17 @@ impl DrawData {
 }
 
 fn get_projection(width: i32, height: i32) -> glm::Mat3 {
-    mat4_to_mat3(&glm::ortho(0.0, width as f32, 0.0, height as f32 * -1.0, -1.0, 1.0))
+//    mat4_to_mat3(&glm::ortho(
+//        0.0,
+//        width as f32,
+//        0.0,
+//        height as f32 * -1.0,
+//        -1.0,
+//        1.0)
+//    )
+    let w = width as f32;
+    let h = height as f32;
+    glm::mat3(2.0 / w, 0.0, -1.0, 0.0, -2.0 / h, 1.0, 0.0, 0.0, 1.0)
 }
 
 pub struct Context {
@@ -163,7 +173,7 @@ impl Context {
         self.data.transform.pop();
     }
 
-    pub fn begin(&mut self, clear_color: Option<color::Color>) {
+    pub fn begin(&mut self) {
         if self.is_drawing {
             return;
         }
@@ -178,10 +188,6 @@ impl Context {
         unsafe {
             self.gl.bind_framebuffer(glow::FRAMEBUFFER, fbo);
             self.gl.viewport(0, 0, ww, hh);
-        }
-
-        if let Some(c) = clear_color {
-            self.clear(c);
         }
 
         self.color_batcher.begin();
@@ -233,6 +239,76 @@ impl Context {
 
         self.draw_color(&vertices);
     }
+
+    pub fn fill_line(&mut self, x1: f32, y1: f32, x2: f32, y2:f32, strength: f32) {
+        let (mut xx, mut yy) = if y1 == y2 {
+            (0.0, -1.0)
+        } else {
+            (1.0, -(x2 - x1) / (y2 - y1))
+        };
+
+        let len = (xx * xx + yy * yy).sqrt();
+        if len != 0.0 { //TODO use epsilon to check this floats?
+            let mul = strength / len;
+            xx *= mul;
+            yy *= mul;
+        }
+
+        let px1 = x1 + 0.5 * xx;
+        let py1 = y1 + 0.5 * yy;
+        let px2 = x2 + 0.5 * xx;
+        let py2 = y2 + 0.5 * yy;
+        let px3 = px1 - xx;
+        let py3 = py1 - yy;
+        let px4 = px2 - xx;
+        let py4 = py2 - yy;
+
+        self.draw_color(&[
+            px1, py1,
+            px2, py2,
+            px3, py3,
+            px3, py3,
+            px2, py2,
+            px4, py4
+        ]);
+    }
+
+    pub fn fill_circle(&mut self, x:f32, y:f32, radius:f32, segmentes:Option<i32>) {
+        let vertices = get_circle_vertices(x, y, radius, segmentes);
+        log(&format!("{:?}", vertices));
+        for v in vertices {
+//            self.draw_color(&v);
+            self.fill_triangle(v[0], v[1], v[2], v[3], v[4], v[5]);
+        }
+//        self.draw_color(&vertices);
+    }
+}
+
+fn get_circle_vertices(x:f32, y:f32, radius:f32, segments: Option<i32>) -> Vec<[f32; 6]> {
+    let segments = if let Some(s) = segments { s } else { (10.0*radius.sqrt()).floor() as i32 };
+    let theta = 2.0 * std::f32::consts::PI;
+    let cos = theta.cos();
+    let sin = theta.sin();
+    let mut xx = radius;
+    let mut yy = 0.0;
+
+    let mut vertices = vec![];
+    for i in (0..segments) {
+        let x1 = xx + x;
+        let y1 = yy + y;
+        let last_x = xx;
+        xx = cos * xx - sin * yy;
+        yy = cos * yy + sin * yy;
+//        vertices.push(x1);
+//        vertices.push(y1);
+//        vertices.push(xx+x);
+//        vertices.push(yy+y);
+//        vertices.push(x);
+//        vertices.push(y);
+        vertices.push([x1, y1, xx+x, yy+y, x, y]);
+    }
+
+    vertices
 }
 
 fn create_gl_context(win: &web_sys::HtmlCanvasElement) -> Result<(GlContext, Driver), String> {

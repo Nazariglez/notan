@@ -54,10 +54,13 @@ pub fn wasm_main() {
 
 //TODO think about this:
 // - draw_2d() -> API easy like nannou api
+//     draw_2d().transform().push(parentMatrix);
 //     draw_2d().sprite(image)
 //              .anchor(0.5, 0.5)
 //              .rotation(1)
 //              .scale(2, 2)
+//              .filters([Filter::Blur, etc...])
+//              .blend(BlendMode::Alpha)
 //              .pos(100, 100);
 // - draw() (or draw_raw())-> Stateful API like kha
 //      gfx.begin(Some(Color::Red));
@@ -67,7 +70,8 @@ pub fn wasm_main() {
 
 fn my_draw_cb(app: &mut App) {
     let mut gfx = &mut app.graphics;
-    gfx.begin(Some(graphics::color::rgba(0.1, 0.2, 0.3, 1.0)));
+    gfx.begin();
+    gfx.clear(graphics::color::rgba(0.1, 0.2, 0.3, 1.0));
     gfx.set_color(Color::Red);
     gfx.push_transform(glm::scaling2d(&glm::vec2(0.5, 0.5)));
     gfx.fill_rect(0.0, 0.0, 100.0, 100.0);
@@ -76,7 +80,7 @@ fn my_draw_cb(app: &mut App) {
     gfx.set_color(Color::Green);
     gfx.push_transform(glm::translation2d(&glm::vec2(-000.0, 0.0)));
     gfx.push_transform(glm::scaling2d(&glm::vec2(2.0, 2.0)));
-        gfx.fill_triangle(200.0, 200.0, 300.0, 300.0, 100.0, 300.0);
+    gfx.fill_triangle(200.0, 200.0, 300.0, 300.0, 100.0, 300.0);
 //    gfx.fill_triangle(0.0, 0.0, 0.0, 0.5, 0.7, 0.0);
     gfx.pop_transform();
 
@@ -90,6 +94,10 @@ fn my_draw_cb(app: &mut App) {
         gfx.set_color(graphics::color::rgba(r, b, g, a));
         gfx.fill_rect(10.0 * n, 10.0 * n, (100.0/len as f32) * n, (100.0/len as f32) * n);
     }
+
+    gfx.pop_transform();
+    gfx.set_color(Color::Blue);
+    gfx.fill_circle(200.0, 200.0, 50.0, None);
     gfx.end();
 }
 
