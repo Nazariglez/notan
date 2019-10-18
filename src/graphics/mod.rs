@@ -6,6 +6,8 @@ use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys;
+use lyon::lyon_tessellation as tess;
+use tess::basic_shapes::{fill_circle, stroke_circle};
 
 pub mod color;
 pub mod shaders;
@@ -14,12 +16,12 @@ pub type GlContext = Rc<glow::Context>;
 enum Driver {
     WebGL,
     WebGL2,
-//    OpenGL,
-//    OpenGLES,
-//    Metal,
-//    Dx11,
-//    Dx12,
-//    Vulkan,
+    //    OpenGL,
+    //    OpenGLES,
+    //    Metal,
+    //    Dx11,
+    //    Dx12,
+    //    Vulkan,
 }
 
 //TODO check this nannout beatiful API https://github.com/nannou-org/nannou/blob/master/examples/simple_draw.rs
@@ -32,6 +34,8 @@ pub struct RenderTarget {
 
 use crate::{glm, log};
 use nalgebra_glm::mat4_to_mat3;
+use lyon::lyon_tessellation::debugger::DebuggerMsg::Point;
+use lyon::lyon_tessellation::{VertexBuffers, BuffersBuilder, StrokeOptions};
 
 //TODO use generic to be able to use with Mat2, Mat3, Mat4
 pub struct Transform(Vec<glm::Mat3>);
@@ -81,27 +85,26 @@ impl DrawData {
         }
     }
 
-    pub fn set_color(&mut self, color:Color) {
+    pub fn set_color(&mut self, color: Color) {
         self.color = color;
     }
 
-    pub fn set_size(&mut self, width: i32, height:i32)  {
+    pub fn set_size(&mut self, width: i32, height: i32) {
         self.width = width;
         self.height = height;
         self.projection = get_projection(self.width, self.height);
-
     }
 }
 
 fn get_projection(width: i32, height: i32) -> glm::Mat3 {
-//    mat4_to_mat3(&glm::ortho(
-//        0.0,
-//        width as f32,
-//        0.0,
-//        height as f32 * -1.0,
-//        -1.0,
-//        1.0)
-//    )
+    //    mat4_to_mat3(&glm::ortho(
+    //        0.0,
+    //        width as f32,
+    //        0.0,
+    //        height as f32 * -1.0,
+    //        -1.0,
+    //        1.0)
+    //    )
     let w = width as f32;
     let h = height as f32;
     glm::mat3(2.0 / w, 0.0, -1.0, 0.0, -2.0 / h, 1.0, 0.0, 0.0, 1.0)
@@ -141,13 +144,13 @@ impl Context {
         })
     }
 
-//    pub fn set_width(&mut self, width: i32) {
-//        self.data.set_width(width);
-//    }
-//
-//    pub fn set_height(&mut self, height: i32) {
-//        self.data.set_height(height);
-//    }
+    //    pub fn set_width(&mut self, width: i32) {
+    //        self.data.set_width(width);
+    //    }
+    //
+    //    pub fn set_height(&mut self, height: i32) {
+    //        self.data.set_height(height);
+    //    }
 
     pub fn set_size(&mut self, width: i32, height: i32) {
         self.data.set_size(width, height);
@@ -225,22 +228,15 @@ impl Context {
         self.draw_color(&[x1, y1, x2, y2, x3, y3]);
     }
 
-    pub fn fill_rect(&mut self, x:f32, y:f32, width:f32, height:f32) {
+    pub fn fill_rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
         let x2 = x + width;
         let y2 = y + height;
-        let vertices = [
-            x, y,
-            x2, y,
-            x, y2,
-            x, y2,
-            x2, y,
-            x2, y2
-        ];
+        let vertices = [x, y, x2, y, x, y2, x, y2, x2, y, x2, y2];
 
         self.draw_color(&vertices);
     }
 
-    pub fn fill_line(&mut self, x1: f32, y1: f32, x2: f32, y2:f32, strength: f32) {
+    pub fn fill_line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, strength: f32) {
         let (mut xx, mut yy) = if y1 == y2 {
             (0.0, -1.0)
         } else {
@@ -248,7 +244,8 @@ impl Context {
         };
 
         let len = (xx * xx + yy * yy).sqrt();
-        if len != 0.0 { //TODO use epsilon to check this floats?
+        if len != 0.0 {
+            //TODO use epsilon to check this floats?
             let mul = strength / len;
             xx *= mul;
             yy *= mul;
@@ -263,30 +260,84 @@ impl Context {
         let px4 = px2 - xx;
         let py4 = py2 - yy;
 
-        self.draw_color(&[
-            px1, py1,
-            px2, py2,
-            px3, py3,
-            px3, py3,
-            px2, py2,
-            px4, py4
-        ]);
+        self.draw_color(&[px1, py1, px2, py2, px3, py3, px3, py3, px2, py2, px4, py4]);
     }
 
-    pub fn fill_circle(&mut self, x:f32, y:f32, radius:f32, segmentes:Option<i32>) {
-        let vertices = get_circle_vertices(x, y, radius, segmentes);
-        log(&format!("{:?}", vertices));
-        for v in vertices {
-//            self.draw_color(&v);
-            self.fill_triangle(v[0], v[1], v[2], v[3], v[4], v[5]);
-        }
-//        self.draw_color(&vertices);
+    pub fn fill_circle(&mut self, x: f32, y: f32, radius: f32, segmentes: Option<i32>) {
+        self.draw_color(&get_circle_vertices(x, y, radius*0.5, segmentes));
+        //https://docs.rs/lyon_tessellation/0.14.1/lyon_tessellation/geometry_builder/index.html
+        //https://docs.rs/lyon_tessellation/0.14.1/lyon_tessellation/struct.FillTessellator.html#examples
+        let mut output:VertexBuffers<MyVertex, u16> = VertexBuffers::new();
+        let mut opts = tess::StrokeOptions::tolerance(0.01);
+        opts = opts.with_line_width(10.0);
+        log(&format!("line options: {:?}", opts));
+        stroke_circle(
+            tess::math::point(x, y),
+            radius,
+            &mut opts,
+            &mut BuffersBuilder::new(
+                &mut output,
+                WithColor([1.0, 1.0, 0.0, 1.0])
+            )
+        );
+//        fill_circle(
+//            tess::math::point(x, y),
+//            radius,
+//            &tess::FillOptions::tolerance(0.05),
+//            &mut BuffersBuilder::new(
+//                &mut output,
+//                WithColor([1.0, 1.0, 0.0, 1.0])
+//            )
+//        );
+
+        let mut vertices = vec![];
+//        output.vertices.iter().for_each(|v| {
+//            vertices.push(v.position[0]);
+//            vertices.push(v.position[1]);
+//        });
+        // https://stackoverflow.com/questions/28075739/drawelements-vs-drawarrays-in-webgl
+        output.indices.iter().for_each(|i| {
+            vertices.push(output.vertices[*i as usize].position[0]);
+            vertices.push(output.vertices[*i as usize].position[1]);
+        });
+
+        self.draw_color(&vertices);
+
+        log(&format!("output: {:?} {} {}", output, output.vertices.len(), output.indices.len()));
     }
 }
 
-fn get_circle_vertices(x:f32, y:f32, radius:f32, segments: Option<i32>) -> Vec<[f32; 6]> {
-    let segments = if let Some(s) = segments { s } else { (10.0*radius.sqrt()).floor() as i32 };
-    let theta = 2.0 * std::f32::consts::PI;
+// Our custom vertex.
+#[derive(Copy, Clone, Debug)]
+pub struct MyVertex {
+    position: [f32; 2],
+    color: [f32; 4],
+}
+
+// The vertex constructor. This is the object that will be used to create the custom
+// verticex from the information provided by the tessellators.
+struct WithColor([f32; 4]);
+
+impl tess::VertexConstructor<tess::StrokeVertex, MyVertex> for WithColor {
+    fn new_vertex(&mut self, vertex: tess::StrokeVertex) -> MyVertex {
+        // FillVertex also provides normals but we don't need it here.
+        MyVertex {
+            position: [
+                vertex.position.x,
+                vertex.position.y,
+            ],
+            color: self.0,
+        }
+    }
+}
+
+fn get_circle_vertices(x: f32, y: f32, radius: f32, segments: Option<i32>) -> Vec<f32> {
+    let segments = if let Some(s) = segments {
+        s
+    } else {
+        (10.0 * radius.sqrt()).floor() as i32
+    };
+    let theta = 2.0 * std::f32::consts::PI / segments as f32;
     let cos = theta.cos();
     let sin = theta.sin();
     let mut xx = radius;
@@ -298,14 +349,14 @@ fn get_circle_vertices(x:f32, y:f32, radius:f32, segments: Option<i32>) -> Vec<[
         let y1 = yy + y;
         let last_x = xx;
         xx = cos * xx - sin * yy;
-        yy = cos * yy + sin * yy;
-//        vertices.push(x1);
-//        vertices.push(y1);
-//        vertices.push(xx+x);
-//        vertices.push(yy+y);
-//        vertices.push(x);
-//        vertices.push(y);
-        vertices.push([x1, y1, xx+x, yy+y, x, y]);
+        yy = cos * yy + sin * last_x;
+        vertices.push(x1);
+        vertices.push(y1);
+        vertices.push(xx + x);
+        vertices.push(yy + y);
+        vertices.push(x);
+        vertices.push(y);
+        //        vertices.append(&mut vec![x1, y1, xx+x, yy+y, x, y]);
     }
 
     vertices

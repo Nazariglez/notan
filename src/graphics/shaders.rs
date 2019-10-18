@@ -270,11 +270,11 @@ impl ColorBatcher {
     fn use_shader(&self, data: &DrawData) {
         let shader = match &data.shader {
             Some(s) => s,
-            _ => &self.shader
+            _ => &self.shader,
         };
         shader.useme();
-//        let ortho = glm::ortho(0.0, data.width as f32, 0.0, -data.height as f32, -1.0, 1.0);
-//        shader.set_uniform("u_matrix", projection(data.width as f32, data.height as f32)); //0.0 is top-right
+        //        let ortho = glm::ortho(0.0, data.width as f32, 0.0, -data.height as f32, -1.0, 1.0);
+        //        shader.set_uniform("u_matrix", projection(data.width as f32, data.height as f32)); //0.0 is top-right
         log(&format!("{:?}", data.projection));
         shader.set_uniform("u_matrix", data.projection);
     }
@@ -300,7 +300,7 @@ impl ColorBatcher {
             if let (Some(v1), Some(v2)) = (vertex.get(i), vertex.get(i + 1)) {
                 let v = data.transform.matrix() * glm::vec3(*v1, *v2, 1.0);
                 self.vertex[offset] = v.x;
-                self.vertex[offset+1] = v.y;
+                self.vertex[offset + 1] = v.y;
                 offset += 2;
             }
         }

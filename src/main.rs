@@ -2,9 +2,9 @@ mod glm;
 mod graphics;
 mod window;
 
+use crate::graphics::color::Color;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
-use crate::graphics::color::Color;
 
 pub struct App {
     window: window::Window,
@@ -81,23 +81,31 @@ fn my_draw_cb(app: &mut App) {
     gfx.push_transform(glm::translation2d(&glm::vec2(-000.0, 0.0)));
     gfx.push_transform(glm::scaling2d(&glm::vec2(2.0, 2.0)));
     gfx.fill_triangle(200.0, 200.0, 300.0, 300.0, 100.0, 300.0);
-//    gfx.fill_triangle(0.0, 0.0, 0.0, 0.5, 0.7, 0.0);
+    //    gfx.fill_triangle(0.0, 0.0, 0.0, 0.5, 0.7, 0.0);
     gfx.pop_transform();
 
     let len = 50;
     for i in (0..len) {
         let n = i as f32;
-        let r = (1.0/len as f32) * n;
+        let r = (1.0 / len as f32) * n;
         let g = 0.5;
-        let b = 1.0 - (1.0/len as f32) * n;
+        let b = 1.0 - (1.0 / len as f32) * n;
         let a = 1.0;
         gfx.set_color(graphics::color::rgba(r, b, g, a));
-        gfx.fill_rect(10.0 * n, 10.0 * n, (100.0/len as f32) * n, (100.0/len as f32) * n);
+        gfx.fill_rect(
+            10.0 * n,
+            10.0 * n,
+            (100.0 / len as f32) * n,
+            (100.0 / len as f32) * n,
+        );
     }
 
     gfx.pop_transform();
     gfx.set_color(Color::Blue);
-    gfx.fill_circle(200.0, 200.0, 50.0, None);
+    gfx.fill_circle(200.0, 200.0, 100.0, None);
+    gfx.set_color(Color::White);
+    gfx.fill_line(200.0, 200.0, 300.0, 300.0, 10.0);
+    gfx.fill_line(200.0, 300.0, 300.0, 200.0, 10.0);
     gfx.end();
 }
 
