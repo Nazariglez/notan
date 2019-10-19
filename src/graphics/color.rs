@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Color {
     Rgba(f32, f32, f32, f32),
     Rgb(f32, f32, f32),

@@ -8,6 +8,7 @@ use wasm_bindgen::JsCast;
 use web_sys;
 use lyon::lyon_tessellation as tess;
 use tess::basic_shapes::{fill_circle, stroke_circle};
+use rayon::prelude::*;
 
 pub mod color;
 pub mod shaders;
@@ -168,12 +169,8 @@ impl Context {
         self.data.set_color(color);
     }
 
-    pub fn push_transform(&mut self, matrix: glm::Mat3) {
-        self.data.transform.push(matrix);
-    }
-
-    pub fn pop_transform(&mut self) {
-        self.data.transform.pop();
+    pub fn transform(&mut self) -> &mut Transform {
+        &mut self.data.transform
     }
 
     pub fn begin(&mut self) {
@@ -220,23 +217,42 @@ impl Context {
         self.color_batcher.flush(&self.gl, &self.data);
     }
 
-    fn draw_color(&mut self, vertex: &[f32]) {
-        self.color_batcher.draw(&self.gl, &self.data, vertex, None);
+    fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
+        let color_vertex= match color {
+            Some(c) => {
+                c.iter().map(|c| c.to_rgba())
+                    .fold(vec![], |mut acc, v| {
+                        acc.append(&mut vec![v.0, v.1, v.2, v.3]);
+                        acc
+                    })
+            }
+            _ => vec![]
+        };
+
+        self.color_batcher.draw(&self.gl, &self.data, vertex, if color.is_some() {
+            Some(&color_vertex)
+        } else {
+            None
+        });
     }
 
-    pub fn fill_triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
-        self.draw_color(&[x1, y1, x2, y2, x3, y3]);
+    pub fn draw_triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
+        self.draw_color(&[x1, y1, x2, y2, x3, y3], None);
     }
 
-    pub fn fill_rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
+    pub fn draw_triangle_with_color_vertices(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3:f32, colors: &[Color; 3]) {
+        self.draw_color(&[x1, y1, x2, y2, x3, y3], Some(colors));
+    }
+
+    pub fn draw_rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
         let x2 = x + width;
         let y2 = y + height;
         let vertices = [x, y, x2, y, x, y2, x, y2, x2, y, x2, y2];
 
-        self.draw_color(&vertices);
+        self.draw_color(&vertices, None);
     }
 
-    pub fn fill_line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, strength: f32) {
+    pub fn draw_line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, strength: f32) {
         let (mut xx, mut yy) = if y1 == y2 {
             (0.0, -1.0)
         } else {
@@ -260,16 +276,35 @@ impl Context {
         let px4 = px2 - xx;
         let py4 = py2 - yy;
 
-        self.draw_color(&[px1, py1, px2, py2, px3, py3, px3, py3, px2, py2, px4, py4]);
+        self.draw_color(&[px1, py1, px2, py2, px3, py3, px3, py3, px2, py2, px4, py4], None);
     }
 
-    pub fn fill_circle(&mut self, x: f32, y: f32, radius: f32, segmentes: Option<i32>) {
-        self.draw_color(&get_circle_vertices(x, y, radius*0.5, segmentes));
+    pub fn draw_circle(&mut self, x: f32, y: f32, radius: f32) {
+        self.draw_color(&get_circle_vertices(x, y, radius, None), None);
         //https://docs.rs/lyon_tessellation/0.14.1/lyon_tessellation/geometry_builder/index.html
         //https://docs.rs/lyon_tessellation/0.14.1/lyon_tessellation/struct.FillTessellator.html#examples
-        let mut output:VertexBuffers<MyVertex, u16> = VertexBuffers::new();
+    }
+
+    pub fn draw_rounded_rect(&mut self, x: f32, y:f32, width: f32, height: f32, radius: f32) {
+
+    }
+
+    pub fn stroke_triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, line_width: f32) {
+
+    }
+
+    pub fn stroke_rect(&mut self, x: f32, y:f32, width: f32, height: f32, line_width: f32) {
+
+    }
+
+    pub fn stroke_rounded_rect(&mut self, x: f32, y:f32, width: f32, height: f32, radius: f32) {
+
+    }
+
+    pub fn stroke_circle(&mut self, x: f32, y:f32, radius: f32, line_width: f32) {
+        let mut output:VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
         let mut opts = tess::StrokeOptions::tolerance(0.01);
-        opts = opts.with_line_width(10.0);
+        opts = opts.with_line_width(line_width);
         log(&format!("line options: {:?}", opts));
         stroke_circle(
             tess::math::point(x, y),
@@ -277,7 +312,7 @@ impl Context {
             &mut opts,
             &mut BuffersBuilder::new(
                 &mut output,
-                WithColor([1.0, 1.0, 0.0, 1.0])
+                WithColor,
             )
         );
 //        fill_circle(
@@ -296,38 +331,81 @@ impl Context {
 //            vertices.push(v.position[1]);
 //        });
         // https://stackoverflow.com/questions/28075739/drawelements-vs-drawarrays-in-webgl
-        output.indices.iter().for_each(|i| {
-            vertices.push(output.vertices[*i as usize].position[0]);
-            vertices.push(output.vertices[*i as usize].position[1]);
+        output.indices.iter().for_each(|mut i| {
+            vertices.push(output.vertices[*i].0);
+            vertices.push(output.vertices[*i].1);
         });
 
-        self.draw_color(&vertices);
+        self.draw_color(&vertices, None);
 
         log(&format!("output: {:?} {} {}", output, output.vertices.len(), output.indices.len()));
     }
+
+    pub fn draw_geometry(&mut self, geometry: &mut Geometry) {
+
+    }
+
+    pub fn draw_svg(&mut self, svg: &mut Svg) {
+
+    }
+
+    pub fn draw_vertex(&mut self, vertices: &[Vertex]) {
+        let (vert, color_vert) = vertices.iter()
+            .fold((vec![], vec![]), |(mut v_acc, mut vc_acc), v| {
+                v_acc.push(v.pos.0);
+                v_acc.push(v.pos.1);
+                vc_acc.push(v.color);
+                (v_acc, vc_acc)
+            });
+
+        log(&format!("vert: {:?} color:{:?}", vert, color_vert));
+        self.draw_color(&vert, Some(&color_vert));
+    }
+}
+
+pub struct Vertex {
+    pos: (f32, f32),
+    color: Color
+}
+
+impl Vertex {
+    pub fn new(x:f32, y:f32, color: Color) -> Self {
+        Self {
+            pos: (x, y),
+            color: color
+        }
+    }
+}
+
+pub struct Svg {}
+
+pub struct Geometry {
+    //https://github.com/nical/lyon/issues/462
+    vertices: Option<Vec<f32>>,
 }
 
 // Our custom vertex.
-#[derive(Copy, Clone, Debug)]
-pub struct MyVertex {
-    position: [f32; 2],
-    color: [f32; 4],
-}
+//#[derive(Copy, Clone, Debug)]
+//pub struct MyVertex {
+//    position: [f32; 2],
+////    color: [f32; 4],
+//}
 
 // The vertex constructor. This is the object that will be used to create the custom
 // verticex from the information provided by the tessellators.
-struct WithColor([f32; 4]);
+struct WithColor;
 
-impl tess::VertexConstructor<tess::StrokeVertex, MyVertex> for WithColor {
-    fn new_vertex(&mut self, vertex: tess::StrokeVertex) -> MyVertex {
+impl tess::VertexConstructor<tess::StrokeVertex, (f32, f32)> for WithColor {
+    fn new_vertex(&mut self, vertex: tess::StrokeVertex) -> (f32, f32) {
         // FillVertex also provides normals but we don't need it here.
-        MyVertex {
-            position: [
-                vertex.position.x,
-                vertex.position.y,
-            ],
-            color: self.0,
-        }
+        (vertex.position.x, vertex.position.y)
+//        MyVertex {
+//            position: [
+//                vertex.position.x,
+//                vertex.position.y,
+//            ],
+////            color: self.0,
+//        }
     }
 }
 

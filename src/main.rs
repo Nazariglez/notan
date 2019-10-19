@@ -5,6 +5,7 @@ mod window;
 use crate::graphics::color::Color;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+use crate::graphics::Vertex;
 
 pub struct App {
     window: window::Window,
@@ -73,16 +74,22 @@ fn my_draw_cb(app: &mut App) {
     gfx.begin();
     gfx.clear(graphics::color::rgba(0.1, 0.2, 0.3, 1.0));
     gfx.set_color(Color::Red);
-    gfx.push_transform(glm::scaling2d(&glm::vec2(0.5, 0.5)));
-    gfx.fill_rect(0.0, 0.0, 100.0, 100.0);
-    gfx.pop_transform();
+    gfx.transform().push(glm::scaling2d(&glm::vec2(0.5, 0.5)));
+    gfx.draw_rect(0.0, 0.0, 100.0, 100.0);
+    gfx.transform().pop();
 
     gfx.set_color(Color::Green);
-    gfx.push_transform(glm::translation2d(&glm::vec2(-000.0, 0.0)));
-    gfx.push_transform(glm::scaling2d(&glm::vec2(2.0, 2.0)));
-    gfx.fill_triangle(200.0, 200.0, 300.0, 300.0, 100.0, 300.0);
-    //    gfx.fill_triangle(0.0, 0.0, 0.0, 0.5, 0.7, 0.0);
-    gfx.pop_transform();
+    gfx.transform().push(glm::translation2d(&glm::vec2(-000.0, 0.0)));
+    gfx.transform().push(glm::scaling2d(&glm::vec2(2.0, 2.0)));
+    gfx.draw_triangle(200.0, 200.0, 300.0, 300.0, 100.0, 300.0);
+//    gfx.draw_triangle(0.0, 0.0, 0.0, 0.5, 0.7, 0.0);
+    gfx.transform().pop();
+    gfx.draw_vertex(&[
+        Vertex::new(600.0, 200.0, Color::Red),
+        Vertex::new(700.0, 300.0, Color::Green),
+        Vertex::new(500.0, 300.0, Color::Blue),
+    ]);
+    gfx.transform().pop();
 
     let len = 50;
     for i in (0..len) {
@@ -92,7 +99,7 @@ fn my_draw_cb(app: &mut App) {
         let b = 1.0 - (1.0 / len as f32) * n;
         let a = 1.0;
         gfx.set_color(graphics::color::rgba(r, b, g, a));
-        gfx.fill_rect(
+        gfx.draw_rect(
             10.0 * n,
             10.0 * n,
             (100.0 / len as f32) * n,
@@ -100,12 +107,13 @@ fn my_draw_cb(app: &mut App) {
         );
     }
 
-    gfx.pop_transform();
+    gfx.transform().pop();
     gfx.set_color(Color::Blue);
-    gfx.fill_circle(200.0, 200.0, 100.0, None);
+    gfx.draw_circle(200.0, 200.0, 50.0);
+    gfx.stroke_circle(200.0, 200.0, 70.0, 10.0);
     gfx.set_color(Color::White);
-    gfx.fill_line(200.0, 200.0, 300.0, 300.0, 10.0);
-    gfx.fill_line(200.0, 300.0, 300.0, 200.0, 10.0);
+    gfx.draw_line(200.0, 200.0, 300.0, 300.0, 10.0);
+    gfx.draw_line(200.0, 300.0, 300.0, 200.0, 10.0);
     gfx.end();
 }
 

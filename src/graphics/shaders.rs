@@ -1,6 +1,6 @@
 use super::{Context, GlContext};
 use crate::graphics::DrawData;
-use crate::{glm, log};
+use crate::{glm, log, Color};
 use glow::*;
 use std::collections::HashMap;
 use std::rc::Rc;
