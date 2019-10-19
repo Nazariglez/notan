@@ -6,11 +6,8 @@
 <canvas id="canvas" width="800" height="600"></canvas>
 <script src="./nae.js"></script>
 <script>
-    console.log("init script");
       window.addEventListener("load", async () => {
-      console.log("On fucking load");
         await wasm_bindgen("./nae_bg.wasm");
-        console.log("after loading");
       });
     </script>
 </body>

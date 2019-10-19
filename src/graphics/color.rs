@@ -45,6 +45,11 @@ impl Color {
             }
         }
     }
+
+    pub fn with_alpha(&self, alpha: f32) -> Color {
+        let (r, g, b, _) = self.to_rgba();
+        rgba(r, g, b, alpha)
+    }
 }
 
 impl From<u32> for Color {

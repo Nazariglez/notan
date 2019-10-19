@@ -214,7 +214,7 @@ fn create_program(
 const VERTICES: usize = 3;
 const VERTICE_SIZE: usize = 2;
 const COLOR_VERTICE_SIZE: usize = 4;
-const MAX_PER_BATCH: usize = 2000;
+const MAX_PER_BATCH: usize = 65000 / (VERTICES * VERTICE_SIZE);
 
 fn vf_to_u8(v: &[f32]) -> &[u8] {
     unsafe { std::slice::from_raw_parts(v.as_ptr() as *const u8, v.len() * 4) }
@@ -246,7 +246,6 @@ impl ColorBatcher {
     }
 
     pub fn flush(&mut self, gl: &GlContext, data: &DrawData) {
-        log("pre flush");
         if self.index == 0 {
             return;
         }
@@ -255,12 +254,14 @@ impl ColorBatcher {
 
         self.use_shader(data);
         unsafe {
+            let v_max = self.index as usize * VERTICES * VERTICE_SIZE;
+            let vc_max = self.index as usize * VERTICES * COLOR_VERTICE_SIZE;
             gl.bind_vertex_array(Some(self.vao));
-            self.bind_buffer(gl, "a_position", &self.vertex, 0);
-            self.bind_buffer(gl, "a_color", &self.vertex_color, 0);
+            self.bind_buffer(gl, "a_position", &self.vertex[0..v_max], 0);
+            self.bind_buffer(gl, "a_color", &self.vertex_color[0..vc_max], 0);
             let primitives = glow::TRIANGLES;
             let offset = 0;
-            let count = self.index * 3;
+            let count = self.index * VERTICES as i32;
             gl.draw_arrays(primitives, offset, count);
         }
 
@@ -273,9 +274,6 @@ impl ColorBatcher {
             _ => &self.shader,
         };
         shader.useme();
-        //        let ortho = glm::ortho(0.0, data.width as f32, 0.0, -data.height as f32, -1.0, 1.0);
-        //        shader.set_uniform("u_matrix", projection(data.width as f32, data.height as f32)); //0.0 is top-right
-        log(&format!("{:?}", data.projection));
         shader.set_uniform("u_matrix", data.projection);
     }
 

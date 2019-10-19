@@ -2,7 +2,7 @@ mod glm;
 mod graphics;
 mod window;
 
-use crate::graphics::color::Color;
+use crate::graphics::color::{Color, rgba};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use crate::graphics::Vertex;
@@ -82,13 +82,15 @@ fn my_draw_cb(app: &mut App) {
     gfx.transform().push(glm::translation2d(&glm::vec2(-000.0, 0.0)));
     gfx.transform().push(glm::scaling2d(&glm::vec2(2.0, 2.0)));
     gfx.draw_triangle(200.0, 200.0, 300.0, 300.0, 100.0, 300.0);
-//    gfx.draw_triangle(0.0, 0.0, 0.0, 0.5, 0.7, 0.0);
     gfx.transform().pop();
     gfx.draw_vertex(&[
         Vertex::new(600.0, 200.0, Color::Red),
         Vertex::new(700.0, 300.0, Color::Green),
         Vertex::new(500.0, 300.0, Color::Blue),
     ]);
+    gfx.set_color(Color::Red.with_alpha(0.3));
+    gfx.stroke_triangle(600.0, 200.0, 700.0, 300.0, 500.0, 300.0, 10.0);
+
     gfx.transform().pop();
 
     let len = 50;
@@ -114,6 +116,16 @@ fn my_draw_cb(app: &mut App) {
     gfx.set_color(Color::White);
     gfx.draw_line(200.0, 200.0, 300.0, 300.0, 10.0);
     gfx.draw_line(200.0, 300.0, 300.0, 200.0, 10.0);
+
+    gfx.set_color(rgba(0.5, 0.5, 0.1, 1.0));
+    gfx.draw_rounded_rect(300.0, 10.0, 200.0, 50.0, 20.0);
+    gfx.set_color(rgba(1.0, 0.5, 0.5, 0.3));
+    gfx.stroke_rounded_rect(300.0, 10.0, 200.0, 50.0, 20.0, 10.0);
+
+    gfx.draw_rect(400.0, 100.0, 300.0, 80.0);
+    gfx.set_color(Color::Green.with_alpha(0.3));
+    gfx.stroke_rect(400.0, 100.0, 300.0, 80.0, 10.0);
+
     gfx.end();
 }
 
