@@ -250,15 +250,18 @@ impl ColorBatcher {
             return;
         }
 
-        log(&format!("Flush, {} {}", self.index, self.vertex.len()));
+        //        log(&format!("Flush, {} {}", self.index, self.vertex.len()));
 
         self.use_shader(data);
         unsafe {
+            gl.bind_vertex_array(Some(self.vao));
+
+            //TODO pass the whole slice or just pass what we need to save bandwidth? (is this really that worth it?)
             let v_max = self.index as usize * VERTICES * VERTICE_SIZE;
             let vc_max = self.index as usize * VERTICES * COLOR_VERTICE_SIZE;
-            gl.bind_vertex_array(Some(self.vao));
             self.bind_buffer(gl, "a_position", &self.vertex[0..v_max], 0);
             self.bind_buffer(gl, "a_color", &self.vertex_color[0..vc_max], 0);
+
             let primitives = glow::TRIANGLES;
             let offset = 0;
             let count = self.index * VERTICES as i32;
@@ -277,7 +280,7 @@ impl ColorBatcher {
         shader.set_uniform("u_matrix", data.projection);
     }
 
-    fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], offset: usize) {
+    fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], _offset: usize) {
         unsafe {
             gl.bind_buffer(glow::ARRAY_BUFFER, self.shader.buffer(name));
             let buff = vf_to_u8(&data);

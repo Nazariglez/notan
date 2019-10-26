@@ -2,13 +2,13 @@ use self::shaders::ColorBatcher;
 use crate::graphics::shaders::Shader;
 use color::Color;
 use glow::*;
+use lyon::lyon_tessellation as tess;
+use rayon::prelude::*;
 use std::rc::Rc;
+use tess::basic_shapes::{fill_circle, stroke_circle};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys;
-use lyon::lyon_tessellation as tess;
-use tess::basic_shapes::{fill_circle, stroke_circle};
-use rayon::prelude::*;
 
 pub mod color;
 pub mod shaders;
@@ -34,10 +34,13 @@ pub struct RenderTarget {
 }
 
 use crate::{glm, log};
-use nalgebra_glm::mat4_to_mat3;
+use lyon::lyon_tessellation::basic_shapes::{
+    fill_rounded_rectangle, stroke_rectangle, stroke_rounded_rectangle, stroke_triangle,
+    BorderRadii,
+};
 use lyon::lyon_tessellation::debugger::DebuggerMsg::Point;
-use lyon::lyon_tessellation::{VertexBuffers, BuffersBuilder, StrokeOptions};
-use lyon::lyon_tessellation::basic_shapes::{stroke_triangle, fill_rounded_rectangle, BorderRadii, stroke_rounded_rectangle, stroke_rectangle};
+use lyon::lyon_tessellation::{BuffersBuilder, StrokeOptions, VertexBuffers};
+use nalgebra_glm::mat4_to_mat3;
 
 //TODO use generic to be able to use with Mat2, Mat3, Mat4
 pub struct Transform(Vec<glm::Mat3>);
@@ -60,6 +63,22 @@ impl Transform {
 
     pub fn matrix(&self) -> &glm::Mat3 {
         &self.0[self.0.len() - 1]
+    }
+
+    pub fn translate(&mut self, x:f32, y:f32) {
+        self.push(glm::translation2d(&glm::vec2(x, y)));
+    }
+
+    pub fn scale(&mut self, x: f32, y: f32) {
+        self.push(glm::scaling2d(&glm::vec2(x, y)));
+    }
+
+    pub fn rotate(&mut self, angle: f32) {
+        self.push(glm::rotation2d(angle));
+    }
+
+    pub fn rotate_deg(&mut self, angle: f32) {
+        self.rotate(crate::math::PI/180.0 * angle);
     }
 }
 
@@ -95,6 +114,10 @@ impl DrawData {
         self.width = width;
         self.height = height;
         self.projection = get_projection(self.width, self.height);
+    }
+
+    pub fn set_alpha(&mut self, alpha: f32) {
+        self.alpha = alpha;
     }
 }
 
@@ -144,6 +167,10 @@ impl Context {
             is_drawing: false,
             render_target: None,
         })
+    }
+
+    pub fn set_alpha(&mut self, alpha: f32) {
+        self.data.set_alpha(alpha);
     }
 
     //    pub fn set_width(&mut self, width: i32) {
@@ -219,15 +246,12 @@ impl Context {
     }
 
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
-        let color_vertex= match color {
-            Some(c) => {
-                c.iter().map(|c| c.to_rgba())
-                    .fold(vec![], |mut acc, v| {
-                        acc.append(&mut vec![v.0, v.1, v.2, v.3]);
-                        acc
-                    })
-            }
-            _ => vec![]
+        let color_vertex = match color {
+            Some(c) => c.iter().map(|c| c.to_rgba()).fold(vec![], |mut acc, v| {
+                acc.append(&mut vec![v.0, v.1, v.2, v.3]);
+                acc
+            }),
+            _ => vec![],
         };
 
         let color = if color.is_some() {
@@ -243,8 +267,17 @@ impl Context {
         self.draw_color(&[x1, y1, x2, y2, x3, y3], None);
     }
 
-    pub fn stroke_triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, line_width: f32) {
-        let mut output:VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
+    pub fn stroke_triangle(
+        &mut self,
+        x1: f32,
+        y1: f32,
+        x2: f32,
+        y2: f32,
+        x3: f32,
+        y3: f32,
+        line_width: f32,
+    ) {
+        let mut output: VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
         let mut opts = tess::StrokeOptions::tolerance(0.01);
         opts = opts.with_line_width(line_width);
         stroke_triangle(
@@ -252,10 +285,7 @@ impl Context {
             tess::math::point(x2, y2),
             tess::math::point(x3, y3),
             &mut opts,
-            &mut BuffersBuilder::new(
-                &mut output,
-                LyonVertex,
-            )
+            &mut BuffersBuilder::new(&mut output, LyonVertex),
         );
 
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
@@ -269,17 +299,14 @@ impl Context {
         self.draw_color(&vertices, None);
     }
 
-    pub fn stroke_rect(&mut self, x: f32, y:f32, width: f32, height: f32, line_width: f32) {
-        let mut output:VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
+    pub fn stroke_rect(&mut self, x: f32, y: f32, width: f32, height: f32, line_width: f32) {
+        let mut output: VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
         let mut opts = tess::StrokeOptions::tolerance(0.01);
         opts = opts.with_line_width(line_width);
         stroke_rectangle(
             &tess::math::rect(x, y, width, height),
             &mut opts,
-            &mut BuffersBuilder::new(
-                &mut output,
-                LyonVertex,
-            )
+            &mut BuffersBuilder::new(&mut output, LyonVertex),
         );
 
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
@@ -309,7 +336,10 @@ impl Context {
         let px4 = px2 - xx;
         let py4 = py2 - yy;
 
-        self.draw_color(&[px1, py1, px2, py2, px3, py3, px3, py3, px2, py2, px4, py4], None);
+        self.draw_color(
+            &[px1, py1, px2, py2, px3, py3, px3, py3, px2, py2, px4, py4],
+            None,
+        );
     }
 
     pub fn draw_circle(&mut self, x: f32, y: f32, radius: f32) {
@@ -318,81 +348,72 @@ impl Context {
         //https://docs.rs/lyon_tessellation/0.14.1/lyon_tessellation/struct.FillTessellator.html#examples
     }
 
-    pub fn draw_rounded_rect(&mut self, x: f32, y:f32, width: f32, height: f32, radius: f32) {
-        let mut output:VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
-        let mut opts = tess::FillOptions::tolerance(0.01);
+    pub fn draw_rounded_rect(&mut self, x: f32, y: f32, width: f32, height: f32, radius: f32) {
+        let mut output: VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
+        let opts = tess::FillOptions::tolerance(0.01);
         fill_rounded_rectangle(
             &tess::math::rect(x, y, width, height),
             &BorderRadii::new(radius, radius, radius, radius),
             &opts,
-            &mut BuffersBuilder::new(
-                &mut output,
-                LyonVertex,
-            )
+            &mut BuffersBuilder::new(&mut output, LyonVertex),
         );
 
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
-
-
-    pub fn stroke_rounded_rect(&mut self, x: f32, y:f32, width: f32, height: f32, radius: f32, line_width: f32) {
-        let mut output:VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
+    pub fn stroke_rounded_rect(
+        &mut self,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        radius: f32,
+        line_width: f32,
+    ) {
+        let mut output: VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
         let mut opts = tess::StrokeOptions::tolerance(0.01);
         opts = opts.with_line_width(line_width);
         stroke_rounded_rectangle(
             &tess::math::rect(x, y, width, height),
             &BorderRadii::new(radius, radius, radius, radius),
             &opts,
-            &mut BuffersBuilder::new(
-                &mut output,
-                LyonVertex,
-            )
+            &mut BuffersBuilder::new(&mut output, LyonVertex),
         );
 
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
-    pub fn stroke_circle(&mut self, x: f32, y:f32, radius: f32, line_width: f32) {
-        let mut output:VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
+    pub fn stroke_circle(&mut self, x: f32, y: f32, radius: f32, line_width: f32) {
+        let mut output: VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
         let mut opts = tess::StrokeOptions::tolerance(0.01);
         opts = opts.with_line_width(line_width);
         stroke_circle(
             tess::math::point(x, y),
             radius,
             &mut opts,
-            &mut BuffersBuilder::new(
-                &mut output,
-                LyonVertex,
-            )
+            &mut BuffersBuilder::new(&mut output, LyonVertex),
         );
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
-    pub fn draw_geometry(&mut self, geometry: &mut Geometry) {
+    pub fn draw_geometry(&mut self, geometry: &mut Geometry) {}
 
-    }
+    pub fn draw_svg(&mut self, svg: &mut Svg) {}
 
-    pub fn draw_svg(&mut self, svg: &mut Svg) {
+    pub fn draw_image(&mut self, x: f32, y: f32) {}
 
-    }
-
-    pub fn draw_image(&mut self, x: f32, y:f32) {
-
-    }
-
-    pub fn draw_9slice(&mut self, x:f32, y:f32, opts:String) {
-
-    }
+    pub fn draw_9slice(&mut self, x: f32, y: f32, opts: String) {}
 
     pub fn draw_vertex(&mut self, vertices: &[Vertex]) {
-        let (vert, color_vert) = vertices.iter()
-            .fold((vec![], vec![]), |(mut v_acc, mut vc_acc), v| {
-                v_acc.push(v.pos.0);
-                v_acc.push(v.pos.1);
-                vc_acc.push(v.color);
-                (v_acc, vc_acc)
-            });
+        let (vert, color_vert) =
+            vertices
+                .iter()
+                .fold((vec![], vec![]), |(mut v_acc, mut vc_acc), v| {
+                    v_acc.push(v.pos.0);
+                    v_acc.push(v.pos.1);
+                    vc_acc.push(v.color);
+                    (v_acc, vc_acc)
+                });
 
         self.draw_color(&vert, Some(&color_vert));
     }
@@ -400,24 +421,23 @@ impl Context {
 
 fn lyon_vbuff_to_vertex(buff: VertexBuffers<(f32, f32), usize>) -> Vec<f32> {
     //TODO use rayon par_iter when it's not wasm32
-    buff.indices.iter()
-        .fold(vec![], |mut acc, v| {
-            acc.push(buff.vertices[*v].0);
-            acc.push(buff.vertices[*v].1);
-            acc
-        })
+    buff.indices.iter().fold(vec![], |mut acc, v| {
+        acc.push(buff.vertices[*v].0);
+        acc.push(buff.vertices[*v].1);
+        acc
+    })
 }
 
 pub struct Vertex {
     pos: (f32, f32),
-    color: Color
+    color: Color,
 }
 
 impl Vertex {
-    pub fn new(x:f32, y:f32, color: Color) -> Self {
+    pub fn new(x: f32, y: f32, color: Color) -> Self {
         Self {
             pos: (x, y),
-            color: color
+            color: color,
         }
     }
 }
@@ -428,7 +448,6 @@ pub struct Geometry {
     //https://github.com/nical/lyon/issues/462
     vertices: Option<Vec<f32>>,
 }
-
 
 // The vertex constructor. This is the object that will be used to create the custom
 // verticex from the information provided by the tessellators.
