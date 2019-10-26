@@ -85,15 +85,36 @@ fn draw_cb(app: &mut App, state: &mut State) {
     let gfx = &mut app.graphics;
     gfx.begin();
     gfx.clear(graphics::color::rgba(0.1, 0.2, 0.3, 1.0));
+
+    //Moving circles
+    let c = rgba(
+        (state.i%360) as f32 / 360.0,
+        (state.i%720) as f32 / 720.0,
+        (state.i%1080) as f32 / 1080.0,
+        1.0
+    );
+    gfx.set_color(c);
+    gfx.transform().translate(150.0, 450.0);
+    gfx.transform().skew_deg((state.i%720) as f32, (state.i%720) as f32);
+    gfx.draw_circle(0.0, 0.0, 50.0);
+    gfx.transform().pop();
+    gfx.set_color(Color::White);
+    gfx.transform().skew_deg(-(state.i%720) as f32, -(state.i%720) as f32);
+    gfx.stroke_circle(0.0, 0.0, 50.0, 5.0);
+    gfx.transform().pop();
+    gfx.transform().pop();
+
+    //top rect
     gfx.set_color(Color::Red);
     gfx.transform().scale(0.5, 0.5);//.push(glm::scaling2d(&glm::vec2(0.5, 0.5)));
     gfx.draw_rect(0.0, 0.0, 100.0, 100.0);
     gfx.transform().pop();
 
+    //middle triangle
     gfx.set_color(Color::Green);
-//    gfx.transform().push(glm::scaling2d(&glm::vec2(2.0, 2.0)));
     gfx.transform().scale(2.0, 2.0);
     gfx.draw_triangle(200.0, 200.0, 300.0, 300.0, 100.0, 300.0);
+    gfx.transform().pop();
     gfx.draw_vertex(&[
         Vertex::new(600.0, 200.0, Color::Red),
         Vertex::new(700.0, 300.0, Color::Green),
@@ -101,9 +122,10 @@ fn draw_cb(app: &mut App, state: &mut State) {
     ]);
     gfx.set_color(Color::Red.with_alpha(0.3));
     gfx.stroke_triangle(600.0, 200.0, 700.0, 300.0, 500.0, 300.0, 10.0);
-    gfx.transform().pop();
 
-    let len = 50;
+    //rect arrow
+    let max = 55;
+    let len = state.i/3%max;
     for i in (0..len) {
         let n = i as f32;
         let r = (1.0 / len as f32) * n;
@@ -158,7 +180,6 @@ fn draw_cb(app: &mut App, state: &mut State) {
     gfx.transform().pop();
     gfx.transform().pop();
     gfx.set_alpha(1.0);
-
 
     gfx.end();
 

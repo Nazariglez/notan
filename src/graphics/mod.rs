@@ -77,6 +77,25 @@ impl Transform {
         self.push(glm::rotation2d(angle));
     }
 
+    pub fn skew(&mut self, x: f32, y: f32) {
+        let m = glm::mat3(
+            1.0, x.tan(), 0.0,
+            y.tan(), 1.0, 0.0,
+            0.0, 0.0, 1.0
+        );
+
+        self.push(m);
+    }
+
+
+    //CALCULATING 2d MATRICES https://github.com/heygrady/transform/wiki/Calculating-2d-Matrices
+
+    pub fn skew_deg(&mut self, x: f32, y: f32) {
+        let x = x * (crate::math::PI/180.0);
+        let y = y * (crate::math::PI/180.0);
+        self.skew(x, y);
+    }
+
     pub fn rotate_deg(&mut self, angle: f32) {
         self.rotate(crate::math::PI/180.0 * angle);
     }
