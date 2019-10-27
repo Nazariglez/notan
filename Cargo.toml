@@ -12,11 +12,16 @@ edition = "2018"
 [dependencies]
 glow = "0.3.0-alpha2"
 wasm-bindgen = "0.2.51"
+console_error_panic_hook = "0.1.6"
+nalgebra-glm = "0.4.2"
+lyon = "0.14.1"
+rayon = "1.2.0"
 
 [dependencies.web-sys]
 version = "0.3.28"
 #package = "web_sys"
 features = [
+    "console",
     "Document",
     "Window",
     "HtmlCanvasElement",
