@@ -220,9 +220,10 @@ fn main() {
         .fill(Color::Red)
         .triangle(100.0, 100.0, 50.0, 150.0, 150.0, 150.0)
         .fill(Color::White)
+        .move_to(100.0, 100.0)
+        .quadratic_bezier_to(350.0, 150.0,  150.0, 300.0)
 //        .arc_to(150.0, 20.0, 150.0, 70.0, math::PI/180.0 * 50.0)
-//        .quadratic_bezier_to(150.0, 150.0,  150.0, 300.0)
-        .stroke(Color::Black, 2.0)
+        .stroke(Color::White, 2.0)
         .build();
 
     let state = State { i: 0, geom: g };

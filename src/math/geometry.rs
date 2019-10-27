@@ -138,13 +138,13 @@ impl Geometry {
         self
     }
 
-    pub fn arc_to(&mut self, x1: f32, y1: f32, x2:f32, y2: f32, start_angle: f32) -> &mut Self {
+    pub fn arc_to(&mut self, x: f32, y:f32, start_angle: f32, end_angle: f32, radius: f32) -> &mut Self {
         if self.current_path.is_none() {
-            self.move_to(x1, y1);
+            self.move_to(x, y);
         }
 
         if let Some(b) = &mut self.current_path {
-            //TODO add arc_to support
+            //TODO add arc support
         }
 
         self
