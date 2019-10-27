@@ -35,7 +35,7 @@ fn projection(w: f32, h: f32) -> glm::Mat3 {
     glm::mat3(2.0 / w, 0.0, -1.0, 0.0, -2.0 / h, 1.0, 0.0, 0.0, 1.0)
 }
 
-trait UniformType {
+pub trait UniformType {
     fn set_uniform_value(&self, gl: &GlContext, location: WebUniformLocationKey);
 }
 

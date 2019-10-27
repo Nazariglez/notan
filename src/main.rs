@@ -1,10 +1,11 @@
 mod glm;
 mod graphics;
-mod window;
 mod math;
+mod window;
 
 use crate::graphics::color::{rgba, Color};
-use crate::graphics::Vertex;
+use crate::graphics::{Vertex};
+use crate::math::Geometry;
 use std::rc::Rc;
 use wasm_bindgen::__rt::core::cell::RefCell;
 #[cfg(target_arch = "wasm32")]
@@ -81,32 +82,34 @@ pub fn wasm_main() {
 //      gfx.draw_image(image, 100, 100);
 //      gfx.transform().pop();
 
-fn draw_cb(app: &mut App, state: &mut State) {
+fn draw_shapes(app: &mut App, state: &mut State) {
     let gfx = &mut app.graphics;
     gfx.begin();
-    gfx.clear(graphics::color::rgba(0.1, 0.2, 0.3, 1.0));
+    gfx.clear(rgba(0.1, 0.2, 0.3, 1.0));
 
     //Moving circles
     let c = rgba(
-        (state.i%360) as f32 / 360.0,
-        (state.i%720) as f32 / 720.0,
-        (state.i%1080) as f32 / 1080.0,
-        1.0
+        (state.i % 360) as f32 / 360.0,
+        (state.i % 720) as f32 / 720.0,
+        (state.i % 1080) as f32 / 1080.0,
+        1.0,
     );
     gfx.set_color(c);
     gfx.transform().translate(150.0, 450.0);
-    gfx.transform().skew_deg((state.i%720) as f32, (state.i%720) as f32);
+    gfx.transform()
+        .skew_deg((state.i % 720) as f32, (state.i % 720) as f32);
     gfx.draw_circle(0.0, 0.0, 50.0);
     gfx.transform().pop();
     gfx.set_color(Color::White);
-    gfx.transform().skew_deg(-(state.i%720) as f32, -(state.i%720) as f32);
+    gfx.transform()
+        .skew_deg(-(state.i % 720) as f32, -(state.i % 720) as f32);
     gfx.stroke_circle(0.0, 0.0, 50.0, 5.0);
     gfx.transform().pop();
     gfx.transform().pop();
 
     //top rect
     gfx.set_color(Color::Red);
-    gfx.transform().scale(0.5, 0.5);//.push(glm::scaling2d(&glm::vec2(0.5, 0.5)));
+    gfx.transform().scale(0.5, 0.5);
     gfx.draw_rect(0.0, 0.0, 100.0, 100.0);
     gfx.transform().pop();
 
@@ -125,7 +128,7 @@ fn draw_cb(app: &mut App, state: &mut State) {
 
     //rect arrow
     let max = 55;
-    let len = state.i/3%max;
+    let len = state.i / 3 % max;
     for i in (0..len) {
         let n = i as f32;
         let r = (1.0 / len as f32) * n;
@@ -160,23 +163,23 @@ fn draw_cb(app: &mut App, state: &mut State) {
     let (ww, hh) = (60.0, 60.0);
     gfx.set_color(Color::Red);
     gfx.set_alpha(0.5);
-    gfx.transform().translate(430.0, 300.0);//.push(glm::translation2d(&glm::vec2(430.0, 300.0)));
+    gfx.transform().translate(430.0, 300.0);
     gfx.transform().rotate_deg(state.i as f32);
-    gfx.draw_rect(-ww*0.5, -hh*0.5, ww, hh);
+    gfx.draw_rect(-ww * 0.5, -hh * 0.5, ww, hh);
     gfx.transform().pop();
     gfx.transform().pop();
 
     gfx.set_color(Color::Blue);
     gfx.transform().translate(430.0, 300.0);
     gfx.transform().rotate_deg(state.i as f32 * 0.5);
-    gfx.draw_rect(-ww*0.5, -hh*0.5, ww, hh);
+    gfx.draw_rect(-ww * 0.5, -hh * 0.5, ww, hh);
     gfx.transform().pop();
     gfx.transform().pop();
 
     gfx.set_color(Color::Green);
     gfx.transform().translate(430.0, 300.0);
     gfx.transform().rotate_deg(-state.i as f32 * 0.5);
-    gfx.draw_rect(-ww*0.5, -hh*0.5, ww, hh);
+    gfx.draw_rect(-ww * 0.5, -hh * 0.5, ww, hh);
     gfx.transform().pop();
     gfx.transform().pop();
     gfx.set_alpha(1.0);
@@ -188,15 +191,45 @@ fn draw_cb(app: &mut App, state: &mut State) {
 
 struct State {
     pub i: i32,
+    pub geom: Geometry,
+}
+
+fn draw_geometry(app: &mut App, state: &mut State) {
+    let gfx = &mut app.graphics;
+    gfx.begin();
+    gfx.clear(rgba(0.1, 0.2, 0.3, 1.0));
+    gfx.draw_geometry(&mut state.geom);
+    gfx.end();
 }
 
 fn main() {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
     log("Hello, world!");
-    let state = State { i: 0 };
+    let mut g = Geometry::new();
+    g.rect(100.0, 100.0, 200.0, 200.0)
+        .move_to(100.0, 100.0)
+        .line_to(150.0, 150.0)
+        .line_to(150.0, 200.0)
+        .line_to(200.0, 400.0)
+        .cubic_bezier_to(250.0, 400.0, 300.0, 450.0, 300.0, 100.0)
+        .close_path()
+        .circle(200.0, 400.0, 50.0)
+        .stroke(Color::Green, 2.0)
+        .rounded_rect(200.0, 400.0, 100.0, 100.0, 4.0)
+        //        .stroke(Color::White, 2.0)
+        .fill(Color::Red)
+        .triangle(100.0, 100.0, 50.0, 150.0, 150.0, 150.0)
+        .fill(Color::White)
+//        .arc_to(150.0, 20.0, 150.0, 70.0, math::PI/180.0 * 50.0)
+//        .quadratic_bezier_to(150.0, 150.0,  150.0, 300.0)
+        .stroke(Color::Black, 2.0)
+        .build();
+
+    let state = State { i: 0, geom: g };
 
     init(state)
-        .draw(draw_cb)
+//                .draw(draw_shapes)
+        .draw(draw_geometry)
         .build()
         .unwrap();
 }

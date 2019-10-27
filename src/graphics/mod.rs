@@ -1,5 +1,6 @@
 use self::shaders::ColorBatcher;
 use crate::graphics::shaders::Shader;
+use crate::math::*;
 use color::Color;
 use glow::*;
 use lyon::lyon_tessellation as tess;
@@ -34,23 +35,28 @@ pub struct RenderTarget {
 }
 
 use crate::{glm, log};
+use lyon::lyon_algorithms::path::{Builder, Path};
 use lyon::lyon_tessellation::basic_shapes::{
-    fill_rounded_rectangle, stroke_rectangle, stroke_rounded_rectangle, stroke_triangle,
-    BorderRadii,
+    fill_rectangle, fill_rounded_rectangle, fill_triangle, stroke_rectangle,
+    stroke_rounded_rectangle, stroke_triangle, BorderRadii,
 };
-use lyon::lyon_tessellation::debugger::DebuggerMsg::Point;
-use lyon::lyon_tessellation::{BuffersBuilder, StrokeOptions, VertexBuffers};
+use lyon::lyon_tessellation::geometry_builder::simple_builder;
+use lyon::lyon_tessellation::{
+    BuffersBuilder, FillOptions, FillTessellator, FillVertex, StrokeOptions, StrokeTessellator,
+    VertexBuffers,
+};
+use lyon::math::{point, Point, Rect};
 use nalgebra_glm::mat4_to_mat3;
 
 //TODO use generic to be able to use with Mat2, Mat3, Mat4
-pub struct Transform(Vec<glm::Mat3>);
+pub struct Transform(Vec<Mat3>);
 
 impl Transform {
     pub fn new() -> Self {
-        Self(vec![glm::Mat3::identity()])
+        Self(vec![Mat3::identity()])
     }
 
-    pub fn push(&mut self, matrix: glm::Mat3) {
+    pub fn push(&mut self, matrix: Mat3) {
         self.0.push(self.matrix() * matrix);
     }
 
@@ -61,11 +67,21 @@ impl Transform {
         self.0.pop();
     }
 
-    pub fn matrix(&self) -> &glm::Mat3 {
+    pub fn matrix(&self) -> &Mat3 {
         &self.0[self.0.len() - 1]
     }
 
-    pub fn translate(&mut self, x:f32, y:f32) {
+    pub fn matrix_mut(&mut self) -> &mut Mat3 {
+        let len = self.0.len();
+        if len > 1 {
+            return &mut self.0[len - 1];
+        }
+
+        self.0.push(identity());
+        &mut self.0[len]
+    }
+
+    pub fn translate(&mut self, x: f32, y: f32) {
         self.push(glm::translation2d(&glm::vec2(x, y)));
     }
 
@@ -78,26 +94,21 @@ impl Transform {
     }
 
     pub fn skew(&mut self, x: f32, y: f32) {
-        let m = glm::mat3(
-            1.0, x.tan(), 0.0,
-            y.tan(), 1.0, 0.0,
-            0.0, 0.0, 1.0
-        );
+        let m = glm::mat3(1.0, x.tan(), 0.0, y.tan(), 1.0, 0.0, 0.0, 0.0, 1.0);
 
         self.push(m);
     }
 
-
     //CALCULATING 2d MATRICES https://github.com/heygrady/transform/wiki/Calculating-2d-Matrices
 
     pub fn skew_deg(&mut self, x: f32, y: f32) {
-        let x = x * (crate::math::PI/180.0);
-        let y = y * (crate::math::PI/180.0);
+        let x = x * (crate::math::PI / 180.0);
+        let y = y * (crate::math::PI / 180.0);
         self.skew(x, y);
     }
 
     pub fn rotate_deg(&mut self, angle: f32) {
-        self.rotate(crate::math::PI/180.0 * angle);
+        self.rotate(crate::math::PI / 180.0 * angle);
     }
 }
 
@@ -296,7 +307,7 @@ impl Context {
         y3: f32,
         line_width: f32,
     ) {
-        let mut output: VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
+        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
         let mut opts = tess::StrokeOptions::tolerance(0.01);
         opts = opts.with_line_width(line_width);
         stroke_triangle(
@@ -319,7 +330,7 @@ impl Context {
     }
 
     pub fn stroke_rect(&mut self, x: f32, y: f32, width: f32, height: f32, line_width: f32) {
-        let mut output: VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
+        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
         let mut opts = tess::StrokeOptions::tolerance(0.01);
         opts = opts.with_line_width(line_width);
         stroke_rectangle(
@@ -368,7 +379,7 @@ impl Context {
     }
 
     pub fn draw_rounded_rect(&mut self, x: f32, y: f32, width: f32, height: f32, radius: f32) {
-        let mut output: VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
+        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
         let opts = tess::FillOptions::tolerance(0.01);
         fill_rounded_rectangle(
             &tess::math::rect(x, y, width, height),
@@ -389,7 +400,7 @@ impl Context {
         radius: f32,
         line_width: f32,
     ) {
-        let mut output: VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
+        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
         let mut opts = tess::StrokeOptions::tolerance(0.01);
         opts = opts.with_line_width(line_width);
         stroke_rounded_rectangle(
@@ -403,7 +414,7 @@ impl Context {
     }
 
     pub fn stroke_circle(&mut self, x: f32, y: f32, radius: f32, line_width: f32) {
-        let mut output: VertexBuffers<(f32, f32), usize> = VertexBuffers::new();
+        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
         let mut opts = tess::StrokeOptions::tolerance(0.01);
         opts = opts.with_line_width(line_width);
         stroke_circle(
@@ -415,7 +426,12 @@ impl Context {
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
-    pub fn draw_geometry(&mut self, geometry: &mut Geometry) {}
+    pub fn draw_geometry(&mut self, geometry: &mut Geometry) {
+        geometry.build();
+        if let Some((v, vc)) = &geometry.vertices {
+            self.draw_color(v, Some(vc));
+        }
+    }
 
     pub fn draw_svg(&mut self, svg: &mut Svg) {}
 
@@ -438,15 +454,6 @@ impl Context {
     }
 }
 
-fn lyon_vbuff_to_vertex(buff: VertexBuffers<(f32, f32), usize>) -> Vec<f32> {
-    //TODO use rayon par_iter when it's not wasm32
-    buff.indices.iter().fold(vec![], |mut acc, v| {
-        acc.push(buff.vertices[*v].0);
-        acc.push(buff.vertices[*v].1);
-        acc
-    })
-}
-
 pub struct Vertex {
     pos: (f32, f32),
     color: Color,
@@ -463,26 +470,6 @@ impl Vertex {
 
 pub struct Svg {}
 
-pub struct Geometry {
-    //https://github.com/nical/lyon/issues/462
-    vertices: Option<Vec<f32>>,
-}
-
-// The vertex constructor. This is the object that will be used to create the custom
-// verticex from the information provided by the tessellators.
-struct LyonVertex;
-
-impl tess::VertexConstructor<tess::StrokeVertex, (f32, f32)> for LyonVertex {
-    fn new_vertex(&mut self, vertex: tess::StrokeVertex) -> (f32, f32) {
-        (vertex.position.x, vertex.position.y)
-    }
-}
-
-impl tess::VertexConstructor<tess::FillVertex, (f32, f32)> for LyonVertex {
-    fn new_vertex(&mut self, vertex: tess::FillVertex) -> (f32, f32) {
-        (vertex.position.x, vertex.position.y)
-    }
-}
 
 fn get_circle_vertices(x: f32, y: f32, radius: f32, segments: Option<i32>) -> Vec<f32> {
     let segments = if let Some(s) = segments {
