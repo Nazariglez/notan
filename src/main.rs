@@ -52,6 +52,11 @@ impl<S> AppBuilder<S> {
         self.draw_callback = Some(cb);
         self
     }
+
+    pub fn resource(&mut self, cb: fn(&mut App, &mut S, res: &str)) -> &mut Self {
+        //TODO call this every time a new resource is loaded
+        self
+    }
 }
 
 pub fn init<S>(state: S) -> AppBuilder<S> {
@@ -81,6 +86,10 @@ pub fn wasm_main() {
 //      gfx.transform().push(matrix::scale(2, 2));
 //      gfx.draw_image(image, 100, 100);
 //      gfx.transform().pop();
+
+fn load_resource(app: &mut App, state: &mut State, res: &str) {
+
+}
 
 fn draw_shapes(app: &mut App, state: &mut State) {
     let gfx = &mut app.graphics;
@@ -231,6 +240,7 @@ fn main() {
     init(state)
 //                .draw(draw_shapes)
         .draw(draw_geometry)
+        .resource(load_resource)
         .build()
         .unwrap();
 }

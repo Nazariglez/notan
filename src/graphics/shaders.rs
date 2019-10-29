@@ -250,8 +250,6 @@ impl ColorBatcher {
             return;
         }
 
-        //        log(&format!("Flush, {} {}", self.index, self.vertex.len()));
-
         self.use_shader(data);
         unsafe {
             gl.bind_vertex_array(Some(self.vao));
@@ -351,8 +349,6 @@ uniform mat3 u_matrix;
 void main() {
   v_color = a_color;
   gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
-//  gl_Position = vec4((vec3(a_position, 1)).xy, 0, 1);
-//  gl_Position = vec4(a_position.x, a_position.y, 0, 1);
 }
 "#;
 
@@ -364,7 +360,6 @@ out vec4 outColor;
 
 void main() {
     outColor = v_color;
-//    outColor = vec4(1, 0, 0, 1);
 }
 "#;
 
@@ -386,4 +381,88 @@ fn create_color_shader(gl: &GlContext) -> Result<Shader, String> {
 
 pub struct SpriteBatcher {
     shader: Shader,
+    vao: glow::WebVertexArrayKey,
+    index: i32,
+    vertex: Vec<f32>,
+    vertex_color: Vec<f32>,
 }
+
+impl SpriteBatcher {
+    pub fn new(gl: &GlContext, data: &DrawData) -> Result<Self, String> {
+        let vao = create_vao(gl)?;
+        let shader = create_sprite_shader(gl)?;
+        Ok(Self {
+            shader,
+            vao,
+            index: 0,
+            vertex: vec![0.0; MAX_PER_BATCH * VERTICES * VERTICE_SIZE],
+            vertex_color: vec![0.0; MAX_PER_BATCH * VERTICES * COLOR_VERTICE_SIZE],
+        })
+    }
+}
+
+const SPRITE_VERTEX: &str = r#"#version 300 es
+in vec2 a_position;
+in vec4 a_color;
+out vec4 v_color;
+
+in vec2 a_texcoord;
+out vec2 v_texcoord;
+
+uniform mat3 u_matrix;
+
+void main() {
+  v_color = a_color;
+  v_texcoord = a_texcoord;
+  gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+}
+"#;
+
+const SPRITE_FRAGMENT: &str = r#"#version 300 es
+precision mediump float;
+
+in vec4 v_color;
+out vec4 outColor;
+
+in vec2 v_texcoord;
+uniform sampler2D u_texture;
+
+void main() {
+    outColor = texture(u_texture, v_texcoord) * v_color;
+}
+"#;
+
+fn create_sprite_shader(gl: &GlContext) -> Result<Shader, String> {
+    //https://webgl2fundamentals.org/webgl/lessons/webgl-2d-drawimage.html
+    let attrs = vec![
+        Attribute::new("a_position", 2, glow::FLOAT),
+        Attribute::new("a_color", 4, glow::FLOAT),
+        Attribute::new("a_texcoord", 2, glow::FLOAT)
+    ];
+
+    let uniforms = vec!["u_matrix", "u_texture"];
+    Ok(Shader::new(
+        gl,
+        SPRITE_VERTEX,
+        SPRITE_FRAGMENT,
+        attrs,
+        uniforms,
+    )?)
+}
+
+struct Texture {
+    inner: Option<String>,
+}
+
+impl Texture {
+    pub fn new(file: &str) -> Self {
+        Self {
+            inner: None
+        }
+    }
+
+    pub fn is_loaded(&self) -> bool {
+        self.inner.is_some()
+    }
+}
+

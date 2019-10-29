@@ -5,6 +5,8 @@ use lyon::lyon_tessellation as tess;
 use tess::{StrokeTessellator, VertexBuffers, BuffersBuilder, StrokeOptions, FillTessellator, FillOptions};
 use tess::basic_shapes::{stroke_circle, stroke_rectangle, stroke_triangle, stroke_rounded_rectangle, BorderRadii, fill_circle, fill_rectangle, fill_rounded_rectangle, fill_triangle};
 
+//TODO check if avoiding the shape tessellators like stroke_circle, and doing this with arcs and bezier we can achieve winding rules.
+
 // The vertex constructor. This is the object that will be used to create the custom
 // verticex from the information provided by the tessellators.
 pub(crate) struct LyonVertex;

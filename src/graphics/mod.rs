@@ -1,5 +1,5 @@
 use self::shaders::ColorBatcher;
-use crate::graphics::shaders::Shader;
+use crate::graphics::shaders::{Shader, SpriteBatcher};
 use crate::math::*;
 use color::Color;
 use glow::*;
@@ -13,6 +13,10 @@ use web_sys;
 
 pub mod color;
 pub mod shaders;
+
+
+//TODO glsl to spv https://crates.io/crates/shaderc -> https://crates.io/crates/spirv_cross spv->glsl->etc...
+
 
 pub type GlContext = Rc<glow::Context>;
 enum Driver {
@@ -169,6 +173,7 @@ pub struct Context {
     gl: GlContext,
     driver: Driver,
     color_batcher: shaders::ColorBatcher,
+    sprite_batcher: shaders::SpriteBatcher,
     is_drawing: bool,
     render_target: Option<RenderTarget>,
     data: DrawData,
@@ -182,6 +187,7 @@ impl Context {
 
         let data = DrawData::new(width, height);
         let color_batcher = ColorBatcher::new(&gl, &data)?;
+        let sprite_batcher = SpriteBatcher::new(&gl, &data)?;
 
         //2d
         unsafe {
@@ -194,6 +200,7 @@ impl Context {
             gl,
             driver,
             color_batcher,
+            sprite_batcher,
             is_drawing: false,
             render_target: None,
         })
@@ -230,6 +237,16 @@ impl Context {
     pub fn transform(&mut self) -> &mut Transform {
         &mut self.data.transform
     }
+
+    /* 3D enviroment
+    pub fn enable_depth(&mut self) {
+        //TODO draw will use depth sort, without use the draw order
+    }
+
+    pub set_depth(&mut self, depth: f32) {
+        //TODO add z to the matrix for the next drawcalls
+    }
+    */
 
     pub fn begin(&mut self) {
         if self.is_drawing {
