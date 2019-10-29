@@ -14,6 +14,8 @@ use web_sys;
 pub mod color;
 pub mod shaders;
 
+pub use shaders::{Texture, Asset};
+
 
 //TODO glsl to spv https://crates.io/crates/shaderc -> https://crates.io/crates/spirv_cross spv->glsl->etc...
 
@@ -452,7 +454,14 @@ impl Context {
 
     pub fn draw_svg(&mut self, svg: &mut Svg) {}
 
-    pub fn draw_image(&mut self, x: f32, y: f32) {}
+    pub fn draw_image(&mut self, x: f32, y: f32, img: &mut Texture) {
+        self.flush_color();
+        self.sprite_batcher.draw_image(&self.gl, &self.data, x, y, img);
+    }
+
+    pub fn draw_pattern(&mut self, x:f32, y:f32, width:f32, height:f32, img: &mut Texture) {
+        //TODO patter also add draw_patter_ext( with offset and scale )
+    }
 
     pub fn draw_9slice(&mut self, x: f32, y: f32, opts: String) {}
 

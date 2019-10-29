@@ -4,7 +4,7 @@ mod math;
 mod window;
 
 use crate::graphics::color::{rgba, Color};
-use crate::graphics::{Vertex};
+use crate::graphics::{Vertex, Asset, Texture};
 use crate::math::Geometry;
 use std::rc::Rc;
 use wasm_bindgen::__rt::core::cell::RefCell;
@@ -22,6 +22,7 @@ where
 {
     state: Option<S>,
     draw_callback: Option<fn(&mut App, &mut S)>,
+    update_callback: Option<fn(&mut App, &mut S)>,
 }
 
 impl<S> AppBuilder<S> {
@@ -36,10 +37,12 @@ impl<S> AppBuilder<S> {
 
         let mut state = self.state.take().unwrap();
         let mut draw_cb = self.draw_callback.take().unwrap_or(|_, _| {});
+        let mut update_cb = self.update_callback.take().unwrap_or(|_, _| {});
 
         //        let rc_app = Rc::new(RefCell::new(app));
 
         window::run(move || {
+            update_cb(&mut app, &mut state);
             draw_cb(&mut app, &mut state);
         });
         //cb(&mut app);
@@ -57,12 +60,18 @@ impl<S> AppBuilder<S> {
         //TODO call this every time a new resource is loaded
         self
     }
+
+    pub fn update(&mut self, cb: fn(&mut App, &mut S)) -> &mut Self {
+        self.update_callback = Some(cb);
+        self
+    }
 }
 
 pub fn init<S>(state: S) -> AppBuilder<S> {
     AppBuilder {
         state: Some(state),
         draw_callback: None,
+        update_callback: None
     }
 }
 
@@ -89,6 +98,12 @@ pub fn wasm_main() {
 
 fn load_resource(app: &mut App, state: &mut State, res: &str) {
 
+}
+
+fn update_cb(app: &mut App, state: &mut State) {
+    if !state.img.is_loaded() {
+        state.img.try_load().unwrap();
+    }
 }
 
 fn draw_shapes(app: &mut App, state: &mut State) {
@@ -201,6 +216,7 @@ fn draw_shapes(app: &mut App, state: &mut State) {
 struct State {
     pub i: i32,
     pub geom: Geometry,
+    pub img: Texture,
 }
 
 fn draw_geometry(app: &mut App, state: &mut State) {
@@ -208,6 +224,20 @@ fn draw_geometry(app: &mut App, state: &mut State) {
     gfx.begin();
     gfx.clear(rgba(0.1, 0.2, 0.3, 1.0));
     gfx.draw_geometry(&mut state.geom);
+    gfx.end();
+}
+
+fn draw_sprite(app: &mut App, state: &mut State) {
+    if !state.img.is_loaded() { return; }
+    let gfx = &mut app.graphics;
+    gfx.begin();
+    gfx.clear(rgba(0.1, 0.2, 0.3, 1.0));
+//    gfx.transform().scale(3.0, 3.0);
+    gfx.draw_image(0.0, 0.0, &mut state.img);
+    gfx.draw_image(100.0, 100.0, &mut state.img);
+    gfx.draw_image(200.0, 200.0, &mut state.img);
+    gfx.draw_image(300.0, 300.0, &mut state.img);
+//    gfx.transform().pop();
     gfx.end();
 }
 
@@ -235,12 +265,18 @@ fn main() {
         .stroke(Color::White, 2.0)
         .build();
 
-    let state = State { i: 0, geom: g };
+    let state = State {
+        i: 0,
+        geom: g,
+        img: Texture::new("h.png")
+    };
 
     init(state)
 //                .draw(draw_shapes)
-        .draw(draw_geometry)
+//        .draw(draw_geometry)
+        .draw(draw_sprite)
         .resource(load_resource)
+        .update(update_cb)
         .build()
         .unwrap();
 }
@@ -248,3 +284,4 @@ fn main() {
 pub fn log(msg: &str) {
     web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(msg));
 }
+
