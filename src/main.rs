@@ -4,7 +4,7 @@ mod math;
 mod window;
 
 use crate::graphics::color::{rgba, Color};
-use crate::graphics::{Vertex, Asset, Texture};
+use crate::graphics::{Asset, Texture, Vertex};
 use crate::math::Geometry;
 use std::rc::Rc;
 use wasm_bindgen::__rt::core::cell::RefCell;
@@ -14,6 +14,12 @@ use wasm_bindgen::prelude::*;
 pub struct App {
     window: window::Window,
     graphics: graphics::Context,
+}
+
+impl App {
+    pub fn load_texture(&mut self, file: &str) -> Texture {
+        unimplemented!()
+    }
 }
 
 pub struct AppBuilder<S>
@@ -71,7 +77,7 @@ pub fn init<S>(state: S) -> AppBuilder<S> {
     AppBuilder {
         state: Some(state),
         draw_callback: None,
-        update_callback: None
+        update_callback: None,
     }
 }
 
@@ -96,9 +102,7 @@ pub fn wasm_main() {
 //      gfx.draw_image(image, 100, 100);
 //      gfx.transform().pop();
 
-fn load_resource(app: &mut App, state: &mut State, res: &str) {
-
-}
+fn load_resource(app: &mut App, state: &mut State, res: &str) {}
 
 fn update_cb(app: &mut App, state: &mut State) {
     if !state.img.is_loaded() {
@@ -228,16 +232,19 @@ fn draw_geometry(app: &mut App, state: &mut State) {
 }
 
 fn draw_sprite(app: &mut App, state: &mut State) {
-    if !state.img.is_loaded() { return; }
+    if !state.img.is_loaded() {
+        return;
+    }
     let gfx = &mut app.graphics;
     gfx.begin();
     gfx.clear(rgba(0.1, 0.2, 0.3, 1.0));
-//    gfx.transform().scale(3.0, 3.0);
+    gfx.transform().scale(3.0, 3.0);
+    //    gfx.draw_geometry(&mut state.geom);
     gfx.draw_image(0.0, 0.0, &mut state.img);
-    gfx.draw_image(100.0, 100.0, &mut state.img);
-    gfx.draw_image(200.0, 200.0, &mut state.img);
-    gfx.draw_image(300.0, 300.0, &mut state.img);
-//    gfx.transform().pop();
+    gfx.draw_image(10.0, 10.0, &mut state.img);
+    gfx.draw_image(20.0, 20.0, &mut state.img);
+    gfx.draw_image(30.0, 30.0, &mut state.img);
+    gfx.transform().pop();
     gfx.end();
 }
 
@@ -260,20 +267,20 @@ fn main() {
         .triangle(100.0, 100.0, 50.0, 150.0, 150.0, 150.0)
         .fill(Color::White)
         .move_to(100.0, 100.0)
-        .quadratic_bezier_to(350.0, 150.0,  150.0, 300.0)
-//        .arc_to(150.0, 20.0, 150.0, 70.0, math::PI/180.0 * 50.0)
+        .quadratic_bezier_to(350.0, 150.0, 150.0, 300.0)
+        //        .arc_to(150.0, 20.0, 150.0, 70.0, math::PI/180.0 * 50.0)
         .stroke(Color::White, 2.0)
         .build();
 
     let state = State {
         i: 0,
         geom: g,
-        img: Texture::new("h.png")
+        img: Texture::new("h.png"),
     };
 
     init(state)
-//                .draw(draw_shapes)
-//        .draw(draw_geometry)
+        //                .draw(draw_shapes)
+        //        .draw(draw_geometry)
         .draw(draw_sprite)
         .resource(load_resource)
         .update(update_cb)
@@ -284,4 +291,3 @@ fn main() {
 pub fn log(msg: &str) {
     web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(msg));
 }
-

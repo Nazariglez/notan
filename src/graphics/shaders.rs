@@ -215,7 +215,30 @@ fn create_program(
 const VERTICES: usize = 3;
 const VERTICE_SIZE: usize = 2;
 const COLOR_VERTICE_SIZE: usize = 4;
-const MAX_PER_BATCH: usize = 65000 / (VERTICES * VERTICE_SIZE);
+
+/*TODO check this: drawElements use u16 as indices, 65553 is the max on webgl1
+    but drawArrays doesn't have this limit.
+    To use drawElements without limit on webgl1 also exists the this extension: OES_element_index_uint https://developer.mozilla.org/en-US/docs/Web/API/OES_element_index_uint
+    On webgl2 the limit doesn't exists, but you need to use UNSIGNED_INT as index https://webgl2fundamentals.org/webgl/lessons/webgl2-whats-new.html (i32)
+    A way to do this on webgl1 is:
+        - try to get the extension
+        - If it fails use drawElements by default
+        - fallback if indices > 65553 to drawArrays
+    On webgl2 we should probably use just drawElements with i32 indices
+    --
+    # help https://computergraphics.stackexchange.com/questions/3637/how-to-use-32-bit-integers-for-element-indices-in-webgl-1-0
+    # var canvas = document.createElement("canvas");
+    var gl = canvas.getContext("webgl");
+    console.log(gl.getExtension("OES_element_index_uint"));
+*/
+const MAX_PER_BATCH: usize = 65000 / (VERTICES * COLOR_VERTICE_SIZE);
+
+/* TODO for work with vaos on webgl1:
+    https://developer.mozilla.org/en-US/docs/Web/API/OES_vertex_array_object
+    https://www.khronos.org/registry/webgl/extensions/OES_vertex_array_object/
+    https://medium.com/@david.komer/dude-wheres-my-data-vao-s-in-webgl-896631783895
+    https://stackoverflow.com/a/46143967
+*/
 
 fn vf_to_u8(v: &[f32]) -> &[u8] {
     unsafe { std::slice::from_raw_parts(v.as_ptr() as *const u8, v.len() * 4) }
@@ -386,6 +409,8 @@ pub struct SpriteBatcher {
     index: i32,
     vertex: Vec<f32>,
     vertex_color: Vec<f32>,
+    vertex_tex: Vec<f32>,
+    current_tex: Option<glow::WebTextureKey>,
 }
 
 impl SpriteBatcher {
@@ -398,13 +423,15 @@ impl SpriteBatcher {
             index: 0,
             vertex: vec![0.0; MAX_PER_BATCH * VERTICES * VERTICE_SIZE],
             vertex_color: vec![0.0; MAX_PER_BATCH * VERTICES * COLOR_VERTICE_SIZE],
+            vertex_tex: vec![0.0; MAX_PER_BATCH * VERTICES * VERTICE_SIZE],
+            current_tex: None,
         })
     }
 
     fn use_shader(&self, data: &DrawData) {
         let shader = match &data.shader {
             Some(s) => s,
-            _ => &self.shader
+            _ => &self.shader,
         };
         shader.useme();
         shader.set_uniform("u_matrix", data.projection);
@@ -419,11 +446,9 @@ impl SpriteBatcher {
         }
     }
 
-    pub fn draw_image(&mut self, gl: &GlContext, data: &DrawData, x:f32, y:f32, img: &mut Texture) {
-        if !img.is_loaded() { return; }
-        if img.tex.is_none() {
-            let tex = create_gl_texture(gl, &img.inner.as_ref().unwrap()).unwrap();
-            img.tex = Some(tex);
+    pub fn flush(&mut self, gl: &GlContext, data: &DrawData) {
+        if self.index == 0 {
+            return;
         }
 
         unsafe {
@@ -431,44 +456,114 @@ impl SpriteBatcher {
             self.use_shader(data);
 
             gl.active_texture(glow::TEXTURE0);
-            let tex_data = img.tex.as_ref().unwrap();
-//            log(&format!("{:?}", tex_data));
-            gl.bind_texture(glow::TEXTURE_2D, Some(tex_data.tex));
+            //            log(&format!("{:?}", tex_data));
+            gl.bind_texture(glow::TEXTURE_2D, self.current_tex);
 
-            let ww = tex_data.width as f32;
-            let hh = tex_data.height as f32;
-
-            self.bind_buffer(gl, "a_position", &[
-                x, y,
-                x, y+hh,
-                x+ww, y,
-                x+ww, y,
-                x, y+hh,
-                x+ww, y+hh
-            ], 0);
-
-
-            self.bind_buffer(gl, "a_texcoord", &[
-                0.0, 0.0,
-                0.0, 1.0,
-                1.0, 0.0,
-                1.0, 0.0,
-                0.0, 1.0,
-                1.0, 1.0
-            ], 0);
-
-
-            self.bind_buffer(gl, "a_color", &[
-                1.0, 1.0, 1.0, 1.0,
-                1.0, 1.0, 1.0, 1.0,
-                1.0, 1.0, 1.0, 1.0,
-                1.0, 1.0, 1.0, 1.0,
-                1.0, 1.0, 1.0, 1.0,
-                1.0, 1.0, 1.0, 1.0,
-            ], 0);
-
-            gl.draw_arrays(glow::TRIANGLES, 0, 6);
+            self.bind_buffer(gl, "a_position", &self.vertex, 0);
+            self.bind_buffer(gl, "a_texcoord", &self.vertex_tex, 0);
+            self.bind_buffer(gl, "a_color", &self.vertex_color, 0);
+            let count = self.index * VERTICES as i32;
+            gl.draw_arrays(glow::TRIANGLES, 0, count);
         }
+
+        self.index = 0;
+    }
+
+    pub fn draw(
+        &mut self,
+        gl: &GlContext,
+        data: &DrawData,
+        x: f32,
+        y: f32,
+        img: &mut Texture,
+        color: Option<&[f32]>,
+    ) {
+        if !img.is_loaded() {
+            return;
+        }
+        if img.tex.is_none() {
+            let tex_data = create_gl_texture(gl, &img.inner.as_ref().unwrap()).unwrap();
+            img.tex = Some(tex_data);
+        }
+
+        let tex_data = img.tex.as_ref().unwrap();
+        let ww = tex_data.width as f32;
+        let hh = tex_data.height as f32;
+
+        let vertex = [
+            x,
+            y,
+            x,
+            y + hh,
+            x + ww,
+            y,
+            x + ww,
+            y,
+            x,
+            y + hh,
+            x + ww,
+            y + hh,
+        ];
+
+        if self.current_tex.is_none() {
+            self.current_tex = Some(tex_data.tex);
+        }
+
+        if let Some(t) = self.current_tex {
+            if t != tex_data.tex {
+                self.flush(gl, data);
+            } else {
+                self.current_tex = Some(tex_data.tex);
+            }
+        }
+
+        let count = (vertex.len() / 6) as i32;
+        let next = self.index + count;
+
+        if next >= (MAX_PER_BATCH as i32) {
+            self.flush(gl, data);
+        }
+
+        let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
+        for (i, _) in vertex.iter().enumerate().step_by(2) {
+            if let (Some(v1), Some(v2)) = (vertex.get(i), vertex.get(i + 1)) {
+                let v = data.transform.matrix() * glm::vec3(*v1, *v2, 1.0);
+                self.vertex[offset] = v.x;
+                self.vertex[offset + 1] = v.y;
+                offset += 2;
+            }
+        }
+
+        let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
+        let vertex_tex = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+        vertex_tex.iter().for_each(|v| {
+            self.vertex_tex[offset] = *v;
+            offset += 1;
+        });
+
+        let color = match color {
+            Some(c) => c.to_vec(),
+            None => {
+                let (r, g, b, a) = data.color.to_rgba();
+                let mut color = vec![];
+                (0..VERTICES * count as usize).for_each(|_| {
+                    color.push(r);
+                    color.push(g);
+                    color.push(b);
+                    color.push(a);
+                });
+                color
+            }
+        };
+
+        let mut offset = self.index as usize * VERTICES * COLOR_VERTICE_SIZE;
+        color.iter().enumerate().for_each(|(i, c)| {
+            let is_alpha = (i + 1) % 4 == 0;
+            self.vertex_color[offset] = if is_alpha { *c * data.alpha } else { *c };
+            offset += 1;
+        });
+
+        self.index += count;
     }
 }
 
@@ -508,7 +603,7 @@ fn create_sprite_shader(gl: &GlContext) -> Result<Shader, String> {
     let attrs = vec![
         Attribute::new("a_position", 2, glow::FLOAT, false),
         Attribute::new("a_color", 4, glow::FLOAT, false),
-        Attribute::new("a_texcoord", 2, glow::FLOAT, true)
+        Attribute::new("a_texcoord", 2, glow::FLOAT, true),
     ];
 
     let uniforms = vec!["u_matrix", "u_texture"];
@@ -534,10 +629,26 @@ fn create_gl_texture(gl: &GlContext, data: &[u8]) -> Result<TextureData, String>
         let tex = gl.create_texture()?;
         gl.bind_texture(glow::TEXTURE_2D, Some(tex));
 
-        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, glow::CLAMP_TO_EDGE as i32);
-        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::CLAMP_TO_EDGE as i32);
-        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::NEAREST as i32);
-        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::NEAREST as i32);
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_S,
+            glow::CLAMP_TO_EDGE as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_T,
+            glow::CLAMP_TO_EDGE as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_MAG_FILTER,
+            glow::NEAREST as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_MIN_FILTER,
+            glow::NEAREST as i32,
+        );
 
         let img_data = image::load_from_memory(data)
             .map_err(|e| e.to_string())?
@@ -556,41 +667,11 @@ fn create_gl_texture(gl: &GlContext, data: &[u8]) -> Result<TextureData, String>
             0,
             glow::RGBA,
             glow::UNSIGNED_BYTE,
-            Some(&vec_data)
+            Some(&vec_data),
         );
-//
-//        gl.tex_image_2d(
-//            glow::TEXTURE_2D,
-//            0,
-//            glow::RGBA as i32,
-//            32,
-//            32,
-//            0,
-//            glow::RGBA,
-//            glow::UNSIGNED_BYTE,
-//            Some(&[
-////                255, 255, 255, 255,
-////                255, 82, 15, 255,
-////                158, 255, 15, 255,
-////                158, 82, 255, 255,
-////                158, 82, 255, 255,
-////                158, 255, 15, 255,
-////                255, 82, 15, 255,
-////                158, 255, 15, 255,
-////                158, 82, 15, 255,
-////                255, 82, 15, 255,
-////                158, 255, 15, 255,
-////                158, 82, 255, 255,
-////                158, 82, 255, 255,
-////                158, 255, 15, 255,
-////                255, 82, 15, 255,
-////                158, 255, 15, 255,
-//                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 158, 82, 15, 255, 158, 82, 15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 158, 82, 15, 255, 158, 82, 15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 158, 82, 15, 255, 158, 82, 15, 255, 255, 171, 18, 255, 255, 208, 17, 255, 158, 82, 15, 255, 158, 82, 15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 158, 82, 15, 255, 158, 82, 15, 255, 255, 208, 17, 255, 255, 171, 18, 255, 158, 82, 15, 255, 158, 82, 15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 158, 82, 15, 255, 255, 171, 18, 255, 255, 208, 17, 255, 255, 247, 255, 255, 255, 247, 255, 255, 255, 171, 18, 255, 255, 252, 91, 255, 158, 82, 15, 255, 0, 0, 0, 0, 158, 82, 15, 255, 255, 252, 91, 255, 255, 171, 18, 255, 255, 247, 255, 255, 255, 247, 255, 255, 255, 208, 17, 255, 255, 171, 18, 255, 158, 82, 15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 158, 82, 15, 255, 255, 208, 17, 255, 255, 247, 255, 255, 255, 171, 18, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 247, 255, 255, 255, 247, 255, 255, 255, 252, 91, 255, 158, 82, 15, 255, 255, 252, 91, 255, 255, 247, 255, 255, 255, 247, 255, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 171, 18, 255, 255, 247, 255, 255, 255, 208, 17, 255, 158, 82, 15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 171, 18, 255, 190, 16, 8, 255, 255, 171, 18, 255, 255, 36, 36, 255, 255, 171, 18, 255, 255, 208, 17, 255, 255, 36, 36, 255, 255, 247, 255, 255, 255, 252, 91, 255, 255, 247, 255, 255, 255, 36, 36, 255, 255, 252, 91, 255, 255, 171, 18, 255, 255, 36, 36, 255, 255, 171, 18, 255, 190, 16, 8, 255, 255, 171, 18, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 158, 82, 15, 255, 255, 208, 17, 255, 190, 16, 8, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 171, 18, 255, 190, 16, 8, 255, 190, 16, 8, 255, 255, 171, 18, 255, 255, 252, 91, 255, 255, 36, 36, 255, 255, 252, 91, 255, 255, 208, 17, 255, 190, 16, 8, 255, 190, 16, 8, 255, 255, 171, 18, 255, 255, 36, 36, 255, 255, 36, 36, 255, 190, 16, 8, 255, 255, 208, 17, 255, 158, 82, 15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 171, 18, 255, 190, 16, 8, 255, 255, 171, 18, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 171, 18, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 171, 18, 255, 190, 16, 8, 255, 255, 171, 18, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 171, 18, 255, 190, 16, 8, 255, 190, 16, 8, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 208, 17, 255, 255, 252, 91, 255, 255, 36, 36, 255, 255, 247, 255, 255, 255, 36, 36, 255, 255, 252, 91, 255, 255, 208, 17, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 36, 36, 255, 190, 16, 8, 255, 190, 16, 8, 255, 255, 171, 18, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 158, 82, 15, 255, 255, 208, 17, 255, 190, 16, 8, 255, 190, 16, 8, 255, 255, 171, 18, 255, 255, 208, 17, 255, 190, 16, 8, 255, 255, 36, 36, 255, 255, 252, 91, 255, 255, 36, 36, 255, 255, 252, 91, 255, 255, 36, 36, 255, 190, 16, 8, 255, 255, 208, 17, 255, 255, 208, 17, 255, 190, 16, 8, 255, 190, 16, 8, 255, 255, 208, 17, 255, 158, 82, 15, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 171, 18, 255, 190, 16, 8, 255, 255, 171, 18, 255, 190, 16, 8, 255, 255, 171, 18, 255, 190, 16, 8, 255, 190, 16, 8, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 36, 36, 255, 190, 16, 8, 255, 190, 16, 8, 255, 255, 171, 18, 255, 190, 16, 8, 255, 255, 171, 18, 255, 190, 16, 8, 255, 255, 171, 18, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 171, 18, 255, 190, 16, 8, 255, 255, 36, 36, 255, 255, 36, 36, 255, 255, 171, 18, 255, 255, 36, 36, 255, 190, 16, 8, 255, 255, 36, 36, 255, 190, 16, 8, 255, 255, 36, 36, 255, 255, 171, 18, 255, 255, 36, 36, 255, 255, 36, 36, 255, 190, 16, 8, 255, 255, 171, 18, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 171, 18, 255, 190, 16, 8, 255, 190, 16, 8, 255, 255, 36, 36, 255, 190, 16, 8, 255, 255, 252, 91, 255, 190, 16, 8, 255, 255, 252, 91, 255, 190, 16, 8, 255, 255, 36, 36, 255, 190, 16, 8, 255, 190, 16, 8, 255, 255, 171, 18, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 208, 17, 255, 150, 41, 21, 255, 190, 16, 8, 255, 255, 171, 18, 255, 255, 208, 17, 255, 255, 252, 91, 255, 255, 208, 17, 255, 255, 171, 18, 255, 190, 16, 8, 255, 150, 41, 21, 255, 255, 208, 17, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 208, 17, 255, 150, 41, 21, 255, 190, 16, 8, 255, 255, 171, 18, 255, 255, 208, 17, 255, 255, 171, 18, 255, 190, 16, 8, 255, 150, 41, 21, 255, 255, 208, 17, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 171, 18, 255, 150, 41, 21, 255, 190, 16, 8, 255, 255, 171, 18, 255, 190, 16, 8, 255, 150, 41, 21, 255, 255, 171, 18, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 252, 91, 255, 150, 41, 21, 255, 190, 16, 8, 255, 150, 41, 21, 255, 255, 252, 91, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 252, 91, 255, 150, 41, 21, 255, 255, 252, 91, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 255, 252, 91, 255, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 114, 73, 29, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-//            ])
-//        );
 
         log(&format!("{} wh:{},{}", vec_data.len(), width, height));
-        log(&format!("{:?}", vec_data));
+        //        log(&format!("{:?}", vec_data));
         //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
         gl.bind_texture(glow::TEXTURE_2D, None);
         Ok(TextureData {
@@ -602,51 +683,47 @@ fn create_gl_texture(gl: &GlContext, data: &[u8]) -> Result<TextureData, String>
     }
 }
 
-
-use futures::{future, Future, Async};
+use futures::{future, Async, Future};
+use js_sys::{ArrayBuffer, Promise, Uint8Array};
 use wasm_bindgen_futures::future_to_promise;
 use wasm_bindgen_futures::JsFuture;
-use js_sys::{Promise, ArrayBuffer, Uint8Array};
 use web_sys::{XmlHttpRequest, XmlHttpRequestEventTarget, XmlHttpRequestResponseType};
 
 pub fn load_file(path: &str) -> impl Future<Item = Vec<u8>, Error = String> {
-    future::result(xhr_req(path))
-        .and_then(|xhr| {
-            // Code ported from quicksilver https://github.com/ryanisaacg/quicksilver/blob/master/src/file.rs#L30
-            future::poll_fn(move || {
-                let status = xhr.status().unwrap() / 100;
-                let done = xhr.ready_state() == 4;
-                match (status, done) {
-                    (2, true) => Ok(Async::Ready(xhr.response().unwrap())),
-                    (2, _) => Ok(Async::NotReady),
-                    (0, _) => Ok(Async::NotReady),
-                    _ => Err(format!("Error loading file.")) //todo add path to know which file is failing. (borrow error here?)
-                }
-            }).and_then(|data| {
-                log(&format!("DATA: {:?}", data));
-                let js_arr: Uint8Array = Uint8Array::new(&data);
-                let mut arr = vec![];
-                let mut cb = |a, b, c| {
-                    arr.push(a);
-                };
-                js_arr.for_each(&mut cb);
-                Ok(arr)
-//                let mut arr = vec![];
-//                js_arr.copy_to(arr.as_mut_slice());
-//                Ok(arr)
-            })
+    future::result(xhr_req(path)).and_then(|xhr| {
+        // Code ported from quicksilver https://github.com/ryanisaacg/quicksilver/blob/master/src/file.rs#L30
+        future::poll_fn(move || {
+            let status = xhr.status().unwrap() / 100;
+            let done = xhr.ready_state() == 4;
+            match (status, done) {
+                (2, true) => Ok(Async::Ready(xhr.response().unwrap())),
+                (2, _) => Ok(Async::NotReady),
+                (0, _) => Ok(Async::NotReady),
+                _ => Err(format!("Error loading file.")), //todo add path to know which file is failing. (borrow error here?)
+            }
         })
+        .and_then(|data| {
+            log(&format!("DATA: {:?}", data));
+            let js_arr: Uint8Array = Uint8Array::new(&data);
+            let mut arr = vec![];
+            let mut cb = |a, b, c| {
+                arr.push(a);
+            };
+            js_arr.for_each(&mut cb);
+            Ok(arr)
+            //                let mut arr = vec![];
+            //                js_arr.copy_to(arr.as_mut_slice());
+            //                Ok(arr)
+        })
+    })
 }
 
 fn xhr_req(url: &str) -> Result<XmlHttpRequest, String> {
-    let mut xhr = XmlHttpRequest::new()
-        .map_err(|e| e.as_string().unwrap())?;
+    let mut xhr = XmlHttpRequest::new().map_err(|e| e.as_string().unwrap())?;
 
     xhr.set_response_type(XmlHttpRequestResponseType::Arraybuffer);
-    xhr.open("GET", url)
-        .map_err(|e| e.as_string().unwrap())?;
-    xhr.send()
-        .map_err(|e| e.as_string().unwrap())?;
+    xhr.open("GET", url).map_err(|e| e.as_string().unwrap())?;
+    xhr.send().map_err(|e| e.as_string().unwrap())?;
 
     Ok(xhr)
 }
@@ -667,18 +744,18 @@ pub trait Asset {
 
     /// Execute the future in charge of loading the file
     fn try_load(&mut self) -> Result<(), String> {
-        if self.is_loaded() { return Ok(()) }
+        if self.is_loaded() {
+            return Ok(());
+        }
 
-        self.future()
-            .poll()
-            .map(|s|{
-                Ok(match s {
-                    Async::Ready(buff) => {
-                        self.set_asset(buff);
-                    },
-                    _ => {}
-                })
-            })?
+        self.future().poll().map(|s| {
+            Ok(match s {
+                Async::Ready(buff) => {
+                    self.set_asset(buff);
+                }
+                _ => {}
+            })
+        })?
     }
 }
 

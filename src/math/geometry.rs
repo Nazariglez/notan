@@ -1,9 +1,14 @@
 use crate::graphics::color::Color;
 use lyon::lyon_algorithms::path::{Builder, Path};
-use lyon::math::{point, Point, rect, Angle, Vector};
 use lyon::lyon_tessellation as tess;
-use tess::{StrokeTessellator, VertexBuffers, BuffersBuilder, StrokeOptions, FillTessellator, FillOptions};
-use tess::basic_shapes::{stroke_circle, stroke_rectangle, stroke_triangle, stroke_rounded_rectangle, BorderRadii, fill_circle, fill_rectangle, fill_rounded_rectangle, fill_triangle};
+use lyon::math::{point, rect, Angle, Point, Vector};
+use tess::basic_shapes::{
+    fill_circle, fill_rectangle, fill_rounded_rectangle, fill_triangle, stroke_circle,
+    stroke_rectangle, stroke_rounded_rectangle, stroke_triangle, BorderRadii,
+};
+use tess::{
+    BuffersBuilder, FillOptions, FillTessellator, StrokeOptions, StrokeTessellator, VertexBuffers,
+};
 
 //TODO check if avoiding the shape tessellators like stroke_circle, and doing this with arcs and bezier we can achieve winding rules.
 
@@ -31,7 +36,6 @@ pub(crate) fn lyon_vbuff_to_vertex(buff: VertexBuffers<(f32, f32), u16>) -> Vec<
         acc
     })
 }
-
 
 enum GeomTypes {
     Circle {
@@ -116,7 +120,15 @@ impl Geometry {
         self
     }
 
-    pub fn cubic_bezier_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) -> &mut Self {
+    pub fn cubic_bezier_to(
+        &mut self,
+        x1: f32,
+        y1: f32,
+        x2: f32,
+        y2: f32,
+        x3: f32,
+        y3: f32,
+    ) -> &mut Self {
         if self.current_path.is_none() {
             self.move_to(x1, y1);
         }
@@ -140,7 +152,14 @@ impl Geometry {
         self
     }
 
-    pub fn arc_to(&mut self, x: f32, y:f32, start_angle: f32, end_angle: f32, radius: f32) -> &mut Self {
+    pub fn arc_to(
+        &mut self,
+        x: f32,
+        y: f32,
+        start_angle: f32,
+        end_angle: f32,
+        radius: f32,
+    ) -> &mut Self {
         if self.current_path.is_none() {
             self.move_to(x, y);
         }
@@ -301,11 +320,7 @@ fn geometry_stroke(geometries: &Vec<GeomTypes>, strength: f32) -> Vec<f32> {
                 width,
                 height,
             } => {
-                stroke_rectangle(
-                    &rect(*x, *y, *width, *height),
-                    &opts,
-                    &mut vertex_builder,
-                )
+                stroke_rectangle(&rect(*x, *y, *width, *height), &opts, &mut vertex_builder)
                     .unwrap();
             }
             GeomTypes::Triangle { p1, p2, p3 } => {
@@ -329,7 +344,7 @@ fn geometry_stroke(geometries: &Vec<GeomTypes>, strength: f32) -> Vec<f32> {
                     &opts,
                     &mut vertex_builder,
                 )
-                    .unwrap();
+                .unwrap();
             }
             _ => {}
         }
@@ -360,12 +375,7 @@ fn geometry_fill(geometries: &Vec<GeomTypes>) -> Vec<f32> {
                 width,
                 height,
             } => {
-                fill_rectangle(
-                    &rect(*x, *y, *width, *height),
-                    &opts,
-                    &mut vertex_builder,
-                )
-                    .unwrap();
+                fill_rectangle(&rect(*x, *y, *width, *height), &opts, &mut vertex_builder).unwrap();
             }
             GeomTypes::Triangle { p1, p2, p3 } => {
                 fill_triangle(*p1, *p2, *p3, &opts, &mut vertex_builder).unwrap();
@@ -388,7 +398,7 @@ fn geometry_fill(geometries: &Vec<GeomTypes>) -> Vec<f32> {
                     &opts,
                     &mut vertex_builder,
                 )
-                    .unwrap();
+                .unwrap();
             }
             _ => {}
         }

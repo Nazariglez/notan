@@ -14,11 +14,9 @@ use web_sys;
 pub mod color;
 pub mod shaders;
 
-pub use shaders::{Texture, Asset};
-
+pub use shaders::{Asset, Texture};
 
 //TODO glsl to spv https://crates.io/crates/shaderc -> https://crates.io/crates/spirv_cross spv->glsl->etc...
-
 
 pub type GlContext = Rc<glow::Context>;
 enum Driver {
@@ -288,13 +286,19 @@ impl Context {
 
     pub fn flush(&mut self) {
         self.flush_color();
+        self.flush_sprite();
     }
 
     fn flush_color(&mut self) {
         self.color_batcher.flush(&self.gl, &self.data);
     }
 
+    fn flush_sprite(&mut self) {
+        self.sprite_batcher.flush(&self.gl, &self.data);
+    }
+
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
+        self.flush_sprite();
         let color_vertex = match color {
             Some(c) => c.iter().map(|c| c.to_rgba()).fold(vec![], |mut acc, v| {
                 acc.append(&mut vec![v.0, v.1, v.2, v.3]);
@@ -456,10 +460,11 @@ impl Context {
 
     pub fn draw_image(&mut self, x: f32, y: f32, img: &mut Texture) {
         self.flush_color();
-        self.sprite_batcher.draw_image(&self.gl, &self.data, x, y, img);
+        self.sprite_batcher
+            .draw(&self.gl, &self.data, x, y, img, None);
     }
 
-    pub fn draw_pattern(&mut self, x:f32, y:f32, width:f32, height:f32, img: &mut Texture) {
+    pub fn draw_pattern(&mut self, x: f32, y: f32, width: f32, height: f32, img: &mut Texture) {
         //TODO patter also add draw_patter_ext( with offset and scale )
     }
 
@@ -495,7 +500,6 @@ impl Vertex {
 }
 
 pub struct Svg {}
-
 
 fn get_circle_vertices(x: f32, y: f32, radius: f32, segments: Option<i32>) -> Vec<f32> {
     let segments = if let Some(s) = segments {
