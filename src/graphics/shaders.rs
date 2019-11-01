@@ -476,6 +476,10 @@ impl SpriteBatcher {
         x: f32,
         y: f32,
         img: &mut Texture,
+        source_x: f32,
+        source_y: f32,
+        source_width: f32,
+        source_height: f32,
         color: Option<&[f32]>,
     ) {
         if !img.is_loaded() {
@@ -490,19 +494,22 @@ impl SpriteBatcher {
         let ww = tex_data.width as f32;
         let hh = tex_data.height as f32;
 
+        let sw = if source_width == 0.0 { ww } else { source_width };
+        let sh = if source_height == 0.0 { hh } else { source_height };
+
         let vertex = [
             x,
             y,
             x,
-            y + hh,
-            x + ww,
+            y + sh,
+            x + sw,
             y,
-            x + ww,
+            x + sw,
             y,
             x,
-            y + hh,
-            x + ww,
-            y + hh,
+            y + sh,
+            x + sw,
+            y + sh,
         ];
 
         if self.current_tex.is_none() {
@@ -534,8 +541,21 @@ impl SpriteBatcher {
             }
         }
 
+        let x1 = source_x / ww;
+        let y1 = source_y / hh;
+        let x2 = (source_x+ sw) / ww;
+        let y2 = (source_y+ sh) / hh;
+//        log(&format!("{} {} {} {}", x1, y1, x2, y2));
+
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
-        let vertex_tex = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+        let vertex_tex = [
+            x1, y1,
+            x1, y2,
+            x2, y1,
+            x2, y1,
+            x1, y2,
+            x2, y2
+        ];
         vertex_tex.iter().for_each(|v| {
             self.vertex_tex[offset] = *v;
             offset += 1;

@@ -14,6 +14,33 @@ use web_sys;
 pub mod color;
 pub mod shaders;
 
+
+//TODO draw_image with crop, scale, etc... draw_image_ext
+
+/*
+TODO API:
+    let draw = app.draw();
+    draw.transform()
+        .translate(100.0, 100.0)
+        .scale(2.0, 2.0)
+        .rotate_deg(45.0);
+    draw.circle(0.0, 0.0, 50.0);
+    draw.transform()
+        .pop()
+        .pop()
+        .pop();
+    - - - - - - - - - - Same As: - - - - - - - - - - - - -
+    let draw = app.draw();
+    draw.obj()
+        .circle(100.0, 100.0, 50.0)
+        .scale(2.0, 2.0)
+        .rotate_dev(45.0);
+        //.matrix(push your own matrix)L
+*/
+
+
+
+
 pub use shaders::{Asset, Texture};
 
 //TODO glsl to spv https://crates.io/crates/shaderc -> https://crates.io/crates/spirv_cross spv->glsl->etc...
@@ -461,7 +488,13 @@ impl Context {
     pub fn draw_image(&mut self, x: f32, y: f32, img: &mut Texture) {
         self.flush_color();
         self.sprite_batcher
-            .draw(&self.gl, &self.data, x, y, img, None);
+            .draw(&self.gl, &self.data, x, y, img, 0.0, 0.0,0.0, 0.0, None);
+    }
+
+    pub fn draw_cropped_image(&mut self, x: f32, y: f32, sx: f32, sy: f32, sw: f32, sh: f32, img: &mut Texture) {
+        self.flush_color();
+        self.sprite_batcher
+            .draw(&self.gl, &self.data, x, y, img, sx, sy, sw, sh, None);
     }
 
     pub fn draw_pattern(&mut self, x: f32, y: f32, width: f32, height: f32, img: &mut Texture) {
