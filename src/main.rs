@@ -10,16 +10,82 @@ use std::rc::Rc;
 use wasm_bindgen::__rt::core::cell::RefCell;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::__rt::std::collections::HashMap;
+use crate::graphics::shaders::AssetConstructor;
 
-pub struct App {
-    window: window::Window,
-    graphics: graphics::Context,
+struct ResourceManager<'a> {
+    loaded: HashMap<String, Rc<RefCell<Asset+'a>>>,
+    to_load: HashMap<String, Rc<RefCell<Asset+'a>>>,
 }
 
-impl App {
-    pub fn load_texture(&mut self, file: &str) -> Texture {
-        unimplemented!()
+impl<'a> ResourceManager<'a> {
+    pub fn new() -> Self {
+        Self {
+            loaded: HashMap::new(),
+            to_load: HashMap::new()
+        }
     }
+
+    pub fn load<A>(&mut self, file:&str) -> Result<A, String>
+        where A: Asset + AssetConstructor + Clone + 'a
+    {
+//        if let Some(a) = self.loaded.get(file) {
+//            return Ok(*a.as_ref().clone());
+//        }
+//
+//        if let Some(a) = self.to_load.get(file) {
+////            return Ok(a.clone());
+//        }
+//
+        let asset = A::new(file);
+        self.to_load.insert(file.to_string(), Rc::new(RefCell::new(asset.clone())));
+        Ok(asset)
+//        unimplemented!()
+    }
+
+    pub fn try_load(&mut self) -> Result<(), String> {
+        if self.to_load.len() == 0 {
+            return Ok(());
+        }
+
+        let mut loaded_files = vec![];
+
+        for (f, a) in self.to_load.iter_mut() {
+            let mut a = a.borrow_mut();
+            a.try_load()?;
+            if a.is_loaded() {
+                loaded_files.push(f.clone());
+            }
+        }
+
+        for f in loaded_files {
+            self.to_load.remove(&f);
+        }
+
+        Ok(())
+    }
+
+    pub fn clear(&mut self) {
+        self.loaded.clear();
+        self.to_load.clear();
+    }
+}
+
+pub struct App<'a> {
+    window: window::Window,
+    graphics: graphics::Context,
+    asset_manager: ResourceManager<'a>,
+}
+
+impl<'a> App<'a> {
+    pub fn load<A>(&mut self, file: &str) -> Result<A, String>
+    where A: AssetConstructor + Asset + Clone + 'a
+    {
+        self.asset_manager.load(file)
+    }
+//    pub fn assets(&mut self) -> &mut ResourceManager<'static> {
+//        &mut self.asset_manager
+//    }
 }
 
 pub struct AppBuilder<S>
@@ -29,6 +95,7 @@ where
     state: Option<S>,
     draw_callback: Option<fn(&mut App, &mut S)>,
     update_callback: Option<fn(&mut App, &mut S)>,
+    start_callback: Option<fn(&mut App, &mut S)>,
 }
 
 impl<S> AppBuilder<S> {
@@ -39,15 +106,22 @@ impl<S> AppBuilder<S> {
         let mut app = App {
             window: win,
             graphics: gfx,
+            asset_manager: ResourceManager::new(),
         };
 
         let mut state = self.state.take().unwrap();
         let mut draw_cb = self.draw_callback.take().unwrap_or(|_, _| {});
         let mut update_cb = self.update_callback.take().unwrap_or(|_, _| {});
+        let mut start_cb = self.start_callback.take().unwrap_or(|_, _| {});
 
         //        let rc_app = Rc::new(RefCell::new(app));
 
+        start_cb(&mut app, &mut state);
         window::run(move || {
+            app.asset_manager
+                .try_load()
+                .unwrap();
+
             update_cb(&mut app, &mut state);
             draw_cb(&mut app, &mut state);
         });
@@ -59,6 +133,11 @@ impl<S> AppBuilder<S> {
 
     pub fn draw(&mut self, cb: fn(&mut App, &mut S)) -> &mut Self {
         self.draw_callback = Some(cb);
+        self
+    }
+
+    pub fn start(&mut self, cb: fn(&mut App, &mut S)) -> &mut Self {
+        self.start_callback = Some(cb);
         self
     }
 
@@ -78,6 +157,7 @@ pub fn init<S>(state: S) -> AppBuilder<S> {
         state: Some(state),
         draw_callback: None,
         update_callback: None,
+        start_callback: None
     }
 }
 
@@ -110,6 +190,10 @@ fn update_cb(app: &mut App, state: &mut State) {
     }
 }
 
+fn start_cb(app: &mut App, state: &mut State) {
+    state.img2 = Some(app.load::<Texture>("b.png").unwrap());
+}
+
 fn draw_shapes(app: &mut App, state: &mut State) {
     let gfx = &mut app.graphics;
     gfx.begin();
@@ -126,7 +210,7 @@ fn draw_shapes(app: &mut App, state: &mut State) {
     gfx.transform().translate(150.0, 450.0);
     gfx.transform()
         .skew_deg((state.i % 720) as f32, (state.i % 720) as f32);
-    gfx.draw_circle(0.0, 0.0, 50.0);
+    gfx.circle(0.0, 0.0, 50.0);
     gfx.transform().pop();
     gfx.set_color(Color::White);
     gfx.transform()
@@ -138,15 +222,15 @@ fn draw_shapes(app: &mut App, state: &mut State) {
     //top rect
     gfx.set_color(Color::Red);
     gfx.transform().scale(0.5, 0.5);
-    gfx.draw_rect(0.0, 0.0, 100.0, 100.0);
+    gfx.rect(0.0, 0.0, 100.0, 100.0);
     gfx.transform().pop();
 
     //middle triangle
     gfx.set_color(Color::Green);
     gfx.transform().scale(2.0, 2.0);
-    gfx.draw_triangle(200.0, 200.0, 300.0, 300.0, 100.0, 300.0);
+    gfx.triangle(200.0, 200.0, 300.0, 300.0, 100.0, 300.0);
     gfx.transform().pop();
-    gfx.draw_vertex(&[
+    gfx.vertex(&[
         Vertex::new(600.0, 200.0, Color::Red),
         Vertex::new(700.0, 300.0, Color::Green),
         Vertex::new(500.0, 300.0, Color::Blue),
@@ -164,7 +248,7 @@ fn draw_shapes(app: &mut App, state: &mut State) {
         let b = 1.0 - (1.0 / len as f32) * n;
         let a = 1.0;
         gfx.set_color(graphics::color::rgba(r, b, g, a));
-        gfx.draw_rect(
+        gfx.rect(
             10.0 * n,
             10.0 * n,
             (100.0 / len as f32) * n,
@@ -173,18 +257,18 @@ fn draw_shapes(app: &mut App, state: &mut State) {
     }
 
     gfx.set_color(Color::Blue);
-    gfx.draw_circle(200.0, 200.0, 50.0);
+    gfx.circle(200.0, 200.0, 50.0);
     gfx.stroke_circle(200.0, 200.0, 70.0, 10.0);
     gfx.set_color(Color::White);
-    gfx.draw_line(200.0, 200.0, 300.0, 300.0, 10.0);
-    gfx.draw_line(200.0, 300.0, 300.0, 200.0, 10.0);
+    gfx.line(200.0, 200.0, 300.0, 300.0, 10.0);
+    gfx.line(200.0, 300.0, 300.0, 200.0, 10.0);
 
     gfx.set_color(rgba(0.5, 0.5, 0.1, 1.0));
-    gfx.draw_rounded_rect(300.0, 10.0, 200.0, 50.0, 20.0);
+    gfx.rounded_rect(300.0, 10.0, 200.0, 50.0, 20.0);
     gfx.set_color(rgba(1.0, 0.5, 0.5, 0.3));
     gfx.stroke_rounded_rect(300.0, 10.0, 200.0, 50.0, 20.0, 10.0);
 
-    gfx.draw_rect(400.0, 100.0, 300.0, 80.0);
+    gfx.rect(400.0, 100.0, 300.0, 80.0);
     gfx.set_color(Color::Green.with_alpha(0.3));
     gfx.stroke_rect(400.0, 100.0, 300.0, 80.0, 10.0);
 
@@ -193,21 +277,21 @@ fn draw_shapes(app: &mut App, state: &mut State) {
     gfx.set_alpha(0.5);
     gfx.transform().translate(430.0, 300.0);
     gfx.transform().rotate_deg(state.i as f32);
-    gfx.draw_rect(-ww * 0.5, -hh * 0.5, ww, hh);
+    gfx.rect(-ww * 0.5, -hh * 0.5, ww, hh);
     gfx.transform().pop();
     gfx.transform().pop();
 
     gfx.set_color(Color::Blue);
     gfx.transform().translate(430.0, 300.0);
     gfx.transform().rotate_deg(state.i as f32 * 0.5);
-    gfx.draw_rect(-ww * 0.5, -hh * 0.5, ww, hh);
+    gfx.rect(-ww * 0.5, -hh * 0.5, ww, hh);
     gfx.transform().pop();
     gfx.transform().pop();
 
     gfx.set_color(Color::Green);
     gfx.transform().translate(430.0, 300.0);
     gfx.transform().rotate_deg(-state.i as f32 * 0.5);
-    gfx.draw_rect(-ww * 0.5, -hh * 0.5, ww, hh);
+    gfx.rect(-ww * 0.5, -hh * 0.5, ww, hh);
     gfx.transform().pop();
     gfx.transform().pop();
     gfx.set_alpha(1.0);
@@ -221,13 +305,14 @@ struct State {
     pub i: i32,
     pub geom: Geometry,
     pub img: Texture,
+    pub img2: Option<Texture>
 }
 
 fn draw_geometry(app: &mut App, state: &mut State) {
     let gfx = &mut app.graphics;
     gfx.begin();
     gfx.clear(rgba(0.1, 0.2, 0.3, 1.0));
-    gfx.draw_geometry(&mut state.geom);
+    gfx.geometry(&mut state.geom);
     gfx.end();
 }
 
@@ -240,17 +325,17 @@ fn draw_sprite(app: &mut App, state: &mut State) {
     gfx.clear(rgba(0.1, 0.2, 0.3, 1.0));
 //    gfx.transform().scale(3.0, 3.0);
     //    gfx.draw_geometry(&mut state.geom);
-    gfx.draw_image(0.0, 0.0, &mut state.img);
-    gfx.draw_image(10.0, 10.0, &mut state.img);
-    gfx.draw_image(20.0, 20.0, &mut state.img);
-    gfx.draw_image(30.0, 30.0, &mut state.img);
+//    gfx.image(0.0, 0.0, &mut state.img);
+//    gfx.image(10.0, 10.0, &mut state.img);
+//    gfx.image(20.0, 20.0, &mut state.img);
+//    gfx.image(30.0, 30.0, &mut state.img);
 //    gfx.transform().pop();
 //    gfx.transform().scale(5.0, 5.0);
 //    gfx.draw_image(300.0, 300.0, &mut state.img);
     gfx.set_color(Color::Green);
     gfx.transform().translate(300.0, 300.0);
     gfx.transform().scale(15.0, 15.0);
-    gfx.draw_cropped_image(0.0, 0.0, 10.0, 10.0, 10.0, 10.0, &mut state.img);
+//    gfx.cropped_image(0.0, 0.0, 10.0, 10.0, 10.0, 10.0, &mut state.img);
     gfx.transform().pop();
     gfx.transform().pop();
     gfx.set_color(Color::White);
@@ -258,21 +343,35 @@ fn draw_sprite(app: &mut App, state: &mut State) {
 }
 
 struct Bunny {
-    x: f32, y: f32, speed_x: f32, speed_y: f32
+    x: f32, y: f32, speed_x: f32, speed_y: f32, color: Color
+}
+
+fn random_color() -> Color {
+    rgba(
+        js_sys::Math::random() as f32,
+        js_sys::Math::random() as f32,
+        js_sys::Math::random() as f32,
+        1.0
+    )
 }
 
 fn bunny_update(app: &mut App, state: &mut BState) {
-    if !state.bunny.is_loaded() {
-        state.bunny.try_load();
+//    if !state.bunny.is_loaded() {
+//        state.bunny.try_load();
+//    }
+
+    for _ in 0..10 {
+        state.bunnies.push(
+            Bunny {
+                x: 0.0,
+                y: 0.0,
+                speed_x: js_sys::Math::random() as f32 * 10.0,
+                speed_y: js_sys::Math::random() as f32 * 10.0 - 5.0,
+                color: random_color()
+            }
+        );
     }
 
-    state.bunnies.push(
-        Bunny {
-            x: 0.0, y: 0.0,
-            speed_x: js_sys::Math::random() as f32 * 10.0,
-            speed_y: js_sys::Math::random() as f32  * 10.0 - 5.0,
-        }
-    );
     state.bunnies.iter_mut()
         .for_each(| b| {
             b.x += b.speed_x;
@@ -301,19 +400,26 @@ fn bunny_update(app: &mut App, state: &mut BState) {
 }
 
 fn bunny(app: &mut App, state: &mut BState) {
+    let bunny = state.bunny.as_mut().unwrap();
     let gfx = &mut app.graphics;
     gfx.begin();
     gfx.clear(rgba(0.1, 0.2, 0.3, 1.0));
     for b in &state.bunnies {
-        gfx.draw_image(b.x, b.y, &mut state.bunny);
+        gfx.set_color(b.color);
+        gfx.image(bunny, b.x, b.y);
     }
+    log(&format!("{} {}", state.bunnies.len(), bunny.is_loaded()));
 //    state.bunnies.iter_mut()
 //        .for_each(|b| gfx.draw_image(b.x, b.y, &mut state.bunny));
     gfx.end();
 }
 
+fn start_bunny(app: &mut App, state: &mut BState) {
+    state.bunny = app.load("b.png").ok();
+}
+
 struct BState {
-    bunny: Texture,
+    bunny: Option<Texture>,
     bunnies: Vec<Bunny>
 }
 
@@ -342,11 +448,12 @@ fn main() {
         .build();
 
     let b_state = BState {
-        bunny: Texture::new("b.png"),
+        bunny: None,
         bunnies: vec![]
     };
 
     init(b_state)
+        .start(start_bunny)
         .draw(bunny)
         .update(bunny_update)
         .build()
@@ -356,6 +463,7 @@ fn main() {
         i: 0,
         geom: g,
         img: Texture::new("h.png"),
+        img2: None
     };
 
 //    init(state)

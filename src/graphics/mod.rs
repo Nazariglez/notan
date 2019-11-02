@@ -343,7 +343,7 @@ impl Context {
         self.color_batcher.draw(&self.gl, &self.data, vertex, color);
     }
 
-    pub fn draw_triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
+    pub fn triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
         self.draw_color(&[x1, y1, x2, y2, x3, y3], None);
     }
 
@@ -371,7 +371,7 @@ impl Context {
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
-    pub fn draw_rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
+    pub fn rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
         let x2 = x + width;
         let y2 = y + height;
         let vertices = [x, y, x2, y, x, y2, x, y2, x2, y, x2, y2];
@@ -392,7 +392,7 @@ impl Context {
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
-    pub fn draw_line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, strength: f32) {
+    pub fn line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, strength: f32) {
         let (mut xx, mut yy) = if y1 == y2 {
             (0.0, -1.0)
         } else {
@@ -422,13 +422,11 @@ impl Context {
         );
     }
 
-    pub fn draw_circle(&mut self, x: f32, y: f32, radius: f32) {
+    pub fn circle(&mut self, x: f32, y: f32, radius: f32) {
         self.draw_color(&get_circle_vertices(x, y, radius, None), None);
-        //https://docs.rs/lyon_tessellation/0.14.1/lyon_tessellation/geometry_builder/index.html
-        //https://docs.rs/lyon_tessellation/0.14.1/lyon_tessellation/struct.FillTessellator.html#examples
     }
 
-    pub fn draw_rounded_rect(&mut self, x: f32, y: f32, width: f32, height: f32, radius: f32) {
+    pub fn rounded_rect(&mut self, x: f32, y: f32, width: f32, height: f32, radius: f32) {
         let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
         let opts = tess::FillOptions::tolerance(0.01);
         fill_rounded_rectangle(
@@ -476,7 +474,7 @@ impl Context {
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
-    pub fn draw_geometry(&mut self, geometry: &mut Geometry) {
+    pub fn geometry(&mut self, geometry: &mut Geometry) {
         geometry.build();
         if let Some((v, vc)) = &geometry.vertices {
             self.draw_color(v, Some(vc));
@@ -485,25 +483,27 @@ impl Context {
 
     pub fn draw_svg(&mut self, svg: &mut Svg) {}
 
-    pub fn draw_image(&mut self, x: f32, y: f32, img: &mut Texture) {
+    pub fn image(&mut self, img: &mut Texture, x: f32, y: f32) {
         self.flush_color();
         self.sprite_batcher
             .draw(&self.gl, &self.data, x, y, img, 0.0, 0.0,0.0, 0.0, None);
     }
 
-    pub fn draw_cropped_image(&mut self, x: f32, y: f32, sx: f32, sy: f32, sw: f32, sh: f32, img: &mut Texture) {
+    pub fn cropped_image(&mut self, img: &mut Texture, x: f32, y: f32, sx: f32, sy: f32, sw: f32, sh: f32) { //TODO change to sub_image?
         self.flush_color();
         self.sprite_batcher
             .draw(&self.gl, &self.data, x, y, img, sx, sy, sw, sh, None);
     }
 
-    pub fn draw_pattern(&mut self, x: f32, y: f32, width: f32, height: f32, img: &mut Texture) {
+    //TODO add a method to draw the image scaled without using the matrix?
+
+    pub fn pattern(&mut self, x: f32, y: f32, width: f32, height: f32, img: &mut Texture) {
         //TODO patter also add draw_patter_ext( with offset and scale )
     }
 
-    pub fn draw_9slice(&mut self, x: f32, y: f32, opts: String) {}
+    pub fn nine_slice(&mut self, x: f32, y: f32, opts: String) {}
 
-    pub fn draw_vertex(&mut self, vertices: &[Vertex]) {
+    pub fn vertex(&mut self, vertices: &[Vertex]) {
         let (vert, color_vert) =
             vertices
                 .iter()

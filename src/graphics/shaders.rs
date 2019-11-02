@@ -486,7 +486,7 @@ impl SpriteBatcher {
             return;
         }
         if img.tex.is_none() {
-            let tex_data = create_gl_texture(gl, &img.inner.as_ref().unwrap()).unwrap();
+            let tex_data = create_gl_texture(gl, &img.inner.borrow().as_ref().unwrap()).unwrap();
             img.tex = Some(tex_data);
         }
 
@@ -636,7 +636,7 @@ fn create_sprite_shader(gl: &GlContext) -> Result<Shader, String> {
     )?)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct TextureData {
     tex: glow::WebTextureKey,
     width: i32,
@@ -708,6 +708,7 @@ use js_sys::{ArrayBuffer, Promise, Uint8Array};
 use wasm_bindgen_futures::future_to_promise;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{XmlHttpRequest, XmlHttpRequestEventTarget, XmlHttpRequestResponseType};
+use std::cell::RefCell;
 
 pub fn load_file(path: &str) -> impl Future<Item = Vec<u8>, Error = String> {
     future::result(xhr_req(path)).and_then(|xhr| {
@@ -748,13 +749,17 @@ fn xhr_req(url: &str) -> Result<XmlHttpRequest, String> {
     Ok(xhr)
 }
 
+pub trait AssetConstructor {
+    fn new(path: &str) -> Self;
+}
+
 /// Represent an Asset
 pub trait Asset {
     /// Create an instance from a file path
-    fn new(path: &str) -> Self;
+//    fn new(path: &str) -> Self;
 
     /// Get the future stored on charge of load the file
-    fn future(&mut self) -> &mut Box<Future<Item = Vec<u8>, Error = String>>;
+    fn future(&mut self) -> Rc<RefCell<Future<Item = Vec<u8>, Error = String>>>;
 
     /// Dispatched when the asset buffer is loaded, used to process and store the data ready to be consumed
     fn set_asset(&mut self, asset: Vec<u8>);
@@ -768,7 +773,7 @@ pub trait Asset {
             return Ok(());
         }
 
-        self.future().poll().map(|s| {
+        self.future().borrow_mut().poll().map(|s| {
             Ok(match s {
                 Async::Ready(buff) => {
                     self.set_asset(buff);
@@ -779,30 +784,62 @@ pub trait Asset {
     }
 }
 
+struct InnerTexture {
+    data: Vec<u8>,
+    width: i32,
+    height: i32,
+    texture: Option<glow::WebTextureKey>,
+}
+
+struct TextureGeometry {
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+    rotation: f32
+    //PIVOT? what needs texture packer to works?
+}
+
+struct Tex {
+    inner: Rc<InnerTexture>,
+    rect: (f32, f32, f32, f32) //Rect to use textures like texturepacker - this should be used to calculate the textcoord buffer
+}
+
+impl Tex {
+    pub fn crop(&self, x: f32, y:f32, width: f32, height: f32) -> Tex {
+        unimplemented!()
+        //TODO clone the texture keeping the inner but changing the rect.
+    }
+}
+
+#[derive(Clone)]
 pub struct Texture {
-    pub inner: Option<Vec<u8>>,
-    fut: Box<Future<Item = Vec<u8>, Error = String>>,
+    pub inner: Rc<RefCell<Option<Vec<u8>>>>,
+    fut: Rc<RefCell<Box<Future<Item = Vec<u8>, Error = String>>>>,
     tex: Option<TextureData>,
 }
 
-impl Asset for Texture {
+impl AssetConstructor for Texture {
     fn new(file: &str) -> Self {
         Self {
-            inner: None,
-            fut: Box::new(load_file(file)),
+            inner: Rc::new(RefCell::new(None)),
+            fut: Rc::new(RefCell::new(Box::new(load_file(file)))),
             tex: None,
         }
     }
+}
 
-    fn future(&mut self) -> &mut Box<Future<Item = Vec<u8>, Error = String>> {
-        &mut self.fut
+impl Asset for Texture {
+    fn future(&mut self) -> Rc<RefCell<Future<Item = Vec<u8>, Error = String>>> {
+        self.fut.clone()
     }
 
     fn set_asset(&mut self, asset: Vec<u8>) {
-        self.inner = Some(asset)
+        log("loaded");
+        *self.inner.borrow_mut() = Some(asset);
     }
 
     fn is_loaded(&self) -> bool {
-        self.inner.is_some()
+        self.inner.borrow().is_some()
     }
 }
