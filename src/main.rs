@@ -349,7 +349,7 @@ fn bunny(app: &mut App, state: &mut BState) {
         gfx.set_color(b.color);
         gfx.image(bunny, b.x, b.y);
     }
-    log(&format!("{} {}", state.bunnies.len(), bunny.is_loaded()));
+//    log(&format!("{} {}", state.bunnies.len(), bunny.is_loaded()));
 //    state.bunnies.iter_mut()
 //        .for_each(|b| gfx.draw_image(b.x, b.y, &mut state.bunny));
     gfx.end();

@@ -1,11 +1,9 @@
 use hashbrown::HashMap;
-use std::rc::Rc;
-use std::cell::RefCell;
 use super::resource::*;
 use super::loader::Loader;
 
 pub struct ResourceManager<'a> {
-    to_load: HashMap<String, Rc<RefCell<Resource+'a>>>,
+    to_load: HashMap<String, Box<Resource+'a>>,
 }
 
 impl<'a> ResourceManager<'a> {
@@ -24,7 +22,7 @@ impl<'a> ResourceManager<'a> {
         where R: Resource + ResourceConstructor + Clone + 'a
     {
         let asset = R::new(file);
-        self.to_load.insert(file.to_string(), Rc::new(RefCell::new(asset.clone())));
+        self.to_load.insert(file.to_string(), Box::new(asset.clone()));
         Ok(asset)
     }
 
@@ -35,7 +33,6 @@ impl<'a> ResourceManager<'a> {
 
         let mut loaded_files = vec![];
         for (f, a) in self.to_load.iter_mut() {
-            let mut a = a.borrow_mut();
             a.try_load()?;
             if a.is_loaded() {
                 loaded_files.push(f.clone());

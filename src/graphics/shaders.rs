@@ -486,14 +486,19 @@ impl SpriteBatcher {
         if !img.is_loaded() {
             return;
         }
-        if img.tex.is_none() {
-            let tex_data = create_gl_texture(gl, &img.inner.borrow().as_ref().unwrap()).unwrap();
-            img.tex = Some(tex_data);
+
+        if !img.data().borrow().as_ref().unwrap().has_context() {
+            let tex = create_gl_texture(gl, &img.data().borrow().as_ref().unwrap()).unwrap();
+            let mut d = img.data()
+                .borrow_mut()
+                .as_mut()
+                .unwrap()
+                .init_graphics(tex);
         }
 
-        let tex_data = img.tex.as_ref().unwrap();
-        let ww = tex_data.width as f32;
-        let hh = tex_data.height as f32;
+        let tex = img.tex();
+        let ww = img.width() as f32;
+        let hh = img.height() as f32;
 
         let sw = if source_width == 0.0 { ww } else { source_width };
         let sh = if source_height == 0.0 { hh } else { source_height };
@@ -514,14 +519,14 @@ impl SpriteBatcher {
         ];
 
         if self.current_tex.is_none() {
-            self.current_tex = Some(tex_data.tex);
+            self.current_tex = Some(tex);
         }
 
         if let Some(t) = self.current_tex {
-            if t != tex_data.tex {
+            if t != tex {
                 self.flush(gl, data);
             } else {
-                self.current_tex = Some(tex_data.tex);
+                self.current_tex = Some(tex);
             }
         }
 
@@ -546,7 +551,6 @@ impl SpriteBatcher {
         let y1 = source_y / hh;
         let x2 = (source_x+ sw) / ww;
         let y2 = (source_y+ sh) / hh;
-//        log(&format!("{} {} {} {}", x1, y1, x2, y2));
 
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
         let vertex_tex = [
@@ -637,7 +641,14 @@ fn create_sprite_shader(gl: &GlContext) -> Result<Shader, String> {
     )?)
 }
 
-fn create_gl_texture(gl: &GlContext, data: &[u8]) -> Result<TextureData, String> {
+#[derive(Debug, Clone)]
+pub(crate) struct GraphicTexture {
+    pub gl: GlContext,
+    pub tex: glow::WebTextureKey,
+}
+
+
+fn create_gl_texture(gl: &GlContext, data: &TextureData) -> Result<GraphicTexture, String> {
     unsafe {
         let tex = gl.create_texture()?;
         gl.bind_texture(glow::TEXTURE_2D, Some(tex));
@@ -663,35 +674,23 @@ fn create_gl_texture(gl: &GlContext, data: &[u8]) -> Result<TextureData, String>
             glow::NEAREST as i32,
         );
 
-        let img_data = image::load_from_memory(data)
-            .map_err(|e| e.to_string())?
-            .to_rgba();
-
-        let width = img_data.width() as i32;
-        let height = img_data.height() as i32;
-        let vec_data = img_data.to_vec();
-
         gl.tex_image_2d(
             glow::TEXTURE_2D,
             0,
             glow::RGBA as i32,
-            width,
-            height,
+            data.width,
+            data.height,
             0,
             glow::RGBA,
             glow::UNSIGNED_BYTE,
-            Some(&vec_data),
+            Some(&data.raw),
         );
 
-        log(&format!("{} wh:{},{}", vec_data.len(), width, height));
-        //        log(&format!("{:?}", vec_data));
         //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
         gl.bind_texture(glow::TEXTURE_2D, None);
-        Ok(TextureData {
-            tex: tex,
-            width: width,
-            height: height,
-            raw: vec_data,
+        Ok(GraphicTexture {
+            gl: gl.clone(),
+            tex: tex
         })
     }
 }
