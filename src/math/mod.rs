@@ -9,11 +9,14 @@ pub struct Rect {
     pub x: f32,
     pub y: f32,
     pub width: f32,
-    pub height: f32
+    pub height: f32,
 }
 
-pub fn rect(x:f32, y:f32, width:f32, height:f32) -> Rect {
+pub fn rect(x: f32, y: f32, width: f32, height: f32) -> Rect {
     Rect {
-        x, y, width, height
+        x,
+        y,
+        width,
+        height,
     }
 }

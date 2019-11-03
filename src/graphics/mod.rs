@@ -1,20 +1,18 @@
 use self::shaders::ColorBatcher;
 use crate::graphics::shaders::{Shader, SpriteBatcher};
 use crate::math::*;
+use crate::res::*;
 use color::Color;
 use glow::*;
 use lyon::lyon_tessellation as tess;
 use rayon::prelude::*;
 use std::rc::Rc;
-use tess::basic_shapes::{fill_circle, stroke_circle};
-use wasm_bindgen::prelude::*;
+use tess::basic_shapes::stroke_circle;
 use wasm_bindgen::JsCast;
 use web_sys;
-use crate::res::*;
 
 pub mod color;
 pub mod shaders;
-
 
 //TODO draw_image with crop, scale, etc... draw_image_ext
 
@@ -61,19 +59,12 @@ pub struct RenderTarget {
     height: i32,
 }
 
-use crate::{glm, log};
-use lyon::lyon_algorithms::path::{Builder, Path};
+use crate::glm;
 use lyon::lyon_tessellation::basic_shapes::{
-    fill_rectangle, fill_rounded_rectangle, fill_triangle, stroke_rectangle,
-    stroke_rounded_rectangle, stroke_triangle, BorderRadii,
+    fill_rounded_rectangle, stroke_rectangle, stroke_rounded_rectangle, stroke_triangle,
+    BorderRadii,
 };
-use lyon::lyon_tessellation::geometry_builder::simple_builder;
-use lyon::lyon_tessellation::{
-    BuffersBuilder, FillOptions, FillTessellator, FillVertex, StrokeOptions, StrokeTessellator,
-    VertexBuffers,
-};
-use lyon::math::{point, Point, Rect};
-use nalgebra_glm::mat4_to_mat3;
+use lyon::lyon_tessellation::{BuffersBuilder, VertexBuffers};
 
 //TODO use generic to be able to use with Mat2, Mat3, Mat4
 pub struct Transform(Vec<Mat3>);
@@ -362,7 +353,8 @@ impl Context {
             tess::math::point(x3, y3),
             &mut opts,
             &mut BuffersBuilder::new(&mut output, LyonVertex),
-        );
+        )
+        .unwrap();
 
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
@@ -383,7 +375,8 @@ impl Context {
             &tess::math::rect(x, y, width, height),
             &mut opts,
             &mut BuffersBuilder::new(&mut output, LyonVertex),
-        );
+        )
+        .unwrap();
 
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
@@ -430,7 +423,8 @@ impl Context {
             &BorderRadii::new(radius, radius, radius, radius),
             &opts,
             &mut BuffersBuilder::new(&mut output, LyonVertex),
-        );
+        )
+        .unwrap();
 
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
@@ -452,7 +446,8 @@ impl Context {
             &BorderRadii::new(radius, radius, radius, radius),
             &opts,
             &mut BuffersBuilder::new(&mut output, LyonVertex),
-        );
+        )
+        .unwrap();
 
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
@@ -466,7 +461,8 @@ impl Context {
             radius,
             &mut opts,
             &mut BuffersBuilder::new(&mut output, LyonVertex),
-        );
+        )
+        .unwrap();
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
@@ -482,10 +478,20 @@ impl Context {
     pub fn image(&mut self, img: &mut Texture, x: f32, y: f32) {
         self.flush_color();
         self.sprite_batcher
-            .draw(&self.gl, &self.data, x, y, img, 0.0, 0.0,0.0, 0.0, None);
+            .draw(&self.gl, &self.data, x, y, img, 0.0, 0.0, 0.0, 0.0, None);
     }
 
-    pub fn cropped_image(&mut self, img: &mut Texture, x: f32, y: f32, sx: f32, sy: f32, sw: f32, sh: f32) { //TODO change to sub_image?
+    pub fn cropped_image(
+        &mut self,
+        img: &mut Texture,
+        x: f32,
+        y: f32,
+        sx: f32,
+        sy: f32,
+        sw: f32,
+        sh: f32,
+    ) {
+        //TODO change to sub_image?
         self.flush_color();
         self.sprite_batcher
             .draw(&self.gl, &self.data, x, y, img, sx, sy, sw, sh, None);

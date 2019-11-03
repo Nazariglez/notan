@@ -1,13 +1,12 @@
-use std::rc::Rc;
-use std::cell::RefCell;
-use futures::future::Future;
-use super::resource::*;
 use super::loader::load_file;
-use glow::HasContext;
+use super::resource::*;
 use crate::graphics::shaders::GraphicTexture;
 use crate::log;
-use crate::math::{Rect, rect};
-
+use crate::math::{rect, Rect};
+use futures::future::Future;
+use glow::HasContext;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 //TODO add rect and rotation to support texturepacker?
 
@@ -20,7 +19,7 @@ pub(crate) struct TextureData {
 }
 
 impl TextureData {
-    pub(crate) fn init_graphics(&mut self, g:GraphicTexture) {
+    pub(crate) fn init_graphics(&mut self, g: GraphicTexture) {
         self.graphics = Some(g);
     }
 }
@@ -36,8 +35,8 @@ impl Drop for TextureData {
     }
 }
 
-
 #[derive(Clone)]
+/// Represents an image resource
 pub struct Texture {
     pub(crate) resource: Rc<RefCell<ResourceData>>,
     pub(crate) data: Rc<RefCell<Option<TextureData>>>, //TODO use a rc here to avoid clone the raw every time?
@@ -48,16 +47,18 @@ impl Texture {
         &self.data
     }
 
+    /// Returns the graphics texture to be draw on the GPU
     pub fn tex(&self) -> Option<glow::WebTextureKey> {
         if let Some(d) = self.data.borrow().as_ref() {
             if let Some(g) = d.graphics.as_ref() {
-                return Some(g.tex)
+                return Some(g.tex);
             }
         }
 
         None
     }
 
+    /// Returns the texture's width
     pub fn width(&self) -> f32 {
         if let Some(d) = self.data.borrow().as_ref() {
             d.width as f32
@@ -66,6 +67,7 @@ impl Texture {
         }
     }
 
+    /// Returns the texture's height
     pub fn height(&self) -> f32 {
         if let Some(d) = self.data.borrow().as_ref() {
             d.height as f32
@@ -102,7 +104,7 @@ impl Resource for Texture {
             width,
             height,
             raw,
-            graphics: None
+            graphics: None,
         });
 
         Ok(())

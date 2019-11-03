@@ -1,10 +1,9 @@
-use super::{Context, GlContext};
+use super::GlContext;
+use crate::glm;
 use crate::graphics::DrawData;
-use crate::{glm, log, Color};
-use glow::*;
-use std::collections::HashMap;
-use std::rc::Rc;
 use crate::res::*;
+use glow::*;
+use hashbrown::HashMap;
 
 type ShaderKey = glow::WebShaderKey;
 type ProgramKey = glow::WebProgramKey;
@@ -489,14 +488,22 @@ impl SpriteBatcher {
 
         let tex = match img.tex() {
             Some(t) => t,
-            _ => init_graphic_texture(gl, img).unwrap()
+            _ => init_graphic_texture(gl, img).unwrap(),
         };
 
         let ww = img.width();
         let hh = img.height();
 
-        let sw = if source_width == 0.0 { ww } else { source_width };
-        let sh = if source_height == 0.0 { hh } else { source_height };
+        let sw = if source_width == 0.0 {
+            ww
+        } else {
+            source_width
+        };
+        let sh = if source_height == 0.0 {
+            hh
+        } else {
+            source_height
+        };
 
         let vertex = [
             x,
@@ -544,18 +551,11 @@ impl SpriteBatcher {
 
         let x1 = source_x / ww;
         let y1 = source_y / hh;
-        let x2 = (source_x+ sw) / ww;
-        let y2 = (source_y+ sh) / hh;
+        let x2 = (source_x + sw) / ww;
+        let y2 = (source_y + sh) / hh;
 
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
-        let vertex_tex = [
-            x1, y1,
-            x1, y2,
-            x2, y1,
-            x2, y1,
-            x1, y2,
-            x2, y2
-        ];
+        let vertex_tex = [x1, y1, x1, y2, x2, y1, x2, y1, x1, y2, x2, y2];
         vertex_tex.iter().for_each(|v| {
             self.vertex_tex[offset] = *v;
             offset += 1;
@@ -588,21 +588,11 @@ impl SpriteBatcher {
 }
 
 fn init_graphic_texture(gl: &GlContext, img: &mut Texture) -> Result<glow::WebTextureKey, String> {
-    let gt = create_gl_texture(
-        gl,
-        &img.data()
-            .borrow()
-            .as_ref()
-            .unwrap()
-    )?;
+    let gt = create_gl_texture(gl, &img.data().borrow().as_ref().unwrap())?;
 
     let tex = gt.tex;
 
-    img.data()
-        .borrow_mut()
-        .as_mut()
-        .unwrap()
-        .init_graphics(gt);
+    img.data().borrow_mut().as_mut().unwrap().init_graphics(gt);
 
     Ok(tex)
 }
@@ -662,7 +652,6 @@ pub(crate) struct GraphicTexture {
     pub tex: glow::WebTextureKey,
 }
 
-
 fn create_gl_texture(gl: &GlContext, data: &TextureData) -> Result<GraphicTexture, String> {
     unsafe {
         let tex = gl.create_texture()?;
@@ -705,45 +694,7 @@ fn create_gl_texture(gl: &GlContext, data: &TextureData) -> Result<GraphicTextur
         gl.bind_texture(glow::TEXTURE_2D, None);
         Ok(GraphicTexture {
             gl: gl.clone(),
-            tex: tex
+            tex: tex,
         })
     }
 }
-
-use futures::{future, Async, Future};
-use js_sys::{ArrayBuffer, Promise, Uint8Array};
-use wasm_bindgen_futures::future_to_promise;
-use wasm_bindgen_futures::JsFuture;
-use web_sys::{XmlHttpRequest, XmlHttpRequestEventTarget, XmlHttpRequestResponseType};
-use std::cell::RefCell;
-
-
-struct InnerTexture {
-    data: Vec<u8>,
-    width: i32,
-    height: i32,
-    texture: Option<glow::WebTextureKey>,
-}
-
-struct TextureGeometry {
-    x: f32,
-    y: f32,
-    width: f32,
-    height: f32,
-    rotation: f32
-    //PIVOT? what needs texture packer to works?
-}
-
-struct Tex {
-    inner: Rc<InnerTexture>,
-    rect: (f32, f32, f32, f32) //Rect to use textures like texturepacker - this should be used to calculate the textcoord buffer
-}
-
-impl Tex {
-    pub fn crop(&self, x: f32, y:f32, width: f32, height: f32) -> Tex {
-        unimplemented!()
-        //TODO clone the texture keeping the inner but changing the rect.
-    }
-}
-
-

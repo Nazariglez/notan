@@ -1,15 +1,15 @@
-use hashbrown::HashMap;
-use super::resource::*;
 use super::loader::Loader;
+use super::resource::*;
+use hashbrown::HashMap;
 
 pub struct ResourceManager<'a> {
-    to_load: HashMap<String, Box<Resource+'a>>,
+    to_load: HashMap<String, Box<Resource + 'a>>,
 }
 
 impl<'a> ResourceManager<'a> {
     pub fn new() -> Self {
         Self {
-            to_load: HashMap::new()
+            to_load: HashMap::new(),
         }
     }
 
@@ -18,11 +18,13 @@ impl<'a> ResourceManager<'a> {
         Loader::new(self)
     }
 
-    pub fn load<R>(&mut self, file:&str) -> Result<R, String>
-        where R: Resource + ResourceConstructor + Clone + 'a
+    pub fn load<R>(&mut self, file: &str) -> Result<R, String>
+    where
+        R: Resource + ResourceConstructor + Clone + 'a,
     {
         let asset = R::new(file);
-        self.to_load.insert(file.to_string(), Box::new(asset.clone()));
+        self.to_load
+            .insert(file.to_string(), Box::new(asset.clone()));
         Ok(asset)
     }
 
@@ -50,4 +52,3 @@ impl<'a> ResourceManager<'a> {
         self.to_load.clear();
     }
 }
-

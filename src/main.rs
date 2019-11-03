@@ -1,17 +1,17 @@
 mod glm;
 mod graphics;
 mod math;
-mod window;
 mod res;
+mod window;
 
 use crate::graphics::color::{rgba, Color};
-use crate::graphics::{Vertex};
+use crate::graphics::Vertex;
 use crate::math::Geometry;
 use std::rc::Rc;
 use wasm_bindgen::__rt::core::cell::RefCell;
+use wasm_bindgen::__rt::std::collections::HashMap;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::__rt::std::collections::HashMap;
 
 use res::*;
 
@@ -23,7 +23,8 @@ pub struct App<'a> {
 
 impl<'a> App<'a> {
     pub fn load<A>(&mut self, file: &str) -> Result<A, String>
-    where A: ResourceConstructor + Resource + Clone + 'a
+    where
+        A: ResourceConstructor + Resource + Clone + 'a,
     {
         self.resources.load(file)
     }
@@ -59,9 +60,7 @@ impl<S> AppBuilder<S> {
 
         start_cb(&mut app, &mut state);
         window::run(move || {
-            app.resources
-                .try_load()
-                .unwrap();
+            app.resources.try_load().unwrap();
 
             update_cb(&mut app, &mut state);
             draw_cb(&mut app, &mut state);
@@ -98,7 +97,7 @@ pub fn init<S>(state: S) -> AppBuilder<S> {
         state: Some(state),
         draw_callback: None,
         update_callback: None,
-        start_callback: None
+        start_callback: None,
     }
 }
 
@@ -246,7 +245,7 @@ struct State {
     pub i: i32,
     pub geom: Geometry,
     pub img: Texture,
-    pub img2: Option<Texture>
+    pub img2: Option<Texture>,
 }
 
 fn draw_geometry(app: &mut App, state: &mut State) {
@@ -258,25 +257,25 @@ fn draw_geometry(app: &mut App, state: &mut State) {
 }
 
 fn draw_sprite(app: &mut App, state: &mut State) {
-//    if !state.img.is_loaded() {
-//        return;
-//    }
+    //    if !state.img.is_loaded() {
+    //        return;
+    //    }
     let gfx = &mut app.graphics;
     gfx.begin();
     gfx.clear(rgba(0.1, 0.2, 0.3, 1.0));
-//    gfx.transform().scale(3.0, 3.0);
+    //    gfx.transform().scale(3.0, 3.0);
     //    gfx.draw_geometry(&mut state.geom);
-//    gfx.image(0.0, 0.0, &mut state.img);
-//    gfx.image(10.0, 10.0, &mut state.img);
-//    gfx.image(20.0, 20.0, &mut state.img);
-//    gfx.image(30.0, 30.0, &mut state.img);
-//    gfx.transform().pop();
-//    gfx.transform().scale(5.0, 5.0);
-//    gfx.draw_image(300.0, 300.0, &mut state.img);
+    //    gfx.image(0.0, 0.0, &mut state.img);
+    //    gfx.image(10.0, 10.0, &mut state.img);
+    //    gfx.image(20.0, 20.0, &mut state.img);
+    //    gfx.image(30.0, 30.0, &mut state.img);
+    //    gfx.transform().pop();
+    //    gfx.transform().scale(5.0, 5.0);
+    //    gfx.draw_image(300.0, 300.0, &mut state.img);
     gfx.set_color(Color::Green);
     gfx.transform().translate(300.0, 300.0);
     gfx.transform().scale(15.0, 15.0);
-//    gfx.cropped_image(0.0, 0.0, 10.0, 10.0, 10.0, 10.0, &mut state.img);
+    //    gfx.cropped_image(0.0, 0.0, 10.0, 10.0, 10.0, 10.0, &mut state.img);
     gfx.transform().pop();
     gfx.transform().pop();
     gfx.set_color(Color::White);
@@ -284,7 +283,11 @@ fn draw_sprite(app: &mut App, state: &mut State) {
 }
 
 struct Bunny {
-    x: f32, y: f32, speed_x: f32, speed_y: f32, color: Color
+    x: f32,
+    y: f32,
+    speed_x: f32,
+    speed_y: f32,
+    color: Color,
 }
 
 fn random_color() -> Color {
@@ -292,52 +295,45 @@ fn random_color() -> Color {
         js_sys::Math::random() as f32,
         js_sys::Math::random() as f32,
         js_sys::Math::random() as f32,
-        1.0
+        1.0,
     )
 }
 
 fn bunny_update(app: &mut App, state: &mut BState) {
-//    if !state.bunny.is_loaded() {
-//        state.bunny.try_load();
-//    }
-
     for _ in 0..10 {
-        state.bunnies.push(
-            Bunny {
-                x: 0.0,
-                y: 0.0,
-                speed_x: js_sys::Math::random() as f32 * 10.0,
-                speed_y: js_sys::Math::random() as f32 * 10.0 - 5.0,
-                color: random_color()
-            }
-        );
+        state.bunnies.push(Bunny {
+            x: 0.0,
+            y: 0.0,
+            speed_x: js_sys::Math::random() as f32 * 10.0,
+            speed_y: js_sys::Math::random() as f32 * 10.0 - 5.0,
+            color: random_color(),
+        });
     }
 
-    state.bunnies.iter_mut()
-        .for_each(| b| {
-            b.x += b.speed_x;
-            b.y += b.speed_y;
-            b.speed_y += 0.75;
+    state.bunnies.iter_mut().for_each(|b| {
+        b.x += b.speed_x;
+        b.y += b.speed_y;
+        b.speed_y += 0.75;
 
-            if b.x > 800.0 {
-                b.speed_x *= -1.0;
-                b.x = 800.0;
-            } else if b.x < 0.0 {
-                b.speed_x *= -1.0;
-                b.x = 0.0
-            }
+        if b.x > 800.0 {
+            b.speed_x *= -1.0;
+            b.x = 800.0;
+        } else if b.x < 0.0 {
+            b.speed_x *= -1.0;
+            b.x = 0.0
+        }
 
-            if b.y > 600.0 {
-                b.speed_y *= -0.85;
-                b.y = 600.0;
-                if js_sys::Math::random() > 0.5 {
-                    b.speed_y -= js_sys::Math::random() as f32 * 6.0;
-                }
-            } else if b.y < 0.0 {
-                b.speed_y = 0.0;
-                b.y = 0.0;
+        if b.y > 600.0 {
+            b.speed_y *= -0.85;
+            b.y = 600.0;
+            if js_sys::Math::random() > 0.5 {
+                b.speed_y -= js_sys::Math::random() as f32 * 6.0;
             }
-        });
+        } else if b.y < 0.0 {
+            b.speed_y = 0.0;
+            b.y = 0.0;
+        }
+    });
 }
 
 fn bunny(app: &mut App, state: &mut BState) {
@@ -349,9 +345,6 @@ fn bunny(app: &mut App, state: &mut BState) {
         gfx.set_color(b.color);
         gfx.image(bunny, b.x, b.y);
     }
-//    log(&format!("{} {}", state.bunnies.len(), bunny.is_loaded()));
-//    state.bunnies.iter_mut()
-//        .for_each(|b| gfx.draw_image(b.x, b.y, &mut state.bunny));
     gfx.end();
 }
 
@@ -361,7 +354,7 @@ fn start_bunny(app: &mut App, state: &mut BState) {
 
 struct BState {
     bunny: Option<Texture>,
-    bunnies: Vec<Bunny>
+    bunnies: Vec<Bunny>,
 }
 
 fn main() {
@@ -390,7 +383,7 @@ fn main() {
 
     let b_state = BState {
         bunny: None,
-        bunnies: vec![]
+        bunnies: vec![],
     };
 
     init(b_state)
@@ -404,17 +397,17 @@ fn main() {
         i: 0,
         geom: g,
         img: Texture::new("h.png"),
-        img2: None
+        img2: None,
     };
 
-//    init(state)
-//        //                .draw(draw_shapes)
-//        //        .draw(draw_geometry)
-//        .draw(draw_sprite)
-//        .resource(load_resource)
-//        .update(update_cb)
-//        .build()
-//        .unwrap();
+    //    init(state)
+    //        //                .draw(draw_shapes)
+    //        //        .draw(draw_geometry)
+    //        .draw(draw_sprite)
+    //        .resource(load_resource)
+    //        .update(update_cb)
+    //        .build()
+    //        .unwrap();
 }
 
 pub fn log(msg: &str) {

@@ -1,0 +1,15 @@
+<html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <title>nae - {{ EXAMPLE }}</title>
+</head>
+<body>
+<canvas id="canvas" width="800" height="600"></canvas>
+<script src="./{{ EXAMPLE }}.js"></script>
+<script>
+      window.addEventListener("load", async () => {
+        await wasm_bindgen("./{{ EXAMPLE }}_bg.wasm");
+      });
+    </script>
+</body>
+</html>
