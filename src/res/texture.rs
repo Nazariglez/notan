@@ -6,9 +6,13 @@ use super::loader::load_file;
 use glow::HasContext;
 use crate::graphics::shaders::GraphicTexture;
 use crate::log;
+use crate::math::{Rect, rect};
+
+
+//TODO add rect and rotation to support texturepacker?
 
 #[derive(Debug, Clone)]
-pub struct TextureData {
+pub(crate) struct TextureData {
     pub(crate) width: i32,
     pub(crate) height: i32,
     pub(crate) raw: Vec<u8>,
@@ -17,15 +21,7 @@ pub struct TextureData {
 
 impl TextureData {
     pub(crate) fn init_graphics(&mut self, g:GraphicTexture) {
-        if self.has_context() {
-            return;
-        }
-
         self.graphics = Some(g);
-    }
-
-    pub fn has_context(&self) -> bool {
-        self.graphics.is_some()
     }
 }
 
@@ -48,35 +44,34 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn data(&mut self) -> &Rc<RefCell<Option<TextureData>>> {
+    pub(crate) fn data(&mut self) -> &Rc<RefCell<Option<TextureData>>> {
         &self.data
     }
 
-    pub fn tex(&self) -> glow::WebTextureKey {
-        self.data
-            .borrow()
-            .as_ref()
-            .unwrap()
-            .graphics
-            .as_ref()
-            .unwrap()
-            .tex
+    pub fn tex(&self) -> Option<glow::WebTextureKey> {
+        if let Some(d) = self.data.borrow().as_ref() {
+            if let Some(g) = d.graphics.as_ref() {
+                return Some(g.tex)
+            }
+        }
+
+        None
     }
 
-    pub fn width(&self) -> i32 {
-        self.data
-            .borrow()
-            .as_ref()
-            .unwrap()
-            .width
+    pub fn width(&self) -> f32 {
+        if let Some(d) = self.data.borrow().as_ref() {
+            d.width as f32
+        } else {
+            0.0
+        }
     }
 
-    pub fn height(&self) -> i32 {
-        self.data
-            .borrow()
-            .as_ref()
-            .unwrap()
-            .height
+    pub fn height(&self) -> f32 {
+        if let Some(d) = self.data.borrow().as_ref() {
+            d.height as f32
+        } else {
+            0.0
+        }
     }
 }
 

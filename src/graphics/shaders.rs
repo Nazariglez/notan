@@ -487,18 +487,13 @@ impl SpriteBatcher {
             return;
         }
 
-        if !img.data().borrow().as_ref().unwrap().has_context() {
-            let tex = create_gl_texture(gl, &img.data().borrow().as_ref().unwrap()).unwrap();
-            let mut d = img.data()
-                .borrow_mut()
-                .as_mut()
-                .unwrap()
-                .init_graphics(tex);
-        }
+        let tex = match img.tex() {
+            Some(t) => t,
+            _ => init_graphic_texture(gl, img).unwrap()
+        };
 
-        let tex = img.tex();
-        let ww = img.width() as f32;
-        let hh = img.height() as f32;
+        let ww = img.width();
+        let hh = img.height();
 
         let sw = if source_width == 0.0 { ww } else { source_width };
         let sh = if source_height == 0.0 { hh } else { source_height };
@@ -590,6 +585,26 @@ impl SpriteBatcher {
 
         self.index += count;
     }
+}
+
+fn init_graphic_texture(gl: &GlContext, img: &mut Texture) -> Result<glow::WebTextureKey, String> {
+    let gt = create_gl_texture(
+        gl,
+        &img.data()
+            .borrow()
+            .as_ref()
+            .unwrap()
+    )?;
+
+    let tex = gt.tex;
+
+    img.data()
+        .borrow_mut()
+        .as_mut()
+        .unwrap()
+        .init_graphics(gt);
+
+    Ok(tex)
 }
 
 const SPRITE_VERTEX: &str = r#"#version 300 es
