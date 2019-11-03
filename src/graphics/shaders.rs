@@ -4,6 +4,7 @@ use crate::{glm, log, Color};
 use glow::*;
 use std::collections::HashMap;
 use std::rc::Rc;
+use crate::res::*;
 
 type ShaderKey = glow::WebShaderKey;
 type ProgramKey = glow::WebProgramKey;
@@ -636,14 +637,6 @@ fn create_sprite_shader(gl: &GlContext) -> Result<Shader, String> {
     )?)
 }
 
-#[derive(Debug, Clone)]
-struct TextureData {
-    tex: glow::WebTextureKey,
-    width: i32,
-    height: i32,
-    raw: Vec<u8>,
-}
-
 fn create_gl_texture(gl: &GlContext, data: &[u8]) -> Result<TextureData, String> {
     unsafe {
         let tex = gl.create_texture()?;
@@ -710,79 +703,6 @@ use wasm_bindgen_futures::JsFuture;
 use web_sys::{XmlHttpRequest, XmlHttpRequestEventTarget, XmlHttpRequestResponseType};
 use std::cell::RefCell;
 
-pub fn load_file(path: &str) -> impl Future<Item = Vec<u8>, Error = String> {
-    future::result(xhr_req(path)).and_then(|xhr| {
-        // Code ported from quicksilver https://github.com/ryanisaacg/quicksilver/blob/master/src/file.rs#L30
-        future::poll_fn(move || {
-            let status = xhr.status().unwrap() / 100;
-            let done = xhr.ready_state() == 4;
-            match (status, done) {
-                (2, true) => Ok(Async::Ready(xhr.response().unwrap())),
-                (2, _) => Ok(Async::NotReady),
-                (0, _) => Ok(Async::NotReady),
-                _ => Err(format!("Error loading file.")), //todo add path to know which file is failing. (borrow error here?)
-            }
-        })
-        .and_then(|data| {
-            log(&format!("DATA: {:?}", data));
-            let js_arr: Uint8Array = Uint8Array::new(&data);
-            let mut arr = vec![];
-            let mut cb = |a, b, c| {
-                arr.push(a);
-            };
-            js_arr.for_each(&mut cb);
-            Ok(arr)
-            //                let mut arr = vec![];
-            //                js_arr.copy_to(arr.as_mut_slice());
-            //                Ok(arr)
-        })
-    })
-}
-
-fn xhr_req(url: &str) -> Result<XmlHttpRequest, String> {
-    let mut xhr = XmlHttpRequest::new().map_err(|e| e.as_string().unwrap())?;
-
-    xhr.set_response_type(XmlHttpRequestResponseType::Arraybuffer);
-    xhr.open("GET", url).map_err(|e| e.as_string().unwrap())?;
-    xhr.send().map_err(|e| e.as_string().unwrap())?;
-
-    Ok(xhr)
-}
-
-pub trait AssetConstructor {
-    fn new(path: &str) -> Self;
-}
-
-/// Represent an Asset
-pub trait Asset {
-    /// Create an instance from a file path
-//    fn new(path: &str) -> Self;
-
-    /// Get the future stored on charge of load the file
-    fn future(&mut self) -> Rc<RefCell<Future<Item = Vec<u8>, Error = String>>>;
-
-    /// Dispatched when the asset buffer is loaded, used to process and store the data ready to be consumed
-    fn set_asset(&mut self, asset: Vec<u8>);
-
-    /// Check if the asset is loaded on memory
-    fn is_loaded(&self) -> bool;
-
-    /// Execute the future in charge of loading the file
-    fn try_load(&mut self) -> Result<(), String> {
-        if self.is_loaded() {
-            return Ok(());
-        }
-
-        self.future().borrow_mut().poll().map(|s| {
-            Ok(match s {
-                Async::Ready(buff) => {
-                    self.set_asset(buff);
-                }
-                _ => {}
-            })
-        })?
-    }
-}
 
 struct InnerTexture {
     data: Vec<u8>,
@@ -812,34 +732,4 @@ impl Tex {
     }
 }
 
-#[derive(Clone)]
-pub struct Texture {
-    pub inner: Rc<RefCell<Option<Vec<u8>>>>,
-    fut: Rc<RefCell<Box<Future<Item = Vec<u8>, Error = String>>>>,
-    tex: Option<TextureData>,
-}
 
-impl AssetConstructor for Texture {
-    fn new(file: &str) -> Self {
-        Self {
-            inner: Rc::new(RefCell::new(None)),
-            fut: Rc::new(RefCell::new(Box::new(load_file(file)))),
-            tex: None,
-        }
-    }
-}
-
-impl Asset for Texture {
-    fn future(&mut self) -> Rc<RefCell<Future<Item = Vec<u8>, Error = String>>> {
-        self.fut.clone()
-    }
-
-    fn set_asset(&mut self, asset: Vec<u8>) {
-        log("loaded");
-        *self.inner.borrow_mut() = Some(asset);
-    }
-
-    fn is_loaded(&self) -> bool {
-        self.inner.borrow().is_some()
-    }
-}

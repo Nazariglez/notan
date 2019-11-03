@@ -10,6 +10,7 @@ use tess::basic_shapes::{fill_circle, stroke_circle};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys;
+use crate::res::*;
 
 pub mod color;
 pub mod shaders;
@@ -37,11 +38,6 @@ TODO API:
         .rotate_dev(45.0);
         //.matrix(push your own matrix)L
 */
-
-
-
-
-pub use shaders::{Asset, Texture};
 
 //TODO glsl to spv https://crates.io/crates/shaderc -> https://crates.io/crates/spirv_cross spv->glsl->etc...
 

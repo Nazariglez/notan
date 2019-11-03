@@ -2,90 +2,31 @@ mod glm;
 mod graphics;
 mod math;
 mod window;
+mod res;
 
 use crate::graphics::color::{rgba, Color};
-use crate::graphics::{Asset, Texture, Vertex};
+use crate::graphics::{Vertex};
 use crate::math::Geometry;
 use std::rc::Rc;
 use wasm_bindgen::__rt::core::cell::RefCell;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::__rt::std::collections::HashMap;
-use crate::graphics::shaders::AssetConstructor;
 
-struct ResourceManager<'a> {
-    loaded: HashMap<String, Rc<RefCell<Asset+'a>>>,
-    to_load: HashMap<String, Rc<RefCell<Asset+'a>>>,
-}
-
-impl<'a> ResourceManager<'a> {
-    pub fn new() -> Self {
-        Self {
-            loaded: HashMap::new(),
-            to_load: HashMap::new()
-        }
-    }
-
-    pub fn load<A>(&mut self, file:&str) -> Result<A, String>
-        where A: Asset + AssetConstructor + Clone + 'a
-    {
-//        if let Some(a) = self.loaded.get(file) {
-//            return Ok(*a.as_ref().clone());
-//        }
-//
-//        if let Some(a) = self.to_load.get(file) {
-////            return Ok(a.clone());
-//        }
-//
-        let asset = A::new(file);
-        self.to_load.insert(file.to_string(), Rc::new(RefCell::new(asset.clone())));
-        Ok(asset)
-//        unimplemented!()
-    }
-
-    pub fn try_load(&mut self) -> Result<(), String> {
-        if self.to_load.len() == 0 {
-            return Ok(());
-        }
-
-        let mut loaded_files = vec![];
-
-        for (f, a) in self.to_load.iter_mut() {
-            let mut a = a.borrow_mut();
-            a.try_load()?;
-            if a.is_loaded() {
-                loaded_files.push(f.clone());
-            }
-        }
-
-        for f in loaded_files {
-            self.to_load.remove(&f);
-        }
-
-        Ok(())
-    }
-
-    pub fn clear(&mut self) {
-        self.loaded.clear();
-        self.to_load.clear();
-    }
-}
+use res::*;
 
 pub struct App<'a> {
     window: window::Window,
     graphics: graphics::Context,
-    asset_manager: ResourceManager<'a>,
+    resources: ResourceManager<'a>,
 }
 
 impl<'a> App<'a> {
     pub fn load<A>(&mut self, file: &str) -> Result<A, String>
-    where A: AssetConstructor + Asset + Clone + 'a
+    where A: ResourceConstructor + Resource + Clone + 'a
     {
-        self.asset_manager.load(file)
+        self.resources.load(file)
     }
-//    pub fn assets(&mut self) -> &mut ResourceManager<'static> {
-//        &mut self.asset_manager
-//    }
 }
 
 pub struct AppBuilder<S>
@@ -106,7 +47,7 @@ impl<S> AppBuilder<S> {
         let mut app = App {
             window: win,
             graphics: gfx,
-            asset_manager: ResourceManager::new(),
+            resources: ResourceManager::new(),
         };
 
         let mut state = self.state.take().unwrap();
@@ -118,7 +59,7 @@ impl<S> AppBuilder<S> {
 
         start_cb(&mut app, &mut state);
         window::run(move || {
-            app.asset_manager
+            app.resources
                 .try_load()
                 .unwrap();
 
