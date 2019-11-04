@@ -1,19 +1,28 @@
 use nae::prelude::*;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
-#[nae_start]
-fn main() {
-    nae::init({}).draw(on_draw).build().unwrap();
+//#[nae_start]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
+pub fn wasm_main() {
+    main();
 }
 
-fn on_draw(app: &mut App, state: ()) {
-    let gfx = &mut app.graphics;
-    gfx.begin()
-        .clear(color::rgba(0.1, 0.2, 0.3, 1.0))
-        .set_color(color::Color::Green)
-        .vertex(&[
-            graphics::Vertex::new(600.0, 200.0, Color::Red),
-            graphics::Vertex::new(700.0, 300.0, Color::Green),
-            graphics::Vertex::new(500.0, 300.0, Color::Blue),
-        ])
-        .end();
+fn main() {
+    nae::init({})
+        .draw(on_draw)
+        .build()
+        .unwrap();
+}
+
+fn on_draw(app: &mut App, state: &mut ()) {
+    let mut draw = app.draw();
+    draw.begin();
+    draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
+    draw.vertex(&[
+        Vertex::new(400.0, 100.0, Color::Red),
+        Vertex::new(100.0, 500.0, Color::Green),
+        Vertex::new(700.0, 500.0, Color::Blue),
+    ]);
+    draw.end();
 }

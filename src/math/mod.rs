@@ -1,6 +1,8 @@
 pub use crate::glm::{identity, mat3, mat4, vec2, vec3, Mat3, Mat4, Vec2, Vec3};
 pub use std::f32::consts::PI;
 
+//TODO Replace all the vecs and mats with the `vek` crate? (SIMD = performace)
+
 mod geometry;
 pub use geometry::*;
 

@@ -22,6 +22,7 @@ js-sys = "0.3.30"
 image = "0.22.3"
 rand = "0.7.2"
 hashbrown = "0.6.3"
+vek = "0.9.10"
 
 [dependencies.web-sys]
 version = "0.3.28"
@@ -38,3 +39,6 @@ features = [
 ]
 
 [features]
+
+[dev-dependencies]
+wasm-bindgen = "0.2.51"
