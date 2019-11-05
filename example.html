@@ -8,7 +8,8 @@
 <script src="./{{ EXAMPLE }}.js"></script>
 <script>
       window.addEventListener("load", async () => {
-        await wasm_bindgen("./{{ EXAMPLE }}_bg.wasm");
+        let nae = await wasm_bindgen("./{{ EXAMPLE }}_bg.wasm");
+        nae.nae_start();
       });
     </script>
 </body>

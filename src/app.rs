@@ -1,6 +1,6 @@
-use super::{window, window::*};
 use super::graphics::Context;
 use super::res::*;
+use super::{window, window::*};
 
 pub struct App<'a> {
     pub(crate) window: Window,
@@ -14,18 +14,18 @@ impl<'a> App<'a> {
     }
 
     pub fn load<A>(&mut self, file: &str) -> Result<A, String>
-        where
-            A: ResourceConstructor + Resource + Clone + 'a,
+    where
+        A: ResourceConstructor + Resource + Clone + 'a,
     {
         self.resources.load(file)
     }
 }
 
 pub struct AppBuilder<S>
-    where
-        S: 'static,
+where
+    S: 'static,
 {
-    state: Option<S>,
+    state_cb: fn(&mut App) -> S,
     draw_callback: Option<fn(&mut App, &mut S)>,
     update_callback: Option<fn(&mut App, &mut S)>,
     start_callback: Option<fn(&mut App, &mut S)>,
@@ -42,7 +42,7 @@ impl<S> AppBuilder<S> {
             resources: ResourceManager::new(),
         };
 
-        let mut state = self.state.take().unwrap();
+        let mut state = (self.state_cb)(&mut app);
         let mut draw_cb = self.draw_callback.take().unwrap_or(|_, _| {});
         let mut update_cb = self.update_callback.take().unwrap_or(|_, _| {});
         let mut start_cb = self.start_callback.take().unwrap_or(|_, _| {});
@@ -78,12 +78,20 @@ impl<S> AppBuilder<S> {
     }
 }
 
-pub fn init<S>(state: S) -> AppBuilder<S> {
+pub fn init() -> AppBuilder<()> {
     AppBuilder {
-        state: Some(state),
+        state_cb: |_| (),
         draw_callback: None,
         update_callback: None,
         start_callback: None,
     }
 }
 
+pub fn with_state<S>(cb: fn(&mut App) -> S) -> AppBuilder<S> {
+    AppBuilder {
+        state_cb: cb,
+        draw_callback: None,
+        update_callback: None,
+        start_callback: None,
+    }
+}
