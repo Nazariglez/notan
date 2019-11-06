@@ -8,6 +8,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys;
 
+//TODO the window backend should consume whatever window with the trait raw-window-handle to be as portable as posible
+
 fn default_cb() {}
 
 pub struct Window {

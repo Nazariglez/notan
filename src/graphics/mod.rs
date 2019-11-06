@@ -183,7 +183,7 @@ fn get_projection(width: i32, height: i32) -> glm::Mat3 {
     glm::mat3(2.0 / w, 0.0, -1.0, 0.0, -2.0 / h, 1.0, 0.0, 0.0, 1.0)
 }
 
-pub struct Context {
+pub struct Context2d {
     gl: GlContext,
     driver: Driver,
     color_batcher: shaders::ColorBatcher,
@@ -193,8 +193,8 @@ pub struct Context {
     data: DrawData,
 }
 
-impl Context {
-    pub fn new(win: &web_sys::HtmlCanvasElement) -> Result<Context, String> {
+impl Context2d {
+    pub fn new(win: &web_sys::HtmlCanvasElement) -> Result<Context2d, String> {
         let width = win.width() as i32;
         let height = win.height() as i32;
         let (gl, driver) = create_gl_context(win)?;
@@ -209,7 +209,7 @@ impl Context {
             gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
         }
 
-        Ok(Context {
+        Ok(Context2d {
             data,
             gl,
             driver,
@@ -499,8 +499,13 @@ impl Context {
 
     //TODO add a method to draw the image scaled without using the matrix?
 
-    pub fn pattern(&mut self, x: f32, y: f32, width: f32, height: f32, img: &mut Texture) {
+    pub fn pattern(&mut self, img: &mut Texture, x:f32, y:f32, width:f32, height:f32) {
+        self.pattern_ext(img, x, y, width, height, 0.0, 0.0);
+    }
+
+    pub fn pattern_ext(&mut self, img: &mut Texture, x:f32, y:f32, width:f32, height:f32, x_offset: f32, y_offset: f32) {
         //TODO patter also add draw_patter_ext( with offset and scale )
+        //https://englercj.github.io/2018/01/07/gl-tiled/
     }
 
     pub fn nine_slice(&mut self, x: f32, y: f32, opts: String) {}

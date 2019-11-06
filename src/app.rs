@@ -1,15 +1,25 @@
-use super::graphics::Context;
+use super::graphics::Context2d;
 use super::res::*;
 use super::{window, window::*};
 
+
+/*TODO avoid to skip the draw callback:
+    returning from update: DrawState::Skip (to draw DrawState::Draw)
+    or from a function on the app: app.skip_next_draw(); //app.resume_next_draw() to cancel?
+    --
+    This is useful for GUI systems, and mobile devices, to save battery.
+*/
+
+//TODO backend requirements for resvg https://github.com/RazrFalcon/resvg/blob/master/docs/backend_requirements.md
+
 pub struct App<'a> {
     pub(crate) window: Window,
-    pub(crate) graphics: Context,
+    pub(crate) graphics: Context2d,
     pub(crate) resources: ResourceManager<'a>,
 }
 
 impl<'a> App<'a> {
-    pub fn draw(&mut self) -> &mut Context {
+    pub fn draw(&mut self) -> &mut Context2d {
         &mut self.graphics
     }
 
@@ -34,7 +44,7 @@ where
 impl<S> AppBuilder<S> {
     pub fn build(&mut self) -> Result<(), String> {
         let win = Window::new();
-        let gfx = Context::new(win.window())?;
+        let gfx = Context2d::new(win.window())?;
 
         let mut app = App {
             window: win,

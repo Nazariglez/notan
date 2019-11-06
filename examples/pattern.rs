@@ -8,7 +8,7 @@ fn draw(app: &mut App, logo: &mut Texture) {
     let draw = app.draw();
     draw.begin();
     draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
-    draw.image(logo, 160.0, 60.0);
+    draw.pattern(logo, 100.0, 100.0, 600.0, 400.0);
     draw.end();
 }
 
