@@ -8,6 +8,11 @@ use hashbrown::HashMap;
 type ShaderKey = glow::WebShaderKey;
 type ProgramKey = glow::WebProgramKey;
 
+/*TODO masking: https://stackoverflow.com/questions/46806063/how-stencil-buffer-and-masking-work
+    https://jsfiddle.net/z11zhf01/1
+    https://jsfiddle.net/gpkdrs93/
+*/
+
 pub struct Attribute {
     name: String,
     size: i32,
@@ -416,7 +421,7 @@ pub struct SpriteBatcher {
 impl SpriteBatcher {
     pub fn new(gl: &GlContext, data: &DrawData) -> Result<Self, String> {
         let vao = create_vao(gl)?;
-        let shader = create_sprite_shader(gl)?;
+        let shader = create_pattern_shader(gl)?;
         Ok(Self {
             shader,
             vao,
@@ -614,6 +619,8 @@ void main() {
 }
 "#;
 
+//TODO https://thebookofshaders.com/09/
+
 const SPRITE_FRAGMENT: &str = r#"#version 300 es
 precision mediump float;
 
@@ -698,3 +705,68 @@ fn create_gl_texture(gl: &GlContext, data: &TextureData) -> Result<GraphicTextur
         })
     }
 }
+
+const PATTERN_VERTEX: &str = r#"#version 300 es
+in vec2 a_position;
+in vec4 a_color;
+out vec4 v_color;
+
+in vec2 a_texcoord;
+out vec2 v_texcoord;
+out float v_scale;
+
+uniform mat3 u_matrix;
+
+void main() {
+  v_scale = 10.0;
+  vec2 coord = a_texcoord;
+  vec2 size = vec2(64.0, 64.0) * v_scale;
+  vec2 offset = fract((size - vec2(32.0, 32.0)) / size);
+
+//  coord = fract(coord*1.1);
+  coord += offset;
+  v_color = a_color;
+  v_texcoord = coord;
+  gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+}
+"#;
+
+//TODO https://thebookofshaders.com/09/
+
+const PATTERN_FRAGMENT: &str = r#"#version 300 es
+precision mediump float;
+
+in vec4 v_color;
+out vec4 outColor;
+
+in vec2 v_texcoord;
+uniform sampler2D u_texture;
+
+in float v_scale;
+
+void main() {
+    vec2 coord = v_texcoord;
+    coord = fract(coord*v_scale);
+//    coord.x += 0.0;
+    outColor = texture(u_texture, coord) * v_color;
+}
+"#;
+
+fn create_pattern_shader(gl: &GlContext) -> Result<Shader, String> {
+    //https://webgl2fundamentals.org/webgl/lessons/webgl-2d-drawimage.html
+    let attrs = vec![
+        Attribute::new("a_position", 2, glow::FLOAT, false),
+        Attribute::new("a_color", 4, glow::FLOAT, false),
+        Attribute::new("a_texcoord", 2, glow::FLOAT, true),
+    ];
+
+    let uniforms = vec!["u_matrix", "u_texture"];
+    Ok(Shader::new(
+        gl,
+        PATTERN_VERTEX,
+        PATTERN_FRAGMENT,
+        attrs,
+        uniforms,
+    )?)
+}
+
