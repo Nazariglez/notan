@@ -11,7 +11,7 @@ pub struct ResourceData {
 
 impl ResourceData {
     /// Create a new resource data storing the future in charge of load the file
-    pub fn new(future: Box<Future<Item = Vec<u8>, Error = String>>) -> Self {
+    pub fn new(future: Box<dyn Future<Item = Vec<u8>, Error = String>>) -> Self {
         Self {
             data: vec![],
             future: Some(future),
@@ -19,7 +19,7 @@ impl ResourceData {
     }
 
     /// Create a new ResourceData and wraps it inside a Rc<RefCell>>
-    pub fn rc(future: Box<Future<Item = Vec<u8>, Error = String>>) -> Rc<RefCell<Self>> {
+    pub fn rc(future: Box<dyn Future<Item = Vec<u8>, Error = String>>) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self::new(future)))
     }
 

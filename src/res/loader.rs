@@ -6,10 +6,10 @@ use hashbrown::HashMap;
 use js_sys::Uint8Array;
 use std::cell::RefCell;
 use std::rc::Rc;
-use web_sys::{XmlHttpRequest, XmlHttpRequestEventTarget, XmlHttpRequestResponseType};
+use web_sys::{XmlHttpRequest, XmlHttpRequestResponseType};
 
 fn xhr_req(url: &str) -> Result<XmlHttpRequest, String> {
-    let mut xhr = XmlHttpRequest::new().map_err(|e| e.as_string().unwrap())?;
+    let xhr = XmlHttpRequest::new().map_err(|e| e.as_string().unwrap())?;
 
     xhr.set_response_type(XmlHttpRequestResponseType::Arraybuffer);
     xhr.open("GET", url).map_err(|e| e.as_string().unwrap())?;
@@ -28,13 +28,13 @@ pub fn load_file(path: &str) -> impl Future<Item = Vec<u8>, Error = String> {
                 (2, true) => Ok(Async::Ready(xhr.response().unwrap())),
                 (2, _) => Ok(Async::NotReady),
                 (0, _) => Ok(Async::NotReady),
-                _ => Err(format!("Error loading file.")), //todo add path to know which file is failing. (borrow error here?)
+                _ => Err("Error loading file.".to_string()), //todo add path to know which file is failing. (borrow error here?)
             }
         })
         .and_then(|data| {
             let js_arr: Uint8Array = Uint8Array::new(&data);
             let mut arr = vec![];
-            let mut cb = |a, b, c| {
+            let mut cb = |a, _b, _c| {
                 arr.push(a);
             };
             js_arr.for_each(&mut cb);
@@ -49,7 +49,7 @@ pub fn load_file(path: &str) -> impl Future<Item = Vec<u8>, Error = String> {
 
 //TODO loader to load resources in batch doesn't works...
 pub struct Loader<'a> {
-    to_load: HashMap<String, Rc<RefCell<Resource + 'a>>>,
+    to_load: HashMap<String, Rc<RefCell<dyn Resource + 'a>>>,
     manager: &'a mut ResourceManager<'a>,
 }
 
@@ -57,7 +57,7 @@ impl<'a> Loader<'a> {
     pub fn new(manager: &'a mut ResourceManager<'a>) -> Self {
         Self {
             to_load: HashMap::new(),
-            manager: manager,
+            manager,
         }
     }
 
@@ -67,7 +67,7 @@ impl<'a> Loader<'a> {
     {
         let asset = self.manager.load::<A>(file).unwrap();
         let asset = Rc::new(RefCell::new(asset));
-        self.to_load.insert(file.to_string(), asset.clone());
+        self.to_load.insert(file.to_string(), asset);
         self
     }
 

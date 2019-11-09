@@ -3,7 +3,7 @@ use super::resource::*;
 use hashbrown::HashMap;
 
 pub struct ResourceManager<'a> {
-    to_load: HashMap<String, Box<Resource + 'a>>,
+    to_load: HashMap<String, Box<dyn Resource + 'a>>,
 }
 
 impl<'a> ResourceManager<'a> {
@@ -29,7 +29,7 @@ impl<'a> ResourceManager<'a> {
     }
 
     pub fn try_load(&mut self) -> Result<(), String> {
-        if self.to_load.len() == 0 {
+        if self.to_load.is_empty() {
             return Ok(());
         }
 

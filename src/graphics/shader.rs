@@ -130,10 +130,10 @@ impl Shader {
         }
 
         Ok(Self {
-            vertex: vertex,
-            fragment: fragment,
-            program: program,
-            gl: gl,
+            vertex,
+            fragment,
+            program,
+            gl,
             attributes: attrs,
             uniforms: uniform_list,
         })

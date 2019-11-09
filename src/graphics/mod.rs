@@ -490,7 +490,7 @@ impl Context2d {
         );
     }
 
-    pub fn nine_slice(&mut self, x: f32, y: f32, opts: String) {}
+    pub fn nine_slice(&mut self, _x: f32, _y: f32, _opts: String) {}
 
     pub fn vertex(&mut self, vertices: &[Vertex]) {
         let (vert, color_vert) =
@@ -516,7 +516,7 @@ impl Vertex {
     pub fn new(x: f32, y: f32, color: Color) -> Self {
         Self {
             pos: (x, y),
-            color: color,
+            color,
         }
     }
 }
@@ -536,7 +536,7 @@ fn get_circle_vertices(x: f32, y: f32, radius: f32, segments: Option<i32>) -> Ve
     let mut yy = 0.0;
 
     let mut vertices = vec![];
-    for i in (0..segments) {
+    for _i in 0..segments {
         let x1 = xx + x;
         let y1 = yy + y;
         let last_x = xx;

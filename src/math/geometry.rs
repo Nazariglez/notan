@@ -156,15 +156,15 @@ impl Geometry {
         &mut self,
         x: f32,
         y: f32,
-        start_angle: f32,
-        end_angle: f32,
-        radius: f32,
+        _start_angle: f32,
+        _end_angle: f32,
+        _radius: f32,
     ) -> &mut Self {
         if self.current_path.is_none() {
             self.move_to(x, y);
         }
 
-        if let Some(b) = &mut self.current_path {
+        if let Some(_b) = &mut self.current_path {
             //TODO add arc support
         }
 
@@ -249,7 +249,7 @@ impl Geometry {
         }
 
         //Use fill mode by default if there is some geometry in the stack without mode
-        if self.stack.len() != 0 {
+        if !self.stack.is_empty() {
             self.fill(Color::White);
         }
 
@@ -307,7 +307,7 @@ fn geometry_stroke(geometries: &Vec<GeomTypes>, strength: f32) -> Vec<f32> {
     for g in geometries {
         match g {
             GeomTypes::Path(p) => {
-                let result = tessellator
+                let _result = tessellator
                     .tessellate_path(p.iter(), &opts, &mut vertex_builder)
                     .unwrap();
             }
@@ -362,7 +362,7 @@ fn geometry_fill(geometries: &Vec<GeomTypes>) -> Vec<f32> {
     for g in geometries {
         match g {
             GeomTypes::Path(p) => {
-                let result = tessellator
+                let _result = tessellator
                     .tessellate_path(p.iter(), &opts, &mut vertex_builder)
                     .unwrap();
             }

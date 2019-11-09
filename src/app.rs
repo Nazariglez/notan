@@ -52,9 +52,9 @@ impl<S> AppBuilder<S> {
         };
 
         let mut state = (self.state_cb)(&mut app);
-        let mut draw_cb = self.draw_callback.take().unwrap_or(|_, _| {});
-        let mut update_cb = self.update_callback.take().unwrap_or(|_, _| {});
-        let mut start_cb = self.start_callback.take().unwrap_or(|_, _| {});
+        let draw_cb = self.draw_callback.take().unwrap_or(|_, _| {});
+        let update_cb = self.update_callback.take().unwrap_or(|_, _| {});
+        let start_cb = self.start_callback.take().unwrap_or(|_, _| {});
 
         start_cb(&mut app, &mut state);
         window::run(move || {
@@ -76,7 +76,7 @@ impl<S> AppBuilder<S> {
         self
     }
 
-    pub fn resource(&mut self, cb: fn(&mut App, &mut S, res: &str)) -> &mut Self {
+    pub fn resource(&mut self, _cb: fn(&mut App, &mut S, res: &str)) -> &mut Self {
         //TODO call this every time a new resource is loaded
         self
     }

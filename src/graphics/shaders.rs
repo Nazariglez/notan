@@ -4,8 +4,8 @@ use crate::graphics::DrawData;
 use crate::math::glm;
 use crate::res::*;
 use glow::*;
-use hashbrown::HashMap;
-use nalgebra_glm::{identity, vec2};
+
+
 
 /*TODO masking: https://stackoverflow.com/questions/46806063/how-stencil-buffer-and-masking-work
     https://jsfiddle.net/z11zhf01/1
@@ -53,7 +53,7 @@ pub(super) struct ColorBatcher {
 }
 
 impl ColorBatcher {
-    pub fn new(gl: &GlContext, data: &DrawData) -> Result<Self, String> {
+    pub fn new(gl: &GlContext, _data: &DrawData) -> Result<Self, String> {
         let vao = create_vao(gl)?;
         let shader = create_color_shader(gl)?;
         Ok(Self {
@@ -165,7 +165,7 @@ pub(super) struct SpriteBatcher {
 }
 
 impl SpriteBatcher {
-    pub fn new(gl: &GlContext, data: &DrawData) -> Result<Self, String> {
+    pub fn new(gl: &GlContext, _data: &DrawData) -> Result<Self, String> {
         let vao = create_vao(gl)?;
         let shader = create_sprite_shader(gl)?;
         Ok(Self {
@@ -349,7 +349,7 @@ pub(super) struct PatternBatcher {
 }
 
 impl PatternBatcher {
-    pub fn new(gl: &GlContext, data: &DrawData) -> Result<Self, String> {
+    pub fn new(gl: &GlContext, _data: &DrawData) -> Result<Self, String> {
         let vao = create_vao(gl)?;
         let shader = create_pattern_shader(gl)?;
         Ok(Self {
@@ -600,7 +600,7 @@ fn create_gl_texture(gl: &GlContext, data: &TextureData) -> Result<GraphicTextur
         gl.bind_texture(glow::TEXTURE_2D, None);
         Ok(GraphicTexture {
             gl: gl.clone(),
-            tex: tex,
+            tex,
         })
     }
 }

@@ -1,7 +1,7 @@
 use super::loader::load_file;
 use super::resource::*;
 use crate::graphics::shaders::GraphicTexture;
-use crate::math::{rect, Rect};
+
 use futures::future::Future;
 use glow::HasContext;
 use std::cell::RefCell;
