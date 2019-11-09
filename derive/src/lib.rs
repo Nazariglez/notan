@@ -1,6 +1,6 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
-use syn::{Item as SynItem, ItemFn};
+use syn::ItemFn;
 use quote::quote;
 
 #[proc_macro_attribute]

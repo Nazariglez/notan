@@ -2,7 +2,6 @@ use super::graphics::Context2d;
 use super::res::*;
 use super::{window, window::*};
 
-
 /*TODO avoid to skip the draw callback:
     returning from update: DrawState::Skip (to draw DrawState::Draw)
     or from a function on the app: app.skip_next_draw(); //app.resume_next_draw() to cancel?

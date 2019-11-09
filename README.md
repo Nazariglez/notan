@@ -44,6 +44,8 @@ Instructions to init and build a project
     - [ ] Patterns
     - [ ] Masking
     - [ ] Custom Shaders
+    - [ ] Text
+    - [ ] BitmapText
 - Drivers
     - [ ] WebGL
     - [ ] WebGL 2

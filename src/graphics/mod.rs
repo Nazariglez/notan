@@ -1,5 +1,5 @@
 use self::shaders::ColorBatcher;
-use crate::graphics::shaders::{Shader, SpriteBatcher};
+use crate::graphics::shaders::{PatternBatcher, SpriteBatcher};
 use crate::math::*;
 use crate::res::*;
 use color::Color;
@@ -12,7 +12,20 @@ use wasm_bindgen::JsCast;
 use web_sys;
 
 pub mod color;
+pub mod shader;
 pub mod shaders;
+pub mod transform;
+
+use transform::Transform2d;
+
+#[derive(Debug, Eq, PartialEq)]
+enum PaintMode {
+    Color,
+    Image,
+    Pattern,
+    Text,
+    Empty,
+}
 
 //TODO draw_image with crop, scale, etc... draw_image_ext
 
@@ -59,82 +72,18 @@ pub struct RenderTarget {
     height: i32,
 }
 
-use crate::glm;
+use crate::math;
 use lyon::lyon_tessellation::basic_shapes::{
     fill_rounded_rectangle, stroke_rectangle, stroke_rounded_rectangle, stroke_triangle,
     BorderRadii,
 };
 use lyon::lyon_tessellation::{BuffersBuilder, VertexBuffers};
 
-//TODO use generic to be able to use with Mat2, Mat3, Mat4
-pub struct Transform(Vec<Mat3>);
-
-impl Transform {
-    pub fn new() -> Self {
-        Self(vec![Mat3::identity()])
-    }
-
-    pub fn push(&mut self, matrix: Mat3) {
-        self.0.push(self.matrix() * matrix);
-    }
-
-    pub fn pop(&mut self) {
-        if self.0.len() <= 1 {
-            return;
-        }
-        self.0.pop();
-    }
-
-    pub fn matrix(&self) -> &Mat3 {
-        &self.0[self.0.len() - 1]
-    }
-
-    pub fn matrix_mut(&mut self) -> &mut Mat3 {
-        let len = self.0.len();
-        if len > 1 {
-            return &mut self.0[len - 1];
-        }
-
-        self.0.push(identity());
-        &mut self.0[len]
-    }
-
-    pub fn translate(&mut self, x: f32, y: f32) {
-        self.push(glm::translation2d(&glm::vec2(x, y)));
-    }
-
-    pub fn scale(&mut self, x: f32, y: f32) {
-        self.push(glm::scaling2d(&glm::vec2(x, y)));
-    }
-
-    pub fn rotate(&mut self, angle: f32) {
-        self.push(glm::rotation2d(angle));
-    }
-
-    pub fn skew(&mut self, x: f32, y: f32) {
-        let m = glm::mat3(1.0, x.tan(), 0.0, y.tan(), 1.0, 0.0, 0.0, 0.0, 1.0);
-
-        self.push(m);
-    }
-
-    //CALCULATING 2d MATRICES https://github.com/heygrady/transform/wiki/Calculating-2d-Matrices
-
-    pub fn skew_deg(&mut self, x: f32, y: f32) {
-        let x = x * (crate::math::PI / 180.0);
-        let y = y * (crate::math::PI / 180.0);
-        self.skew(x, y);
-    }
-
-    pub fn rotate_deg(&mut self, angle: f32) {
-        self.rotate(crate::math::PI / 180.0 * angle);
-    }
-}
-
 pub struct DrawData {
     alpha: f32,
     color: Color,
-    shader: Option<Shader>,
-    transform: Transform,
+    shader: Option<shader::Shader>,
+    transform: Transform2d,
     width: i32,
     height: i32,
     projection: glm::Mat3,
@@ -148,7 +97,7 @@ impl DrawData {
             height,
             alpha: 1.0,
             shader: None,
-            transform: Transform::new(),
+            transform: Transform2d::new(),
             color: Color::White,
             projection,
         }
@@ -188,9 +137,11 @@ pub struct Context2d {
     driver: Driver,
     color_batcher: shaders::ColorBatcher,
     sprite_batcher: shaders::SpriteBatcher,
+    pattern_batcher: shaders::PatternBatcher,
     is_drawing: bool,
     render_target: Option<RenderTarget>,
     data: DrawData,
+    paint_mode: PaintMode,
 }
 
 impl Context2d {
@@ -202,6 +153,7 @@ impl Context2d {
         let data = DrawData::new(width, height);
         let color_batcher = ColorBatcher::new(&gl, &data)?;
         let sprite_batcher = SpriteBatcher::new(&gl, &data)?;
+        let pattern_batcher = PatternBatcher::new(&gl, &data)?;
 
         //2d
         unsafe {
@@ -215,8 +167,10 @@ impl Context2d {
             driver,
             color_batcher,
             sprite_batcher,
+            pattern_batcher,
             is_drawing: false,
             render_target: None,
+            paint_mode: PaintMode::Empty,
         })
     }
 
@@ -248,19 +202,9 @@ impl Context2d {
         self.data.set_color(color);
     }
 
-    pub fn transform(&mut self) -> &mut Transform {
+    pub fn transform(&mut self) -> &mut Transform2d {
         &mut self.data.transform
     }
-
-    /* 3D enviroment
-    pub fn enable_depth(&mut self) {
-        //TODO draw will use depth sort, without use the draw order
-    }
-
-    pub set_depth(&mut self, depth: f32) {
-        //TODO add z to the matrix for the next drawcalls
-    }
-    */
 
     pub fn begin(&mut self) {
         if self.is_drawing {
@@ -301,6 +245,7 @@ impl Context2d {
     pub fn flush(&mut self) {
         self.flush_color();
         self.flush_sprite();
+        self.flush_pattern();
     }
 
     fn flush_color(&mut self) {
@@ -311,8 +256,12 @@ impl Context2d {
         self.sprite_batcher.flush(&self.gl, &self.data);
     }
 
+    fn flush_pattern(&mut self) {
+        self.pattern_batcher.flush(&self.gl, &self.data);
+    }
+
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
-        self.flush_sprite();
+        self.set_paint_mode(PaintMode::Color);
         let color_vertex = match color {
             Some(c) => c.iter().map(|c| c.to_rgba()).fold(vec![], |mut acc, v| {
                 acc.append(&mut vec![v.0, v.1, v.2, v.3]);
@@ -382,7 +331,7 @@ impl Context2d {
     }
 
     pub fn line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, strength: f32) {
-        let (mut xx, mut yy) = if y1 == y2 {
+        let (mut xx, mut yy) = if math::eq_float(y1, y2) {
             (0.0, -1.0)
         } else {
             (1.0, -(x2 - x1) / (y2 - y1))
@@ -473,15 +422,13 @@ impl Context2d {
         }
     }
 
-    pub fn draw_svg(&mut self, svg: &mut Svg) {}
+    //    pub fn draw_svg(&mut self, svg: &mut Svg) {}
 
     pub fn image(&mut self, img: &mut Texture, x: f32, y: f32) {
-        self.flush_color();
-        self.sprite_batcher
-            .draw(&self.gl, &self.data, x, y, img, 0.0, 0.0, 0.0, 0.0, None);
+        self.image_ext(img, x, y, 0.0, 0.0, 0.0, 0.0);
     }
 
-    pub fn cropped_image(
+    pub fn image_ext(
         &mut self,
         img: &mut Texture,
         x: f32,
@@ -492,20 +439,55 @@ impl Context2d {
         sh: f32,
     ) {
         //TODO change to sub_image?
-        self.flush_color();
+        self.set_paint_mode(PaintMode::Image);
         self.sprite_batcher
             .draw(&self.gl, &self.data, x, y, img, sx, sy, sw, sh, None);
     }
 
     //TODO add a method to draw the image scaled without using the matrix?
 
-    pub fn pattern(&mut self, img: &mut Texture, x:f32, y:f32, width:f32, height:f32) {
+    pub fn pattern(&mut self, img: &mut Texture, x: f32, y: f32, width: f32, height: f32) {
         self.pattern_ext(img, x, y, width, height, 0.0, 0.0);
     }
 
-    pub fn pattern_ext(&mut self, img: &mut Texture, x:f32, y:f32, width:f32, height:f32, x_offset: f32, y_offset: f32) {
+    fn set_paint_mode(&mut self, mode: PaintMode) {
+        if mode == self.paint_mode {
+            return;
+        }
+        self.paint_mode = mode;
+        match &self.paint_mode {
+            PaintMode::Color => {
+                self.flush_sprite();
+                self.flush_pattern();
+            }
+            PaintMode::Image => {
+                self.flush_color();
+                self.flush_pattern();
+            }
+            PaintMode::Pattern => {
+                self.flush_color();
+                self.flush_sprite();
+            }
+            _ => {}
+        }
+    }
+
+    pub fn pattern_ext(
+        &mut self,
+        img: &mut Texture,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        x_offset: f32,
+        y_offset: f32,
+    ) {
         //TODO patter also add draw_patter_ext( with offset and scale )
         //https://englercj.github.io/2018/01/07/gl-tiled/
+        self.set_paint_mode(PaintMode::Pattern);
+        self.pattern_batcher.draw(
+            &self.gl, &self.data, x, y, img, width, height, x_offset, y_offset, None,
+        );
     }
 
     pub fn nine_slice(&mut self, x: f32, y: f32, opts: String) {}
