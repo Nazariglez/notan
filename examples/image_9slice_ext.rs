@@ -8,7 +8,7 @@ struct State {
 fn init(app: &mut App) -> State {
     State {
         btn: app.load("../assets/grey_button.png").unwrap(),
-        count: 0.0
+        count: 0.0,
     }
 }
 
@@ -20,8 +20,17 @@ fn draw(app: &mut App, state: &mut State) {
     draw.begin();
     draw.clear(Color::White);
     draw.image(&mut state.btn, 10.0, 10.0);
-//    draw.set_color(rgba(0.7, 0.8, 0.9, 1.0));
-    draw.image_9slice_ext(&mut state.btn, 200.0, 120.0, width, height, 10.0, 10.0, 5.0, 28.0);
+    draw.image_9slice_ext(
+        &mut state.btn,
+        200.0,
+        120.0,
+        width,
+        height,
+        10.0,
+        10.0,
+        5.0,
+        28.0,
+    );
     draw.end();
 
     state.count += 0.03;

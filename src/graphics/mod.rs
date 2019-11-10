@@ -118,14 +118,6 @@ impl DrawData {
 }
 
 fn get_projection(width: i32, height: i32) -> glm::Mat3 {
-    //    mat4_to_mat3(&glm::ortho(
-    //        0.0,
-    //        width as f32,
-    //        0.0,
-    //        height as f32 * -1.0,
-    //        -1.0,
-    //        1.0)
-    //    )
     let w = width as f32;
     let h = height as f32;
     glm::mat3(2.0 / w, 0.0, -1.0, 0.0, -2.0 / h, 1.0, 0.0, 0.0, 1.0)
@@ -534,9 +526,9 @@ impl Context2d {
     }
 
     pub fn image_9slice(&mut self, img: &mut Texture, x: f32, y: f32, width: f32, height: f32) {
-        let ww = img.width()/3.0;
-        let hh = img.height()/3.0;
-        self.image_9slice_ext(img, x, y, width, height,ww, ww, hh, hh);
+        let ww = img.width() / 3.0;
+        let hh = img.height() / 3.0;
+        self.image_9slice_ext(img, x, y, width, height, ww, ww, hh, hh);
     }
 
     pub fn image_9slice_ext(
@@ -551,22 +543,76 @@ impl Context2d {
         top: f32,
         bottom: f32,
     ) {
-        let center_sw = img.width() - (left+right);
-        let center_sh = img.height() - (top+bottom);
-        let center_w = width - (left+right);
-        let center_h = height - (top+bottom);
+        let center_sw = img.width() - (left + right);
+        let center_sh = img.height() - (top + bottom);
+        let center_w = width - (left + right);
+        let center_h = height - (top + bottom);
 
         self.image_crop(img, x, y, 0.0, 0.0, left, top);
-        self.image_ext(img, x+left, y, center_w, top, left, 0.0, center_sw, top);
-        self.image_crop(img, x+left+center_w, y, left+center_sw, 0.0, right, top);
+        self.image_ext(img, x + left, y, center_w, top, left, 0.0, center_sw, top);
+        self.image_crop(
+            img,
+            x + left + center_w,
+            y,
+            left + center_sw,
+            0.0,
+            right,
+            top,
+        );
 
-        self.image_ext(img, x, y+top, left, center_h, 0.0, top, left, center_sh);
-        self.image_ext(img, x+left, y+top, center_w, center_h, left, top, center_sw, center_sh);
-        self.image_ext(img, x+left+center_w, y+top, right, center_h, left+center_sw, top, right, center_sh);
+        self.image_ext(img, x, y + top, left, center_h, 0.0, top, left, center_sh);
+        self.image_ext(
+            img,
+            x + left,
+            y + top,
+            center_w,
+            center_h,
+            left,
+            top,
+            center_sw,
+            center_sh,
+        );
+        self.image_ext(
+            img,
+            x + left + center_w,
+            y + top,
+            right,
+            center_h,
+            left + center_sw,
+            top,
+            right,
+            center_sh,
+        );
 
-        self.image_crop(img, x, y+top+center_h, 0.0, top+center_sh, left, bottom);
-        self.image_ext(img, x+left, y+top+center_h, center_w, bottom, left, top+center_sh, center_sw, bottom);
-        self.image_crop(img, x+left+center_w, y+top+center_h, left+center_sw, top+center_sh, right, bottom);
+        self.image_crop(
+            img,
+            x,
+            y + top + center_h,
+            0.0,
+            top + center_sh,
+            left,
+            bottom,
+        );
+        self.image_ext(
+            img,
+            x + left,
+            y + top + center_h,
+            center_w,
+            bottom,
+            left,
+            top + center_sh,
+            center_sw,
+            bottom,
+        );
+        self.image_crop(
+            img,
+            x + left + center_w,
+            y + top + center_h,
+            left + center_sw,
+            top + center_sh,
+            right,
+            bottom,
+        );
     }
 }
 
@@ -580,8 +626,6 @@ impl Vertex {
         Self { pos: (x, y), color }
     }
 }
-
-pub struct Svg {}
 
 fn get_circle_vertices(x: f32, y: f32, radius: f32, segments: Option<i32>) -> Vec<f32> {
     let segments = if let Some(s) = segments {
