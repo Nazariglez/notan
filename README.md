@@ -37,6 +37,7 @@ fn draw(app: &mut App, _: &mut ()) {
     draw.end();
 }
 ```
+![Triangle](./assets/triangle.png)
 
 **More examples**
 - [Hello world](https://github.com/Nazariglez/nae/blob/master/examples/hello.rs)

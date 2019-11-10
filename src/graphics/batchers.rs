@@ -7,6 +7,7 @@ use crate::res::*;
 
 use super::shader::*;
 use super::GlContext;
+use wasm_bindgen::__rt::std::alloc::handle_alloc_error;
 
 /*TODO masking: https://stackoverflow.com/questions/46806063/how-stencil-buffer-and-masking-work
     https://jsfiddle.net/z11zhf01/1
@@ -229,6 +230,8 @@ impl SpriteBatcher {
         data: &DrawData,
         x: f32,
         y: f32,
+        width: f32,
+        height: f32,
         img: &mut Texture,
         source_x: f32,
         source_y: f32,
@@ -245,16 +248,19 @@ impl SpriteBatcher {
             _ => init_graphic_texture(gl, img).unwrap(),
         };
 
-        let ww = img.width();
-        let hh = img.height();
+        let img_ww = img.width();
+        let img_hh = img.height();
+
+        let ww = if width == 0.0 { img_ww } else { width };
+        let hh = if height == 0.0 { img_hh } else { height };
 
         let sw = if source_width == 0.0 {
-            ww
+            img_ww
         } else {
             source_width
         };
         let sh = if source_height == 0.0 {
-            hh
+            img_hh
         } else {
             source_height
         };
@@ -263,15 +269,15 @@ impl SpriteBatcher {
             x,
             y,
             x,
-            y + sh,
-            x + sw,
+            y + hh,
+            x + ww,
             y,
-            x + sw,
+            x + ww,
             y,
             x,
-            y + sh,
-            x + sw,
-            y + sh,
+            y + hh,
+            x + ww,
+            y + hh,
         ];
 
         if self.current_tex.is_none() {
@@ -303,10 +309,10 @@ impl SpriteBatcher {
             }
         }
 
-        let x1 = source_x / ww;
-        let y1 = source_y / hh;
-        let x2 = (source_x + sw) / ww;
-        let y2 = (source_y + sh) / hh;
+        let x1 = source_x / img_ww;
+        let y1 = source_y / img_hh;
+        let x2 = (source_x + sw) / img_ww;
+        let y2 = (source_y + sh) / img_hh;
 
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
         let vertex_tex = [x1, y1, x1, y2, x2, y1, x2, y1, x1, y2, x2, y2];
