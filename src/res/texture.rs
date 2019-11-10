@@ -1,6 +1,6 @@
 use super::loader::load_file;
 use super::resource::*;
-use crate::graphics::shaders::GraphicTexture;
+use crate::graphics::batchers::GraphicTexture;
 
 use futures::future::Future;
 use glow::HasContext;

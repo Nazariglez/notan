@@ -1,28 +1,34 @@
-use self::shaders::ColorBatcher;
-use crate::graphics::shaders::{PatternBatcher, SpriteBatcher};
-use crate::math::*;
-use crate::res::*;
-use color::Color;
+use std::rc::Rc;
+
 use glow::*;
 use lyon::lyon_tessellation as tess;
+use lyon::lyon_tessellation::basic_shapes::{
+    fill_rounded_rectangle, stroke_rectangle, stroke_rounded_rectangle, stroke_triangle,
+    BorderRadii,
+};
+use lyon::lyon_tessellation::{BuffersBuilder, VertexBuffers};
 use rayon::prelude::*;
-use std::rc::Rc;
 use tess::basic_shapes::stroke_circle;
 use wasm_bindgen::JsCast;
 use web_sys;
 
+use batchers::{ColorBatcher, SpriteBatcher};
+use color::Color;
+use transform::Transform2d;
+
+use crate::math;
+use crate::math::*;
+use crate::res::*;
+
+pub mod batchers;
 pub mod color;
 pub mod shader;
-pub mod shaders;
 pub mod transform;
-
-use transform::Transform2d;
 
 #[derive(Debug, Eq, PartialEq)]
 enum PaintMode {
     Color,
     Image,
-    Pattern,
     Text,
     Empty,
 }
@@ -71,13 +77,6 @@ pub struct RenderTarget {
     width: i32,
     height: i32,
 }
-
-use crate::math;
-use lyon::lyon_tessellation::basic_shapes::{
-    fill_rounded_rectangle, stroke_rectangle, stroke_rounded_rectangle, stroke_triangle,
-    BorderRadii,
-};
-use lyon::lyon_tessellation::{BuffersBuilder, VertexBuffers};
 
 pub struct DrawData {
     alpha: f32,
@@ -135,9 +134,8 @@ fn get_projection(width: i32, height: i32) -> glm::Mat3 {
 pub struct Context2d {
     gl: GlContext,
     driver: Driver,
-    color_batcher: shaders::ColorBatcher,
-    sprite_batcher: shaders::SpriteBatcher,
-    pattern_batcher: shaders::PatternBatcher,
+    color_batcher: batchers::ColorBatcher,
+    sprite_batcher: batchers::SpriteBatcher,
     is_drawing: bool,
     render_target: Option<RenderTarget>,
     data: DrawData,
@@ -153,7 +151,6 @@ impl Context2d {
         let data = DrawData::new(width, height);
         let color_batcher = ColorBatcher::new(&gl, &data)?;
         let sprite_batcher = SpriteBatcher::new(&gl, &data)?;
-        let pattern_batcher = PatternBatcher::new(&gl, &data)?;
 
         //2d
         unsafe {
@@ -167,7 +164,6 @@ impl Context2d {
             driver,
             color_batcher,
             sprite_batcher,
-            pattern_batcher,
             is_drawing: false,
             render_target: None,
             paint_mode: PaintMode::Empty,
@@ -245,7 +241,6 @@ impl Context2d {
     pub fn flush(&mut self) {
         self.flush_color();
         self.flush_sprite();
-        self.flush_pattern();
     }
 
     fn flush_color(&mut self) {
@@ -254,10 +249,6 @@ impl Context2d {
 
     fn flush_sprite(&mut self) {
         self.sprite_batcher.flush(&self.gl, &self.data);
-    }
-
-    fn flush_pattern(&mut self) {
-        self.pattern_batcher.flush(&self.gl, &self.data);
     }
 
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
@@ -440,10 +431,11 @@ impl Context2d {
     ) {
         self.set_paint_mode(PaintMode::Image);
         self.sprite_batcher
-            .draw(&self.gl, &self.data, x, y, img, sx, sy, sw, sh, None);
+            .draw_image(&self.gl, &self.data, x, y, img, sx, sy, sw, sh, None);
     }
 
     //TODO add a method to draw the image scaled without using the matrix?
+    //TODO allow to change the tex_matrix for images and patterns?
 
     pub fn pattern(
         &mut self,
@@ -466,15 +458,9 @@ impl Context2d {
         match &self.paint_mode {
             PaintMode::Color => {
                 self.flush_sprite();
-                self.flush_pattern();
             }
             PaintMode::Image => {
                 self.flush_color();
-                self.flush_pattern();
-            }
-            PaintMode::Pattern => {
-                self.flush_color();
-                self.flush_sprite();
             }
             _ => {}
         }
@@ -492,8 +478,8 @@ impl Context2d {
         scale_x: f32,
         scale_y: f32,
     ) {
-        self.set_paint_mode(PaintMode::Pattern);
-        self.pattern_batcher.draw(
+        self.set_paint_mode(PaintMode::Image);
+        self.sprite_batcher.draw_pattern(
             &self.gl, &self.data, x, y, img, width, height, offset_x, offset_y, scale_x, scale_y,
             None,
         );

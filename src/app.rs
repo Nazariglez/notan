@@ -28,6 +28,10 @@ impl<'a> App<'a> {
     {
         self.resources.load(file)
     }
+
+    pub fn delta(&self) -> f32 {
+        1.0
+    }
 }
 
 pub struct AppBuilder<S>

@@ -1,7 +1,7 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
-use syn::ItemFn;
 use quote::quote;
+use syn::ItemFn;
 
 #[proc_macro_attribute]
 pub fn nae_start(_attr: TokenStream, item: TokenStream) -> TokenStream {
