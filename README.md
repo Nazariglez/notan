@@ -19,7 +19,23 @@ Nae is Not An Engine, is a portable multimedia layer with an easy API designed t
 
 ## Examples
 ```rust 
-fn main() {}
+use nae::prelude::*;
+
+#[nae_start]
+fn main() {
+    nae::init()
+        .draw(draw)
+        .build()
+        .unwrap();
+}
+
+fn draw(app: &mut App, _: &mut ()) {
+    let draw = app.draw();
+    draw.begin();
+    draw.set_color(Color::Green);
+    draw.triangle(400.0, 100.0, 100.0, 500.0, 700.0, 500.0);
+    draw.end();
+}
 ```
 
 **More examples**
@@ -43,7 +59,13 @@ Instructions to init and build a project
     - [ ] Sprites
     - [ ] Patterns
     - [ ] Masking
-    - [ ] Custom Shaders
+    - [ ] Custom Shader
+    - [ ] Text
+    - [ ] BitmapText
+    - [ ] NineSlice
+    - [ ] Linear Gradient
+    - [ ] Radial Gradient
+    - [ ] Atlas
 - Drivers
     - [ ] WebGL
     - [ ] WebGL 2

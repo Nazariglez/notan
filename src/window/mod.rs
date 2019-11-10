@@ -1,12 +1,12 @@
-use glow::*;
-
 //add #[cfg(target_arch = "wasm32")]
-use crate::graphics;
+
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys;
+
+//TODO the window backend should consume whatever window with the trait raw-window-handle to be as portable as posible
 
 fn default_cb() {}
 
@@ -34,14 +34,14 @@ impl Window {
 
         Window {
             //            window: window,
-            canvas: canvas,
+            canvas,
             //            cb: default_cb
             //            ctx: ctx, //gl: glow::Context::from_webgl2_context(gl)
         }
     }
 
     pub fn window(&self) -> &web_sys::HtmlCanvasElement {
-        return &self.canvas;
+        &self.canvas
     }
 
     //window_rect()? top_right, top_left, center, etc...
@@ -76,7 +76,7 @@ where
         let win = web_sys::window().unwrap();
         request_animation_frame(win, cb.borrow().as_ref().unwrap());
         //            }
-    }) as Box<FnMut()>));
+    }) as Box<dyn FnMut()>));
 
     let win = web_sys::window().unwrap();
     request_animation_frame(win, cb_copy.borrow().as_ref().unwrap());
