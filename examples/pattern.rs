@@ -4,23 +4,15 @@ fn init(app: &mut App) -> Texture {
     app.load("../assets/t.png").unwrap()
 }
 
-fn draw(app: &mut App, logo: &mut Texture) {
+fn draw(app: &mut App, tex: &mut Texture) {
     let draw = app.draw();
     draw.begin();
     draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
-    //    draw.clear(Color::White);
-    draw.transform().translate(160.0, 60.0);
-    draw.transform().scale(7.0, 7.0);
-    //    draw.set_color(rgba(1.0, 0.2, 0.3, 1.0));
-    draw.pattern(logo, 0.0, 0.0, logo.width(), logo.height());
-    draw.transform().pop();
-    draw.transform().pop();
+    draw.pattern(tex, 10.0, 10.0, 780.0, 580.0, 0.0, 0.0);
     draw.end();
 }
 
 #[nae_start]
 fn main() {
-    if let Err(e) = nae::with_state(init).draw(draw).build() {
-        log(&e);
-    }
+    nae::with_state(init).draw(draw).build();
 }

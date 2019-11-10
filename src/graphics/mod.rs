@@ -438,7 +438,6 @@ impl Context2d {
         sw: f32,
         sh: f32,
     ) {
-        //TODO change to sub_image?
         self.set_paint_mode(PaintMode::Image);
         self.sprite_batcher
             .draw(&self.gl, &self.data, x, y, img, sx, sy, sw, sh, None);
@@ -446,8 +445,17 @@ impl Context2d {
 
     //TODO add a method to draw the image scaled without using the matrix?
 
-    pub fn pattern(&mut self, img: &mut Texture, x: f32, y: f32, width: f32, height: f32) {
-        self.pattern_ext(img, x, y, width, height, 0.0, 0.0);
+    pub fn pattern(
+        &mut self,
+        img: &mut Texture,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        offset_x: f32,
+        offset_y: f32,
+    ) {
+        self.pattern_ext(img, x, y, width, height, offset_x, offset_y, 1.0, 1.0);
     }
 
     fn set_paint_mode(&mut self, mode: PaintMode) {
@@ -479,14 +487,15 @@ impl Context2d {
         y: f32,
         width: f32,
         height: f32,
-        x_offset: f32,
-        y_offset: f32,
+        offset_x: f32,
+        offset_y: f32,
+        scale_x: f32,
+        scale_y: f32,
     ) {
-        //TODO patter also add draw_patter_ext( with offset and scale )
-        //https://englercj.github.io/2018/01/07/gl-tiled/
         self.set_paint_mode(PaintMode::Pattern);
         self.pattern_batcher.draw(
-            &self.gl, &self.data, x, y, img, width, height, x_offset, y_offset, None,
+            &self.gl, &self.data, x, y, img, width, height, offset_x, offset_y, scale_x, scale_y,
+            None,
         );
     }
 
@@ -514,10 +523,7 @@ pub struct Vertex {
 
 impl Vertex {
     pub fn new(x: f32, y: f32, color: Color) -> Self {
-        Self {
-            pos: (x, y),
-            color,
-        }
+        Self { pos: (x, y), color }
     }
 }
 
@@ -529,7 +535,7 @@ fn get_circle_vertices(x: f32, y: f32, radius: f32, segments: Option<i32>) -> Ve
     } else {
         (10.0 * radius.sqrt()).floor() as i32
     };
-    let theta = 2.0 * std::f32::consts::PI / segments as f32;
+    let theta = 2.0 * PI / segments as f32;
     let cos = theta.cos();
     let sin = theta.sin();
     let mut xx = radius;

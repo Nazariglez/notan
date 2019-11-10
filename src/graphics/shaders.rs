@@ -1,11 +1,10 @@
 use super::shader::*;
 use super::GlContext;
 use crate::graphics::DrawData;
+use crate::log;
 use crate::math::glm;
 use crate::res::*;
 use glow::*;
-
-
 
 /*TODO masking: https://stackoverflow.com/questions/46806063/how-stencil-buffer-and-masking-work
     https://jsfiddle.net/z11zhf01/1
@@ -370,10 +369,10 @@ impl PatternBatcher {
             _ => &self.shader,
         };
         shader.useme();
-        //        let mut m:glm::Mat3 = identity();
-        //        m = glm::scale2d(&m, &vec2(2.0, 2.0));
+        let mut m = glm::Mat3::identity();
+        //                m = glm::scale2d(&m, &glm::vec2(2.0, 2.0));
         shader.set_uniform("u_matrix", data.projection);
-        //        shader.set_uniform("u_tex_matrix", m);
+        shader.set_uniform("u_tex_matrix", m);
         shader.set_uniform("u_texture", 0);
     }
 
@@ -414,10 +413,12 @@ impl PatternBatcher {
         x: f32,
         y: f32,
         img: &mut Texture,
-        source_x: f32,
-        source_y: f32,
-        source_width: f32,
-        source_height: f32,
+        width: f32,
+        height: f32,
+        offset_x: f32,
+        offset_y: f32,
+        scale_x: f32,
+        scale_y: f32,
         color: Option<&[f32]>,
     ) {
         if !img.is_loaded() {
@@ -429,19 +430,16 @@ impl PatternBatcher {
             _ => init_graphic_texture(gl, img).unwrap(),
         };
 
-        let ww = img.width();
-        let hh = img.height();
+        let offset_x = offset_x * scale_x;
+        let offset_y = offset_y * scale_y;
 
-        let sw = if source_width == 0.0 {
-            ww
-        } else {
-            source_width
-        };
-        let sh = if source_height == 0.0 {
-            hh
-        } else {
-            source_height
-        };
+        let ww = img.width() * scale_x;
+        let hh = img.height() * scale_y;
+        let quad_scale_x = width / ww;
+        let quad_scale_y = height / hh;
+
+        let sw = width;
+        let sh = height;
 
         let vertex = [
             x,
@@ -487,10 +485,17 @@ impl PatternBatcher {
             }
         }
 
-        let x1 = source_x / ww;
-        let y1 = source_y / hh;
-        let x2 = (source_x + sw) / ww;
-        let y2 = (source_y + sh) / hh;
+        let fract_x = quad_scale_x.fract();
+        let fract_y = quad_scale_y.fract();
+        let tex_offset_x = ((ww - offset_x) / ww).fract();
+        let tex_offset_y = ((hh - offset_y) / hh).fract();
+
+        let x1 = (quad_scale_x.floor() + tex_offset_x);
+        let y1 = (quad_scale_y.floor() + tex_offset_y);
+        let x2 = ((width + sw) / ww - fract_x + tex_offset_x);
+        let y2 = ((height + sh) / hh - fract_y + tex_offset_y);
+
+        //        log(&format!("{} {} {} {} - {} {} {} {}", scale_x, scale_y, fract_x, fract_y, x1, x2, y1, y2));
 
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
         let vertex_tex = [x1, y1, x1, y2, x2, y1, x2, y1, x1, y2, x2, y2];
@@ -527,11 +532,8 @@ impl PatternBatcher {
 
 fn init_graphic_texture(gl: &GlContext, img: &mut Texture) -> Result<glow::WebTextureKey, String> {
     let gt = create_gl_texture(gl, &img.data().borrow().as_ref().unwrap())?;
-
     let tex = gt.tex;
-
     img.data().borrow_mut().as_mut().unwrap().init_graphics(gt);
-
     Ok(tex)
 }
 
@@ -614,7 +616,7 @@ fn create_pattern_shader(gl: &GlContext) -> Result<Shader, String> {
         Attribute::new("a_texcoord", 2, glow::FLOAT, true),
     ];
 
-    let uniforms = vec!["u_matrix", "u_texture"];
+    let uniforms = vec!["u_matrix", "u_texture", "u_tex_matrix"];
     Ok(Shader::new(
         gl,
         include_str!("./shaders/pattern.vert.glsl"),
