@@ -8,8 +8,8 @@ fn draw(app: &mut App, logo: &mut Texture) {
     let draw = app.draw();
     draw.begin();
     draw.clear(Color::White);
-    draw.image_ext(logo, 0.0, 0.0, 0.0, 0.0, logo.width() * 0.5, 0.0);
-    draw.image_ext(
+    draw.image_crop(logo, 0.0, 0.0, 0.0, 0.0, logo.width() * 0.5, 0.0);
+    draw.image_crop(
         logo,
         logo.width() * 0.6,
         00.0,
