@@ -275,10 +275,6 @@ impl Context2d {
     pub fn flush(&mut self) {
         self.flush_color();
         self.flush_sprite();
-//        unsafe {
-//            self.gl.flush();
-//            self.gl.clear_stencil(1);
-//        }
     }
 
     fn flush_color(&mut self) {
