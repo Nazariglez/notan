@@ -37,6 +37,7 @@ features = [
   'XmlHttpRequest',
   'XmlHttpRequestEventTarget',
   'XmlHttpRequestResponseType',
+  'WebGlContextAttributes'
 ]
 
 [features]

@@ -54,19 +54,20 @@ Instructions to init and build a project
     - [ ] Linux 
     - [ ] Windows
 - 2D renderer
-    - [ ] Primitives
-    - [ ] Polylines
+    - [x] Primitives
+    - [x] Polylines
     - [ ] SVGs
-    - [ ] Sprites
-    - [ ] Patterns
-    - [ ] Masking
+    - [x] Sprites
+    - [x] Patterns
+    - [x] Masking
     - [ ] Custom Shader
     - [ ] Text
     - [ ] BitmapText
-    - [ ] NineSlice
+    - [x] NineSlice
     - [ ] Linear Gradient
     - [ ] Radial Gradient
     - [ ] Atlas
+    - [ ] BlendModes
 - Drivers
     - [ ] WebGL
     - [ ] WebGL 2
