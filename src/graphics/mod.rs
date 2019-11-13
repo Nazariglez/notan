@@ -132,6 +132,7 @@ pub struct Context2d {
     render_target: Option<RenderTarget>,
     data: DrawData,
     paint_mode: PaintMode,
+    stencil: bool,
 }
 
 impl Context2d {
@@ -146,6 +147,7 @@ impl Context2d {
 
         //2d
         unsafe {
+            gl.disable(glow::DEPTH_TEST);
             gl.enable(glow::BLEND);
             gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
         }
@@ -159,6 +161,7 @@ impl Context2d {
             is_drawing: false,
             render_target: None,
             paint_mode: PaintMode::Empty,
+            stencil: false,
         })
     }
 
@@ -218,7 +221,46 @@ impl Context2d {
         let (r, g, b, a) = color.to_rgba();
         unsafe {
             self.gl.clear_color(r, g, b, a);
-            self.gl.clear(glow::COLOR_BUFFER_BIT);
+            let mut flags = glow::COLOR_BUFFER_BIT;
+            if self.stencil {
+                flags |= glow::STENCIL_BUFFER_BIT;
+            }
+
+            self.gl.clear(flags);
+        }
+    }
+
+    //TODO stencil https://community.khronos.org/t/please-help-me-understand-the-concept-of-how-stencil-buffering-works-in-vulkan/7592/7
+
+    pub fn begin_mask(&mut self) {
+        self.flush();
+        unsafe {
+            self.stencil = true;
+            self.gl.enable(glow::STENCIL_TEST);
+            self.gl.stencil_op(glow::KEEP, glow::KEEP, glow::REPLACE);
+            self.gl.stencil_func(glow::ALWAYS, 1, 0xff);
+            self.gl.stencil_mask(0xff);
+            self.gl.depth_mask(false);
+            self.gl.color_mask(false, false, false, false);
+        }
+    }
+
+    pub fn end_mask(&mut self) {
+        self.flush();
+        unsafe {
+            self.gl.stencil_func(glow::EQUAL, 1, 0xff);
+            self.gl.stencil_mask(0x00);
+            self.gl.depth_mask(true);
+            self.gl.color_mask(true, true, true, true);
+        }
+    }
+
+    pub fn clear_mask(&mut self) {
+        self.flush();
+        unsafe {
+            self.gl.flush();
+            self.stencil = false;
+            self.gl.disable(glow::STENCIL_TEST);
         }
     }
 
@@ -227,7 +269,7 @@ impl Context2d {
             return;
         }
         self.is_drawing = false;
-        self.flush();
+        self.clear_mask(); //this is already doing flush
     }
 
     pub fn flush(&mut self) {
@@ -667,10 +709,16 @@ fn create_gl_context(win: &web_sys::HtmlCanvasElement) -> Result<(GlContext, Dri
     Ok((ctx, Driver::WebGL))
 }
 
+fn webgl_options() -> web_sys::WebGlContextAttributes {
+    let mut opts = web_sys::WebGlContextAttributes::new();
+    opts.stencil(true);
+    opts
+}
+
 fn create_webgl_context(win: &web_sys::HtmlCanvasElement) -> Result<GlContext, String> {
     //TODO manage errors
     let gl = win
-        .get_context("webgl")
+        .get_context_with_context_options("webgl2", webgl_options().as_ref())
         .unwrap()
         .unwrap()
         .dyn_into::<web_sys::WebGlRenderingContext>()
@@ -683,7 +731,7 @@ fn create_webgl_context(win: &web_sys::HtmlCanvasElement) -> Result<GlContext, S
 fn create_webgl2_context(win: &web_sys::HtmlCanvasElement) -> Result<GlContext, String> {
     //TODO manage errors
     let gl = win
-        .get_context("webgl2")
+        .get_context_with_context_options("webgl2", webgl_options().as_ref())
         .unwrap()
         .unwrap()
         .dyn_into::<web_sys::WebGl2RenderingContext>()
