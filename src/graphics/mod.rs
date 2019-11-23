@@ -16,7 +16,7 @@ use batchers::{ColorBatcher, SpriteBatcher};
 use color::Color;
 use transform::Transform2d;
 
-use crate::math;
+use crate::{math, log};
 use crate::math::*;
 use crate::res::*;
 
@@ -133,6 +133,7 @@ pub struct Context2d {
     data: DrawData,
     paint_mode: PaintMode,
     stencil: bool,
+    pub(crate) font_manager: FontManager<'static>,
 }
 
 impl Context2d {
@@ -144,6 +145,7 @@ impl Context2d {
         let data = DrawData::new(width, height);
         let color_batcher = ColorBatcher::new(&gl, &data)?;
         let sprite_batcher = SpriteBatcher::new(&gl, &data)?;
+        let font_manager = FontManager::new();
 
         //2d
         unsafe {
@@ -162,6 +164,7 @@ impl Context2d {
             render_target: None,
             paint_mode: PaintMode::Empty,
             stencil: false,
+            font_manager
         })
     }
 
@@ -283,6 +286,11 @@ impl Context2d {
 
     fn flush_sprite(&mut self) {
         self.sprite_batcher.flush(&self.gl, &self.data);
+    }
+
+    pub fn text(&mut self, font: &Font, text: &str, x: f32, y: f32) {
+        self.font_manager.try_update(&self.gl, font.id(), text, 1.0);
+//        log("hello");
     }
 
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {

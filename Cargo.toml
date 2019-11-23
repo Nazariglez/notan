@@ -24,6 +24,7 @@ rand = "0.7.2"
 hashbrown = "0.6.3"
 vek = "0.9.10"
 derive = { path = "./derive" }
+glyph_brush = "0.6.1"
 
 [dependencies.web-sys]
 version = "0.3.28"

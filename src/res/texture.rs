@@ -30,6 +30,18 @@ impl Texture {
     pub fn tex(&self) -> Option<glow::WebTextureKey> {
         self.inner.borrow().tex
     }
+
+    /// Create a new texture with a custom size
+    pub fn from_size(gl: &GlContext, width: i32, height: i32) -> Result<Self, String> {
+        let mut inner = InnerTexture::empty(width, height);
+        let gl = gl.clone();
+        let tex = create_gl_tex(&gl, width, height, &vec![])?;
+        inner.gl = Some(gl);
+        inner.tex = Some(tex);
+        Ok(Self {
+            inner: Rc::new(RefCell::new(inner))
+        })
+    }
 }
 
 impl Resource for Texture {
