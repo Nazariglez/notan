@@ -1,7 +1,7 @@
 use nae::prelude::*;
 
 fn init(app: &mut App) -> Texture {
-    app.load("../assets/green_panel.png").unwrap()
+    app.load_file("../assets/green_panel.png").unwrap()
 }
 
 fn draw(app: &mut App, panel: &mut Texture) {

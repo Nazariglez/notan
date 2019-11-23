@@ -1,5 +1,4 @@
 use super::resource::*;
-use crate::res::ResourceManager;
 use futures::future::{poll_fn, result, Future};
 use futures::Async;
 use hashbrown::HashMap;
@@ -45,42 +44,4 @@ pub fn load_file(path: &str) -> impl Future<Item = Vec<u8>, Error = String> {
             //   Ok(arr)
         })
     })
-}
-
-//TODO loader to load resources in batch doesn't works...
-pub struct Loader<'a> {
-    to_load: HashMap<String, Rc<RefCell<dyn Resource + 'a>>>,
-    manager: &'a mut ResourceManager<'a>,
-}
-
-impl<'a> Loader<'a> {
-    pub fn new(manager: &'a mut ResourceManager<'a>) -> Self {
-        Self {
-            to_load: HashMap::new(),
-            manager,
-        }
-    }
-
-    pub fn add<A>(&mut self, file: &str) -> &mut Self
-    where
-        A: Resource + ResourceConstructor + Clone + 'a,
-    {
-        let asset = self.manager.load::<A>(file).unwrap();
-        let asset = Rc::new(RefCell::new(asset));
-        self.to_load.insert(file.to_string(), asset);
-        self
-    }
-
-    //    pub fn get<A>(&self, file: &str) -> Option<&mut A>
-    //        where A: Resource + ResourceConstructor + 'a
-    //    {
-    //        Some(self.to_load.get(file).unwrap().borrow_mut())
-    //    }
-    //
-    //    pub fn load<A>(files: Vec<&str>) -> Self
-    //    where A: ResourceConstructor + Resource
-    //    {
-    //        self.to_load = files.iter()
-    //            .map()
-    //    }
 }

@@ -2,114 +2,99 @@ use super::loader::load_file;
 use super::resource::*;
 use crate::graphics::batchers::GraphicTexture;
 
+use crate::app::App;
+use crate::graphics::{create_gl_tex, GlContext};
 use futures::future::Future;
-use glow::HasContext;
+use glow::{HasContext, TEXTURE_ALPHA_TYPE};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-//TODO add rect and rotation to support texturepacker?
-
-#[derive(Debug, Clone)]
-pub(crate) struct TextureData {
-    pub(crate) width: i32,
-    pub(crate) height: i32,
-    pub(crate) raw: Vec<u8>,
-    pub(crate) graphics: Option<GraphicTexture>,
-}
-
-impl TextureData {
-    pub(crate) fn init_graphics(&mut self, g: GraphicTexture) {
-        self.graphics = Some(g);
-    }
-}
-
-impl Drop for TextureData {
-    fn drop(&mut self) {
-        if let Some(g) = &self.graphics {
-            let tex = g.tex;
-            unsafe {
-                g.gl.delete_texture(tex);
-            }
-        }
-    }
-}
-
+/// Represent an image resource
 #[derive(Clone)]
-/// Represents an image resource
 pub struct Texture {
-    pub(crate) resource: Rc<RefCell<ResourceData>>,
-    pub(crate) data: Rc<RefCell<Option<TextureData>>>, //TODO use a rc here to avoid clone the raw every time?
+    inner: Rc<RefCell<InnerTexture>>,
 }
 
 impl Texture {
-    pub(crate) fn data(&mut self) -> &Rc<RefCell<Option<TextureData>>> {
-        &self.data
-    }
-
-    /// Returns the graphics texture to be draw on the GPU
-    pub fn tex(&self) -> Option<glow::WebTextureKey> {
-        if let Some(d) = self.data.borrow().as_ref() {
-            if let Some(g) = d.graphics.as_ref() {
-                return Some(g.tex);
-            }
-        }
-
-        None
-    }
-
     /// Returns the texture's width
     pub fn width(&self) -> f32 {
-        if let Some(d) = self.data.borrow().as_ref() {
-            d.width as f32
-        } else {
-            0.0
-        }
+        self.inner.borrow().width as _
     }
 
     /// Returns the texture's height
     pub fn height(&self) -> f32 {
-        if let Some(d) = self.data.borrow().as_ref() {
-            d.height as f32
-        } else {
-            0.0
-        }
+        self.inner.borrow().height as _
+    }
+
+    /// Returns the graphics texture ready to draw on the gpu
+    pub fn tex(&self) -> Option<glow::WebTextureKey> {
+        self.inner.borrow().tex
+    }
+}
+
+impl Resource for Texture {
+    fn parse(&mut self, app: &mut App, data: Vec<u8>) -> Result<(), String> {
+        let data = image::load_from_memory(&data)
+            .map_err(|e| e.to_string())?
+            .to_rgba();
+
+        let width = data.width() as _;
+        let height = data.height() as _;
+        let raw = data.to_vec();
+        let gl = app.graphics.gl.clone();
+        let tex = create_gl_tex(&gl, width, height, &raw)?;
+
+        *self.inner.borrow_mut() = InnerTexture {
+            width,
+            height,
+            raw,
+            gl: Some(gl),
+            tex: Some(tex),
+        };
+        Ok(())
+    }
+
+    fn is_loaded(&self) -> bool {
+        self.inner.borrow().tex.is_some()
     }
 }
 
 impl ResourceConstructor for Texture {
     fn new(file: &str) -> Self {
         Self {
-            resource: ResourceData::rc(Box::new(load_file(file))),
-            data: Rc::new(RefCell::new(None)),
+            inner: Rc::new(RefCell::new(InnerTexture::empty(1, 1))),
         }
     }
 }
 
-impl Resource for Texture {
-    fn resource_data(&self) -> &Rc<RefCell<ResourceData>> {
-        &self.resource
-    }
+struct InnerTexture {
+    width: i32,
+    height: i32,
+    raw: Vec<u8>,
+    gl: Option<GlContext>,
+    tex: Option<glow::WebTextureKey>,
+}
 
-    fn on_load(&mut self) -> Result<(), String> {
-        let data = image::load_from_memory(self.resource_data().borrow().data())
-            .map_err(|e| e.to_string())?
-            .to_rgba();
-
-        let width = data.width() as i32;
-        let height = data.height() as i32;
-        let raw = data.to_vec();
-
-        *self.data.borrow_mut() = Some(TextureData {
+impl InnerTexture {
+    fn empty(width: i32, height: i32) -> Self {
+        Self {
             width,
             height,
-            raw,
-            graphics: None,
-        });
-
-        Ok(())
-    }
-
-    fn is_loaded(&self) -> bool {
-        self.data.borrow().is_some()
+            raw: vec![],
+            gl: None,
+            tex: None,
+        }
     }
 }
+
+impl Drop for InnerTexture {
+    fn drop(&mut self) {
+        if let (Some(gl), Some(tex)) = (self.gl.as_ref(), self.tex) {
+            unsafe {
+                gl.delete_texture(tex);
+            }
+        }
+    }
+}
+
+//TODO add rect and rotation to support texturepacker?
