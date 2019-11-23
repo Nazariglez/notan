@@ -124,7 +124,7 @@ fn get_projection(width: i32, height: i32) -> glm::Mat3 {
 }
 
 pub struct Context2d {
-    gl: GlContext,
+    pub(crate) gl: GlContext,
     driver: Driver,
     color_batcher: batchers::ColorBatcher,
     sprite_batcher: batchers::SpriteBatcher,
@@ -447,13 +447,13 @@ impl Context2d {
         }
     }
 
-    pub fn image(&mut self, img: &mut Texture, x: f32, y: f32) {
+    pub fn image(&mut self, img: &Texture, x: f32, y: f32) {
         self.image_ext(img, x, y, img.width(), img.height(), 0.0, 0.0, 0.0, 0.0);
     }
 
     pub fn image_crop(
         &mut self,
-        img: &mut Texture,
+        img: &Texture,
         x: f32,
         y: f32,
         source_x: f32,
@@ -476,7 +476,7 @@ impl Context2d {
 
     pub fn image_ext(
         &mut self,
-        img: &mut Texture,
+        img: &Texture,
         x: f32,
         y: f32,
         width: f32,
@@ -507,7 +507,7 @@ impl Context2d {
 
     pub fn pattern(
         &mut self,
-        img: &mut Texture,
+        img: &Texture,
         x: f32,
         y: f32,
         width: f32,
@@ -536,7 +536,7 @@ impl Context2d {
 
     pub fn pattern_ext(
         &mut self,
-        img: &mut Texture,
+        img: &Texture,
         x: f32,
         y: f32,
         width: f32,
@@ -567,7 +567,7 @@ impl Context2d {
         self.draw_color(&vert, Some(&color_vert));
     }
 
-    pub fn image_9slice(&mut self, img: &mut Texture, x: f32, y: f32, width: f32, height: f32) {
+    pub fn image_9slice(&mut self, img: &Texture, x: f32, y: f32, width: f32, height: f32) {
         let ww = img.width() / 3.0;
         let hh = img.height() / 3.0;
         self.image_9slice_ext(img, x, y, width, height, ww, ww, hh, hh);
@@ -575,7 +575,7 @@ impl Context2d {
 
     pub fn image_9slice_ext(
         &mut self,
-        img: &mut Texture,
+        img: &Texture,
         x: f32,
         y: f32,
         width: f32,
@@ -739,4 +739,53 @@ fn create_webgl2_context(win: &web_sys::HtmlCanvasElement) -> Result<GlContext, 
 
     let ctx = Rc::new(glow::Context::from_webgl2_context(gl));
     Ok(ctx)
+}
+
+pub(crate) fn create_gl_tex(
+    gl: &GlContext,
+    width: i32,
+    height: i32,
+    data: &[u8],
+) -> Result<glow::WebTextureKey, String> {
+    unsafe {
+        let tex = gl.create_texture()?;
+        gl.bind_texture(glow::TEXTURE_2D, Some(tex));
+
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_S,
+            glow::CLAMP_TO_EDGE as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_T,
+            glow::CLAMP_TO_EDGE as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_MAG_FILTER,
+            glow::NEAREST as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_MIN_FILTER,
+            glow::NEAREST as i32,
+        );
+
+        gl.tex_image_2d(
+            glow::TEXTURE_2D,
+            0,
+            glow::RGBA as i32,
+            width,
+            height,
+            0,
+            glow::RGBA,
+            glow::UNSIGNED_BYTE,
+            Some(data),
+        );
+
+        //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
+        gl.bind_texture(glow::TEXTURE_2D, None);
+        Ok(tex)
+    }
 }

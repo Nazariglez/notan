@@ -232,7 +232,7 @@ impl SpriteBatcher {
         y: f32,
         width: f32,
         height: f32,
-        img: &mut Texture,
+        img: &Texture,
         source_x: f32,
         source_y: f32,
         source_width: f32,
@@ -243,10 +243,12 @@ impl SpriteBatcher {
             return;
         }
 
-        let tex = match img.tex() {
-            Some(t) => t,
-            _ => init_graphic_texture(gl, img).unwrap(),
-        };
+        let tex = img.tex().unwrap();
+
+        //        let tex = match img.tex() {
+        //            Some(t) => t,
+        //            _ => init_graphic_texture(gl, img).unwrap(),
+        //        };
 
         let img_ww = img.width();
         let img_hh = img.height();
@@ -352,7 +354,7 @@ impl SpriteBatcher {
         data: &DrawData,
         x: f32,
         y: f32,
-        img: &mut Texture,
+        img: &Texture,
         width: f32,
         height: f32,
         offset_x: f32,
@@ -365,10 +367,12 @@ impl SpriteBatcher {
             return;
         }
 
-        let tex = match img.tex() {
-            Some(t) => t,
-            _ => init_graphic_texture(gl, img).unwrap(),
-        };
+        let tex = img.tex().unwrap();
+
+        //        let tex = match img.tex() {
+        //            Some(t) => t,
+        //            _ => init_graphic_texture(gl, img).unwrap(),
+        //        };
 
         let offset_x = offset_x * scale_x;
         let offset_y = offset_y * scale_y;
@@ -468,13 +472,6 @@ impl SpriteBatcher {
     }
 }
 
-fn init_graphic_texture(gl: &GlContext, img: &mut Texture) -> Result<glow::WebTextureKey, String> {
-    let gt = create_gl_texture(gl, &img.data().borrow().as_ref().unwrap())?;
-    let tex = gt.tex;
-    img.data().borrow_mut().as_mut().unwrap().init_graphics(gt);
-    Ok(tex)
-}
-
 fn create_sprite_shader(gl: &GlContext) -> Result<Shader, String> {
     let attrs = vec![
         Attribute::new("a_position", 2, glow::FLOAT, false),
@@ -496,53 +493,6 @@ fn create_sprite_shader(gl: &GlContext) -> Result<Shader, String> {
 pub(crate) struct GraphicTexture {
     pub gl: GlContext,
     pub tex: glow::WebTextureKey,
-}
-
-fn create_gl_texture(gl: &GlContext, data: &TextureData) -> Result<GraphicTexture, String> {
-    unsafe {
-        let tex = gl.create_texture()?;
-        gl.bind_texture(glow::TEXTURE_2D, Some(tex));
-
-        gl.tex_parameter_i32(
-            glow::TEXTURE_2D,
-            glow::TEXTURE_WRAP_S,
-            glow::CLAMP_TO_EDGE as i32,
-        );
-        gl.tex_parameter_i32(
-            glow::TEXTURE_2D,
-            glow::TEXTURE_WRAP_T,
-            glow::CLAMP_TO_EDGE as i32,
-        );
-        gl.tex_parameter_i32(
-            glow::TEXTURE_2D,
-            glow::TEXTURE_MAG_FILTER,
-            glow::NEAREST as i32,
-        );
-        gl.tex_parameter_i32(
-            glow::TEXTURE_2D,
-            glow::TEXTURE_MIN_FILTER,
-            glow::NEAREST as i32,
-        );
-
-        gl.tex_image_2d(
-            glow::TEXTURE_2D,
-            0,
-            glow::RGBA as i32,
-            data.width,
-            data.height,
-            0,
-            glow::RGBA,
-            glow::UNSIGNED_BYTE,
-            Some(&data.raw),
-        );
-
-        //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
-        gl.bind_texture(glow::TEXTURE_2D, None);
-        Ok(GraphicTexture {
-            gl: gl.clone(),
-            tex,
-        })
-    }
 }
 
 fn create_vao(gl: &GlContext) -> Result<WebVertexArrayKey, String> {

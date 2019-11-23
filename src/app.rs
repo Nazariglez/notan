@@ -14,7 +14,7 @@ use super::{window, window::*};
 pub struct App<'a> {
     pub(crate) window: Window,
     pub(crate) graphics: Context2d,
-    pub(crate) resources: ResourceManager<'a>,
+    resources: ResourceLoaderManager<'a>,
 }
 
 impl<'a> App<'a> {
@@ -22,11 +22,11 @@ impl<'a> App<'a> {
         &mut self.graphics
     }
 
-    pub fn load<A>(&mut self, file: &str) -> Result<A, String>
+    pub fn load_file<A>(&mut self, file: &str) -> Result<A, String>
     where
         A: ResourceConstructor + Resource + Clone + 'a,
     {
-        self.resources.load(file)
+        self.resources.add(file)
     }
 
     pub fn delta(&self) -> f32 {
@@ -52,7 +52,7 @@ impl<S> AppBuilder<S> {
         let mut app = App {
             window: win,
             graphics: gfx,
-            resources: ResourceManager::new(),
+            resources: ResourceLoaderManager::new(),
         };
 
         let mut state = (self.state_cb)(&mut app);
@@ -62,7 +62,7 @@ impl<S> AppBuilder<S> {
 
         start_cb(&mut app, &mut state);
         window::run(move || {
-            app.resources.try_load().unwrap();
+            try_load_resources(&mut app).unwrap();
 
             update_cb(&mut app, &mut state);
             draw_cb(&mut app, &mut state);
@@ -89,6 +89,19 @@ impl<S> AppBuilder<S> {
         self.update_callback = Some(cb);
         self
     }
+}
+
+//TODO don't stop the loop, just return Vec<String> with the errors, and the user will decide what to do instead of stop the program
+fn try_load_resources(app: &mut App) -> Result<(), String> {
+    if let Some(mut assets_loaded) = app.resources.try_load()? {
+        while let Some((data, mut asset)) = assets_loaded.pop() {
+            if !asset.is_loaded() {
+                asset.parse(app, data)?;
+            }
+        }
+    }
+
+    Ok(())
 }
 
 pub fn init() -> AppBuilder<()> {
