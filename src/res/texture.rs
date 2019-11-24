@@ -4,6 +4,7 @@ use crate::graphics::batchers::GraphicTexture;
 
 use crate::app::App;
 use crate::graphics::{create_gl_tex, GlContext};
+use crate::log;
 use futures::future::Future;
 use glow::{HasContext, TEXTURE_ALPHA_TYPE};
 use std::cell::RefCell;
@@ -35,11 +36,11 @@ impl Texture {
     pub fn from_size(gl: &GlContext, width: i32, height: i32) -> Result<Self, String> {
         let mut inner = InnerTexture::empty(width, height);
         let gl = gl.clone();
-        let tex = create_gl_tex(&gl, width, height, &vec![])?;
+        let tex = create_gl_tex(&gl, width, height, &vec![0; (width * height) as usize * 4])?;
         inner.gl = Some(gl);
         inner.tex = Some(tex);
         Ok(Self {
-            inner: Rc::new(RefCell::new(inner))
+            inner: Rc::new(RefCell::new(inner)),
         })
     }
 }
@@ -106,6 +107,38 @@ impl Drop for InnerTexture {
                 gl.delete_texture(tex);
             }
         }
+    }
+}
+
+pub(crate) fn update_texture(
+    gl: &GlContext,
+    texture: &Texture,
+    rect: glyph_brush::rusttype::Rect<u32>,
+    data: &[u8],
+) {
+    let mut padded_data = Vec::with_capacity(data.len() * 4);
+
+    for a in data {
+        padded_data.push(255);
+        padded_data.push(255);
+        padded_data.push(255);
+        padded_data.push(*a);
+    }
+
+    unsafe {
+        gl.bind_texture(glow::TEXTURE_2D, texture.tex());
+
+        gl.tex_sub_image_2d_u8_slice(
+            glow::TEXTURE_2D,
+            0,
+            rect.min.x as _,
+            rect.min.y as _,
+            rect.width() as _,
+            rect.height() as _,
+            glow::RGBA,
+            glow::UNSIGNED_BYTE,
+            Some(&padded_data),
+        );
     }
 }
 

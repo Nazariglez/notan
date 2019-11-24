@@ -1,11 +1,15 @@
-use std::rc::Rc;
-use std::cell::RefCell;
-use super::{ResourceConstructor, Resource};
-use crate::app::App;
 use super::Texture;
-use glyph_brush::{GlyphBrushBuilder, GlyphBrush, FontId, Section, GlyphVertex, BrushAction, BrushError};
-use glyph_brush::rusttype::Scale;
+use super::{Resource, ResourceConstructor};
+use crate::app::App;
 use crate::graphics::GlContext;
+use crate::log;
+use crate::res::update_texture;
+use glyph_brush::rusttype::Scale;
+use glyph_brush::{
+    BrushAction, BrushError, FontId, GlyphBrush, GlyphBrushBuilder, GlyphVertex, Section,
+};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 struct InnerFont {
     id: FontId,
@@ -14,7 +18,7 @@ struct InnerFont {
 
 #[derive(Clone)]
 pub struct Font {
-    inner: Rc<RefCell<InnerFont>>
+    inner: Rc<RefCell<InnerFont>>,
 }
 
 impl Font {
@@ -29,7 +33,7 @@ impl Default for Font {
             inner: Rc::new(RefCell::new(InnerFont {
                 id: FontId(0),
                 loaded: true,
-            }))
+            })),
         }
     }
 }
@@ -39,8 +43,8 @@ impl ResourceConstructor for Font {
         Self {
             inner: Rc::new(RefCell::new(InnerFont {
                 id: FontId(0),
-                loaded: false
-            }))
+                loaded: false,
+            })),
         }
     }
 }
@@ -48,10 +52,7 @@ impl ResourceConstructor for Font {
 impl Resource for Font {
     fn parse(&mut self, app: &mut App, data: Vec<u8>) -> Result<(), String> {
         let id = app.graphics.font_manager.add(data);
-        *self.inner.borrow_mut() = InnerFont {
-            id,
-            loaded: true,
-        };
+        *self.inner.borrow_mut() = InnerFont { id, loaded: true };
         Ok(())
     }
 
@@ -60,33 +61,36 @@ impl Resource for Font {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct FontQuad {
-    x1: f32,
-    y1: f32,
-    x2: f32,
-    y2: f32,
-    u1: f32,
-    v1: f32,
-    u2: f32,
-    v2: f32,
+    pub x1: f32,
+    pub y1: f32,
+    pub x2: f32,
+    pub y2: f32,
+    pub u1: f32,
+    pub v1: f32,
+    pub u2: f32,
+    pub v2: f32,
 }
 
 pub(crate) struct FontManager<'a> {
     cache: GlyphBrush<'a, FontQuad>,
-    texture: Texture,
+    pub(crate) texture: Texture,
+    pub(crate) quads: Vec<FontQuad>,
 }
 
 impl<'a> FontManager<'a> {
-    const DEFAULT:&'a [u8] = include_bytes!("../../assets/ubuntu/Ubuntu-B.ttf");
+    const DEFAULT: &'a [u8] = include_bytes!("../../assets/ubuntu/Ubuntu-B.ttf");
 
-    pub fn new() -> Self {
+    pub fn new(gl: &GlContext) -> Result<Self, String> {
         let cache = GlyphBrushBuilder::using_font_bytes(FontManager::DEFAULT).build();
-        let texture = Texture::new("");
-        Self {
+        let (width, height) = cache.texture_dimensions();
+        let texture = Texture::from_size(gl, width as _, height as _)?;
+        Ok(Self {
             cache,
-            texture
-        }
+            texture,
+            quads: vec![],
+        })
     }
 
     fn add(&mut self, data: Vec<u8>) -> FontId {
@@ -97,9 +101,10 @@ impl<'a> FontManager<'a> {
     pub fn try_update(&mut self, gl: &GlContext, id: FontId, text: &str, size: f32) {
         self.cache.queue(create_section(id, text, size));
 
+        let texture = &mut self.texture;
         let action = loop {
             let try_action = self.cache.process_queued(
-                |rect, data| {},
+                |rect, data| update_texture(gl, &texture, rect, data),
                 |v| glyph_to_quad(&v),
             );
 
@@ -107,15 +112,18 @@ impl<'a> FontManager<'a> {
                 Ok(a) => break a,
                 Err(BrushError::TextureTooSmall { suggested, .. }) => {
                     let (width, height) = suggested;
-                    self.texture = Texture::from_size(gl, width as _, height as _).unwrap();
+                    log(&format!("{} {}", width, height));
+                    *texture = Texture::from_size(gl, width as _, height as _).unwrap();
                     self.cache.resize_texture(width, height);
                 }
             }
         };
 
-        if let BrushAction::Draw(quad) = action {
+        if let BrushAction::Draw(quads) = action {
+            //            log(&format!("draw... {} {:#?}", quads.len(), quads));
             //https://github.com/17cupsofcoffee/tetra/blob/master/src/graphics/text.rs#L197
             //TODO update quad
+            self.quads = quads;
         }
     }
 }
@@ -123,7 +131,7 @@ impl<'a> FontManager<'a> {
 fn create_section(id: FontId, text: &str, size: f32) -> Section {
     Section {
         text: text,
-        scale: Scale::uniform(size),
+        scale: Scale::uniform(size * 100.0),
         font_id: id,
         ..Section::default()
     }

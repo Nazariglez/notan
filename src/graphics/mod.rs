@@ -16,9 +16,9 @@ use batchers::{ColorBatcher, SpriteBatcher};
 use color::Color;
 use transform::Transform2d;
 
-use crate::{math, log};
 use crate::math::*;
 use crate::res::*;
+use crate::{log, math};
 
 pub mod batchers;
 pub mod color;
@@ -145,7 +145,7 @@ impl Context2d {
         let data = DrawData::new(width, height);
         let color_batcher = ColorBatcher::new(&gl, &data)?;
         let sprite_batcher = SpriteBatcher::new(&gl, &data)?;
-        let font_manager = FontManager::new();
+        let font_manager = FontManager::new(&gl)?;
 
         //2d
         unsafe {
@@ -164,7 +164,7 @@ impl Context2d {
             render_target: None,
             paint_mode: PaintMode::Empty,
             stencil: false,
-            font_manager
+            font_manager,
         })
     }
 
@@ -289,8 +289,26 @@ impl Context2d {
     }
 
     pub fn text(&mut self, font: &Font, text: &str, x: f32, y: f32) {
+        if !font.is_loaded() {
+            return;
+        }
         self.font_manager.try_update(&self.gl, font.id(), text, 1.0);
-//        log("hello");
+        let texture = self.font_manager.texture.clone();
+        for (i, ref q) in self.font_manager.quads.clone().iter().enumerate() {
+            //            log(&format!("{}",i));
+            let ww = texture.width();
+            let hh = texture.height();
+            let xx = q.x1 + x;
+            let yy = q.y1 + y;
+            let sx = q.u1 * ww;
+            let sy = q.v1 * hh;
+            let sw = q.u2 * ww - sx;
+            let sh = q.v2 * hh - sy;
+            self.image_crop(&texture, xx, yy, sx, sy, sw, sh);
+        }
+
+        self.set_color(Color::White);
+        self.image(&texture, 200.0, 300.0);
     }
 
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
