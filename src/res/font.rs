@@ -61,35 +61,33 @@ impl Resource for Font {
     }
 }
 
-#[derive(Clone, Debug)]
-pub(crate) struct FontQuad {
-    pub x1: f32,
-    pub y1: f32,
-    pub x2: f32,
-    pub y2: f32,
-    pub u1: f32,
-    pub v1: f32,
-    pub u2: f32,
-    pub v2: f32,
+#[derive(Debug, Clone)]
+pub(crate) struct FontTextureData {
+    pub x: f32,
+    pub y: f32,
+    pub source_x: f32,
+    pub source_y: f32,
+    pub source_width: f32,
+    pub source_height: f32,
 }
 
 pub(crate) struct FontManager<'a> {
-    cache: GlyphBrush<'a, FontQuad>,
+    cache: GlyphBrush<'a, FontTextureData>,
     pub(crate) texture: Texture,
-    pub(crate) quads: Vec<FontQuad>,
+    pub(crate) data: Vec<FontTextureData>,
 }
 
 impl<'a> FontManager<'a> {
-    const DEFAULT: &'a [u8] = include_bytes!("../../assets/ubuntu/Ubuntu-B.ttf");
+    const DEFAULT_DATA: &'a [u8] = include_bytes!("../../assets/ubuntu/Ubuntu-B.ttf");
 
     pub fn new(gl: &GlContext) -> Result<Self, String> {
-        let cache = GlyphBrushBuilder::using_font_bytes(FontManager::DEFAULT).build();
+        let cache = GlyphBrushBuilder::using_font_bytes(FontManager::DEFAULT_DATA).build();
         let (width, height) = cache.texture_dimensions();
         let texture = Texture::from_size(gl, width as _, height as _)?;
         Ok(Self {
             cache,
             texture,
-            quads: vec![],
+            data: vec![],
         })
     }
 
@@ -105,12 +103,12 @@ impl<'a> FontManager<'a> {
         let action = loop {
             let try_action = self.cache.process_queued(
                 |rect, data| update_texture(gl, &texture, rect, data),
-                |v| glyph_to_quad(&v),
+                |v| glyph_to_data(&v, texture.width(), texture.height()),
             );
 
             match try_action {
                 Ok(a) => break a,
-                Err(BrushError::TextureTooSmall { suggested, .. }) => {
+                Err(BrushError::TextureTooSmall { suggested }) => {
                     let (width, height) = suggested;
                     log(&format!("{} {}", width, height));
                     *texture = Texture::from_size(gl, width as _, height as _).unwrap();
@@ -119,33 +117,31 @@ impl<'a> FontManager<'a> {
             }
         };
 
-        if let BrushAction::Draw(quads) = action {
-            //            log(&format!("draw... {} {:#?}", quads.len(), quads));
-            //https://github.com/17cupsofcoffee/tetra/blob/master/src/graphics/text.rs#L197
-            //TODO update quad
-            self.quads = quads;
+        match action {
+            BrushAction::Draw(data_list) => self.data = data_list,
+            BrushAction::ReDraw => log("telele..."),
         }
     }
 }
 
-fn create_section(id: FontId, text: &str, size: f32) -> Section {
+fn create_section(font_id: FontId, text: &str, size: f32) -> Section {
     Section {
-        text: text,
-        scale: Scale::uniform(size * 100.0),
-        font_id: id,
+        text,
+        scale: Scale::uniform(size),
+        font_id,
         ..Section::default()
     }
 }
 
-fn glyph_to_quad(v: &GlyphVertex) -> FontQuad {
-    FontQuad {
-        x1: v.pixel_coords.min.x as f32,
-        y1: v.pixel_coords.min.y as f32,
-        x2: v.pixel_coords.max.x as f32,
-        y2: v.pixel_coords.max.y as f32,
-        u1: v.tex_coords.min.x as f32,
-        v1: v.tex_coords.min.y as f32,
-        u2: v.tex_coords.max.x as f32,
-        v2: v.tex_coords.max.y as f32,
+fn glyph_to_data(v: &GlyphVertex, width: f32, height: f32) -> FontTextureData {
+    let sx = v.tex_coords.min.x * width;
+    let sy = v.tex_coords.min.y * height;
+    FontTextureData {
+        x: v.pixel_coords.min.x as _,
+        y: v.pixel_coords.min.y as _,
+        source_x: sx,
+        source_y: sy,
+        source_width: v.tex_coords.max.x * width - sx,
+        source_height: v.tex_coords.max.y * height - sy,
     }
 }

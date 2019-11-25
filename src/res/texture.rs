@@ -116,14 +116,15 @@ pub(crate) fn update_texture(
     rect: glyph_brush::rusttype::Rect<u32>,
     data: &[u8],
 ) {
-    let mut padded_data = Vec::with_capacity(data.len() * 4);
+    let xx = rect.min.x as i32;
+    let yy = rect.min.y as i32;
+    let ww = rect.width() as i32;
+    let hh = rect.height() as i32;
 
-    for a in data {
-        padded_data.push(255);
-        padded_data.push(255);
-        padded_data.push(255);
-        padded_data.push(*a);
-    }
+    let rgba_data = data
+        .iter()
+        .flat_map(|a| vec![255, 255, 255, *a])
+        .collect::<Vec<u8>>();
 
     unsafe {
         gl.bind_texture(glow::TEXTURE_2D, texture.tex());
@@ -131,13 +132,13 @@ pub(crate) fn update_texture(
         gl.tex_sub_image_2d_u8_slice(
             glow::TEXTURE_2D,
             0,
-            rect.min.x as _,
-            rect.min.y as _,
-            rect.width() as _,
-            rect.height() as _,
+            xx,
+            yy,
+            ww,
+            hh,
             glow::RGBA,
             glow::UNSIGNED_BYTE,
-            Some(&padded_data),
+            Some(&rgba_data),
         );
     }
 }

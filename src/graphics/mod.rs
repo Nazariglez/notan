@@ -288,27 +288,29 @@ impl Context2d {
         self.sprite_batcher.flush(&self.gl, &self.data);
     }
 
-    pub fn text(&mut self, font: &Font, text: &str, x: f32, y: f32) {
+    pub fn text(&mut self, font: &Font, text: &str, x: f32, y: f32, size: f32) {
         if !font.is_loaded() {
             return;
         }
-        self.font_manager.try_update(&self.gl, font.id(), text, 1.0);
+        //MUTLTILINE https://github.com/alexheretic/glyph-brush/blob/master/glyph-brush/examples/opengl.rs#L238
+        //ALIGNMNET https://github.com/alexheretic/glyph-brush/blob/master/glyph-brush/examples/opengl.rs#L249
+        self.font_manager
+            .try_update(&self.gl, font.id(), text, size);
         let texture = self.font_manager.texture.clone();
-        for (i, ref q) in self.font_manager.quads.clone().iter().enumerate() {
-            //            log(&format!("{}",i));
-            let ww = texture.width();
-            let hh = texture.height();
-            let xx = q.x1 + x;
-            let yy = q.y1 + y;
-            let sx = q.u1 * ww;
-            let sy = q.v1 * hh;
-            let sw = q.u2 * ww - sx;
-            let sh = q.v2 * hh - sy;
-            self.image_crop(&texture, xx, yy, sx, sy, sw, sh);
+        for ref q in self.font_manager.data.clone() {
+            self.image_crop(
+                &texture,
+                x + q.x,
+                y + q.y,
+                q.source_x,
+                q.source_y,
+                q.source_width,
+                q.source_height,
+            );
         }
 
         self.set_color(Color::White);
-        self.image(&texture, 200.0, 300.0);
+        self.image(&texture, 200.0, 200.0);
     }
 
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
