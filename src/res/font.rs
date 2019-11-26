@@ -10,6 +10,8 @@ use glyph_brush::{
 };
 use std::cell::RefCell;
 use std::rc::Rc;
+use glow::HasContext;
+use wasm_bindgen::__rt::core::cmp::max;
 
 struct InnerFont {
     id: FontId,
@@ -71,8 +73,15 @@ pub(crate) struct FontTextureData {
     pub source_height: f32,
 }
 
+fn max_texture_size(gl: &GlContext) -> i32 {
+    unsafe {
+        gl.get_parameter_i32(glow::MAX_TEXTURE_SIZE)
+    }
+}
+
 pub(crate) struct FontManager<'a> {
     cache: GlyphBrush<'a, FontTextureData>,
+    max_texture_size: i32,
     pub(crate) texture: Texture,
     pub(crate) data: Vec<FontTextureData>,
 }
@@ -88,6 +97,7 @@ impl<'a> FontManager<'a> {
             cache,
             texture,
             data: vec![],
+            max_texture_size: max_texture_size(gl),
         })
     }
 
@@ -109,7 +119,7 @@ impl<'a> FontManager<'a> {
             match try_action {
                 Ok(a) => break a,
                 Err(BrushError::TextureTooSmall { suggested }) => {
-                    let (width, height) = suggested;
+                    let (width, height) = max_suggest_size(self.max_texture_size as u32, suggested, self.cache.texture_dimensions());
                     log(&format!("{} {}", width, height));
                     *texture = Texture::from_size(gl, width as _, height as _).unwrap();
                     self.cache.resize_texture(width, height);
@@ -121,6 +131,16 @@ impl<'a> FontManager<'a> {
             BrushAction::Draw(data_list) => self.data = data_list,
             BrushAction::ReDraw => log("telele..."),
         }
+    }
+}
+
+fn max_suggest_size(max_texture_dimensions: u32, suggested: (u32, u32), dimensions: (u32, u32)) -> (u32, u32) {
+    log(&format!("{} {:?} {:?}", max_texture_dimensions, suggested, dimensions));
+    if (suggested.0 > max_texture_dimensions || suggested.1 > max_texture_dimensions)
+        && (dimensions.0 < max_texture_dimensions || dimensions.1 < max_texture_dimensions) {
+        (max_texture_dimensions, max_texture_dimensions)
+    } else {
+        suggested
     }
 }
 
