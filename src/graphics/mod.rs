@@ -815,8 +815,10 @@ pub(crate) fn create_gl_tex_ext(
 ) -> Result<glow::WebTextureKey, String> {
     unsafe {
         let tex = gl.create_texture()?;
-        gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
         gl.bind_texture(glow::TEXTURE_2D, Some(tex));
+        if format == TextureFormat::Red.into() {
+            gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
+        }
 
         gl.tex_parameter_i32(
             glow::TEXTURE_2D,

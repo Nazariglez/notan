@@ -34,14 +34,7 @@ impl Texture {
 
     /// Create a new texture with a custom size
     pub fn from_size(gl: &GlContext, width: i32, height: i32) -> Result<Self, String> {
-        let mut inner = InnerTexture::empty(width, height);
-        let gl = gl.clone();
-        let tex = create_gl_tex(&gl, width, height, &vec![0; (width * height) as usize * 4])?;
-        inner.gl = Some(gl);
-        inner.tex = Some(tex);
-        Ok(Self {
-            inner: Rc::new(RefCell::new(inner)),
-        })
+        Texture::from(gl, width, height, TextureFormat::Rgba, TextureFilter::Nearest, TextureFilter::Nearest)
     }
 
     /// Create a new texture using custom size and format
@@ -56,6 +49,7 @@ impl Texture {
         })
     }
 
+    /// Returns the texture format
     pub fn format(&self) -> TextureFormat {
         self.inner.borrow().format
     }
@@ -162,7 +156,7 @@ pub(crate) fn update_texture(
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TextureFormat {
     Rgba,
     Red,
@@ -186,7 +180,7 @@ impl From<TextureFormat> for i32 {
 }
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TextureFilter {
     Linear,
     Nearest,
