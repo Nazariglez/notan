@@ -12,6 +12,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use glow::HasContext;
 use wasm_bindgen::__rt::core::cmp::max;
+use crate::graphics::color::Color;
 
 struct InnerFont {
     id: FontId,
@@ -71,6 +72,7 @@ pub(crate) struct FontTextureData {
     pub source_y: f32,
     pub source_width: f32,
     pub source_height: f32,
+    pub color: [f32; 4],
 }
 
 fn max_texture_size(gl: &GlContext) -> i32 {
@@ -82,8 +84,11 @@ fn max_texture_size(gl: &GlContext) -> i32 {
 pub(crate) struct FontManager<'a> {
     cache: GlyphBrush<'a, FontTextureData>,
     max_texture_size: i32,
-    pub(crate) texture: Texture,
-    pub(crate) data: Vec<FontTextureData>,
+    pub texture: Texture,
+    pub data: Vec<FontTextureData>,
+    pub width: u32,
+    pub height: u32,
+
 }
 
 impl<'a> FontManager<'a> {
@@ -98,6 +103,8 @@ impl<'a> FontManager<'a> {
             texture,
             data: vec![],
             max_texture_size: max_texture_size(gl),
+            width: width,
+            height: height,
         })
     }
 
@@ -105,10 +112,16 @@ impl<'a> FontManager<'a> {
         self.cache.add_font_bytes(data)
     }
 
+    pub fn texture_dimensions(&self) -> (u32, u32) {
+        self.cache.texture_dimensions()
+    }
+
     //https://github.com/17cupsofcoffee/tetra/blob/master/src/graphics/text.rs#L178
     pub fn try_update(&mut self, gl: &GlContext, id: FontId, text: &str, size: f32) {
         self.cache.queue(create_section(id, text, size));
 
+//        let width = self.width as _;
+//        let height = self.height as _;
         let texture = &mut self.texture;
         let action = loop {
             let try_action = self.cache.process_queued(
@@ -128,9 +141,48 @@ impl<'a> FontManager<'a> {
         };
 
         match action {
-            BrushAction::Draw(data_list) => self.data = data_list,
-            BrushAction::ReDraw => log("telele..."),
+            BrushAction::Draw(data_list) => {
+                self.data = data_list;
+//                log("lilili");
+            },
+            _ => {}
+//            BrushAction::ReDraw => log("telele..."),
         }
+    }
+
+    pub fn queue(&mut self, font: &Font, x: f32, y: f32, text: &str, size: f32, color: [f32; 4]) {
+        self.cache.queue(Section {
+            text,
+            screen_position: (x, y),
+            scale: Scale::uniform(size),
+            font_id: font.id(),
+            color,
+            ..Section::default()
+        });
+    }
+
+    pub fn process_queue(&mut self, gl: &GlContext, texture: &mut Texture) -> Option<Vec<FontTextureData>> {
+        let action = loop {
+            let try_action = self.cache.process_queued(
+                |rect, data| update_texture(gl, texture, rect, data),
+                |vert| glyph_to_data(&vert, texture.width(), texture.height())
+            );
+
+            match try_action {
+                Ok(action) => break action,
+                Err(BrushError::TextureTooSmall { suggested }) => {
+                    let (width, height) = max_suggest_size(self.max_texture_size as u32, suggested, self.cache.texture_dimensions());
+                    *texture = Texture::from_size(gl, width as _, height as _).unwrap();
+                    self.cache.resize_texture(width, height);
+                }
+            }
+        };
+
+        if let BrushAction::Draw(data) = action {
+            return Some(data);
+        }
+
+        None
     }
 }
 
@@ -163,5 +215,6 @@ fn glyph_to_data(v: &GlyphVertex, width: f32, height: f32) -> FontTextureData {
         source_y: sy,
         source_width: v.tex_coords.max.x * width - sx,
         source_height: v.tex_coords.max.y * height - sy,
+        color: v.color,
     }
 }

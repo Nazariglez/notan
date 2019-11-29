@@ -19,11 +19,24 @@ use transform::Transform2d;
 use crate::math::*;
 use crate::res::*;
 use crate::{log, math};
+use crate::graphics::batchers::TextBatcher;
 
 pub mod batchers;
 pub mod color;
 pub mod shader;
 pub mod transform;
+
+/*TODO FILTERS:
+    draw.filter(filters: &[Filter], cb: |ctx|{
+        ctx.drawImage(&img, 0.0, 0.0);
+    });
+    This is going to render:
+        - Callback to a render_target
+        - Render this render_target with each filter in order
+        - Render to screen once all the filters are done
+*/
+
+
 
 #[derive(Debug, Eq, PartialEq)]
 enum PaintMode {
@@ -128,6 +141,7 @@ pub struct Context2d {
     driver: Driver,
     color_batcher: batchers::ColorBatcher,
     sprite_batcher: batchers::SpriteBatcher,
+    text_batcher: batchers::TextBatcher,
     is_drawing: bool,
     render_target: Option<RenderTarget>,
     data: DrawData,
@@ -145,6 +159,7 @@ impl Context2d {
         let data = DrawData::new(width, height);
         let color_batcher = ColorBatcher::new(&gl, &data)?;
         let sprite_batcher = SpriteBatcher::new(&gl, &data)?;
+        let text_batcher = TextBatcher::new(&gl, &data)?;
         let font_manager = FontManager::new(&gl)?;
 
         //2d
@@ -160,6 +175,7 @@ impl Context2d {
             driver,
             color_batcher,
             sprite_batcher,
+            text_batcher,
             is_drawing: false,
             render_target: None,
             paint_mode: PaintMode::Empty,
@@ -278,6 +294,11 @@ impl Context2d {
     pub fn flush(&mut self) {
         self.flush_color();
         self.flush_sprite();
+        self.flush_text();
+    }
+
+    fn flush_text(&mut self) {
+        self.text_batcher.flush(&self.gl, &self.data);
     }
 
     fn flush_color(&mut self) {
@@ -288,29 +309,37 @@ impl Context2d {
         self.sprite_batcher.flush(&self.gl, &self.data);
     }
 
-    pub fn text(&mut self, font: &Font, text: &str, x: f32, y: f32, size: f32) {
-        if !font.is_loaded() {
-            return;
-        }
-        //MUTLTILINE https://github.com/alexheretic/glyph-brush/blob/master/glyph-brush/examples/opengl.rs#L238
-        //ALIGNMNET https://github.com/alexheretic/glyph-brush/blob/master/glyph-brush/examples/opengl.rs#L249
-        self.font_manager
-            .try_update(&self.gl, font.id(), text, size);
-        let texture = self.font_manager.texture.clone();
-        for ref q in self.font_manager.data.clone() {
-            self.image_crop(
-                &texture,
-                x + q.x,
-                y + q.y,
-                q.source_x,
-                q.source_y,
-                q.source_width,
-                q.source_height,
-            );
-        }
+    pub fn set_font(&mut self, font: &Font) {
+        self.text_batcher.set_font(font);
+    }
 
-        self.set_color(Color::White);
-        self.image(&texture, 200.0, 200.0);
+    pub fn text(&mut self, font: &Font, text: &str, x: f32, y: f32, size: f32) {
+//        if !font.is_loaded() {
+//            return;
+//        }
+//
+//        //MUTLTILINE https://github.com/alexheretic/glyph-brush/blob/master/glyph-brush/examples/opengl.rs#L238
+//        //ALIGNMNET https://github.com/alexheretic/glyph-brush/blob/master/glyph-brush/examples/opengl.rs#L249
+//        self.font_manager
+//            .try_update(&self.gl, font.id(), text, size);
+//        let texture = self.font_manager.texture.clone();
+//        for ref q in self.font_manager.data.clone() {
+//            self.image_crop(
+//                &texture,
+//                x + q.x,
+//                y + q.y,
+//                q.source_x,
+//                q.source_y,
+//                q.source_width,
+//                q.source_height,
+//            );
+//        }
+//
+//        self.set_color(Color::White);
+//        self.image(&texture, 200.0, 200.0);
+//        self.flush();
+        self.set_paint_mode(PaintMode::Text);
+        self.text_batcher.draw_text(&self.gl, &self.data, text, x, y, size);
     }
 
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
@@ -554,9 +583,15 @@ impl Context2d {
         match &self.paint_mode {
             PaintMode::Color => {
                 self.flush_sprite();
+                self.flush_text();
             }
             PaintMode::Image => {
                 self.flush_color();
+                self.flush_text();
+            }
+            PaintMode::Text => {
+                self.flush_color();
+                self.flush_sprite();
             }
             _ => {}
         }
@@ -770,6 +805,55 @@ fn create_webgl2_context(win: &web_sys::HtmlCanvasElement) -> Result<GlContext, 
 }
 
 pub(crate) fn create_gl_tex(
+    gl: &GlContext,
+    width: i32,
+    height: i32,
+    data: &[u8],
+) -> Result<glow::WebTextureKey, String> {
+    unsafe {
+        let tex = gl.create_texture()?;
+        gl.bind_texture(glow::TEXTURE_2D, Some(tex));
+
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_S,
+            glow::CLAMP_TO_EDGE as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_T,
+            glow::CLAMP_TO_EDGE as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_MAG_FILTER,
+            glow::NEAREST as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_MIN_FILTER,
+            glow::NEAREST as i32,
+        );
+
+        gl.tex_image_2d(
+            glow::TEXTURE_2D,
+            0,
+            glow::RGBA as i32,
+            width,
+            height,
+            0,
+            glow::RGBA,
+            glow::UNSIGNED_BYTE,
+            Some(data),
+        );
+
+        //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
+        gl.bind_texture(glow::TEXTURE_2D, None);
+        Ok(tex)
+    }
+}
+
+pub(crate) fn create_gl_tex_ext(
     gl: &GlContext,
     width: i32,
     height: i32,
