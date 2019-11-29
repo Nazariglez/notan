@@ -809,16 +809,19 @@ pub(crate) fn create_gl_tex_ext(
     width: i32,
     height: i32,
     data: &[u8],
+    internal: i32,
     format: i32,
     min_filter: i32,
     mag_filter: i32,
+    bytes_per_pixel: usize,
 ) -> Result<glow::WebTextureKey, String> {
     unsafe {
         let tex = gl.create_texture()?;
-        gl.bind_texture(glow::TEXTURE_2D, Some(tex));
-        if format == TextureFormat::Red.into() {
+        if bytes_per_pixel == 1 {
             gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
         }
+
+        gl.bind_texture(glow::TEXTURE_2D, Some(tex));
 
         gl.tex_parameter_i32(
             glow::TEXTURE_2D,
@@ -830,21 +833,13 @@ pub(crate) fn create_gl_tex_ext(
             glow::TEXTURE_WRAP_T,
             glow::CLAMP_TO_EDGE as i32,
         );
-        gl.tex_parameter_i32(
-            glow::TEXTURE_2D,
-            glow::TEXTURE_MAG_FILTER,
-            mag_filter,
-        );
-        gl.tex_parameter_i32(
-            glow::TEXTURE_2D,
-            glow::TEXTURE_MIN_FILTER,
-            min_filter,
-        );
+        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, mag_filter);
+        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, min_filter);
 
         gl.tex_image_2d(
             glow::TEXTURE_2D,
             0,
-            format,
+            internal,
             width,
             height,
             0,

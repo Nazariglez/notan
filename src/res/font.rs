@@ -4,7 +4,7 @@ use crate::app::App;
 use crate::graphics::color::Color;
 use crate::graphics::GlContext;
 use crate::log;
-use crate::res::{update_texture, TextureFilter};
+use crate::res::{update_texture, TextureFilter, TextureFormat};
 use glow::HasContext;
 use glyph_brush::rusttype::Scale;
 use glyph_brush::{
@@ -147,7 +147,16 @@ impl<'a> FontManager<'a> {
                         suggested,
                         self.cache.texture_dimensions(),
                     );
-                    *texture = Texture::from(gl, width as _, height as _, texture.format(), TextureFilter::Linear, TextureFilter::Linear).unwrap();
+                    *texture = Texture::from(
+                        gl,
+                        width as _,
+                        height as _,
+                        TextureFormat::R8,
+                        TextureFormat::Red,
+                        TextureFilter::Linear,
+                        TextureFilter::Linear,
+                    )
+                    .unwrap();
                     self.cache.resize_texture(width, height);
                 }
             }

@@ -528,14 +528,11 @@ pub(super) struct TextBatcher {
     vertex_color: Vec<f32>,
     vertex_tex: Vec<f32>,
     current_tex: glow::WebTextureKey,
-    texture_matrix: Mat3,
     font: Font,
     pub(crate) manager: FontManager<'static>,
     data: Vec<FontTextureData>,
     texture: Texture,
-    text_count: usize,
     current_matrix: Mat3,
-    //dirty: bool
 }
 
 impl TextBatcher {
@@ -545,7 +542,15 @@ impl TextBatcher {
         let font = Font::default();
         let manager = FontManager::new(gl)?;
         let (width, height) = manager.texture_dimensions();
-        let texture = Texture::from(gl, width as _, height as _, TextureFormat::Rgba, TextureFilter::Linear, TextureFilter::Linear)?;
+        let texture = Texture::from(
+            gl,
+            width as _,
+            height as _,
+            TextureFormat::R8,
+            TextureFormat::Red,
+            TextureFilter::Linear,
+            TextureFilter::Linear,
+        )?;
         let current_tex = texture.tex().unwrap();
 
         Ok(Self {
@@ -556,12 +561,10 @@ impl TextBatcher {
             vertex_color: vec![0.0; MAX_PER_BATCH * VERTICES * COLOR_VERTICE_SIZE],
             vertex_tex: vec![0.0; MAX_PER_BATCH * VERTICES * VERTICE_SIZE],
             current_tex,
-            texture_matrix: Mat3::identity(),
             font,
             manager,
             data: vec![],
             texture,
-            text_count: 0,
             current_matrix: Mat3::identity(),
             //dirty: true,
         })
@@ -584,7 +587,6 @@ impl TextBatcher {
         };
         shader.useme();
         shader.set_uniform("u_matrix", data.projection);
-        shader.set_uniform("u_tex_matrix", self.texture_matrix);
         shader.set_uniform("u_texture", 0);
     }
 
@@ -737,11 +739,11 @@ fn create_text_shader(gl: &GlContext) -> Result<Shader, String> {
         Attribute::new("a_texcoord", 2, glow::FLOAT, true),
     ];
 
-    let uniforms = vec!["u_matrix", "u_texture", "u_tex_matrix"];
+    let uniforms = vec!["u_matrix", "u_texture"];
     Ok(Shader::new(
         gl,
-        include_str!("./shaders/image.vert.glsl"),
-        include_str!("./shaders/image.frag.glsl"),
+        include_str!("./shaders/text.vert.glsl"),
+        include_str!("./shaders/text.frag.glsl"),
         attrs,
         uniforms,
     )?)
