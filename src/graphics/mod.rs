@@ -16,10 +16,10 @@ use batchers::{ColorBatcher, SpriteBatcher};
 use color::Color;
 use transform::Transform2d;
 
+use crate::graphics::batchers::TextBatcher;
 use crate::math::*;
 use crate::res::*;
 use crate::{log, math};
-use crate::graphics::batchers::TextBatcher;
 
 pub mod batchers;
 pub mod color;
@@ -35,8 +35,6 @@ pub mod transform;
         - Render this render_target with each filter in order
         - Render to screen once all the filters are done
 */
-
-
 
 #[derive(Debug, Eq, PartialEq)]
 enum PaintMode {
@@ -147,7 +145,6 @@ pub struct Context2d {
     data: DrawData,
     paint_mode: PaintMode,
     stencil: bool,
-    pub(crate) font_manager: FontManager<'static>,
 }
 
 impl Context2d {
@@ -160,7 +157,6 @@ impl Context2d {
         let color_batcher = ColorBatcher::new(&gl, &data)?;
         let sprite_batcher = SpriteBatcher::new(&gl, &data)?;
         let text_batcher = TextBatcher::new(&gl, &data)?;
-        let font_manager = FontManager::new(&gl)?;
 
         //2d
         unsafe {
@@ -180,8 +176,11 @@ impl Context2d {
             render_target: None,
             paint_mode: PaintMode::Empty,
             stencil: false,
-            font_manager,
         })
+    }
+
+    pub(crate) fn add_font(&mut self, data: Vec<u8>) -> usize {
+        self.text_batcher.manager.add(data)
     }
 
     pub fn set_alpha(&mut self, alpha: f32) {
@@ -313,33 +312,10 @@ impl Context2d {
         self.text_batcher.set_font(font);
     }
 
-    pub fn text(&mut self, font: &Font, text: &str, x: f32, y: f32, size: f32) {
-//        if !font.is_loaded() {
-//            return;
-//        }
-//
-//        //MUTLTILINE https://github.com/alexheretic/glyph-brush/blob/master/glyph-brush/examples/opengl.rs#L238
-//        //ALIGNMNET https://github.com/alexheretic/glyph-brush/blob/master/glyph-brush/examples/opengl.rs#L249
-//        self.font_manager
-//            .try_update(&self.gl, font.id(), text, size);
-//        let texture = self.font_manager.texture.clone();
-//        for ref q in self.font_manager.data.clone() {
-//            self.image_crop(
-//                &texture,
-//                x + q.x,
-//                y + q.y,
-//                q.source_x,
-//                q.source_y,
-//                q.source_width,
-//                q.source_height,
-//            );
-//        }
-//
-//        self.set_color(Color::White);
-//        self.image(&texture, 200.0, 200.0);
-//        self.flush();
+    pub fn text(&mut self, text: &str, x: f32, y: f32, size: f32) {
         self.set_paint_mode(PaintMode::Text);
-        self.text_batcher.draw_text(&self.gl, &self.data, text, x, y, size);
+        self.text_batcher
+            .draw_text(&self.gl, &self.data, text, x, y, size);
     }
 
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {

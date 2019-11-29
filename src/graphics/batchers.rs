@@ -530,7 +530,7 @@ pub(super) struct TextBatcher {
     current_tex: glow::WebTextureKey,
     texture_matrix: Mat3,
     font: Font,
-    manager: FontManager<'static>,
+    pub(crate) manager: FontManager<'static>,
     data: Vec<FontTextureData>,
     texture: Texture,
     text_count: usize,
@@ -571,13 +571,9 @@ impl TextBatcher {
         self.font = font.clone();
     }
 
-    pub fn set_font_valign(&mut self, a: ()) {
+    pub fn set_font_valign(&mut self, a: ()) {}
 
-    }
-
-    pub fn set_font_halign(&mut self, a: ()) {
-
-    }
+    pub fn set_font_halign(&mut self, a: ()) {}
 
     //pub fn draw_text_ext to use breaklines?
 
@@ -618,19 +614,36 @@ impl TextBatcher {
         self.index = 0;
     }
 
-    pub fn draw_text(&mut self, gl: &GlContext, data: &DrawData, text: &str, x: f32, y: f32, size: f32) {
+    pub fn draw_text(
+        &mut self,
+        gl: &GlContext,
+        data: &DrawData,
+        text: &str,
+        x: f32,
+        y: f32,
+        size: f32,
+    ) {
         if !self.font.is_loaded() {
             return;
         }
 
-        if *data.transform.matrix() != self.current_matrix {
-            log("change matrix...");
+        /*TODO avoid to flush because the matrix change, store it by section and
+           process it in the same draw call
+        */
+        if data.transform.matrix() != &self.current_matrix {
             self.flush(gl, data);
             self.current_matrix = *data.transform.matrix();
         }
 
         let color = data.color.to_rgba();
-        self.manager.queue(&self.font, x, y, text, size, [color.0, color.1, color.2, color.3 * data.alpha]);
+        self.manager.queue(
+            &self.font,
+            x,
+            y,
+            text,
+            size,
+            [color.0, color.1, color.2, color.3 * data.alpha],
+        );
     }
 
     pub fn flush(&mut self, gl: &GlContext, data: &DrawData) {
@@ -639,19 +652,15 @@ impl TextBatcher {
         }
 
         self.current_tex = self.texture.tex().unwrap();
-        for tex_data in self.data.clone() { //TODO borrow issue, don't clone the vector...
+        for tex_data in self.data.clone() {
+            //TODO borrow issue, don't clone the vector...
             self.draw_letter(gl, data, &tex_data);
         }
 
         self.flush_gpu(gl, data);
     }
 
-    fn draw_letter(
-        &mut self,
-        gl: &GlContext,
-        data: &DrawData,
-        tex_data: &FontTextureData
-    ) {
+    fn draw_letter(&mut self, gl: &GlContext, data: &DrawData, tex_data: &FontTextureData) {
         let x = tex_data.x;
         let y = tex_data.y;
         let tex = self.texture.tex().unwrap();
@@ -661,12 +670,18 @@ impl TextBatcher {
         let hh = tex_data.source_height;
 
         let vertex = [
-            x, y,
-            x, y+hh,
-            x+ww, y,
-            x+ww, y,
-            x, y+hh,
-            x+ww, y+hh
+            x,
+            y,
+            x,
+            y + hh,
+            x + ww,
+            y,
+            x + ww,
+            y,
+            x,
+            y + hh,
+            x + ww,
+            y + hh,
         ];
 
         let count = (vertex.len() / 6) as i32;
@@ -698,7 +713,7 @@ impl TextBatcher {
             offset += 1;
         });
 
-//        let (r, g, b, a) = data.color.to_rgba();
+        //        let (r, g, b, a) = data.color.to_rgba();
         let mut color = vec![];
         (0..VERTICES * count as usize).for_each(|_| {
             color.extend_from_slice(&tex_data.color);
