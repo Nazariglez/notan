@@ -545,7 +545,7 @@ impl TextBatcher {
         let font = Font::default();
         let manager = FontManager::new(gl)?;
         let (width, height) = manager.texture_dimensions();
-        let texture = Texture::from_size(gl, width as _, height as _)?;
+        let texture = Texture::from(gl, width as _, height as _, TextureFormat::Rgba, TextureFilter::Linear, TextureFilter::Linear)?;
         let current_tex = texture.tex().unwrap();
 
         Ok(Self {

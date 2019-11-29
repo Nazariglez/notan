@@ -4,7 +4,7 @@ use crate::app::App;
 use crate::graphics::color::Color;
 use crate::graphics::GlContext;
 use crate::log;
-use crate::res::update_texture;
+use crate::res::{update_texture, TextureFilter};
 use glow::HasContext;
 use glyph_brush::rusttype::Scale;
 use glyph_brush::{
@@ -116,43 +116,6 @@ impl<'a> FontManager<'a> {
         self.cache.texture_dimensions()
     }
 
-    //https://github.com/17cupsofcoffee/tetra/blob/master/src/graphics/text.rs#L178
-    pub fn try_update(&mut self, gl: &GlContext, id: FontId, text: &str, size: f32) {
-        self.cache.queue(create_section(id, text, size));
-
-        //        let width = self.width as _;
-        //        let height = self.height as _;
-        let texture = &mut self.texture;
-        let action = loop {
-            let try_action = self.cache.process_queued(
-                |rect, data| update_texture(gl, &texture, rect, data),
-                |v| glyph_to_data(&v, texture.width(), texture.height()),
-            );
-
-            match try_action {
-                Ok(a) => break a,
-                Err(BrushError::TextureTooSmall { suggested }) => {
-                    let (width, height) = max_suggest_size(
-                        self.max_texture_size as u32,
-                        suggested,
-                        self.cache.texture_dimensions(),
-                    );
-                    log(&format!("{} {}", width, height));
-                    *texture = Texture::from_size(gl, width as _, height as _).unwrap();
-                    self.cache.resize_texture(width, height);
-                }
-            }
-        };
-
-        match action {
-            BrushAction::Draw(data_list) => {
-                self.data = data_list;
-                //                log("lilili");
-            }
-            _ => {} //            BrushAction::ReDraw => log("telele..."),
-        }
-    }
-
     pub fn queue(&mut self, font: &Font, x: f32, y: f32, text: &str, size: f32, color: [f32; 4]) {
         let section = Section {
             text,
@@ -184,7 +147,7 @@ impl<'a> FontManager<'a> {
                         suggested,
                         self.cache.texture_dimensions(),
                     );
-                    *texture = Texture::from_size(gl, width as _, height as _).unwrap();
+                    *texture = Texture::from(gl, width as _, height as _, texture.format(), TextureFilter::Linear, TextureFilter::Linear).unwrap();
                     self.cache.resize_texture(width, height);
                 }
             }
@@ -213,15 +176,6 @@ fn max_suggest_size(
         (max_texture_dimensions, max_texture_dimensions)
     } else {
         suggested
-    }
-}
-
-fn create_section(font_id: FontId, text: &str, size: f32) -> Section {
-    Section {
-        text,
-        scale: Scale::uniform(size),
-        font_id,
-        ..Section::default()
     }
 }
 

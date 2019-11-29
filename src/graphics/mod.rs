@@ -46,27 +46,6 @@ enum PaintMode {
 
 //TODO draw_image with crop, scale, etc... draw_image_ext
 
-/*
-TODO API:
-    let draw = app.draw();
-    draw.transform()
-        .translate(100.0, 100.0)
-        .scale(2.0, 2.0)
-        .rotate_deg(45.0);
-    draw.circle(0.0, 0.0, 50.0);
-    draw.transform()
-        .pop()
-        .pop()
-        .pop();
-    - - - - - - - - - - Same As: - - - - - - - - - - - - -
-    let draw = app.draw();
-    draw.obj()
-        .circle(100.0, 100.0, 50.0)
-        .scale(2.0, 2.0)
-        .rotate_dev(45.0);
-        //.matrix(push your own matrix)L
-*/
-
 //TODO glsl to spv https://crates.io/crates/shaderc -> https://crates.io/crates/spirv_cross spv->glsl->etc...
 
 pub type GlContext = Rc<glow::Context>;
@@ -80,8 +59,6 @@ enum Driver {
     //    Dx12,
     //    Vulkan,
 }
-
-//TODO check this nannout beatiful API https://github.com/nannou-org/nannou/blob/master/examples/simple_draw.rs
 
 pub struct RenderTarget {
     fbo: glow::WebFramebufferKey,
@@ -247,8 +224,6 @@ impl Context2d {
             self.gl.clear(flags);
         }
     }
-
-    //TODO stencil https://community.khronos.org/t/please-help-me-understand-the-concept-of-how-stencil-buffering-works-in-vulkan/7592/7
 
     pub fn begin_mask(&mut self) {
         self.flush();
@@ -834,9 +809,13 @@ pub(crate) fn create_gl_tex_ext(
     width: i32,
     height: i32,
     data: &[u8],
+    format: i32,
+    min_filter: i32,
+    mag_filter: i32,
 ) -> Result<glow::WebTextureKey, String> {
     unsafe {
         let tex = gl.create_texture()?;
+        gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
         gl.bind_texture(glow::TEXTURE_2D, Some(tex));
 
         gl.tex_parameter_i32(
@@ -852,22 +831,22 @@ pub(crate) fn create_gl_tex_ext(
         gl.tex_parameter_i32(
             glow::TEXTURE_2D,
             glow::TEXTURE_MAG_FILTER,
-            glow::NEAREST as i32,
+            mag_filter,
         );
         gl.tex_parameter_i32(
             glow::TEXTURE_2D,
             glow::TEXTURE_MIN_FILTER,
-            glow::NEAREST as i32,
+            min_filter,
         );
 
         gl.tex_image_2d(
             glow::TEXTURE_2D,
             0,
-            glow::RGBA as i32,
+            format,
             width,
             height,
             0,
-            glow::RGBA,
+            format as _,
             glow::UNSIGNED_BYTE,
             Some(data),
         );

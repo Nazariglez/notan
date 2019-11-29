@@ -3,7 +3,7 @@ use super::resource::*;
 use crate::graphics::batchers::GraphicTexture;
 
 use crate::app::App;
-use crate::graphics::{create_gl_tex, GlContext};
+use crate::graphics::{create_gl_tex, GlContext, create_gl_tex_ext};
 use crate::log;
 use futures::future::Future;
 use glow::{HasContext, TEXTURE_ALPHA_TYPE};
@@ -43,6 +43,22 @@ impl Texture {
             inner: Rc::new(RefCell::new(inner)),
         })
     }
+
+    /// Create a new texture using custom size and format
+    pub fn from(gl: &GlContext, width: i32, height: i32, format: TextureFormat, min_filter: TextureFilter, mag_filter: TextureFilter) -> Result<Self, String> {
+        let mut inner = InnerTexture::empty(width, height);
+        let gl = gl.clone();
+        let tex = create_gl_tex_ext(&gl, width, height, &vec![0; (width * height) as usize * 4], format.into(), min_filter.into(), mag_filter.into())?;
+        inner.gl = Some(gl);
+        inner.tex = Some(tex);
+        Ok(Self {
+            inner: Rc::new(RefCell::new(inner)),
+        })
+    }
+
+    pub fn format(&self) -> TextureFormat {
+        self.inner.borrow().format
+    }
 }
 
 impl Resource for Texture {
@@ -63,6 +79,7 @@ impl Resource for Texture {
             raw,
             gl: Some(gl),
             tex: Some(tex),
+            format: TextureFormat::Rgba,
         };
         Ok(())
     }
@@ -86,6 +103,7 @@ struct InnerTexture {
     raw: Vec<u8>,
     gl: Option<GlContext>,
     tex: Option<glow::WebTextureKey>,
+    format: TextureFormat,
 }
 
 impl InnerTexture {
@@ -96,6 +114,7 @@ impl InnerTexture {
             raw: vec![],
             gl: None,
             tex: None,
+            format: TextureFormat::Rgba,
         }
     }
 }
@@ -136,10 +155,57 @@ pub(crate) fn update_texture(
             yy,
             ww,
             hh,
-            glow::RGBA,
+            texture.format().into(),
             glow::UNSIGNED_BYTE,
             Some(&rgba_data),
         );
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum TextureFormat {
+    Rgba,
+    Red,
+}
+
+impl From<TextureFormat> for u32 {
+    fn from(f: TextureFormat) -> Self {
+        use TextureFormat::*;
+        match f {
+            Rgba => glow::RGBA,
+            Red => glow::RED,
+        }
+    }
+}
+
+impl From<TextureFormat> for i32 {
+    fn from(f: TextureFormat) -> Self {
+        let f:u32 = f.into();
+        f as _
+    }
+}
+
+
+#[derive(Debug, Clone, Copy)]
+pub enum TextureFilter {
+    Linear,
+    Nearest,
+}
+
+impl From<TextureFilter> for u32 {
+    fn from(f: TextureFilter) -> Self {
+        use TextureFilter::*;
+        match f {
+            Linear => glow::LINEAR,
+            Nearest => glow::NEAREST,
+        }
+    }
+}
+
+impl From<TextureFilter> for i32 {
+    fn from(f: TextureFilter) -> Self {
+        let f:u32 = f.into();
+        f as _
     }
 }
 
