@@ -7,6 +7,7 @@ use crate::res::*;
 
 use super::shader::*;
 use super::GlContext;
+use js_sys::Math::max;
 use wasm_bindgen::__rt::std::alloc::handle_alloc_error;
 
 /*TODO masking: https://stackoverflow.com/questions/46806063/how-stencil-buffer-and-masking-work
@@ -624,6 +625,9 @@ impl TextBatcher {
         x: f32,
         y: f32,
         size: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+        max_width: Option<f32>,
     ) {
         if !self.font.is_loaded() {
             return;
@@ -637,6 +641,8 @@ impl TextBatcher {
             self.current_matrix = *data.transform.matrix();
         }
 
+        let max_width = max_width.unwrap_or(std::f32::INFINITY);
+
         let color = data.color.to_rgba();
         self.manager.queue(
             &self.font,
@@ -645,6 +651,9 @@ impl TextBatcher {
             text,
             size,
             [color.0, color.1, color.2, color.3 * data.alpha],
+            max_width,
+            h_align,
+            v_align,
         );
     }
 
@@ -715,7 +724,6 @@ impl TextBatcher {
             offset += 1;
         });
 
-        //        let (r, g, b, a) = data.color.to_rgba();
         let mut color = vec![];
         (0..VERTICES * count as usize).for_each(|_| {
             color.extend_from_slice(&tex_data.color);
@@ -723,8 +731,7 @@ impl TextBatcher {
 
         let mut offset = self.index as usize * VERTICES * COLOR_VERTICE_SIZE;
         color.iter().enumerate().for_each(|(i, c)| {
-            let is_alpha = (i + 1) % 4 == 0;
-            self.vertex_color[offset] = if is_alpha { *c * data.alpha } else { *c };
+            self.vertex_color[offset] = *c;
             offset += 1;
         });
 

@@ -14,6 +14,8 @@ use glyph_brush::{
 use std::cell::RefCell;
 use std::rc::Rc;
 
+pub use glyph_brush::{HorizontalAlign, VerticalAlign};
+
 struct InnerFont {
     id: FontId,
     loaded: bool,
@@ -29,12 +31,29 @@ impl Font {
         self.inner.borrow().id
     }
 
-    //    pub fn size(&mut self, app: &mut App, text: &str, size: f32) -> (f32, f32) {
-    //        app.graphics.text_size(&self, text, size)
-    //    }
-
     pub fn text_size(app: &mut App, font: &Font, text: &str, size: f32) -> (f32, f32) {
-        app.graphics.text_size(font, text, size)
+        Self::text_size_ext(
+            app,
+            font,
+            text,
+            size,
+            HorizontalAlign::Left,
+            VerticalAlign::Top,
+            None,
+        )
+    }
+
+    pub fn text_size_ext(
+        app: &mut App,
+        font: &Font,
+        text: &str,
+        size: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+        max_width: Option<f32>,
+    ) -> (f32, f32) {
+        app.graphics
+            .text_size(font, text, size, h_align, v_align, max_width)
     }
 }
 
@@ -124,11 +143,23 @@ impl<'a> FontManager<'a> {
         self.cache.texture_dimensions()
     }
 
-    pub fn text_size(&mut self, font: &Font, text: &str, size: f32) -> (f32, f32) {
+    pub fn text_size(
+        &mut self,
+        font: &Font,
+        text: &str,
+        size: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+        max_width: Option<f32>,
+    ) -> (f32, f32) {
         let section = Section {
             text,
             scale: Scale::uniform(size),
             font_id: font.id(),
+            bounds: (max_width.unwrap_or(std::f32::INFINITY), std::f32::INFINITY),
+            layout: glyph_brush::Layout::default()
+                .h_align(h_align)
+                .v_align(v_align),
             ..Section::default()
         };
 
@@ -139,12 +170,27 @@ impl<'a> FontManager<'a> {
         (0.0, 0.0)
     }
 
-    pub fn queue(&mut self, font: &Font, x: f32, y: f32, text: &str, size: f32, color: [f32; 4]) {
+    pub fn queue(
+        &mut self,
+        font: &Font,
+        x: f32,
+        y: f32,
+        text: &str,
+        size: f32,
+        color: [f32; 4],
+        max_width: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+    ) {
         let section = Section {
             text,
             screen_position: (x, y),
             scale: Scale::uniform(size),
             font_id: font.id(),
+            bounds: (max_width, std::f32::INFINITY),
+            layout: glyph_brush::Layout::default()
+                .h_align(h_align)
+                .v_align(v_align),
             color,
             ..Section::default()
         };
@@ -198,10 +244,6 @@ fn max_suggest_size(
     suggested: (u32, u32),
     dimensions: (u32, u32),
 ) -> (u32, u32) {
-    log(&format!(
-        "{} {:?} {:?}",
-        max_texture_dimensions, suggested, dimensions
-    ));
     if (suggested.0 > max_texture_dimensions || suggested.1 > max_texture_dimensions)
         && (dimensions.0 < max_texture_dimensions || dimensions.1 < max_texture_dimensions)
     {

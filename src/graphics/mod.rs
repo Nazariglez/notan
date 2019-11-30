@@ -20,6 +20,7 @@ use crate::graphics::batchers::TextBatcher;
 use crate::math::*;
 use crate::res::*;
 use crate::{log, math};
+use lyon::lyon_algorithms::fit::FitStyle::Horizontal;
 
 pub mod batchers;
 pub mod color;
@@ -160,8 +161,19 @@ impl Context2d {
         self.text_batcher.manager.add(data)
     }
 
-    pub(crate) fn text_size(&mut self, font: &Font, text: &str, size: f32) -> (f32, f32) {
-        let size = self.text_batcher.manager.text_size(font, text, size);
+    pub(crate) fn text_size(
+        &mut self,
+        font: &Font,
+        text: &str,
+        size: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+        max_width: Option<f32>,
+    ) -> (f32, f32) {
+        let size = self
+            .text_batcher
+            .manager
+            .text_size(font, text, size, h_align, v_align, max_width);
         (size.0 as _, size.1 as _)
     }
 
@@ -297,9 +309,31 @@ impl Context2d {
     }
 
     pub fn text(&mut self, text: &str, x: f32, y: f32, size: f32) {
+        self.text_ext(
+            text,
+            x,
+            y,
+            size,
+            HorizontalAlign::Left,
+            VerticalAlign::Top,
+            None,
+        );
+    }
+
+    pub fn text_ext(
+        &mut self,
+        text: &str,
+        x: f32,
+        y: f32,
+        size: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+        max_width: Option<f32>,
+    ) {
         self.set_paint_mode(PaintMode::Text);
-        self.text_batcher
-            .draw_text(&self.gl, &self.data, text, x, y, size);
+        self.text_batcher.draw_text(
+            &self.gl, &self.data, text, x, y, size, h_align, v_align, max_width,
+        );
     }
 
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
