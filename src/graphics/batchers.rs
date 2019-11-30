@@ -7,6 +7,7 @@ use crate::res::*;
 
 use super::shader::*;
 use super::GlContext;
+use js_sys::Math::max;
 use wasm_bindgen::__rt::std::alloc::handle_alloc_error;
 
 /*TODO masking: https://stackoverflow.com/questions/46806063/how-stencil-buffer-and-masking-work
@@ -104,12 +105,8 @@ impl ColorBatcher {
         shader.set_uniform("u_matrix", data.projection);
     }
 
-    fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], _offset: usize) {
-        unsafe {
-            gl.bind_buffer(glow::ARRAY_BUFFER, self.shader.buffer(name));
-            let buff = vf_to_u8(&data);
-            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, buff, glow::STATIC_DRAW);
-        }
+    fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], offset: usize) {
+        bind_buffer(gl, self.shader.buffer(name), data, offset);
     }
 
     pub fn draw(&mut self, gl: &GlContext, data: &DrawData, vertex: &[f32], color: Option<&[f32]>) {
@@ -194,12 +191,8 @@ impl SpriteBatcher {
         shader.set_uniform("u_texture", 0);
     }
 
-    fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], _offset: usize) {
-        unsafe {
-            gl.bind_buffer(glow::ARRAY_BUFFER, self.shader.buffer(name));
-            let buff = vf_to_u8(&data);
-            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, buff, glow::STATIC_DRAW);
-        }
+    fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], offset: usize) {
+        bind_buffer(gl, self.shader.buffer(name), data, offset);
     }
 
     pub fn flush(&mut self, gl: &GlContext, data: &DrawData) {
@@ -515,6 +508,249 @@ fn create_color_shader(gl: &GlContext) -> Result<Shader, String> {
         gl,
         include_str!("./shaders/color.vert.glsl"),
         include_str!("./shaders/color.frag.glsl"),
+        attrs,
+        uniforms,
+    )?)
+}
+
+fn bind_buffer(gl: &GlContext, buffer: Option<WebBufferKey>, data: &[f32], _offset: usize) {
+    unsafe {
+        gl.bind_buffer(glow::ARRAY_BUFFER, buffer);
+        let buff = vf_to_u8(&data);
+        gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, buff, glow::STATIC_DRAW);
+    }
+}
+
+pub(super) struct TextBatcher {
+    shader: Shader,
+    vao: glow::WebVertexArrayKey,
+    index: i32,
+    vertex: Vec<f32>,
+    vertex_color: Vec<f32>,
+    vertex_tex: Vec<f32>,
+    current_tex: glow::WebTextureKey,
+    pub(crate) font: Font,
+    pub(crate) manager: FontManager<'static>,
+    data: Vec<FontTextureData>,
+    texture: Texture,
+    current_matrix: Mat3,
+}
+
+impl TextBatcher {
+    pub fn new(gl: &GlContext, _data: &DrawData) -> Result<Self, String> {
+        let vao = create_vao(gl)?;
+        let shader = create_text_shader(gl)?;
+        let font = Font::default();
+        let manager = FontManager::new(gl)?;
+        let (width, height) = manager.texture_dimensions();
+        let texture = Texture::from(
+            gl,
+            width as _,
+            height as _,
+            TextureFormat::R8,
+            TextureFormat::Red,
+            TextureFilter::Linear,
+            TextureFilter::Linear,
+        )?;
+        let current_tex = texture.tex().unwrap();
+
+        Ok(Self {
+            shader,
+            vao,
+            index: 0,
+            vertex: vec![0.0; MAX_PER_BATCH * VERTICES * VERTICE_SIZE],
+            vertex_color: vec![0.0; MAX_PER_BATCH * VERTICES * COLOR_VERTICE_SIZE],
+            vertex_tex: vec![0.0; MAX_PER_BATCH * VERTICES * VERTICE_SIZE],
+            current_tex,
+            font,
+            manager,
+            data: vec![],
+            texture,
+            current_matrix: Mat3::identity(),
+            //dirty: true,
+        })
+    }
+
+    pub fn set_font(&mut self, font: &Font) {
+        self.font = font.clone();
+    }
+
+    pub fn set_font_valign(&mut self, a: ()) {}
+
+    pub fn set_font_halign(&mut self, a: ()) {}
+
+    //pub fn draw_text_ext to use breaklines?
+
+    fn use_shader(&self, data: &DrawData) {
+        let shader = match &data.shader {
+            Some(s) => s,
+            _ => &self.shader,
+        };
+        shader.useme();
+        shader.set_uniform("u_matrix", data.projection);
+        shader.set_uniform("u_texture", 0);
+    }
+
+    fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], offset: usize) {
+        bind_buffer(gl, self.shader.buffer(name), data, offset);
+    }
+
+    pub fn flush_gpu(&mut self, gl: &GlContext, data: &DrawData) {
+        if self.index == 0 {
+            return;
+        }
+
+        unsafe {
+            gl.bind_vertex_array(Some(self.vao));
+            self.use_shader(data);
+
+            gl.active_texture(glow::TEXTURE0);
+            gl.bind_texture(glow::TEXTURE_2D, Some(self.current_tex));
+
+            self.bind_buffer(gl, "a_position", &self.vertex, 0);
+            self.bind_buffer(gl, "a_texcoord", &self.vertex_tex, 0);
+            self.bind_buffer(gl, "a_color", &self.vertex_color, 0);
+            let count = self.index * VERTICES as i32;
+            gl.draw_arrays(glow::TRIANGLES, 0, count);
+        }
+
+        self.index = 0;
+    }
+
+    pub fn draw_text(
+        &mut self,
+        gl: &GlContext,
+        data: &DrawData,
+        text: &str,
+        x: f32,
+        y: f32,
+        size: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+        max_width: Option<f32>,
+    ) {
+        if !self.font.is_loaded() {
+            return;
+        }
+
+        /*TODO avoid to flush because the matrix change, store it by section and
+           process it in the same draw call
+        */
+        if data.transform.matrix() != &self.current_matrix {
+            self.flush(gl, data);
+            self.current_matrix = *data.transform.matrix();
+        }
+
+        let max_width = max_width.unwrap_or(std::f32::INFINITY);
+
+        let color = data.color.to_rgba();
+        self.manager.queue(
+            &self.font,
+            x,
+            y,
+            text,
+            size,
+            [color.0, color.1, color.2, color.3 * data.alpha],
+            max_width,
+            h_align,
+            v_align,
+        );
+    }
+
+    pub fn flush(&mut self, gl: &GlContext, data: &DrawData) {
+        if let Some(tex_data) = self.manager.process_queue(gl, &mut self.texture) {
+            self.data = tex_data;
+        }
+
+        self.current_tex = self.texture.tex().unwrap();
+        for tex_data in self.data.clone() {
+            //TODO borrow issue, don't clone the vector...
+            self.draw_letter(gl, data, &tex_data);
+        }
+
+        self.flush_gpu(gl, data);
+    }
+
+    fn draw_letter(&mut self, gl: &GlContext, data: &DrawData, tex_data: &FontTextureData) {
+        let x = tex_data.x;
+        let y = tex_data.y;
+        let tex = self.texture.tex().unwrap();
+        let img_ww = self.texture.width();
+        let img_hh = self.texture.height();
+        let ww = tex_data.source_width;
+        let hh = tex_data.source_height;
+
+        let vertex = [
+            x,
+            y,
+            x,
+            y + hh,
+            x + ww,
+            y,
+            x + ww,
+            y,
+            x,
+            y + hh,
+            x + ww,
+            y + hh,
+        ];
+
+        let count = (vertex.len() / 6) as i32;
+        let next = self.index + count;
+
+        if next >= (MAX_PER_BATCH as i32) {
+            self.flush_gpu(gl, data);
+        }
+
+        let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
+        for (i, _) in vertex.iter().enumerate().step_by(2) {
+            if let (Some(v1), Some(v2)) = (vertex.get(i), vertex.get(i + 1)) {
+                let v = self.current_matrix * vec3(*v1, *v2, 1.0);
+                self.vertex[offset] = v.x;
+                self.vertex[offset + 1] = v.y;
+                offset += 2;
+            }
+        }
+
+        let x1 = tex_data.source_x / img_ww;
+        let y1 = tex_data.source_y / img_hh;
+        let x2 = (tex_data.source_x + ww) / img_ww;
+        let y2 = (tex_data.source_y + hh) / img_hh;
+
+        let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
+        let vertex_tex = [x1, y1, x1, y2, x2, y1, x2, y1, x1, y2, x2, y2];
+        vertex_tex.iter().for_each(|v| {
+            self.vertex_tex[offset] = *v;
+            offset += 1;
+        });
+
+        let mut color = vec![];
+        (0..VERTICES * count as usize).for_each(|_| {
+            color.extend_from_slice(&tex_data.color);
+        });
+
+        let mut offset = self.index as usize * VERTICES * COLOR_VERTICE_SIZE;
+        color.iter().enumerate().for_each(|(i, c)| {
+            self.vertex_color[offset] = *c;
+            offset += 1;
+        });
+
+        self.index += count;
+    }
+}
+
+fn create_text_shader(gl: &GlContext) -> Result<Shader, String> {
+    let attrs = vec![
+        Attribute::new("a_position", 2, glow::FLOAT, false),
+        Attribute::new("a_color", 4, glow::FLOAT, false),
+        Attribute::new("a_texcoord", 2, glow::FLOAT, true),
+    ];
+
+    let uniforms = vec!["u_matrix", "u_texture"];
+    Ok(Shader::new(
+        gl,
+        include_str!("./shaders/text.vert.glsl"),
+        include_str!("./shaders/text.frag.glsl"),
         attrs,
         uniforms,
     )?)

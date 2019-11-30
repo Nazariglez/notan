@@ -61,7 +61,7 @@ Instructions to init and build a project
     - [x] Patterns
     - [x] Masking
     - [ ] Custom Shader
-    - [ ] Text
+    - [X] Text
     - [ ] BitmapText
     - [x] NineSlice
     - [ ] Linear Gradient

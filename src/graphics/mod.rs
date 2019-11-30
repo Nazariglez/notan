@@ -16,14 +16,26 @@ use batchers::{ColorBatcher, SpriteBatcher};
 use color::Color;
 use transform::Transform2d;
 
-use crate::{math, log};
+use crate::graphics::batchers::TextBatcher;
 use crate::math::*;
 use crate::res::*;
+use crate::{log, math};
+use lyon::lyon_algorithms::fit::FitStyle::Horizontal;
 
 pub mod batchers;
 pub mod color;
 pub mod shader;
 pub mod transform;
+
+/*TODO FILTERS:
+    draw.filter(filters: &[Filter], cb: |ctx|{
+        ctx.drawImage(&img, 0.0, 0.0);
+    });
+    This is going to render:
+        - Callback to a render_target
+        - Render this render_target with each filter in order
+        - Render to screen once all the filters are done
+*/
 
 #[derive(Debug, Eq, PartialEq)]
 enum PaintMode {
@@ -34,27 +46,6 @@ enum PaintMode {
 }
 
 //TODO draw_image with crop, scale, etc... draw_image_ext
-
-/*
-TODO API:
-    let draw = app.draw();
-    draw.transform()
-        .translate(100.0, 100.0)
-        .scale(2.0, 2.0)
-        .rotate_deg(45.0);
-    draw.circle(0.0, 0.0, 50.0);
-    draw.transform()
-        .pop()
-        .pop()
-        .pop();
-    - - - - - - - - - - Same As: - - - - - - - - - - - - -
-    let draw = app.draw();
-    draw.obj()
-        .circle(100.0, 100.0, 50.0)
-        .scale(2.0, 2.0)
-        .rotate_dev(45.0);
-        //.matrix(push your own matrix)L
-*/
 
 //TODO glsl to spv https://crates.io/crates/shaderc -> https://crates.io/crates/spirv_cross spv->glsl->etc...
 
@@ -69,8 +60,6 @@ enum Driver {
     //    Dx12,
     //    Vulkan,
 }
-
-//TODO check this nannout beatiful API https://github.com/nannou-org/nannou/blob/master/examples/simple_draw.rs
 
 pub struct RenderTarget {
     fbo: glow::WebFramebufferKey,
@@ -128,12 +117,12 @@ pub struct Context2d {
     driver: Driver,
     color_batcher: batchers::ColorBatcher,
     sprite_batcher: batchers::SpriteBatcher,
+    text_batcher: batchers::TextBatcher,
     is_drawing: bool,
     render_target: Option<RenderTarget>,
     data: DrawData,
     paint_mode: PaintMode,
     stencil: bool,
-    pub(crate) font_manager: FontManager<'static>,
 }
 
 impl Context2d {
@@ -145,7 +134,7 @@ impl Context2d {
         let data = DrawData::new(width, height);
         let color_batcher = ColorBatcher::new(&gl, &data)?;
         let sprite_batcher = SpriteBatcher::new(&gl, &data)?;
-        let font_manager = FontManager::new();
+        let text_batcher = TextBatcher::new(&gl, &data)?;
 
         //2d
         unsafe {
@@ -160,12 +149,32 @@ impl Context2d {
             driver,
             color_batcher,
             sprite_batcher,
+            text_batcher,
             is_drawing: false,
             render_target: None,
             paint_mode: PaintMode::Empty,
             stencil: false,
-            font_manager
         })
+    }
+
+    pub(crate) fn add_font(&mut self, data: Vec<u8>) -> usize {
+        self.text_batcher.manager.add(data)
+    }
+
+    pub(crate) fn text_size(
+        &mut self,
+        font: &Font,
+        text: &str,
+        size: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+        max_width: Option<f32>,
+    ) -> (f32, f32) {
+        let size = self
+            .text_batcher
+            .manager
+            .text_size(font, text, size, h_align, v_align, max_width);
+        (size.0 as _, size.1 as _)
     }
 
     pub fn set_alpha(&mut self, alpha: f32) {
@@ -233,8 +242,6 @@ impl Context2d {
         }
     }
 
-    //TODO stencil https://community.khronos.org/t/please-help-me-understand-the-concept-of-how-stencil-buffering-works-in-vulkan/7592/7
-
     pub fn begin_mask(&mut self) {
         self.flush();
         unsafe {
@@ -278,6 +285,11 @@ impl Context2d {
     pub fn flush(&mut self) {
         self.flush_color();
         self.flush_sprite();
+        self.flush_text();
+    }
+
+    fn flush_text(&mut self) {
+        self.text_batcher.flush(&self.gl, &self.data);
     }
 
     fn flush_color(&mut self) {
@@ -288,9 +300,40 @@ impl Context2d {
         self.sprite_batcher.flush(&self.gl, &self.data);
     }
 
-    pub fn text(&mut self, font: &Font, text: &str, x: f32, y: f32) {
-        self.font_manager.try_update(&self.gl, font.id(), text, 1.0);
-//        log("hello");
+    pub fn set_font(&mut self, font: &Font) {
+        self.text_batcher.set_font(font);
+    }
+
+    pub fn font(&self) -> &Font {
+        &self.text_batcher.font
+    }
+
+    pub fn text(&mut self, text: &str, x: f32, y: f32, size: f32) {
+        self.text_ext(
+            text,
+            x,
+            y,
+            size,
+            HorizontalAlign::Left,
+            VerticalAlign::Top,
+            None,
+        );
+    }
+
+    pub fn text_ext(
+        &mut self,
+        text: &str,
+        x: f32,
+        y: f32,
+        size: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+        max_width: Option<f32>,
+    ) {
+        self.set_paint_mode(PaintMode::Text);
+        self.text_batcher.draw_text(
+            &self.gl, &self.data, text, x, y, size, h_align, v_align, max_width,
+        );
     }
 
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
@@ -534,9 +577,15 @@ impl Context2d {
         match &self.paint_mode {
             PaintMode::Color => {
                 self.flush_sprite();
+                self.flush_text();
             }
             PaintMode::Image => {
                 self.flush_color();
+                self.flush_text();
+            }
+            PaintMode::Text => {
+                self.flush_color();
+                self.flush_sprite();
             }
             _ => {}
         }
@@ -788,6 +837,56 @@ pub(crate) fn create_gl_tex(
             height,
             0,
             glow::RGBA,
+            glow::UNSIGNED_BYTE,
+            Some(data),
+        );
+
+        //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
+        gl.bind_texture(glow::TEXTURE_2D, None);
+        Ok(tex)
+    }
+}
+
+pub(crate) fn create_gl_tex_ext(
+    gl: &GlContext,
+    width: i32,
+    height: i32,
+    data: &[u8],
+    internal: i32,
+    format: i32,
+    min_filter: i32,
+    mag_filter: i32,
+    bytes_per_pixel: usize,
+) -> Result<glow::WebTextureKey, String> {
+    unsafe {
+        let tex = gl.create_texture()?;
+        if bytes_per_pixel == 1 {
+            gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
+        }
+
+        gl.bind_texture(glow::TEXTURE_2D, Some(tex));
+
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_S,
+            glow::CLAMP_TO_EDGE as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_T,
+            glow::CLAMP_TO_EDGE as i32,
+        );
+        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, mag_filter);
+        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, min_filter);
+
+        gl.tex_image_2d(
+            glow::TEXTURE_2D,
+            0,
+            internal,
+            width,
+            height,
+            0,
+            format as _,
             glow::UNSIGNED_BYTE,
             Some(data),
         );
