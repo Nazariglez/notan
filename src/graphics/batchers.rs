@@ -528,7 +528,7 @@ pub(super) struct TextBatcher {
     vertex_color: Vec<f32>,
     vertex_tex: Vec<f32>,
     current_tex: glow::WebTextureKey,
-    font: Font,
+    pub(crate) font: Font,
     pub(crate) manager: FontManager<'static>,
     data: Vec<FontTextureData>,
     texture: Texture,

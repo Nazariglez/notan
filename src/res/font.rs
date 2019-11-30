@@ -8,11 +8,11 @@ use crate::res::{update_texture, TextureFilter, TextureFormat};
 use glow::HasContext;
 use glyph_brush::rusttype::Scale;
 use glyph_brush::{
-    BrushAction, BrushError, FontId, GlyphBrush, GlyphBrushBuilder, GlyphVertex, Section,
+    BrushAction, BrushError, FontId, GlyphBrush, GlyphBrushBuilder, GlyphCruncher, GlyphVertex,
+    Section,
 };
 use std::cell::RefCell;
 use std::rc::Rc;
-use wasm_bindgen::__rt::core::cmp::max;
 
 struct InnerFont {
     id: FontId,
@@ -27,6 +27,14 @@ pub struct Font {
 impl Font {
     pub(crate) fn id(&self) -> FontId {
         self.inner.borrow().id
+    }
+
+    //    pub fn size(&mut self, app: &mut App, text: &str, size: f32) -> (f32, f32) {
+    //        app.graphics.text_size(&self, text, size)
+    //    }
+
+    pub fn text_size(app: &mut App, font: &Font, text: &str, size: f32) -> (f32, f32) {
+        app.graphics.text_size(font, text, size)
     }
 }
 
@@ -114,6 +122,21 @@ impl<'a> FontManager<'a> {
 
     pub fn texture_dimensions(&self) -> (u32, u32) {
         self.cache.texture_dimensions()
+    }
+
+    pub fn text_size(&mut self, font: &Font, text: &str, size: f32) -> (f32, f32) {
+        let section = Section {
+            text,
+            scale: Scale::uniform(size),
+            font_id: font.id(),
+            ..Section::default()
+        };
+
+        if let Some(bounds) = self.cache.glyph_bounds(section) {
+            return (bounds.width(), bounds.height());
+        }
+
+        (0.0, 0.0)
     }
 
     pub fn queue(&mut self, font: &Font, x: f32, y: f32, text: &str, size: f32, color: [f32; 4]) {

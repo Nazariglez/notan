@@ -160,6 +160,11 @@ impl Context2d {
         self.text_batcher.manager.add(data)
     }
 
+    pub(crate) fn text_size(&mut self, font: &Font, text: &str, size: f32) -> (f32, f32) {
+        let size = self.text_batcher.manager.text_size(font, text, size);
+        (size.0 as _, size.1 as _)
+    }
+
     pub fn set_alpha(&mut self, alpha: f32) {
         self.data.set_alpha(alpha);
     }
@@ -285,6 +290,10 @@ impl Context2d {
 
     pub fn set_font(&mut self, font: &Font) {
         self.text_batcher.set_font(font);
+    }
+
+    pub fn font(&self) -> &Font {
+        &self.text_batcher.font
     }
 
     pub fn text(&mut self, text: &str, x: f32, y: f32, size: f32) {
