@@ -18,7 +18,7 @@ fn init(_: &mut App) -> State {
             geom.circle((x as f32) * 20.0 - 200.0, (y as f32) * 20.0 - 200.0, 5.0);
         }
     }
-    geom.fill(Color::White);
+    geom.fill(Color::WHITE);
 
     State {
         geom: geom,
@@ -43,12 +43,12 @@ fn draw(app: &mut App, state: &mut State) {
     draw.transform().pop();
     draw.transform().pop();
 
-    draw.set_color(Color::Green);
+    draw.set_color(Color::GREEN);
     draw.triangle(400.0, 120.0, 200.0, 400.0, 600.0, 400.0);
 
     draw.clear_mask();
 
-    draw.set_color(Color::White);
+    draw.set_color(Color::WHITE);
     draw.stroke_triangle(400.0, 120.0, 200.0, 400.0, 600.0, 400.0, 5.0);
     draw.end();
 

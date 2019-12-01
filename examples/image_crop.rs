@@ -7,7 +7,7 @@ fn init(app: &mut App) -> Texture {
 fn draw(app: &mut App, logo: &mut Texture) {
     let draw = app.draw();
     draw.begin();
-    draw.clear(Color::White);
+    draw.clear(Color::WHITE);
     draw.image_crop(logo, 0.0, 0.0, 0.0, 0.0, logo.width() * 0.5, 0.0);
     draw.image_crop(
         logo,

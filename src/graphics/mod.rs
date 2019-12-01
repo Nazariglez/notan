@@ -86,7 +86,7 @@ impl DrawData {
             alpha: 1.0,
             shader: None,
             transform: Transform2d::new(),
-            color: Color::White,
+            color: Color::WHITE,
             projection,
         }
     }
@@ -230,7 +230,7 @@ impl Context2d {
     }
 
     pub fn clear(&mut self, color: Color) {
-        let (r, g, b, a) = color.to_rgba();
+        let [r, g, b, a] = color.to_rgba();
         unsafe {
             self.gl.clear_color(r, g, b, a);
             let mut flags = glow::COLOR_BUFFER_BIT;
@@ -339,8 +339,8 @@ impl Context2d {
     fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
         self.set_paint_mode(PaintMode::Color);
         let color_vertex = match color {
-            Some(c) => c.iter().map(|c| c.to_rgba()).fold(vec![], |mut acc, v| {
-                acc.append(&mut vec![v.0, v.1, v.2, v.3]);
+            Some(c) => c.iter().fold(vec![], |mut acc, v| {
+                acc.extend_from_slice(&v.to_rgba());
                 acc
             }),
             _ => vec![],

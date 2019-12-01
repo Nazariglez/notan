@@ -250,7 +250,7 @@ impl Geometry {
 
         //Use fill mode by default if there is some geometry in the stack without mode
         if !self.stack.is_empty() {
-            self.fill(Color::White);
+            self.fill(Color::WHITE);
         }
 
         let (v, vc) = self
@@ -264,7 +264,7 @@ impl Geometry {
                         strength,
                     } => (geometry_stroke(geometries, *strength), *color),
                     GeomMode::Fill { geometries, color } => (geometry_fill(geometries), *color),
-                    _ => (vec![], Color::White),
+                    _ => (vec![], Color::WHITE),
                 };
 
                 let vc = vec![c; v.len() / 2];

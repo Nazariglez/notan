@@ -14,7 +14,7 @@ fn draw(app: &mut App, _: &mut ()) {
     draw.rect(180.0, 180.0, 440.0, 240.0);
     draw.end_mask();
 
-    draw.set_color(Color::Red);
+    draw.set_color(Color::RED);
     draw.triangle(400.0, 100.0, 100.0, 500.0, 700.0, 500.0);
     draw.end();
 }
