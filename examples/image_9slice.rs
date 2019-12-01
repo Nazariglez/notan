@@ -7,7 +7,7 @@ fn init(app: &mut App) -> Texture {
 fn draw(app: &mut App, panel: &mut Texture) {
     let draw = app.draw();
     draw.begin();
-    draw.clear(Color::White);
+    draw.clear(Color::WHITE);
     draw.image(panel, 10.0, 10.0);
     draw.image_9slice(panel, 200.0, 120.0, 400.0, 300.0);
     draw.end();

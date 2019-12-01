@@ -18,7 +18,7 @@ fn draw(app: &mut App, state: &mut State) {
 
     let draw = app.draw();
     draw.begin();
-    draw.clear(Color::White);
+    draw.clear(Color::WHITE);
     draw.image(&mut state.btn, 10.0, 10.0);
     draw.image_9slice_ext(
         &mut state.btn,

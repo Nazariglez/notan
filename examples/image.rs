@@ -7,7 +7,7 @@ fn init(app: &mut App) -> Texture {
 fn draw(app: &mut App, logo: &mut Texture) {
     let draw = app.draw();
     draw.begin();
-    draw.clear(Color::White);
+    draw.clear(Color::WHITE);
     draw.image(logo, 160.0, 60.0);
     draw.end();
 }

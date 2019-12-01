@@ -130,15 +130,11 @@ impl ColorBatcher {
         let color = match color {
             Some(c) => c.to_vec(),
             None => {
-                let (r, g, b, a) = data.color.to_rgba();
-                let mut color = vec![];
-                (0..VERTICES * count as usize).for_each(|_| {
-                    color.push(r);
-                    color.push(g);
-                    color.push(b);
-                    color.push(a);
-                });
-                color
+                let color = data.color.to_rgba();
+                (0..VERTICES * count as usize).fold(vec![], |mut acc, _| {
+                    acc.extend_from_slice(&color);
+                    acc
+                })
             }
         };
 
@@ -319,15 +315,11 @@ impl SpriteBatcher {
         let color = match color {
             Some(c) => c.to_vec(),
             None => {
-                let (r, g, b, a) = data.color.to_rgba();
-                let mut color = vec![];
-                (0..VERTICES * count as usize).for_each(|_| {
-                    color.push(r);
-                    color.push(g);
-                    color.push(b);
-                    color.push(a);
-                });
-                color
+                let color = data.color.to_rgba();
+                (0..VERTICES * count as usize).fold(vec![], |mut acc, _| {
+                    acc.extend_from_slice(&color);
+                    acc
+                })
             }
         };
 
@@ -442,15 +434,11 @@ impl SpriteBatcher {
         let color = match color {
             Some(c) => c.to_vec(),
             None => {
-                let (r, g, b, a) = data.color.to_rgba();
-                let mut color = vec![];
-                (0..VERTICES * count as usize).for_each(|_| {
-                    color.push(r);
-                    color.push(g);
-                    color.push(b);
-                    color.push(a);
-                });
-                color
+                let color = data.color.to_rgba();
+                (0..VERTICES * count as usize).fold(vec![], |mut acc, _| {
+                    acc.extend_from_slice(&color);
+                    acc
+                })
             }
         };
 
@@ -643,17 +631,10 @@ impl TextBatcher {
 
         let max_width = max_width.unwrap_or(std::f32::INFINITY);
 
-        let color = data.color.to_rgba();
+        let mut color = data.color.to_rgba();
+        color[3] *= data.alpha;
         self.manager.queue(
-            &self.font,
-            x,
-            y,
-            text,
-            size,
-            [color.0, color.1, color.2, color.3 * data.alpha],
-            max_width,
-            h_align,
-            v_align,
+            &self.font, x, y, text, size, color, max_width, h_align, v_align,
         );
     }
 
