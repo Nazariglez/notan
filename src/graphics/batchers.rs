@@ -109,10 +109,41 @@ impl ColorBatcher {
         bind_buffer(gl, self.shader.buffer(name), data, offset);
     }
 
-    pub fn draw(&mut self, gl: &GlContext, data: &DrawData, vertex: &[f32], color: Option<&[f32]>) {
-        let count = (vertex.len() / 6) as i32; //vertex.len() / (vertices*size)
-        let next = self.index + count;
+    fn split_draw(
+        &mut self,
+        count: i32,
+        gl: &GlContext,
+        data: &DrawData,
+        vertex: &[f32],
+        color: Option<&[f32]>,
+    ) {
+        let max_per_batch = (MAX_PER_BATCH * (VERTICES * VERTICE_SIZE)) as i32;
+        let max_color_per_batch = (MAX_PER_BATCH * (VERTICES * COLOR_VERTICE_SIZE)) as i32;
+        let iterations = count / (MAX_PER_BATCH as i32);
+        let len = vertex.len();
+        for i in 0..iterations + 1 {
+            let start = (i * max_per_batch) as usize;
+            let end = ((start as i32 + max_per_batch) as usize).min(len - 1);
+            let color_vertex = if let Some(color) = color {
+                let len = color.len();
+                let start = (i * max_color_per_batch) as usize;
+                let end = ((start as i32 + max_color_per_batch) as usize).min(len - 1);
+                Some(&color[start..end])
+            } else {
+                None
+            };
+            self.draw(gl, data, &vertex[start..end], color_vertex);
+            self.flush(gl, data);
+        }
+    }
 
+    pub fn draw(&mut self, gl: &GlContext, data: &DrawData, vertex: &[f32], color: Option<&[f32]>) {
+        let count = (vertex.len() / (VERTICES * VERTICE_SIZE)) as i32;
+        if count > MAX_PER_BATCH as i32 {
+            return self.split_draw(count, gl, data, vertex, color);
+        }
+
+        let next = self.index + count;
         if next >= (MAX_PER_BATCH as i32) {
             self.flush(gl, data);
         }
