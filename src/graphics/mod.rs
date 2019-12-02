@@ -26,6 +26,9 @@ pub mod batchers;
 pub mod color;
 pub mod shader;
 pub mod transform;
+mod blend;
+
+pub use blend::*;
 
 /*TODO FILTERS:
     draw.filter(filters: &[Filter], cb: |ctx|{
@@ -123,6 +126,7 @@ pub struct Context2d {
     data: DrawData,
     paint_mode: PaintMode,
     stencil: bool,
+    blend_mode: BlendMode,
 }
 
 impl Context2d {
@@ -135,12 +139,13 @@ impl Context2d {
         let color_batcher = ColorBatcher::new(&gl, &data)?;
         let sprite_batcher = SpriteBatcher::new(&gl, &data)?;
         let text_batcher = TextBatcher::new(&gl, &data)?;
+        let blend_mode = BlendMode::NORMAL;
 
         //2d
         unsafe {
             gl.disable(glow::DEPTH_TEST);
             gl.enable(glow::BLEND);
-            gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
+            gl.blend_func(blend_mode.source().into(), blend_mode.destination().into());
         }
 
         Ok(Context2d {
@@ -150,6 +155,7 @@ impl Context2d {
             color_batcher,
             sprite_batcher,
             text_batcher,
+            blend_mode,
             is_drawing: false,
             render_target: None,
             paint_mode: PaintMode::Empty,
@@ -179,6 +185,13 @@ impl Context2d {
 
     pub fn set_alpha(&mut self, alpha: f32) {
         self.data.set_alpha(alpha);
+    }
+
+    pub fn set_blend(&mut self, mode: BlendMode) {
+        if mode != self.blend_mode {
+            self.flush();
+            self.blend_mode = mode;
+        }
     }
 
     //    pub fn set_width(&mut self, width: i32) {
