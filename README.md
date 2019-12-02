@@ -61,13 +61,13 @@ Instructions to init and build a project
     - [x] Patterns
     - [x] Masking
     - [ ] Custom Shader
-    - [X] Text
+    - [x] Text
     - [ ] BitmapText
     - [x] NineSlice
     - [ ] Linear Gradient
     - [ ] Radial Gradient
     - [ ] Atlas
-    - [ ] BlendModes
+    - [x] BlendModes
 - Drivers
     - [ ] WebGL
     - [ ] WebGL 2
