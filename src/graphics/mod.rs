@@ -191,6 +191,10 @@ impl Context2d {
         if mode != self.blend_mode {
             self.flush();
             self.blend_mode = mode;
+
+            unsafe {
+                self.gl.blend_func(self.blend_mode.source().into(), self.blend_mode.destination().into());
+            }
         }
     }
 
