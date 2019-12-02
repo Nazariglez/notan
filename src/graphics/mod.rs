@@ -23,10 +23,10 @@ use crate::{log, math};
 use lyon::lyon_algorithms::fit::FitStyle::Horizontal;
 
 pub mod batchers;
+mod blend;
 pub mod color;
 pub mod shader;
 pub mod transform;
-mod blend;
 
 pub use blend::*;
 
@@ -193,7 +193,10 @@ impl Context2d {
             self.blend_mode = mode;
 
             unsafe {
-                self.gl.blend_func(self.blend_mode.source().into(), self.blend_mode.destination().into());
+                self.gl.blend_func(
+                    self.blend_mode.source().into(),
+                    self.blend_mode.destination().into(),
+                );
             }
         }
     }
