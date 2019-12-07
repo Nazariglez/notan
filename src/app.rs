@@ -2,6 +2,13 @@ use super::graphics::Context2d;
 use super::res::*;
 use super::{window, window::*};
 
+/*TODO
+    - Custom Error like Nae::NotFound, Nae::GraphicsX
+    - math functions like random, random::seed() (crossplatform)
+    - use rayon when it's necessary for example processing the batch before draw
+    -
+*/
+
 /*TODO avoid to skip the draw callback:
     returning from update: DrawState::Skip (to draw DrawState::Draw)
     or from a function on the app: app.skip_next_draw(); //app.resume_next_draw() to cancel?

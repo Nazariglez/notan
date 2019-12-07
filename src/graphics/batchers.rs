@@ -68,7 +68,7 @@ impl ColorBatcher {
         })
     }
 
-    pub fn begin(&mut self) {
+    pub fn reset(&mut self) {
         self.index = 0;
     }
 
@@ -482,6 +482,10 @@ impl SpriteBatcher {
 
         self.index += count;
     }
+
+    pub fn reset(&mut self) {
+        self.index = 0;
+    }
 }
 
 fn create_sprite_shader(gl: &GlContext) -> Result<Shader, String> {
@@ -588,6 +592,10 @@ impl TextBatcher {
             current_matrix: Mat3::identity(),
             //dirty: true,
         })
+    }
+
+    pub fn reset(&mut self) {
+        self.index = 0;
     }
 
     pub fn set_font(&mut self, font: &Font) {
