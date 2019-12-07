@@ -68,6 +68,8 @@ Instructions to init and build a project
     - [ ] Radial Gradient
     - [ ] Atlas
     - [x] BlendModes
+    - [x] RenderTarget/Surface
+    - [ ] Filters
 - Drivers
     - [ ] WebGL
     - [ ] WebGL 2

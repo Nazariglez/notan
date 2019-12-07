@@ -27,10 +27,13 @@ mod blend;
 pub mod color;
 pub mod shader;
 pub mod transform;
+pub mod surface;
 
 pub use blend::*;
+use crate::graphics::surface::Surface;
+use nalgebra_glm::proj;
 
-/*TODO FILTERS:
+/*TODO FILTERS: (or post processing effects...)
     draw.filter(filters: &[Filter], cb: |ctx|{
         ctx.drawImage(&img, 0.0, 0.0);
     });
@@ -82,7 +85,8 @@ pub struct DrawData {
 
 impl DrawData {
     pub fn new(width: i32, height: i32) -> Self {
-        let projection = get_projection(width, height);
+        let projection = get_projection(width, height, false);
+        log(&format!("{:?}", projection));
         Self {
             width,
             height,
@@ -98,10 +102,10 @@ impl DrawData {
         self.color = color;
     }
 
-    pub fn set_size(&mut self, width: i32, height: i32) {
+    pub fn set_size(&mut self, width: i32, height: i32, flipped: bool) {
         self.width = width;
         self.height = height;
-        self.projection = get_projection(self.width, self.height);
+        self.projection = get_projection(self.width, self.height, flipped);
     }
 
     pub fn set_alpha(&mut self, alpha: f32) {
@@ -109,10 +113,16 @@ impl DrawData {
     }
 }
 
-fn get_projection(width: i32, height: i32) -> glm::Mat3 {
-    let w = width as f32;
-    let h = height as f32;
-    glm::mat3(2.0 / w, 0.0, -1.0, 0.0, -2.0 / h, 1.0, 0.0, 0.0, 1.0)
+fn get_projection(width: i32, height: i32, flipped: bool) -> glm::Mat3 {
+    let ww = width as f32;
+    let hh = height as f32;
+    let bottom = if flipped { 0.0 } else { hh };
+    let top = if flipped { hh } else { 0.0 };
+//    let m = glm::mat3(2.0 / w, 0.0, -1.0, 0.0, -2.0 / h, 1.0, 0.0, 0.0, 1.0);
+//    log(&format!("{:?}", m));
+    glm::translate2d(&glm::mat4_to_mat3(
+    &glm::ortho(0.0, ww, bottom, top, -1.0, 1.0)
+    ), &glm::vec2(-ww*0.5, -hh*0.5))
 }
 
 pub struct Context2d {
@@ -127,6 +137,9 @@ pub struct Context2d {
     paint_mode: PaintMode,
     stencil: bool,
     blend_mode: BlendMode,
+    is_drawing_surface: bool,
+    width: i32,
+    height: i32,
 }
 
 impl Context2d {
@@ -157,9 +170,12 @@ impl Context2d {
             text_batcher,
             blend_mode,
             is_drawing: false,
+            is_drawing_surface: false,
             render_target: None,
             paint_mode: PaintMode::Empty,
             stencil: false,
+            width,
+            height
         })
     }
 
@@ -210,15 +226,20 @@ impl Context2d {
     //    }
 
     pub fn set_size(&mut self, width: i32, height: i32) {
-        self.data.set_size(width, height);
+        self.width = width;
+        self.height = height;
+
+        if !self.is_drawing {
+            self.data.set_size(width, height, false);
+        }
     }
 
     pub fn width(&self) -> i32 {
-        self.data.width
+        self.width
     }
 
     pub fn height(&self) -> i32 {
-        self.data.height
+        self.height
     }
 
     pub fn set_color(&mut self, color: Color) {
@@ -229,24 +250,54 @@ impl Context2d {
         &mut self.data.transform
     }
 
-    pub fn begin(&mut self) {
+    pub fn begin_to_surface(&mut self, surface: Option<&Surface>) {
         if self.is_drawing {
             return;
         }
         self.is_drawing = true;
 
-        let (fbo, ww, hh) = if let Some(rt) = &self.render_target {
-            (Some(rt.fbo), rt.width, rt.height)
+        let (fbo, ww, hh) = if let Some(rt) = surface {
+            self.is_drawing_surface = true;
+            (Some(rt.fbo), rt.width() as _, rt.height() as _)
         } else {
             (None, self.width(), self.height())
         };
 
+        self.data.set_size(ww, hh, self.is_drawing_surface);
         unsafe {
             self.gl.bind_framebuffer(glow::FRAMEBUFFER, fbo);
+
+            if fbo.is_some() {
+                self.gl.draw_buffer(glow::COLOR_ATTACHMENT0);
+            }
+
             self.gl.viewport(0, 0, ww, hh);
         }
 
-        self.color_batcher.begin();
+        self.color_batcher.reset();
+        self.text_batcher.reset();
+        self.sprite_batcher.reset();
+    }
+
+    pub fn end(&mut self) {
+        if !self.is_drawing {
+            return;
+        }
+        self.is_drawing = false;
+        self.clear_mask(); //this is already doing flush
+
+        self.data.set_size(self.width, self.height, self.is_drawing_surface);
+        self.is_drawing_surface = false;
+
+        unsafe {
+            self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+            self.gl.viewport(0, 0, self.width(), self.height());
+        }
+    }
+
+
+    pub fn begin(&mut self) {
+        self.begin_to_surface(None);
     }
 
     pub fn clear(&mut self, color: Color) {
@@ -292,14 +343,6 @@ impl Context2d {
             self.stencil = false;
             self.gl.disable(glow::STENCIL_TEST);
         }
-    }
-
-    pub fn end(&mut self) {
-        if !self.is_drawing {
-            return;
-        }
-        self.is_drawing = false;
-        self.clear_mask(); //this is already doing flush
     }
 
     pub fn flush(&mut self) {
