@@ -299,6 +299,7 @@ impl Context2d {
 
         unsafe {
             self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+            self.gl.bind_texture(glow::TEXTURE_2D, None);
             self.gl.viewport(0, 0, self.width(), self.height());
         }
     }
