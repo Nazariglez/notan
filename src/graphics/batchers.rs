@@ -309,7 +309,6 @@ impl SpriteBatcher {
         if let Some(t) = self.current_tex {
             if t != tex {
                 self.flush(gl, data);
-            } else {
                 self.current_tex = Some(tex);
             }
         }

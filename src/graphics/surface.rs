@@ -45,6 +45,7 @@ fn create_framebuffer(
             tex,
             0,
         );
+        gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         Ok(fb)
     }
 }
