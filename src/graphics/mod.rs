@@ -26,11 +26,11 @@ pub mod batchers;
 mod blend;
 pub mod color;
 pub mod shader;
-pub mod transform;
 pub mod surface;
+pub mod transform;
 
-pub use blend::*;
 use crate::graphics::surface::Surface;
+pub use blend::*;
 use nalgebra_glm::proj;
 
 /*TODO FILTERS: (or post processing effects...)
@@ -80,13 +80,13 @@ pub struct DrawData {
     transform: Transform2d,
     width: i32,
     height: i32,
+    flipped: bool,
     projection: glm::Mat3,
 }
 
 impl DrawData {
     pub fn new(width: i32, height: i32) -> Self {
         let projection = get_projection(width, height, false);
-        log(&format!("{:?}", projection));
         Self {
             width,
             height,
@@ -95,6 +95,7 @@ impl DrawData {
             transform: Transform2d::new(),
             color: Color::WHITE,
             projection,
+            flipped: false,
         }
     }
 
@@ -103,8 +104,15 @@ impl DrawData {
     }
 
     pub fn set_size(&mut self, width: i32, height: i32, flipped: bool) {
+        if width != self.width || height != self.height || flipped != self.flipped {
+            self.upadte_projection(width, height, flipped);
+        }
+    }
+
+    fn upadte_projection(&mut self, width: i32, height: i32, flipped: bool) {
         self.width = width;
         self.height = height;
+        self.flipped = flipped;
         self.projection = get_projection(self.width, self.height, flipped);
     }
 
@@ -118,11 +126,10 @@ fn get_projection(width: i32, height: i32, flipped: bool) -> glm::Mat3 {
     let hh = height as f32;
     let bottom = if flipped { 0.0 } else { hh };
     let top = if flipped { hh } else { 0.0 };
-//    let m = glm::mat3(2.0 / w, 0.0, -1.0, 0.0, -2.0 / h, 1.0, 0.0, 0.0, 1.0);
-//    log(&format!("{:?}", m));
-    glm::translate2d(&glm::mat4_to_mat3(
-    &glm::ortho(0.0, ww, bottom, top, -1.0, 1.0)
-    ), &glm::vec2(-ww*0.5, -hh*0.5))
+    glm::translate2d(
+        &glm::mat4_to_mat3(&glm::ortho(0.0, ww, bottom, top, -1.0, 1.0)),
+        &glm::vec2(-ww * 0.5, -hh * 0.5),
+    )
 }
 
 pub struct Context2d {
@@ -175,7 +182,7 @@ impl Context2d {
             paint_mode: PaintMode::Empty,
             stencil: false,
             width,
-            height
+            height,
         })
     }
 
@@ -286,7 +293,8 @@ impl Context2d {
         self.is_drawing = false;
         self.clear_mask(); //this is already doing flush
 
-        self.data.set_size(self.width, self.height, self.is_drawing_surface);
+        self.data
+            .set_size(self.width, self.height, self.is_drawing_surface);
         self.is_drawing_surface = false;
 
         unsafe {
@@ -294,7 +302,6 @@ impl Context2d {
             self.gl.viewport(0, 0, self.width(), self.height());
         }
     }
-
 
     pub fn begin(&mut self) {
         self.begin_to_surface(None);
