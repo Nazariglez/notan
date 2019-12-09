@@ -1,4 +1,5 @@
 use super::GlContext;
+use crate::app::App;
 use crate::math::*;
 use glow::*;
 use hashbrown::HashMap;
@@ -8,6 +9,44 @@ use hashbrown::HashMap;
 type BufferKey = glow::WebBufferKey;
 type ShaderKey = glow::WebShaderKey;
 type ProgramKey = glow::WebProgramKey;
+
+//https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/vertexAttribPointer
+pub enum VertexData {
+    Float1,
+    Float2,
+    Float3,
+    Float4,
+}
+
+impl VertexData {
+    pub fn size(&self) -> usize {
+        use VertexData::*;
+        match self {
+            Float1 => 1,
+            Float2 => 2,
+            Float3 => 3,
+            Float4 => 4,
+        }
+    }
+
+    pub fn typ(&self) -> u32 {
+        glow::FLOAT
+    }
+}
+
+pub struct Attr {
+    name: String,
+    vertex_data: VertexData,
+}
+
+impl Attr {
+    pub fn new(name: &str, data_type: VertexData) -> Self {
+        Self {
+            name: name.to_string(),
+            vertex_data: data_type,
+        }
+    }
+}
 
 /// Represent a shader attribute
 pub struct Attribute {
@@ -76,8 +115,27 @@ pub struct Shader {
 }
 
 impl Shader {
+    pub const COLOR_VERTEX: &'static str = include_str!("./shaders/color.vert.glsl");
+    pub const COLOR_FRAG: &'static str = include_str!("./shaders/color.frag.glsl");
+
+    pub const IMAGE_VERTEX: &'static str = include_str!("./shaders/image.vert.glsl");
+    pub const IMAGE_FRAG: &'static str = include_str!("./shaders/image.frag.glsl");
+
+    pub const TEXT_VERTEX: &'static str = include_str!("./shaders/text.vert.glsl");
+    pub const TEXT_FRAG: &'static str = include_str!("./shaders/text.frag.glsl");
+
     /// Create a new shader program from source
     pub fn new(
+        app: &App,
+        vertex: &str,
+        fragment: &str,
+        attributes: Vec<Attr>,
+    ) -> Result<Self, String> {
+        unimplemented!()
+        //        Self::new_from_context(&app.graphics.gl, vertex, fragment, attributes, uniforms)
+    }
+
+    pub(crate) fn new_from_context(
         gl: &GlContext,
         vertex: &str,
         fragment: &str,
@@ -146,7 +204,7 @@ impl Shader {
         }
     }
 
-    /// Send to the GPU a uniform valie
+    /// Send to the GPU a uniform value
     pub fn set_uniform<T: UniformType>(&self, name: &str, value: T) {
         if let Some(u) = self.uniforms.get(name) {
             value.set_uniform_value(&self.gl, *u);

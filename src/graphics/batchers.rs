@@ -491,14 +491,14 @@ fn create_sprite_shader(gl: &GlContext) -> Result<Shader, String> {
     let attrs = vec![
         Attribute::new("a_position", 2, glow::FLOAT, false),
         Attribute::new("a_color", 4, glow::FLOAT, false),
-        Attribute::new("a_texcoord", 2, glow::FLOAT, true),
+        Attribute::new("a_texcoord", 2, glow::FLOAT, false),
     ];
 
     let uniforms = vec!["u_matrix", "u_texture", "u_tex_matrix"];
-    Ok(Shader::new(
+    Ok(Shader::new_from_context(
         gl,
-        include_str!("./shaders/image.vert.glsl"),
-        include_str!("./shaders/image.frag.glsl"),
+        Shader::IMAGE_VERTEX,
+        Shader::IMAGE_FRAG,
         attrs,
         uniforms,
     )?)
@@ -526,10 +526,10 @@ fn create_color_shader(gl: &GlContext) -> Result<Shader, String> {
     ];
 
     let uniforms = vec!["u_matrix"];
-    Ok(Shader::new(
+    Ok(Shader::new_from_context(
         gl,
-        include_str!("./shaders/color.vert.glsl"),
-        include_str!("./shaders/color.frag.glsl"),
+        Shader::COLOR_VERTEX,
+        Shader::COLOR_FRAG,
         attrs,
         uniforms,
     )?)
@@ -762,14 +762,20 @@ fn create_text_shader(gl: &GlContext) -> Result<Shader, String> {
     let attrs = vec![
         Attribute::new("a_position", 2, glow::FLOAT, false),
         Attribute::new("a_color", 4, glow::FLOAT, false),
-        Attribute::new("a_texcoord", 2, glow::FLOAT, true),
+        Attribute::new("a_texcoord", 2, glow::FLOAT, false),
     ];
 
     let uniforms = vec!["u_matrix", "u_texture"];
-    Ok(Shader::new(
+
+    let a = vec![
+        Attr::new("a_position", VertexData::Float2),
+        Attr::new("a_color", VertexData::Float4),
+        Attr::new("a_texcoord", VertexData::Float2),
+    ];
+    Ok(Shader::new_from_context(
         gl,
-        include_str!("./shaders/text.vert.glsl"),
-        include_str!("./shaders/text.frag.glsl"),
+        Shader::TEXT_VERTEX,
+        Shader::TEXT_FRAG,
         attrs,
         uniforms,
     )?)
