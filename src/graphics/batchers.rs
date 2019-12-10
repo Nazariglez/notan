@@ -489,18 +489,16 @@ impl SpriteBatcher {
 
 fn create_sprite_shader(gl: &GlContext) -> Result<Shader, String> {
     let attrs = vec![
-        Attribute::new("a_position", 2, glow::FLOAT, false),
-        Attribute::new("a_color", 4, glow::FLOAT, false),
-        Attribute::new("a_texcoord", 2, glow::FLOAT, false),
+        Attr::new("a_position", VertexData::Float2),
+        Attr::new("a_color", VertexData::Float4),
+        Attr::new("a_texcoord", VertexData::Float2),
     ];
 
-    let uniforms = vec!["u_matrix", "u_texture", "u_tex_matrix"];
     Ok(Shader::new_from_context(
         gl,
         Shader::IMAGE_VERTEX,
         Shader::IMAGE_FRAG,
         attrs,
-        uniforms,
     )?)
 }
 
@@ -521,17 +519,15 @@ fn create_vao(gl: &GlContext) -> Result<WebVertexArrayKey, String> {
 
 fn create_color_shader(gl: &GlContext) -> Result<Shader, String> {
     let attrs = vec![
-        Attribute::new("a_position", 2, glow::FLOAT, false),
-        Attribute::new("a_color", 4, glow::FLOAT, false),
+        Attr::new("a_position", VertexData::Float2),
+        Attr::new("a_color", VertexData::Float4),
     ];
 
-    let uniforms = vec!["u_matrix"];
     Ok(Shader::new_from_context(
         gl,
         Shader::COLOR_VERTEX,
         Shader::COLOR_FRAG,
         attrs,
-        uniforms,
     )?)
 }
 
@@ -589,7 +585,6 @@ impl TextBatcher {
             data: vec![],
             texture,
             current_matrix: Mat3::identity(),
-            //dirty: true,
         })
     }
 
@@ -604,8 +599,6 @@ impl TextBatcher {
     pub fn set_font_valign(&mut self, a: ()) {}
 
     pub fn set_font_halign(&mut self, a: ()) {}
-
-    //pub fn draw_text_ext to use breaklines?
 
     fn use_shader(&self, data: &DrawData) {
         let shader = match &data.shader {
@@ -760,14 +753,6 @@ impl TextBatcher {
 
 fn create_text_shader(gl: &GlContext) -> Result<Shader, String> {
     let attrs = vec![
-        Attribute::new("a_position", 2, glow::FLOAT, false),
-        Attribute::new("a_color", 4, glow::FLOAT, false),
-        Attribute::new("a_texcoord", 2, glow::FLOAT, false),
-    ];
-
-    let uniforms = vec!["u_matrix", "u_texture"];
-
-    let a = vec![
         Attr::new("a_position", VertexData::Float2),
         Attr::new("a_color", VertexData::Float4),
         Attr::new("a_texcoord", VertexData::Float2),
@@ -777,6 +762,5 @@ fn create_text_shader(gl: &GlContext) -> Result<Shader, String> {
         Shader::TEXT_VERTEX,
         Shader::TEXT_FRAG,
         attrs,
-        uniforms,
     )?)
 }

@@ -10,7 +10,12 @@ type BufferKey = glow::WebBufferKey;
 type ShaderKey = glow::WebShaderKey;
 type ProgramKey = glow::WebProgramKey;
 
+//https://github.com/pixijs/pixi-filters
+//https://github.com/pixijs/pixi-extra-filters/blob/master/src/filters/glow/glow.frag
+//https://webplatform.github.io/docs/tutorials/post-processing_with_webgl/
+//Test shader https://observablehq.com/@ondras/glsl-edge-detection
 //https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/vertexAttribPointer
+/// Vertex data types
 pub enum VertexData {
     Float1,
     Float2,
@@ -19,7 +24,7 @@ pub enum VertexData {
 }
 
 impl VertexData {
-    pub fn size(&self) -> usize {
+    pub fn size(&self) -> i32 {
         use VertexData::*;
         match self {
             Float1 => 1,
@@ -31,6 +36,10 @@ impl VertexData {
 
     pub fn typ(&self) -> u32 {
         glow::FLOAT
+    }
+
+    pub fn normalized(&self) -> bool {
+        false
     }
 }
 
@@ -48,29 +57,8 @@ impl Attr {
     }
 }
 
-/// Represent a shader attribute
-pub struct Attribute {
-    name: String,
-    size: i32,
-    data_type: u32,
-    normalize: bool,
-}
-
-impl Attribute {
-    /// Create a new attribute
-    pub fn new(name: &str, size: i32, data_type: u32, normalize: bool) -> Self {
-        let name = name.to_string();
-        Self {
-            name,
-            size,
-            data_type,
-            normalize,
-        }
-    }
-}
-
 struct AttributeData {
-    attr: Attribute,
+    attr: Attr,
     location: u32,
     buffer: glow::WebBufferKey,
 }
@@ -131,16 +119,14 @@ impl Shader {
         fragment: &str,
         attributes: Vec<Attr>,
     ) -> Result<Self, String> {
-        unimplemented!()
-        //        Self::new_from_context(&app.graphics.gl, vertex, fragment, attributes, uniforms)
+        Self::new_from_context(&app.graphics.gl, vertex, fragment, attributes)
     }
 
     pub(crate) fn new_from_context(
         gl: &GlContext,
         vertex: &str,
         fragment: &str,
-        mut attributes: Vec<Attribute>,
-        uniforms: Vec<&str>,
+        mut attributes: Vec<Attr>,
     ) -> Result<Self, String> {
         let gl = gl.clone();
         let vertex = create_shader(&gl, glow::VERTEX_SHADER, vertex)?;
@@ -149,7 +135,6 @@ impl Shader {
         let program = create_program(&gl, vertex, fragment)?;
 
         let mut attrs = HashMap::new();
-        let mut uniform_list = HashMap::new();
         unsafe {
             while let Some(attr) = attributes.pop() {
                 let location = gl.get_attrib_location(program, &attr.name) as u32;
@@ -159,14 +144,10 @@ impl Shader {
 
                 let stride = 0;
                 let offset = 0;
-                gl.vertex_attrib_pointer_f32(
-                    location,
-                    attr.size,
-                    attr.data_type,
-                    attr.normalize,
-                    stride,
-                    offset,
-                );
+                let size = attr.vertex_data.size();
+                let data_type = attr.vertex_data.typ();
+                let normalized = attr.vertex_data.normalized();
+                gl.vertex_attrib_pointer_f32(location, size, data_type, normalized, stride, offset);
 
                 attrs.insert(
                     attr.name.clone(),
@@ -177,14 +158,6 @@ impl Shader {
                     },
                 );
             }
-
-            for uniform in uniforms {
-                let u = gl
-                    .get_uniform_location(program, uniform)
-                    .ok_or(format!("Invalid uniform name: {}", uniform))?;
-
-                uniform_list.insert(uniform.to_string(), u);
-            }
         }
 
         Ok(Self {
@@ -193,7 +166,7 @@ impl Shader {
             program,
             gl,
             attributes: attrs,
-            uniforms: uniform_list,
+            uniforms: HashMap::new(),
         })
     }
 
@@ -205,10 +178,15 @@ impl Shader {
     }
 
     /// Send to the GPU a uniform value
-    pub fn set_uniform<T: UniformType>(&self, name: &str, value: T) {
-        if let Some(u) = self.uniforms.get(name) {
-            value.set_uniform_value(&self.gl, *u);
-        }
+    pub fn set_uniform<T: UniformType>(&self, name: &str, value: T) -> Result<(), String> {
+        let location = unsafe {
+            self.gl
+                .get_uniform_location(self.program, name)
+                .ok_or(format!("Invalid uniform name: {}", name))?
+        };
+        value.set_uniform_value(&self.gl, location);
+
+        Ok(())
     }
 
     /// Returns an attribute buffer

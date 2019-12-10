@@ -14,6 +14,7 @@ use web_sys;
 
 use batchers::{ColorBatcher, SpriteBatcher};
 use color::Color;
+use shader::Shader;
 use transform::Transform2d;
 
 use crate::graphics::batchers::TextBatcher;
@@ -840,6 +841,8 @@ fn create_gl_context(win: &web_sys::HtmlCanvasElement) -> Result<(GlContext, Dri
 fn webgl_options() -> web_sys::WebGlContextAttributes {
     let mut opts = web_sys::WebGlContextAttributes::new();
     opts.stencil(true);
+    opts.premultiplied_alpha(false);
+    opts.alpha(false);
     opts
 }
 
