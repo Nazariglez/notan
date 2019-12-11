@@ -99,7 +99,7 @@ impl ColorBatcher {
             Some(s) => s,
             _ => &self.shader,
         };
-        shader.useme();
+        shader.use_me();
         shader.set_uniform("u_matrix", data.projection);
     }
 
@@ -210,7 +210,7 @@ impl SpriteBatcher {
             Some(s) => s,
             _ => &self.shader,
         };
-        shader.useme();
+        shader.use_me();
         shader.set_uniform("u_matrix", data.projection)?;
         shader.set_uniform("u_tex_matrix", self.texture_matrix)?;
         shader.set_uniform("u_texture", 0)?;
@@ -577,7 +577,7 @@ impl TextBatcher {
             Some(s) => s,
             _ => &self.shader,
         };
-        shader.useme();
+        shader.use_me();
         shader.set_uniform("u_matrix", data.projection);
         shader.set_uniform("u_texture", 0);
     }

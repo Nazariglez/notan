@@ -25,7 +25,7 @@ pub fn log(msg: &str) {
 
 pub mod prelude {
     pub use super::app::*;
-    pub use super::graphics::{color::*, *};
+    pub use super::graphics::{color::*, shader::*, *};
     pub use super::log;
     pub use super::res::*;
     pub use derive::nae_start;

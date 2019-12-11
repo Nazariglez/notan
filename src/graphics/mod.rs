@@ -234,7 +234,7 @@ impl Context2d {
         self.flush();
         self.data.set_shader(shader);
         if let Some(s) = shader {
-            s.useme();
+            s.use_me();
         }
     }
 

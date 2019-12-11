@@ -192,13 +192,17 @@ impl Shader {
 
         Ok(Self {
             inner: Rc::new(InnerShader {
-                vertex, fragment, program, gl, attributes: attrs
-            })
+                vertex,
+                fragment,
+                program,
+                gl,
+                attributes: attrs,
+            }),
         })
     }
 
     /// Tell to the GPU to use this shader
-    pub fn useme(&self) {
+    pub(crate) fn use_me(&self) {
         unsafe {
             self.inner.gl.use_program(Some(self.inner.program));
         }
@@ -212,6 +216,7 @@ impl Shader {
                 .get_uniform_location(self.inner.program, name)
                 .ok_or(format!("Invalid uniform name: {}", name))?
         };
+        self.use_me();
         value.set_uniform_value(&self.inner.gl, location);
 
         Ok(())
