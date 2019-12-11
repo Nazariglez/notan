@@ -1,8 +1,10 @@
 use super::GlContext;
 use crate::app::App;
+use crate::log;
 use crate::math::*;
 use glow::*;
 use hashbrown::HashMap;
+use std::rc::Rc;
 
 //TODO cross compile https://crates.io/crates/shaderc - https://crates.io/crates/spirv_cross
 
@@ -16,6 +18,7 @@ type ProgramKey = glow::WebProgramKey;
 //Test shader https://observablehq.com/@ondras/glsl-edge-detection
 //https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/vertexAttribPointer
 /// Vertex data types
+#[derive(Debug, Clone)]
 pub enum VertexData {
     Float1,
     Float2,
@@ -43,6 +46,7 @@ impl VertexData {
     }
 }
 
+#[derive(Clone)]
 pub struct Attr {
     name: String,
     vertex_data: VertexData,
@@ -57,6 +61,7 @@ impl Attr {
     }
 }
 
+#[derive(Clone)]
 struct AttributeData {
     attr: Attr,
     location: u32,
@@ -76,10 +81,18 @@ impl UniformType for i32 {
     }
 }
 
-impl UniformType for (f32, f32) {
+impl UniformType for &[f32; 2] {
     fn set_uniform_value(&self, gl: &GlContext, location: WebUniformLocationKey) {
         unsafe {
-            gl.uniform_2_f32(Some(location), self.0, self.1);
+            gl.uniform_2_f32(Some(location), self[0], self[1]);
+        }
+    }
+}
+
+impl UniformType for &[f32; 4] {
+    fn set_uniform_value(&self, gl: &GlContext, location: WebUniformLocationKey) {
+        unsafe {
+            gl.uniform_4_f32(Some(location), self[0], self[1], self[2], self[3]);
         }
     }
 }
@@ -92,14 +105,31 @@ impl UniformType for Mat3 {
     }
 }
 
-/// A shader is a program that runs on thr GPU
-pub struct Shader {
+struct InnerShader {
+    gl: GlContext,
     vertex: ShaderKey,
     fragment: ShaderKey,
     program: ProgramKey,
-    gl: GlContext,
     attributes: HashMap<String, AttributeData>,
-    uniforms: HashMap<String, glow::WebUniformLocationKey>,
+}
+
+impl Drop for InnerShader {
+    fn drop(&mut self) {
+        unsafe {
+            self.gl.delete_shader(self.vertex);
+            self.gl.delete_shader(self.fragment);
+            self.gl.delete_program(self.program);
+            self.attributes.iter().for_each(|(_, attr)| {
+                self.gl.delete_buffer(attr.buffer);
+            });
+        }
+    }
+}
+
+/// A shader is a program that runs on thr GPU
+#[derive(Clone)]
+pub struct Shader {
+    inner: Rc<InnerShader>,
 }
 
 impl Shader {
@@ -161,51 +191,55 @@ impl Shader {
         }
 
         Ok(Self {
-            vertex,
-            fragment,
-            program,
-            gl,
-            attributes: attrs,
-            uniforms: HashMap::new(),
+            inner: Rc::new(InnerShader {
+                vertex, fragment, program, gl, attributes: attrs
+            })
         })
     }
 
     /// Tell to the GPU to use this shader
     pub fn useme(&self) {
         unsafe {
-            self.gl.use_program(Some(self.program));
+            self.inner.gl.use_program(Some(self.inner.program));
         }
     }
 
     /// Send to the GPU a uniform value
     pub fn set_uniform<T: UniformType>(&self, name: &str, value: T) -> Result<(), String> {
         let location = unsafe {
-            self.gl
-                .get_uniform_location(self.program, name)
+            self.inner
+                .gl
+                .get_uniform_location(self.inner.program, name)
                 .ok_or(format!("Invalid uniform name: {}", name))?
         };
-        value.set_uniform_value(&self.gl, location);
+        value.set_uniform_value(&self.inner.gl, location);
 
         Ok(())
     }
 
     /// Returns an attribute buffer
     pub fn buffer(&self, name: &str) -> Option<WebBufferKey> {
-        if let Some(attr) = self.attributes.get(name) {
+        if let Some(attr) = self.inner.attributes.get(name) {
             return Some(attr.buffer);
         }
 
         None
     }
-}
 
-impl Drop for Shader {
-    fn drop(&mut self) {
-        unsafe {
-            self.gl.delete_shader(self.vertex);
-            self.gl.delete_shader(self.fragment);
-            self.gl.delete_program(self.program);
-        }
+    pub fn from_image_fragment(app: &App, fragment: &str) -> Result<Self, String> {
+        create_sprite_shader(&app.graphics.gl, Some(fragment))
+    }
+
+    pub fn from_text_fragment(app: &App, fragment: &str) -> Result<Self, String> {
+        create_text_shader(&app.graphics.gl, Some(fragment))
+    }
+
+    pub fn from_color_fragment(app: &App, fragment: &str) -> Result<Self, String> {
+        create_color_shader(&app.graphics.gl, Some(fragment))
+    }
+
+    pub fn is_equal(&self, shader: &Shader) -> bool {
+        self.inner.program == shader.inner.program
     }
 }
 
@@ -250,4 +284,47 @@ fn create_program(
 
 fn m3_to_slice(m: &glm::Mat3) -> *const [f32; 9] {
     m.as_slice().as_ptr() as *const [f32; 9]
+}
+
+pub(crate) fn create_text_shader(gl: &GlContext, frag: Option<&str>) -> Result<Shader, String> {
+    let attrs = vec![
+        Attr::new("a_position", VertexData::Float2),
+        Attr::new("a_color", VertexData::Float4),
+        Attr::new("a_texcoord", VertexData::Float2),
+    ];
+    Ok(Shader::new_from_context(
+        gl,
+        Shader::TEXT_VERTEX,
+        frag.unwrap_or(Shader::TEXT_FRAG),
+        attrs,
+    )?)
+}
+
+pub(crate) fn create_color_shader(gl: &GlContext, frag: Option<&str>) -> Result<Shader, String> {
+    let attrs = vec![
+        Attr::new("a_position", VertexData::Float2),
+        Attr::new("a_color", VertexData::Float4),
+    ];
+
+    Ok(Shader::new_from_context(
+        gl,
+        Shader::COLOR_VERTEX,
+        frag.unwrap_or(Shader::COLOR_FRAG),
+        attrs,
+    )?)
+}
+
+pub(crate) fn create_sprite_shader(gl: &GlContext, frag: Option<&str>) -> Result<Shader, String> {
+    let attrs = vec![
+        Attr::new("a_position", VertexData::Float2),
+        Attr::new("a_color", VertexData::Float4),
+        Attr::new("a_texcoord", VertexData::Float2),
+    ];
+
+    Ok(Shader::new_from_context(
+        gl,
+        Shader::IMAGE_VERTEX,
+        frag.unwrap_or(Shader::IMAGE_FRAG),
+        attrs,
+    )?)
 }
