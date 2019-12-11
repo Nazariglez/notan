@@ -110,6 +110,10 @@ impl DrawData {
         }
     }
 
+    pub fn set_shader(&mut self, shader: Option<&Shader>) {
+        self.shader = shader.map(|v| v.clone());
+    }
+
     fn upadte_projection(&mut self, width: i32, height: i32, flipped: bool) {
         self.width = width;
         self.height = height;
@@ -205,6 +209,33 @@ impl Context2d {
             .manager
             .text_size(font, text, size, h_align, v_align, max_width);
         (size.0 as _, size.1 as _)
+    }
+
+    pub fn set_shader(&mut self, shader: Option<&Shader>) {
+        if shader.is_none() && self.data.shader.is_none() {
+            return;
+        }
+
+        if shader.is_some() && self.data.shader.is_none()
+            || shader.is_none() && self.data.shader.is_some()
+        {
+            self.update_custom_shader(shader);
+            return;
+        }
+
+        if let (Some(s1), Some(s2)) = (shader, &self.data.shader) {
+            if s1.is_equal(s2) {
+                self.update_custom_shader(shader);
+            }
+        }
+    }
+
+    fn update_custom_shader(&mut self, shader: Option<&Shader>) {
+        self.flush();
+        self.data.set_shader(shader);
+        if let Some(s) = shader {
+            s.useme();
+        }
     }
 
     pub fn set_alpha(&mut self, alpha: f32) {
@@ -843,6 +874,7 @@ fn webgl_options() -> web_sys::WebGlContextAttributes {
     opts.stencil(true);
     opts.premultiplied_alpha(false);
     opts.alpha(false);
+    opts.antialias(true);
     opts
 }
 

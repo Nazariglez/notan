@@ -7,8 +7,6 @@ use crate::res::*;
 
 use super::shader::*;
 use super::GlContext;
-use js_sys::Math::max;
-use wasm_bindgen::__rt::std::alloc::handle_alloc_error;
 
 /*TODO masking: https://stackoverflow.com/questions/46806063/how-stencil-buffer-and-masking-work
     https://jsfiddle.net/z11zhf01/1
@@ -58,7 +56,7 @@ pub(super) struct ColorBatcher {
 impl ColorBatcher {
     pub fn new(gl: &GlContext, _data: &DrawData) -> Result<Self, String> {
         let vao = create_vao(gl)?;
-        let shader = create_color_shader(gl)?;
+        let shader = create_color_shader(gl, None)?;
         Ok(Self {
             shader,
             vao,
@@ -194,7 +192,7 @@ pub(super) struct SpriteBatcher {
 impl SpriteBatcher {
     pub fn new(gl: &GlContext, _data: &DrawData) -> Result<Self, String> {
         let vao = create_vao(gl)?;
-        let shader = create_sprite_shader(gl)?;
+        let shader = create_sprite_shader(gl, None)?;
         Ok(Self {
             shader,
             vao,
@@ -207,15 +205,16 @@ impl SpriteBatcher {
         })
     }
 
-    fn use_shader(&self, data: &DrawData) {
+    fn use_shader(&self, data: &DrawData) -> Result<(), String> {
         let shader = match &data.shader {
             Some(s) => s,
             _ => &self.shader,
         };
         shader.useme();
-        shader.set_uniform("u_matrix", data.projection);
-        shader.set_uniform("u_tex_matrix", self.texture_matrix);
-        shader.set_uniform("u_texture", 0);
+        shader.set_uniform("u_matrix", data.projection)?;
+        shader.set_uniform("u_tex_matrix", self.texture_matrix)?;
+        shader.set_uniform("u_texture", 0)?;
+        Ok(())
     }
 
     fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], offset: usize) {
@@ -229,7 +228,9 @@ impl SpriteBatcher {
 
         unsafe {
             gl.bind_vertex_array(Some(self.vao));
-            self.use_shader(data);
+            if let Err(e) = self.use_shader(data) {
+                log(&e);
+            }
 
             gl.active_texture(glow::TEXTURE0);
             gl.bind_texture(glow::TEXTURE_2D, self.current_tex);
@@ -487,21 +488,6 @@ impl SpriteBatcher {
     }
 }
 
-fn create_sprite_shader(gl: &GlContext) -> Result<Shader, String> {
-    let attrs = vec![
-        Attr::new("a_position", VertexData::Float2),
-        Attr::new("a_color", VertexData::Float4),
-        Attr::new("a_texcoord", VertexData::Float2),
-    ];
-
-    Ok(Shader::new_from_context(
-        gl,
-        Shader::IMAGE_VERTEX,
-        Shader::IMAGE_FRAG,
-        attrs,
-    )?)
-}
-
 #[derive(Debug, Clone)]
 pub(crate) struct GraphicTexture {
     pub gl: GlContext,
@@ -515,20 +501,6 @@ fn create_vao(gl: &GlContext) -> Result<WebVertexArrayKey, String> {
 
         Ok(vao)
     }
-}
-
-fn create_color_shader(gl: &GlContext) -> Result<Shader, String> {
-    let attrs = vec![
-        Attr::new("a_position", VertexData::Float2),
-        Attr::new("a_color", VertexData::Float4),
-    ];
-
-    Ok(Shader::new_from_context(
-        gl,
-        Shader::COLOR_VERTEX,
-        Shader::COLOR_FRAG,
-        attrs,
-    )?)
 }
 
 fn bind_buffer(gl: &GlContext, buffer: Option<WebBufferKey>, data: &[f32], _offset: usize) {
@@ -557,7 +529,7 @@ pub(super) struct TextBatcher {
 impl TextBatcher {
     pub fn new(gl: &GlContext, _data: &DrawData) -> Result<Self, String> {
         let vao = create_vao(gl)?;
-        let shader = create_text_shader(gl)?;
+        let shader = create_text_shader(gl, None)?;
         let font = Font::default();
         let manager = FontManager::new(gl)?;
         let (width, height) = manager.texture_dimensions();
@@ -749,18 +721,4 @@ impl TextBatcher {
 
         self.index += count;
     }
-}
-
-fn create_text_shader(gl: &GlContext) -> Result<Shader, String> {
-    let attrs = vec![
-        Attr::new("a_position", VertexData::Float2),
-        Attr::new("a_color", VertexData::Float4),
-        Attr::new("a_texcoord", VertexData::Float2),
-    ];
-    Ok(Shader::new_from_context(
-        gl,
-        Shader::TEXT_VERTEX,
-        Shader::TEXT_FRAG,
-        attrs,
-    )?)
 }
