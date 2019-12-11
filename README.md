@@ -60,7 +60,7 @@ Instructions to init and build a project
     - [x] Sprites
     - [x] Patterns
     - [x] Masking
-    - [ ] Custom Shader
+    - [x] Custom Shader
     - [x] Text
     - [ ] BitmapText
     - [x] NineSlice
