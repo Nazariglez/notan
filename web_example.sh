@@ -1,7 +1,14 @@
 #!/bin/bash
-cargo build --target wasm32-unknown-unknown --example $1
 mkdir -p output/$1
-wasm-bindgen ./target/wasm32-unknown-unknown/debug/examples/$1.wasm --out-dir output/$1 --no-modules --browser --keep-debug --debug
+if [[ $2 == '--release' ]];
+then
+  cargo build --target wasm32-unknown-unknown --release --example $1
+  wasm-bindgen ./target/wasm32-unknown-unknown/release/examples/$1.wasm --out-dir output/$1 --no-modules --browser
+else
+  cargo build --target wasm32-unknown-unknown --example $1
+  wasm-bindgen ./target/wasm32-unknown-unknown/debug/examples/$1.wasm --out-dir output/$1 --no-modules --browser --keep-debug --debug
+fi
+
 cp example.html output/$1/index.html
 index=$(sed "s/{{ EXAMPLE }}/${1}/g" "example.html")
 echo "${index}" > output/$1/index.html
