@@ -231,18 +231,22 @@ impl Shader {
         None
     }
 
+    /// Default image vertex shader with custom fragment
     pub fn from_image_fragment(app: &App, fragment: &str) -> Result<Self, String> {
         create_sprite_shader(&app.graphics.gl, Some(fragment))
     }
 
+    /// Default text vertex shader with custom fragment
     pub fn from_text_fragment(app: &App, fragment: &str) -> Result<Self, String> {
         create_text_shader(&app.graphics.gl, Some(fragment))
     }
 
+    /// Default color vertex shader with custom fragment
     pub fn from_color_fragment(app: &App, fragment: &str) -> Result<Self, String> {
         create_color_shader(&app.graphics.gl, Some(fragment))
     }
 
+    /// Check if the shader program is equal to another shader (clone)
     pub fn is_equal(&self, shader: &Shader) -> bool {
         self.inner.program == shader.inner.program
     }

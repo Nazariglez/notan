@@ -42,6 +42,20 @@ use nalgebra_glm::proj;
         - Callback to a render_target
         - Render this render_target with each filter in order
         - Render to screen once all the filters are done
+
+   Filter {
+    blend: BlendMode,
+    shader: Shader,
+    draw: FnMut(shader) {}
+   }
+
+   PostProcess::new(app, 300.0, 300.0, &[Filters])
+   PostProcess.draw(app, state);
+   draw.image(postprocess.image(), 100.0, 100.0);
+
+   PostProcess.add(blendMode, shader, |app, state| {
+    apply uniforms, etc...
+   });
 */
 
 #[derive(Debug, Eq, PartialEq)]

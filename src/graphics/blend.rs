@@ -12,7 +12,7 @@ pub enum BlendFactor {
     InverseDestinationAlpha,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Copy)]
 pub struct BlendMode {
     src: BlendFactor,
     dst: BlendFactor,

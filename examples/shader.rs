@@ -8,9 +8,7 @@ struct State {
 
 #[nae_start]
 fn main() {
-    if let Err(e) = nae::with_state(init).draw(draw).build() {
-        log(&e);
-    }
+    nae::with_state(init).draw(draw).build().unwrap();
 }
 
 fn init(app: &mut App) -> State {
