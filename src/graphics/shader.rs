@@ -5,6 +5,7 @@ use crate::math::*;
 use glow::*;
 use hashbrown::HashMap;
 use std::rc::Rc;
+use std::cell::RefCell;
 
 //TODO cross compile https://crates.io/crates/shaderc - https://crates.io/crates/spirv_cross
 
@@ -111,6 +112,7 @@ struct InnerShader {
     fragment: ShaderKey,
     program: ProgramKey,
     attributes: HashMap<String, AttributeData>,
+    uniforms: RefCell<HashMap<String, glow::WebUniformLocationKey>>,
 }
 
 impl Drop for InnerShader {
@@ -197,6 +199,7 @@ impl Shader {
                 program,
                 gl,
                 attributes: attrs,
+                uniforms: RefCell::new(HashMap::new())
             }),
         })
     }
@@ -210,15 +213,19 @@ impl Shader {
 
     /// Send to the GPU a uniform value
     pub fn set_uniform<T: UniformType>(&self, name: &str, value: T) -> Result<(), String> {
-        let location = unsafe {
-            self.inner
-                .gl
-                .get_uniform_location(self.inner.program, name)
-                .ok_or(format!("Invalid uniform name: {}", name))?
-        };
-        self.use_me();
-        value.set_uniform_value(&self.inner.gl, location);
-
+        let mut uniforms = self.inner.uniforms.borrow_mut();
+        if let Some(location) = uniforms.get(name) {
+            value.set_uniform_value(&self.inner.gl, *location);
+        } else {
+           let location = unsafe {
+               self.inner
+                   .gl
+                   .get_uniform_location(self.inner.program, name)
+                   .ok_or(format!("Invalid uniform name: {}", name))?
+           };
+            value.set_uniform_value(&self.inner.gl, location);
+            uniforms.insert(name.to_string(), location);
+        }
         Ok(())
     }
 
