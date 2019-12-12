@@ -1,7 +1,7 @@
 use crate::graphics::color::Color;
 use lyon::lyon_algorithms::path::{Builder, Path};
 use lyon::lyon_tessellation as tess;
-use lyon::math::{point, rect, Angle, Point, Vector};
+use lyon::math::{point, rect, Point};
 use tess::basic_shapes::{
     fill_circle, fill_rectangle, fill_rounded_rectangle, fill_triangle, stroke_circle,
     stroke_rectangle, stroke_rounded_rectangle, stroke_triangle, BorderRadii,
@@ -264,7 +264,6 @@ impl Geometry {
                         strength,
                     } => (geometry_stroke(geometries, *strength), *color),
                     GeomMode::Fill { geometries, color } => (geometry_fill(geometries), *color),
-                    _ => (vec![], Color::WHITE),
                 };
 
                 let vc = vec![c; v.len() / 2];
@@ -346,7 +345,6 @@ fn geometry_stroke(geometries: &Vec<GeomTypes>, strength: f32) -> Vec<f32> {
                 )
                 .unwrap();
             }
-            _ => {}
         }
     }
 
@@ -400,7 +398,6 @@ fn geometry_fill(geometries: &Vec<GeomTypes>) -> Vec<f32> {
                 )
                 .unwrap();
             }
-            _ => {}
         }
     }
 

@@ -1,7 +1,6 @@
 use super::loader::load_file;
 use super::resource::*;
 use futures::{Async, Future};
-use hashbrown::HashMap;
 
 type ResourceLoader<'a> = (
     Box<dyn Resource + 'a>,
@@ -34,7 +33,7 @@ impl<'a> ResourceLoaderManager<'a> {
         unimplemented!()
     }
 
-    pub fn try_load(&mut self) -> Result<Option<Vec<(Vec<u8>, Box<Resource + 'a>)>>, String> {
+    pub fn try_load(&mut self) -> Result<Option<Vec<(Vec<u8>, Box<dyn Resource + 'a>)>>, String> {
         if self.to_load.len() == 0 {
             return Ok(None);
         }
@@ -64,7 +63,7 @@ pub(crate) enum AssetState {
 }
 
 fn try_load_asset(loader: &mut ResourceLoader) -> Result<AssetState, String> {
-    let (ref mut asset, ref mut future) = loader;
+    let (_, ref mut future) = loader;
     return future.poll().map(|s| {
         if let Async::Ready(buff) = s {
             AssetState::Done(buff.to_vec())

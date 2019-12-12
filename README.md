@@ -12,7 +12,7 @@ Nae is Not An Engine, is a portable multimedia layer with an easy API designed t
 
 ## Goals
 - HTML5 must be a first class citizen using Webassembly.
-- Support as many platforms as posible.
+- Support all hte major platforms.
 - Provide an abstraction layer to add new platforms easily (even privates like consoles). 
 - Make easy to deploy on these platforms with a CLI.
 - Provide an API that run on each platform without changes.
@@ -40,14 +40,14 @@ fn draw(app: &mut App, _: &mut ()) {
 ![Triangle](./assets/triangle.png)
 
 **More examples**
-- [Hello world](https://github.com/Nazariglez/nae/blob/master/examples/hello.rs)
+- [Triangle](https://github.com/Nazariglez/nae/blob/master/examples/triangle.rs)
 
 ## Getting started
 Instructions to init and build a project
 
 ## Current state
 - Targets
-    - [ ] HTML
+    - [x] Web Browsers
     - [ ] iOS
     - [ ] Android
     - [ ] MacOS
@@ -56,23 +56,17 @@ Instructions to init and build a project
 - 2D renderer
     - [x] Primitives
     - [x] Polylines
-    - [ ] SVGs
     - [x] Sprites
     - [x] Patterns
     - [x] Masking
     - [x] Custom Shader
     - [x] Text
-    - [ ] BitmapText
     - [x] NineSlice
-    - [ ] Linear Gradient
-    - [ ] Radial Gradient
-    - [ ] Atlas
     - [x] BlendModes
-    - [x] RenderTarget/Surface
-    - [ ] Filters
+    - [x] Surfaces
 - Drivers
     - [ ] WebGL
-    - [ ] WebGL 2
+    - [x] WebGL 2
     - [ ] Metal
     - [ ] Dx11
     - [ ] Dx12
@@ -86,6 +80,15 @@ Instructions to init and build a project
     - [ ] Touch
     - [ ] Gamepad
     - [ ] Audio
+- Extras
+    - [ ] PostProcess 
+    - [ ] Animations
+    - [ ] Particles
+    - [ ] Tweens
+    - [ ] Atlas
+    - [ ] SVGs
+    - [ ] BitmapText
+    - [ ] UI System (Maybe Iced?)
 
 ## License
 ...

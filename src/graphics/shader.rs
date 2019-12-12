@@ -1,6 +1,6 @@
 use super::GlContext;
 use crate::app::App;
-use crate::log;
+
 use crate::math::*;
 use glow::*;
 use hashbrown::HashMap;

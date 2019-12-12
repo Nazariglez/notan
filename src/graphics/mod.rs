@@ -7,7 +7,6 @@ use lyon::lyon_tessellation::basic_shapes::{
     BorderRadii,
 };
 use lyon::lyon_tessellation::{BuffersBuilder, VertexBuffers};
-use rayon::prelude::*;
 use tess::basic_shapes::stroke_circle;
 use wasm_bindgen::JsCast;
 use web_sys;
@@ -18,10 +17,9 @@ use shader::Shader;
 use transform::Transform2d;
 
 use crate::graphics::batchers::TextBatcher;
+use crate::math;
 use crate::math::*;
 use crate::res::*;
-use crate::{log, math};
-use lyon::lyon_algorithms::fit::FitStyle::Horizontal;
 
 pub mod batchers;
 mod blend;
@@ -32,7 +30,6 @@ pub mod transform;
 
 use crate::graphics::surface::Surface;
 pub use blend::*;
-use nalgebra_glm::proj;
 
 /*TODO FILTERS: (or post processing effects...)
     draw.filter(filters: &[Filter], cb: |ctx|{
@@ -80,12 +77,6 @@ enum Driver {
     //    Dx11,
     //    Dx12,
     //    Vulkan,
-}
-
-pub struct RenderTarget {
-    fbo: glow::WebFramebufferKey,
-    width: i32,
-    height: i32,
 }
 
 pub struct DrawData {
@@ -158,7 +149,6 @@ pub struct Context2d {
     sprite_batcher: batchers::SpriteBatcher,
     text_batcher: batchers::TextBatcher,
     is_drawing: bool,
-    render_target: Option<RenderTarget>,
     data: DrawData,
     paint_mode: PaintMode,
     stencil: bool,
@@ -197,7 +187,6 @@ impl Context2d {
             blend_mode,
             is_drawing: false,
             is_drawing_surface: false,
-            render_target: None,
             paint_mode: PaintMode::Empty,
             stencil: false,
             width,

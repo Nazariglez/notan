@@ -1,9 +1,4 @@
 use crate::app::App;
-use crate::res::loader::load_file;
-use futures::future::Future;
-use futures::Async;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 /// Represent a resource
 pub trait Resource {
