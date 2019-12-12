@@ -1,10 +1,8 @@
-use super::resource::*;
 use futures::future::{poll_fn, result, Future};
 use futures::Async;
-use hashbrown::HashMap;
+
 use js_sys::Uint8Array;
-use std::cell::RefCell;
-use std::rc::Rc;
+
 use web_sys::{XmlHttpRequest, XmlHttpRequestResponseType};
 
 fn xhr_req(url: &str) -> Result<XmlHttpRequest, String> {

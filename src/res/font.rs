@@ -1,9 +1,9 @@
 use super::Texture;
 use super::{Resource, ResourceConstructor};
 use crate::app::App;
-use crate::graphics::color::Color;
+
 use crate::graphics::GlContext;
-use crate::log;
+
 use crate::res::{update_texture, TextureFilter, TextureFormat};
 use glow::HasContext;
 use glyph_brush::rusttype::Scale;

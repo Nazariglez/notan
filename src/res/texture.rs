@@ -1,13 +1,10 @@
-use super::loader::load_file;
 use super::resource::*;
-use crate::graphics::batchers::GraphicTexture;
 
 use crate::app::App;
 use crate::graphics::{create_gl_tex, create_gl_tex_ext, GlContext};
-use crate::log;
-use futures::future::Future;
-use glow::{HasContext, TEXTURE_ALPHA_TYPE};
-use nalgebra_glm::magnitude;
+
+use glow::HasContext;
+
 use std::cell::RefCell;
 use std::rc::Rc;
 

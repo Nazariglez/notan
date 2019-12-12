@@ -450,10 +450,10 @@ impl SpriteBatcher {
         let tex_offset_x = ((ww - offset_x) / ww).fract();
         let tex_offset_y = ((hh - offset_y) / hh).fract();
 
-        let x1 = (quad_scale_x.floor() + tex_offset_x);
-        let y1 = (quad_scale_y.floor() + tex_offset_y);
-        let x2 = ((width + sw) / ww - fract_x + tex_offset_x);
-        let y2 = ((height + sh) / hh - fract_y + tex_offset_y);
+        let x1 = quad_scale_x.floor() + tex_offset_x;
+        let y1 = quad_scale_y.floor() + tex_offset_y;
+        let x2 = (width + sw) / ww - fract_x + tex_offset_x;
+        let y2 = (height + sh) / hh - fract_y + tex_offset_y;
 
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
         let vertex_tex = [x1, y1, x1, y2, x2, y1, x2, y1, x1, y2, x2, y2];
@@ -568,10 +568,6 @@ impl TextBatcher {
         self.font = font.clone();
     }
 
-    pub fn set_font_valign(&mut self, a: ()) {}
-
-    pub fn set_font_halign(&mut self, a: ()) {}
-
     fn use_shader(&self, data: &DrawData) {
         let shader = match &data.shader {
             Some(s) => s,
@@ -658,7 +654,6 @@ impl TextBatcher {
     fn draw_letter(&mut self, gl: &GlContext, data: &DrawData, tex_data: &FontTextureData) {
         let x = tex_data.x;
         let y = tex_data.y;
-        let tex = self.texture.tex().unwrap();
         let img_ww = self.texture.width();
         let img_hh = self.texture.height();
         let ww = tex_data.source_width;
@@ -714,7 +709,7 @@ impl TextBatcher {
         });
 
         let mut offset = self.index as usize * VERTICES * COLOR_VERTICE_SIZE;
-        color.iter().enumerate().for_each(|(i, c)| {
+        color.iter().for_each(|c| {
             self.vertex_color[offset] = *c;
             offset += 1;
         });

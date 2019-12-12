@@ -1,21 +1,20 @@
 use crate::app::App;
 use crate::graphics::GlContext;
-use crate::res::{ResourceConstructor, Texture};
+use crate::res::Texture;
 use glow::HasContext;
 
 //https://webgl2fundamentals.org/webgl/lessons/webgl-render-to-texture.html
 pub struct Surface {
     texture: Texture,
     pub(crate) fbo: glow::WebFramebufferKey,
-    gl: GlContext,
 }
 
 impl Surface {
     pub fn from_size(app: &mut App, width: i32, height: i32) -> Result<Self, String> {
-        let gl = app.graphics.gl.clone();
-        let texture = Texture::from_size(&gl, width, height)?;
-        let fbo = create_framebuffer(&gl, texture.tex())?;
-        Ok(Self { texture, fbo, gl })
+        let gl = &app.graphics.gl;
+        let texture = Texture::from_size(gl, width, height)?;
+        let fbo = create_framebuffer(gl, texture.tex())?;
+        Ok(Self { texture, fbo })
     }
 
     pub fn width(&self) -> f32 {

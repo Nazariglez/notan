@@ -23,7 +23,7 @@ impl Blob {
 }
 
 impl Resource for Blob {
-    fn parse(&mut self, app: &mut App, data: Vec<u8>) -> Result<(), String> {
+    fn parse(&mut self, _app: &mut App, data: Vec<u8>) -> Result<(), String> {
         *self.inner.borrow_mut() = data;
         Ok(())
     }
