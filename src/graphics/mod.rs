@@ -63,10 +63,6 @@ enum PaintMode {
     Empty,
 }
 
-//TODO draw_image with crop, scale, etc... draw_image_ext
-
-//TODO glsl to spv https://crates.io/crates/shaderc -> https://crates.io/crates/spirv_cross spv->glsl->etc...
-
 pub type GlContext = Rc<glow::Context>;
 enum Driver {
     WebGL,
