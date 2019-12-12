@@ -4,20 +4,13 @@ use crate::app::App;
 use crate::math::*;
 use glow::*;
 use hashbrown::HashMap;
-use std::rc::Rc;
 use std::cell::RefCell;
-
-//TODO cross compile https://crates.io/crates/shaderc - https://crates.io/crates/spirv_cross
+use std::rc::Rc;
 
 type BufferKey = glow::WebBufferKey;
 type ShaderKey = glow::WebShaderKey;
 type ProgramKey = glow::WebProgramKey;
 
-//https://github.com/pixijs/pixi-filters
-//https://github.com/pixijs/pixi-extra-filters/blob/master/src/filters/glow/glow.frag
-//https://webplatform.github.io/docs/tutorials/post-processing_with_webgl/
-//Test shader https://observablehq.com/@ondras/glsl-edge-detection
-//https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/vertexAttribPointer
 /// Vertex data types
 #[derive(Debug, Clone)]
 pub enum VertexData {
@@ -199,7 +192,7 @@ impl Shader {
                 program,
                 gl,
                 attributes: attrs,
-                uniforms: RefCell::new(HashMap::new())
+                uniforms: RefCell::new(HashMap::new()),
             }),
         })
     }
@@ -217,12 +210,12 @@ impl Shader {
         if let Some(location) = uniforms.get(name) {
             value.set_uniform_value(&self.inner.gl, *location);
         } else {
-           let location = unsafe {
-               self.inner
-                   .gl
-                   .get_uniform_location(self.inner.program, name)
-                   .ok_or(format!("Invalid uniform name: {}", name))?
-           };
+            let location = unsafe {
+                self.inner
+                    .gl
+                    .get_uniform_location(self.inner.program, name)
+                    .ok_or(format!("Invalid uniform name: {}", name))?
+            };
             value.set_uniform_value(&self.inner.gl, location);
             uniforms.insert(name.to_string(), location);
         }

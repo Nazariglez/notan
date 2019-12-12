@@ -8,38 +8,11 @@ use crate::res::*;
 use super::shader::*;
 use super::GlContext;
 
-/*TODO masking: https://stackoverflow.com/questions/46806063/how-stencil-buffer-and-masking-work
-    https://jsfiddle.net/z11zhf01/1
-    https://jsfiddle.net/gpkdrs93/
-*/
-
 const VERTICES: usize = 3;
 const VERTICE_SIZE: usize = 2;
 const COLOR_VERTICE_SIZE: usize = 4;
 
-/*TODO check this: drawElements use u16 as indices, 65553 is the max on webgl1
-    but drawArrays doesn't have this limit.
-    To use drawElements without limit on webgl1 also exists the this extension: OES_element_index_uint https://developer.mozilla.org/en-US/docs/Web/API/OES_element_index_uint
-    On webgl2 the limit doesn't exists, but you need to use UNSIGNED_INT as index https://webgl2fundamentals.org/webgl/lessons/webgl2-whats-new.html (i32)
-    A way to do this on webgl1 is:
-        - try to get the extension
-        - If it fails use drawElements by default
-        - fallback if indices > 65553 to drawArrays
-    On webgl2 we should probably use just drawElements with i32 indices
-    --
-    # help https://computergraphics.stackexchange.com/questions/3637/how-to-use-32-bit-integers-for-element-indices-in-webgl-1-0
-    # var canvas = document.createElement("canvas");
-    var gl = canvas.getContext("webgl");
-    console.log(gl.getExtension("OES_element_index_uint"));
-*/
 const MAX_PER_BATCH: usize = 65000 / (VERTICES * COLOR_VERTICE_SIZE);
-
-/* TODO for work with vaos on webgl1:
-    https://developer.mozilla.org/en-US/docs/Web/API/OES_vertex_array_object
-    https://www.khronos.org/registry/webgl/extensions/OES_vertex_array_object/
-    https://medium.com/@david.komer/dude-wheres-my-data-vao-s-in-webgl-896631783895
-    https://stackoverflow.com/a/46143967
-*/
 
 fn vf_to_u8(v: &[f32]) -> &[u8] {
     unsafe { std::slice::from_raw_parts(v.as_ptr() as *const u8, v.len() * 4) }
@@ -78,12 +51,8 @@ impl ColorBatcher {
         self.use_shader(data);
         unsafe {
             gl.bind_vertex_array(Some(self.vao));
-
-            //TODO pass the whole slice or just pass what we need to save bandwidth? (is this really that worth it?)
-            let v_max = self.index as usize * VERTICES * VERTICE_SIZE;
-            let vc_max = self.index as usize * VERTICES * COLOR_VERTICE_SIZE;
-            self.bind_buffer(gl, "a_position", &self.vertex[0..v_max], 0);
-            self.bind_buffer(gl, "a_color", &self.vertex_color[0..vc_max], 0);
+            self.bind_buffer(gl, "a_position", &self.vertex, 0);
+            self.bind_buffer(gl, "a_color", &self.vertex_color, 0);
 
             let primitives = glow::TRIANGLES;
             let offset = 0;
