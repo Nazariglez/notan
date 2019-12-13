@@ -2,7 +2,7 @@ use nae::prelude::*;
 
 const TEXT: &'static str = include_str!("./assets/loremipsum.txt");
 
-#[nae_start]
+#[nae::main]
 fn main() {
     nae::init().draw(draw).build().unwrap();
 }

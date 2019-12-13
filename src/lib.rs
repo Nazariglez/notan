@@ -5,6 +5,8 @@ pub mod math;
 pub mod res;
 mod window;
 
+pub use nae_derive::main;
+
 /*
   TODO think about a plugin trait?
     something like .plugins(vec![Tween])
@@ -28,5 +30,4 @@ pub mod prelude {
     pub use super::graphics::{color::*, shader::*, *};
     pub use super::log;
     pub use super::res::*;
-    pub use derive::nae_start;
 }

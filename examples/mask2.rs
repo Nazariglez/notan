@@ -40,7 +40,7 @@ fn draw(app: &mut App, state: &mut State) {
     state.offset += 2.5 * app.delta();
 }
 
-#[nae_start]
+#[nae::main]
 fn main() {
     nae::with_state(init).draw(draw).build();
 }

@@ -13,7 +13,7 @@ fn draw(app: &mut App, panel: &mut Texture) {
     draw.end();
 }
 
-#[nae_start]
+#[nae::main]
 fn main() {
     nae::with_state(init).draw(draw).build().unwrap();
 }
