@@ -9,7 +9,7 @@
 <script>
       window.addEventListener("load", async () => {
         let nae = await wasm_bindgen("./{{ EXAMPLE }}_bg.wasm");
-        nae.nae_start();
+        nae.nae_main();
       });
     </script>
 </body>

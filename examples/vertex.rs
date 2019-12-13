@@ -1,6 +1,6 @@
 use nae::prelude::*;
 
-#[nae_start]
+#[nae::main]
 fn main() {
     nae::init().draw(draw).build().unwrap();
 }

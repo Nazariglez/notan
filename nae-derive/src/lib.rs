@@ -4,7 +4,7 @@ use quote::quote;
 use syn::ItemFn;
 
 #[proc_macro_attribute]
-pub fn nae_start(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(item as syn::ItemFn);
     handle_func(input)
 }
@@ -15,7 +15,7 @@ fn handle_func(input: ItemFn) -> TokenStream {
         #input
 
         #[no_mangle]
-        pub extern fn nae_start() {
+        pub extern fn nae_main() {
             #ident();
         }
     };

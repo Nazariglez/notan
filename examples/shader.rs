@@ -6,7 +6,7 @@ struct State {
     count: f32,
 }
 
-#[nae_start]
+#[nae::main]
 fn main() {
     nae::with_state(init).draw(draw).build().unwrap();
 }
