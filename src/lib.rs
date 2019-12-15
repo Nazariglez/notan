@@ -30,4 +30,5 @@ pub mod prelude {
     pub use super::graphics::{color::*, shader::*, *};
     pub use super::log;
     pub use super::res::*;
+    pub use nae_core::*;
 }
