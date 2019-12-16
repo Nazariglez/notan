@@ -3,10 +3,10 @@ pub use std::f32::consts::PI;
 use std::ops::*;
 use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
-pub use super::rand::Random;
+pub use super::rand::{Random, RngType, RngRandomType};
 
 lazy_static! {
-    //static ref RNG:Arc<Mutex<Random>> = Arc::new(Mutex::new(Random::))
+    static ref RNG:Arc<Mutex<Random>> = Arc::new(Mutex::new(Random::new(crate::date_now())));
 }
 
 //TODO Replace all the vecs and mats with the `vek` crate? (SIMD = performace)
@@ -16,6 +16,20 @@ pub fn eq_float(a: f32, b: f32) -> bool {
     (a - b).abs() < std::f32::EPSILON
 }
 
+pub fn random<T: RngType>() -> T {
+    RNG.lock().unwrap().next()
+}
+
+pub fn random_range<T>(min: T, max: T) -> T
+where
+    T: RngRandomType,
+{
+    RNG.lock().unwrap().next_range(min, max)
+}
+
+pub fn random_seed(seed: u64) {
+    RNG.lock().unwrap().reseed(seed);
+}
 
 //pub trait RngType {
 //    fn random() -> Self;
