@@ -69,7 +69,6 @@ fn get_state_seq_from_seed(seed: u64) -> (u64, u64) {
     (state, seq)
 }
 
-//TODO add default, and noseedable or autogenerable using some kind os number like Date.now()
 pub struct Random {
     rnd: PCG32,
 }
@@ -88,15 +87,37 @@ impl Random {
     pub fn next<T: RngType>(&mut self) -> T {
         T::random_pcg(&mut self.rnd)
     }
+
+    pub fn next_range<T: RngRandomType>(&mut self, min: T, max: T) -> T {
+        T::random_range_pcg(&mut self.rnd, min, max)
+    }
+}
+
+impl Default for Random {
+    fn default() -> Self {
+        Self {
+            rnd: PCG32::default()
+        }
+    }
 }
 
 pub trait RngType {
     fn random_pcg(rnd: &mut PCG32) -> Self;
 }
 
+pub trait RngRandomType: RngType {
+    fn random_range_pcg(rnd: &mut PCG32, min: Self, max: Self) -> Self;
+}
+
 impl RngType for f32 {
     fn random_pcg(rnd: &mut PCG32) -> Self {
         rnd.next_u32() as f32 / std::u32::MAX as f32
+    }
+}
+
+impl RngRandomType for f32 {
+    fn random_range_pcg(rnd: &mut PCG32, min: Self, max: Self) -> Self {
+        min + f32::random_pcg(rnd) * (max - min)
     }
 }
 
@@ -106,15 +127,57 @@ impl RngType for f64 {
     }
 }
 
+impl RngRandomType for f64 {
+    fn random_range_pcg(rnd: &mut PCG32, min: Self, max: Self) -> Self {
+        min + f64::random_pcg(rnd) * (max - min)
+    }
+}
+
 impl RngType for i64 {
     fn random_pcg(rnd: &mut PCG32) -> Self {
         (rnd.next_u64() % MAX_I64_AS_U64) as i64
     }
 }
 
+impl RngRandomType for i64 {
+    fn random_range_pcg(rnd: &mut PCG32, min: Self, max: Self) -> Self {
+        i64::random_pcg(rnd) % (max + 1 - min) + min
+    }
+}
+
 impl RngType for i32 {
     fn random_pcg(rnd: &mut PCG32) -> Self {
         (rnd.next_u32() % MAX_I32_AS_U32) as i32
+    }
+}
+
+impl RngRandomType for i32 {
+    fn random_range_pcg(rnd: &mut PCG32, min: Self, max: Self) -> Self {
+        i32::random_pcg(rnd) % (max + 1 - min) + min //TODO overflow...
+    }
+}
+
+impl RngType for u64 {
+    fn random_pcg(rnd: &mut PCG32) -> Self {
+        rnd.next_u64()
+    }
+}
+
+impl RngRandomType for u64 {
+    fn random_range_pcg(rnd: &mut PCG32, min: Self, max: Self) -> Self {
+        u64::random_pcg(rnd) % (max + 1 - min) + min
+    }
+}
+
+impl RngType for u32 {
+    fn random_pcg(rnd: &mut PCG32) -> Self {
+        rnd.next_u32()
+    }
+}
+
+impl RngRandomType for u32 {
+    fn random_range_pcg(rnd: &mut PCG32, min: Self, max: Self) -> Self {
+        u32::random_pcg(rnd) % (max + 1 - min) + min
     }
 }
 
