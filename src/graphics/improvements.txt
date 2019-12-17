@@ -27,3 +27,4 @@
     var gl = canvas.getContext("webgl");
     console.log(gl.getExtension("OES_element_index_uint"));
 */
+webgl1 improvements like pot2 or antialisng -> https://doc.babylonjs.com/features/webgl2#multisample-render-targets

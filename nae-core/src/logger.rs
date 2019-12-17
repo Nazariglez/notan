@@ -24,11 +24,11 @@ impl From<LogLevel> for Level {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn init_logger(level: LogLevel) {
+pub fn init(level: LogLevel) {
     console_log::init_with_level(level.into());
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn init_logger(level: LogLevel) {
+pub fn init(level: LogLevel) {
     unimplemented!()
 }

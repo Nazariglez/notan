@@ -6,6 +6,7 @@ pub mod res;
 mod window;
 
 pub use nae_derive::main;
+pub use nae_extras as extras;
 
 /*
   TODO think about a plugin trait?
