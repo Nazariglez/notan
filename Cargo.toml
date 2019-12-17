@@ -25,6 +25,7 @@ hashbrown = "0.6.3"
 vek = "0.9.10"
 nae-derive = { path = "./nae-derive" }
 nae-core = { path = "./nae-core" }
+nae-extras = { path = "./nae-extras" }
 glyph_brush = "0.6.1"
 
 [dependencies.web-sys]
@@ -52,5 +53,6 @@ members = [
     "nae-derive",
     "nae-core",
     "nae-glow",
-    "nae-web"
+    "nae-web",
+    "nae-extras"
 ]

@@ -1,8 +1,7 @@
-mod logger;
+pub mod logger;
 pub mod math;
-mod rand;
 
-pub use logger::*;
+pub use logger::{debug, error, info, trace, warn};
 
 #[cfg(target_arch = "wasm32")]
 pub fn date_now() -> u64 {
