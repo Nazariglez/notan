@@ -7,6 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+lyon = "0.14.1"
 log = "0.4.8"
 nalgebra-glm = "0.4.2"
 

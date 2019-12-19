@@ -83,14 +83,18 @@ where
         self.reset();
     }
 
-    pub fn item(&mut self) -> T {
+    pub fn item(&mut self) -> Option<&T> {
+        if self.items.len() == 0 {
+            return None;
+        }
+
         if self.index >= self.bag.len() {
             self.reset();
         }
 
-        let item = self.items[self.bag[self.index]].clone();
+        let item = &self.items[self.bag[self.index]];
         self.index += 1;
-        item
+        Some(item)
     }
     pub fn reset(&mut self) {
         self.bag.shuffle(&mut self.rng.rng);
@@ -118,11 +122,11 @@ mod test {
 
         //add nums to the bag
         to_add.iter().for_each(|(n, amount)| bag.add(*n, *amount));
-        let result = (0..iter_num).fold(0, |acc, _| acc + bag.item());
+        let result = (0..iter_num).fold(0, |acc, _| acc + *bag.item().unwrap());
         assert_eq!(result_expected, result);
 
         //The loop should be reset automatically when the end is reached
-        let result = (0..iter_num).fold(0, |acc, _| acc + bag.item());
+        let result = (0..iter_num).fold(0, |acc, _| acc + *bag.item().unwrap());
         assert_eq!(result_expected, result);
     }
 }

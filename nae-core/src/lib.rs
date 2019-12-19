@@ -1,7 +1,11 @@
 pub mod logger;
 pub mod math;
+mod graphics;
+mod resources;
 
 pub use logger::{debug, error, info, trace, warn};
+
+pub trait BaseApp {}
 
 #[cfg(target_arch = "wasm32")]
 pub fn date_now() -> u64 {
