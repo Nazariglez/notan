@@ -4,18 +4,19 @@ mod blend;
 mod transform;
 mod geometry;
 
-use geometry::Geometry;
-use transform::Transform2d;
-use blend::BlendMode;
-use color::Color;
+pub use geometry::Geometry;
+pub use transform::Transform2d;
+pub use blend::BlendMode;
+pub use color::Color;
 use crate::resources::{BaseTexture, BaseFont, HorizontalAlign, VerticalAlign};
 
 pub trait BaseSurface
     where Self: Sized
 {
     type Texture:BaseTexture;
+    type Context2d:BaseContext2d;
 
-    fn from_size<T: BaseApp>(app: &mut T, width: i32, height: i32) -> Result<Self, String>;
+    fn from_size<T: BaseApp<Graphics = Self::Context2d>>(app: &mut T, width: i32, height: i32) -> Result<Self, String>;
     fn width(&self) -> f32;
     fn height(&self) -> f32;
     fn texture(&self) -> &Self::Texture;

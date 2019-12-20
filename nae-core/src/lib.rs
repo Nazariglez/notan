@@ -1,11 +1,16 @@
 pub mod logger;
 pub mod math;
-mod graphics;
-mod resources;
+pub mod graphics;
+pub mod resources;
 
 pub use logger::{debug, error, info, trace, warn};
+use crate::graphics::BaseContext2d;
 
-pub trait BaseApp {}
+pub trait BaseApp {
+    type Graphics: BaseContext2d;
+
+    fn graphics(&mut self) -> &mut Self::Graphics;
+}
 
 #[cfg(target_arch = "wasm32")]
 pub fn date_now() -> u64 {
