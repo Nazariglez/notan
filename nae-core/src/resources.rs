@@ -1,4 +1,5 @@
 use crate::BaseApp;
+use crate::graphics::BaseContext2d;
 
 /// Represent a resource
 pub trait Resource {
@@ -28,9 +29,24 @@ pub enum TextureFilter {
     Nearest,
 }
 
-pub trait BaseTexture: Resource {
+pub trait BaseTexture: Resource
+    where Self: Sized
+{
+    type Context2d:BaseContext2d;
+
     fn width(&self) -> f32;
     fn height(&self) -> f32;
+    fn from_size<T: BaseApp<Graphics = Self::Context2d>>(app: &mut T, width: i32, height: i32) -> Result<Self, String>;
+    fn from<T: BaseApp<Graphics = Self::Context2d>>(
+        app: &mut T,
+        width: i32,
+        height: i32,
+        internal_format: TextureFormat,
+        format: TextureFormat,
+        min_filter: TextureFilter,
+        mag_filter: TextureFilter,
+    ) -> Result<Self, String>;
+    fn format(&self) -> TextureFormat;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
