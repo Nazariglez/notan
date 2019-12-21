@@ -3,8 +3,11 @@ use crate::graphics::BaseContext2d;
 
 /// Represent a resource
 pub trait Resource {
+    type Context2d: BaseContext2d;
+
     /// Dispatched when the resource is loaded on memory
-    fn parse<T: BaseApp>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>;
+    fn parse<T>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
+        where T: BaseApp<Graphics = Self::Context2d>;
 
     /// Should return true if the resource is ready to use it
     fn is_loaded(&self) -> bool;
@@ -32,8 +35,6 @@ pub enum TextureFilter {
 pub trait BaseTexture: Resource
     where Self: Sized
 {
-    type Context2d:BaseContext2d;
-
     fn width(&self) -> f32;
     fn height(&self) -> f32;
     fn from_size<T: BaseApp<Graphics = Self::Context2d>>(app: &mut T, width: i32, height: i32) -> Result<Self, String>;
@@ -64,8 +65,10 @@ pub enum VerticalAlign {
 }
 
 pub trait BaseFont: Resource {
-    fn text_size<T: BaseApp, F: BaseFont>(app: &mut T, font: &F, text: &str, size: f32) -> (f32, f32);
-    fn text_size_ext<T: BaseApp, F: BaseFont>(
+    fn text_size<T, F>(app: &mut T, font: &F, text: &str, size: f32) -> (f32, f32)
+        where T: BaseApp<Graphics = Self::Context2d>,
+                F: BaseFont;
+    fn text_size_ext<T, F>(
         app: &mut T,
         font: &F,
         text: &str,
@@ -73,5 +76,7 @@ pub trait BaseFont: Resource {
         h_align: HorizontalAlign,
         v_align: VerticalAlign,
         max_width: Option<f32>,
-    ) -> (f32, f32);
+    ) -> (f32, f32)
+        where T: BaseApp<Graphics = Self::Context2d>,
+              F: BaseFont;
 }
