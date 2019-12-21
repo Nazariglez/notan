@@ -1,5 +1,5 @@
 use crate::context::Context2d;
-use crate::{GlContext, TextureKey, GlowValue};
+use crate::{GlContext, GlowValue, TextureKey};
 use glow::HasContext;
 use nae_core::resources::{
     BaseTexture, Resource, ResourceConstructor, TextureFilter, TextureFormat,

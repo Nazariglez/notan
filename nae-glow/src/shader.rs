@@ -1,12 +1,12 @@
-use nae_core::graphics::{BaseShader};
-use nae_core::BaseApp;
 use crate::context::Context2d;
 use crate::{GlContext, GlowValue};
-use hashbrown::HashMap;
-use std::rc::Rc;
-use std::cell::RefCell;
 use glow::HasContext;
+use hashbrown::HashMap;
+use nae_core::graphics::BaseShader;
 use nae_core::math::Mat3;
+use nae_core::BaseApp;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[cfg(target_arch = "wasm32")]
 type BufferKey = glow::WebBufferKey;
@@ -33,7 +33,7 @@ type UniformLocationKey = glow::WebUniformLocationKey;
 type UniformLocationKey = glow::UniformLocation;
 
 pub struct Shader {
-    inner: Rc<InnerShader>
+    inner: Rc<InnerShader>,
 }
 
 impl Shader {
@@ -88,15 +88,24 @@ impl BaseShader for Shader {
         None
     }
 
-    fn from_image_fragment<T: BaseApp<Graphics = Self::Graphics>>(app: &mut T, fragment: &str) -> Result<Self, String> {
+    fn from_image_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+        app: &mut T,
+        fragment: &str,
+    ) -> Result<Self, String> {
         create_sprite_shader(&app.graphics().gl, Some(fragment))
     }
 
-    fn from_text_fragment<T: BaseApp<Graphics = Self::Graphics>>(app: &mut T, fragment: &str) -> Result<Self, String> {
+    fn from_text_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+        app: &mut T,
+        fragment: &str,
+    ) -> Result<Self, String> {
         create_text_shader(&app.graphics().gl, Some(fragment))
     }
 
-    fn from_color_fragment<T: BaseApp<Graphics = Self::Graphics>>(app: &mut T, fragment: &str) -> Result<Self, String> {
+    fn from_color_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+        app: &mut T,
+        fragment: &str,
+    ) -> Result<Self, String> {
         create_color_shader(&app.graphics().gl, Some(fragment))
     }
 
@@ -105,7 +114,12 @@ impl BaseShader for Shader {
     }
 }
 
-fn shader_from_gl_context(gl: &GlContext, vertex: &str, fragment: &str, mut attributes: Vec<Attr>) -> Result<Shader, String> {
+fn shader_from_gl_context(
+    gl: &GlContext,
+    vertex: &str,
+    fragment: &str,
+    mut attributes: Vec<Attr>,
+) -> Result<Shader, String> {
     let vertex = create_shader(gl, glow::VERTEX_SHADER, vertex)?;
     let fragment = create_shader(gl, glow::FRAGMENT_SHADER, fragment)?;
 

@@ -20,4 +20,3 @@ pub(crate) type TextureKey = glow::Texture;
 pub(crate) trait GlowValue {
     fn glow_value(&self) -> u32;
 }
-
