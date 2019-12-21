@@ -15,7 +15,7 @@ pub(crate) type GlContext = Rc<Context>;
 pub(crate) type TextureKey = glow::WebTextureKey;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub(crate) type TextureKey = glow::Texture;
+pub(crate) type TextureKey = <glow::Context as HasContext>::Texture;
 
 pub(crate) trait GlowValue {
     fn glow_value(&self) -> u32;

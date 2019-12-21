@@ -1,4 +1,3 @@
-#[cfg(target_arch = "wasm32")]
 pub use log::{debug, error, info, trace, warn, Level};
 
 pub enum LogLevel {
