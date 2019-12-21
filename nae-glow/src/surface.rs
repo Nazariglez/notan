@@ -10,7 +10,7 @@ use nae_core::BaseApp;
 type FramebufferKey = glow::WebFramebufferKey;
 
 #[cfg(not(target_arch = "wasm32"))]
-type FramebufferKey = glow::Framebuffer;
+type FramebufferKey = <glow::Context as HasContext>::Framebuffer;
 
 pub struct Surface {
     texture: Texture,

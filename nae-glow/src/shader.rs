@@ -12,25 +12,25 @@ use std::rc::Rc;
 type BufferKey = glow::WebBufferKey;
 
 #[cfg(not(target_arch = "wasm32"))]
-type BufferKey = glow::Buffer;
+type BufferKey = <glow::Context as HasContext>::Buffer;
 
 #[cfg(target_arch = "wasm32")]
 type ShaderKey = glow::WebShaderKey;
 
 #[cfg(not(target_arch = "wasm32"))]
-type ShaderKey = glow::Shader;
+type ShaderKey = <glow::Context as HasContext>::Shader;
 
 #[cfg(target_arch = "wasm32")]
 type ProgramKey = glow::WebProgramKey;
 
 #[cfg(not(target_arch = "wasm32"))]
-type ProgramKey = glow::Program;
+type ProgramKey = <glow::Context as HasContext>::Program;
 
 #[cfg(target_arch = "wasm32")]
 type UniformLocationKey = glow::WebUniformLocationKey;
 
 #[cfg(not(target_arch = "wasm32"))]
-type UniformLocationKey = glow::UniformLocation;
+type UniformLocationKey = <glow::Context as HasContext>::UniformLocation;
 
 pub struct Shader {
     inner: Rc<InnerShader>,
