@@ -171,11 +171,6 @@ pub(crate) fn update_texture(
     let ww = rect.width() as i32;
     let hh = rect.height() as i32;
 
-    //    let rgba_data = data
-    //        .iter()
-    //        .flat_map(|a| vec![255, 255, 255, *a])
-    //        .collect::<Vec<u8>>();
-    //
     unsafe {
         gl.bind_texture(glow::TEXTURE_2D, texture.tex());
 
@@ -188,7 +183,6 @@ pub(crate) fn update_texture(
             hh,
             glow::RED, //texture.format().into(),
             glow::UNSIGNED_BYTE,
-            //            Some(&rgba_data),
             Some(data),
         );
     }

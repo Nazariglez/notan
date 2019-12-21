@@ -1,12 +1,13 @@
-mod surface;
+mod batchers;
 mod context;
-mod texture;
-mod shader;
 mod font;
+mod shader;
+mod surface;
+mod texture;
 
-pub use surface::*;
 use glow::{Context, HasContext};
 use std::rc::Rc;
+pub use surface::*;
 
 pub(crate) type GlContext = Rc<Context>;
 

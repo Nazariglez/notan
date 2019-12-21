@@ -1,10 +1,12 @@
-use nae_core::resources::{BaseTexture, Resource, ResourceConstructor, TextureFormat, TextureFilter};
-use nae_core::BaseApp;
-use crate::{TextureKey, GlContext};
-use std::rc::Rc;
-use std::cell::RefCell;
 use crate::context::Context2d;
+use crate::{GlContext, TextureKey};
 use glow::HasContext;
+use nae_core::resources::{
+    BaseTexture, Resource, ResourceConstructor, TextureFilter, TextureFormat,
+};
+use nae_core::BaseApp;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct Texture {
     inner: Rc<RefCell<InnerTexture>>,
@@ -25,29 +27,40 @@ impl BaseTexture for Texture {
         self.inner.borrow().height as _
     }
 
-    fn from_size<T: BaseApp<Graphics=Self::Context2d>>(app: &mut T, width: i32, height: i32) -> Result<Self, String> {
-        <Texture as BaseTexture>::from(app, width, height, TextureFormat::Rgba, TextureFormat::Rgba, TextureFilter::Nearest, TextureFilter::Nearest)
+    fn from_size<T: BaseApp<Graphics = Self::Context2d>>(
+        app: &mut T,
+        width: i32,
+        height: i32,
+    ) -> Result<Self, String> {
+        <Texture as BaseTexture>::from(
+            app,
+            width,
+            height,
+            TextureFormat::Rgba,
+            TextureFormat::Rgba,
+            TextureFilter::Nearest,
+            TextureFilter::Nearest,
+        )
     }
 
-    fn from<T: BaseApp<Graphics=Self::Context2d>>(app: &mut T, width: i32, height: i32, internal_format: TextureFormat, format: TextureFormat, min_filter: TextureFilter, mag_filter: TextureFilter) -> Result<Self, String> {
-        let mut inner = InnerTexture::empty(width, height);
-        let bpp = byte_per_pixel(internal_format, format);
-        let tex = create_gl_tex_ext(
+    fn from<T: BaseApp<Graphics = Self::Context2d>>(
+        app: &mut T,
+        width: i32,
+        height: i32,
+        internal_format: TextureFormat,
+        format: TextureFormat,
+        min_filter: TextureFilter,
+        mag_filter: TextureFilter,
+    ) -> Result<Self, String> {
+        texture_from_gl_context(
             &app.graphics().gl,
             width,
             height,
-            &vec![0; (width * height) as usize * bpp],
-            internal_format.glow_value() as _,
-            format.glow_value() as _,
-            min_filter.glow_value() as _,
-            mag_filter.glow_value() as _,
-            bpp,
-        )?;
-        inner.gl = Some(app.graphics().gl.clone());
-        inner.tex = Some(tex);
-        Ok(Self {
-            inner: Rc::new(RefCell::new(inner)),
-        })
+            internal_format,
+            format,
+            min_filter,
+            mag_filter,
+        )
     }
 
     fn format(&self) -> TextureFormat {
@@ -55,10 +68,51 @@ impl BaseTexture for Texture {
     }
 }
 
+pub(crate) fn texture_from_gl_context(
+    gl: &GlContext,
+    width: i32,
+    height: i32,
+    internal_format: TextureFormat,
+    format: TextureFormat,
+    min_filter: TextureFilter,
+    mag_filter: TextureFilter,
+) -> Result<Texture, String> {
+    let max_size = max_texture_size(gl);
+    if width > max_size || height > max_size {
+        return Err(format!(
+            "Texture size {}x{} is bigger than the max allowed ({}x{})",
+            width, height, max_size, max_size
+        ));
+    }
+
+    let mut inner = InnerTexture::empty(width, height);
+    let bpp = byte_per_pixel(internal_format, format);
+    let tex = create_gl_tex_ext(
+        gl,
+        width,
+        height,
+        &vec![0; (width * height) as usize * bpp],
+        internal_format.glow_value() as _,
+        format.glow_value() as _,
+        min_filter.glow_value() as _,
+        mag_filter.glow_value() as _,
+        bpp,
+    )?;
+    inner.gl = Some(gl.clone());
+    inner.tex = Some(tex);
+    Ok(Texture {
+        inner: Rc::new(RefCell::new(inner)),
+    })
+}
+
 impl Resource for Texture {
     type Context2d = Context2d;
 
-    fn parse<T: BaseApp<Graphics = Self::Context2d>>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String> {
+    fn parse<T: BaseApp<Graphics = Self::Context2d>>(
+        &mut self,
+        app: &mut T,
+        data: Vec<u8>,
+    ) -> Result<(), String> {
         let data = image::load_from_memory(&data)
             .map_err(|e| e.to_string())?
             .to_rgba();
@@ -67,7 +121,17 @@ impl Resource for Texture {
         let height = data.height() as _;
         let raw = data.to_vec();
         let gl = app.graphics().gl.clone();
-        let tex = create_gl_tex_ext(&gl, width, height, &raw, TextureFormat::Rgba.glow_value() as _, TextureFormat::Rgba.glow_value() as _, TextureFilter::Nearest.glow_value() as _, TextureFilter::Nearest.glow_value() as _, byte_per_pixel(TextureFormat::Rgba, TextureFormat::Rgba))?;
+        let tex = create_gl_tex_ext(
+            &gl,
+            width,
+            height,
+            &raw,
+            TextureFormat::Rgba.glow_value() as _,
+            TextureFormat::Rgba.glow_value() as _,
+            TextureFilter::Nearest.glow_value() as _,
+            TextureFilter::Nearest.glow_value() as _,
+            byte_per_pixel(TextureFormat::Rgba, TextureFormat::Rgba),
+        )?;
 
         *self.inner.borrow_mut() = InnerTexture {
             width,
@@ -210,3 +274,6 @@ impl GlowValue for TextureFormat {
     }
 }
 
+pub(crate) fn max_texture_size(gl: &GlContext) -> i32 {
+    unsafe { gl.get_parameter_i32(glow::MAX_TEXTURE_SIZE) }
+}
