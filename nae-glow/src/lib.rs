@@ -17,6 +17,12 @@ pub(crate) type TextureKey = glow::WebTextureKey;
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) type TextureKey = <glow::Context as HasContext>::Texture;
 
+#[cfg(target_arch = "wasm32")]
+pub(crate) type BufferKey = glow::WebBufferKey;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) type BufferKey = <glow::Context as HasContext>::Buffer;
+
 pub(crate) trait GlowValue {
     fn glow_value(&self) -> u32;
 }

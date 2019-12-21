@@ -1,5 +1,5 @@
 use crate::context::Context2d;
-use crate::{GlContext, GlowValue};
+use crate::{BufferKey, GlContext, GlowValue};
 use glow::HasContext;
 use hashbrown::HashMap;
 use nae_core::graphics::BaseShader;
@@ -7,12 +7,6 @@ use nae_core::math::Mat3;
 use nae_core::BaseApp;
 use std::cell::RefCell;
 use std::rc::Rc;
-
-#[cfg(target_arch = "wasm32")]
-type BufferKey = glow::WebBufferKey;
-
-#[cfg(not(target_arch = "wasm32"))]
-type BufferKey = <glow::Context as HasContext>::Buffer;
 
 #[cfg(target_arch = "wasm32")]
 type ShaderKey = glow::WebShaderKey;
@@ -63,6 +57,13 @@ impl Shader {
         }
         Ok(())
     }
+
+    /// Tell to the GPU to use this shader
+    pub(crate) fn use_me(&self) {
+        unsafe {
+            self.inner.gl.use_program(Some(self.inner.program));
+        }
+    }
 }
 
 impl BaseShader for Shader {
@@ -92,21 +93,21 @@ impl BaseShader for Shader {
         app: &mut T,
         fragment: &str,
     ) -> Result<Self, String> {
-        create_sprite_shader(&app.graphics().gl, Some(fragment))
+        sprite_shader_from_gl_context(&app.graphics().gl, Some(fragment))
     }
 
     fn from_text_fragment<T: BaseApp<Graphics = Self::Graphics>>(
         app: &mut T,
         fragment: &str,
     ) -> Result<Self, String> {
-        create_text_shader(&app.graphics().gl, Some(fragment))
+        text_shader_from_gl_context(&app.graphics().gl, Some(fragment))
     }
 
     fn from_color_fragment<T: BaseApp<Graphics = Self::Graphics>>(
         app: &mut T,
         fragment: &str,
     ) -> Result<Self, String> {
-        create_color_shader(&app.graphics().gl, Some(fragment))
+        color_shader_from_gl_context(&app.graphics().gl, Some(fragment))
     }
 
     fn is_equal(&self, shader: &Shader) -> bool {
@@ -318,7 +319,10 @@ fn m3_to_slice(m: &Mat3) -> *const [f32; 9] {
     m.as_slice().as_ptr() as *const [f32; 9]
 }
 
-fn create_sprite_shader(gl: &GlContext, frag: Option<&str>) -> Result<Shader, String> {
+pub(crate) fn sprite_shader_from_gl_context(
+    gl: &GlContext,
+    frag: Option<&str>,
+) -> Result<Shader, String> {
     let attrs = vec![
         Attr::new("a_position", VertexData::Float2),
         Attr::new("a_color", VertexData::Float4),
@@ -333,7 +337,10 @@ fn create_sprite_shader(gl: &GlContext, frag: Option<&str>) -> Result<Shader, St
     )?)
 }
 
-fn create_text_shader(gl: &GlContext, frag: Option<&str>) -> Result<Shader, String> {
+pub(crate) fn text_shader_from_gl_context(
+    gl: &GlContext,
+    frag: Option<&str>,
+) -> Result<Shader, String> {
     let attrs = vec![
         Attr::new("a_position", VertexData::Float2),
         Attr::new("a_color", VertexData::Float4),
@@ -347,7 +354,10 @@ fn create_text_shader(gl: &GlContext, frag: Option<&str>) -> Result<Shader, Stri
     )?)
 }
 
-fn create_color_shader(gl: &GlContext, frag: Option<&str>) -> Result<Shader, String> {
+pub(crate) fn color_shader_from_gl_context(
+    gl: &GlContext,
+    frag: Option<&str>,
+) -> Result<Shader, String> {
     let attrs = vec![
         Attr::new("a_position", VertexData::Float2),
         Attr::new("a_color", VertexData::Float4),
