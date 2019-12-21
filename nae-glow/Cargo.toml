@@ -11,6 +11,7 @@ nae-core = { path = "../nae-core" }
 glow = "0.3.0-alpha2"
 glyph_brush = "0.6.1"
 image = "0.22.3"
+hashbrown = "0.6.3"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 js-sys = "0.3.30"
