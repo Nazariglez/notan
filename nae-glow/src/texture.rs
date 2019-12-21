@@ -1,5 +1,5 @@
 use crate::context::Context2d;
-use crate::{GlContext, TextureKey};
+use crate::{GlContext, TextureKey, GlowValue};
 use glow::HasContext;
 use nae_core::resources::{
     BaseTexture, Resource, ResourceConstructor, TextureFilter, TextureFormat,
@@ -247,10 +247,6 @@ fn create_gl_tex_ext(
         gl.bind_texture(glow::TEXTURE_2D, None);
         Ok(tex)
     }
-}
-
-trait GlowValue {
-    fn glow_value(&self) -> u32;
 }
 
 impl GlowValue for TextureFilter {
