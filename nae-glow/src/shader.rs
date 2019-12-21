@@ -1,16 +1,19 @@
 use nae_core::graphics::BaseShader;
 use nae_core::BaseApp;
 
-pub struct Shader {
-
-}
+pub struct Shader {}
 
 impl BaseShader for Shader {
     type Uniform = ();
     type Buffer = ();
     type Attr = ();
 
-    fn new<T: BaseApp>(app: &T, vertex: &str, fragment: &str, attributes: Vec<Self::Attr>) -> Result<Self, String> {
+    fn new<T: BaseApp>(
+        app: &T,
+        vertex: &str,
+        fragment: &str,
+        attributes: Vec<Self::Attr>,
+    ) -> Result<Self, String> {
         unimplemented!()
     }
 

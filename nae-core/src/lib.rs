@@ -1,10 +1,10 @@
+pub mod graphics;
 pub mod logger;
 pub mod math;
-pub mod graphics;
 pub mod resources;
 
-pub use logger::{debug, error, info, trace, warn};
 use crate::graphics::BaseContext2d;
+pub use logger::{debug, error, info, trace, warn};
 
 pub trait BaseApp {
     type Graphics: BaseContext2d;

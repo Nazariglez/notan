@@ -59,4 +59,3 @@ impl BlendMode {
         self.dst
     }
 }
-

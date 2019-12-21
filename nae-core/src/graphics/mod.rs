@@ -1,29 +1,35 @@
 use crate::BaseApp;
-mod color;
 mod blend;
-mod transform;
+mod color;
 mod geometry;
+mod transform;
 
-pub use geometry::Geometry;
-pub use transform::Transform2d;
+use crate::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
 pub use blend::BlendMode;
 pub use color::Color;
-use crate::resources::{BaseTexture, BaseFont, HorizontalAlign, VerticalAlign};
+pub use geometry::Geometry;
+pub use transform::Transform2d;
 
 pub trait BaseSurface
-    where Self: Sized
+where
+    Self: Sized,
 {
-    type Texture:BaseTexture;
-    type Context2d:BaseContext2d;
+    type Texture: BaseTexture;
+    type Context2d: BaseContext2d;
 
-    fn from_size<T: BaseApp<Graphics = Self::Context2d>>(app: &mut T, width: i32, height: i32) -> Result<Self, String>;
+    fn from_size<T: BaseApp<Graphics = Self::Context2d>>(
+        app: &mut T,
+        width: i32,
+        height: i32,
+    ) -> Result<Self, String>;
     fn width(&self) -> f32;
     fn height(&self) -> f32;
     fn texture(&self) -> &Self::Texture;
 }
 
 pub trait BaseShader
-    where Self: Sized
+where
+    Self: Sized,
 {
     type Uniform;
     type Buffer;
@@ -55,10 +61,10 @@ impl Vertex {
 }
 
 pub trait BaseContext2d {
-    type Shader:BaseShader;
-    type Surface:BaseSurface;
-    type Texture:BaseTexture;
-    type Font:BaseFont;
+    type Shader: BaseShader;
+    type Surface: BaseSurface;
+    type Texture: BaseTexture;
+    type Font: BaseFont;
 
     fn set_shader(&mut self, shader: Option<&Self::Shader>);
     fn update_custom_shader(&mut self, shader: Option<&Self::Shader>);

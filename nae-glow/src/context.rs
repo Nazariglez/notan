@@ -1,12 +1,14 @@
-use nae_core::graphics::{Geometry, BaseContext2d, Vertex, Color, BlendMode, Transform2d};
-use nae_core::resources::{VerticalAlign, HorizontalAlign, BaseFont};
-use crate::{Surface, GlContext};
-use crate::texture::Texture;
-use crate::shader::Shader;
+use crate::batchers::TextBatcher;
 use crate::font::Font;
+use crate::shader::Shader;
+use crate::texture::Texture;
+use crate::{GlContext, Surface};
+use nae_core::graphics::{BaseContext2d, BlendMode, Color, Geometry, Transform2d, Vertex};
+use nae_core::resources::{BaseFont, HorizontalAlign, VerticalAlign};
 
 pub struct Context2d {
-    pub(crate) gl: GlContext
+    pub(crate) gl: GlContext,
+    pub(crate) text_batcher: TextBatcher,
 }
 
 impl BaseContext2d for Context2d {
@@ -15,7 +17,7 @@ impl BaseContext2d for Context2d {
     type Texture = Texture;
     type Font = Font;
 
-    fn set_shader<>(&mut self, shader: Option<&Self::Shader>) {
+    fn set_shader(&mut self, shader: Option<&Self::Shader>) {
         unimplemented!()
     }
 
@@ -95,7 +97,16 @@ impl BaseContext2d for Context2d {
         unimplemented!()
     }
 
-    fn text_ext(&mut self, text: &str, x: f32, y: f32, size: f32, h_align: HorizontalAlign, v_align: VerticalAlign, max_width: Option<f32>) {
+    fn text_ext(
+        &mut self,
+        text: &str,
+        x: f32,
+        y: f32,
+        size: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+        max_width: Option<f32>,
+    ) {
         unimplemented!()
     }
 
@@ -103,7 +114,16 @@ impl BaseContext2d for Context2d {
         unimplemented!()
     }
 
-    fn stroke_triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32, line_width: f32) {
+    fn stroke_triangle(
+        &mut self,
+        x1: f32,
+        y1: f32,
+        x2: f32,
+        y2: f32,
+        x3: f32,
+        y3: f32,
+        line_width: f32,
+    ) {
         unimplemented!()
     }
 
@@ -127,7 +147,15 @@ impl BaseContext2d for Context2d {
         unimplemented!()
     }
 
-    fn stroke_rounded_rect(&mut self, x: f32, y: f32, width: f32, height: f32, radius: f32, line_width: f32) {
+    fn stroke_rounded_rect(
+        &mut self,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        radius: f32,
+        line_width: f32,
+    ) {
         unimplemented!()
     }
 
@@ -143,19 +171,59 @@ impl BaseContext2d for Context2d {
         unimplemented!()
     }
 
-    fn image_crop(&mut self, img: &Self::Texture, x: f32, y: f32, source_x: f32, source_y: f32, source_width: f32, source_height: f32) {
+    fn image_crop(
+        &mut self,
+        img: &Self::Texture,
+        x: f32,
+        y: f32,
+        source_x: f32,
+        source_y: f32,
+        source_width: f32,
+        source_height: f32,
+    ) {
         unimplemented!()
     }
 
-    fn image_ext(&mut self, img: &Self::Texture, x: f32, y: f32, width: f32, height: f32, source_x: f32, source_y: f32, source_width: f32, source_height: f32) {
+    fn image_ext(
+        &mut self,
+        img: &Self::Texture,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        source_x: f32,
+        source_y: f32,
+        source_width: f32,
+        source_height: f32,
+    ) {
         unimplemented!()
     }
 
-    fn pattern(&mut self, img: &Self::Texture, x: f32, y: f32, width: f32, height: f32, offset_x: f32, offset_y: f32) {
+    fn pattern(
+        &mut self,
+        img: &Self::Texture,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        offset_x: f32,
+        offset_y: f32,
+    ) {
         unimplemented!()
     }
 
-    fn pattern_ext(&mut self, img: &Self::Texture, x: f32, y: f32, width: f32, height: f32, offset_x: f32, offset_y: f32, scale_x: f32, scale_y: f32) {
+    fn pattern_ext(
+        &mut self,
+        img: &Self::Texture,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        offset_x: f32,
+        offset_y: f32,
+        scale_x: f32,
+        scale_y: f32,
+    ) {
         unimplemented!()
     }
 
@@ -167,7 +235,18 @@ impl BaseContext2d for Context2d {
         unimplemented!()
     }
 
-    fn image_9slice_ext(&mut self, img: &Self::Texture, x: f32, y: f32, width: f32, height: f32, left: f32, right: f32, top: f32, bottom: f32) {
+    fn image_9slice_ext(
+        &mut self,
+        img: &Self::Texture,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        left: f32,
+        right: f32,
+        top: f32,
+        bottom: f32,
+    ) {
         unimplemented!()
     }
 }
