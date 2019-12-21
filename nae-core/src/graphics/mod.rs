@@ -43,9 +43,18 @@ where
         attributes: Vec<Self::Attr>,
     ) -> Result<Self, String>;
     fn buffer(&self, name: &str) -> Option<Self::Buffer>;
-    fn from_image_fragment<T: BaseApp<Graphics = Self::Graphics>>(app: &mut T, fragment: &str) -> Result<Self, String>;
-    fn from_text_fragment<T: BaseApp<Graphics = Self::Graphics>>(app: &mut T, fragment: &str) -> Result<Self, String>;
-    fn from_color_fragment<T: BaseApp<Graphics = Self::Graphics>>(app: &mut T, fragment: &str) -> Result<Self, String>;
+    fn from_image_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+        app: &mut T,
+        fragment: &str,
+    ) -> Result<Self, String>;
+    fn from_text_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+        app: &mut T,
+        fragment: &str,
+    ) -> Result<Self, String>;
+    fn from_color_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+        app: &mut T,
+        fragment: &str,
+    ) -> Result<Self, String>;
     fn is_equal(&self, shader: &Self::Kind) -> bool;
 
     //TODO find a way to include this in this trait keeping flexible to do something like fn<T: UniformTrait>(name: &str, value: T); where UniformTrait is defined on the impl not here...
