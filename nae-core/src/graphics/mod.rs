@@ -60,7 +60,7 @@ pub trait BaseContext2d {
     type Texture:BaseTexture;
     type Font:BaseFont;
 
-    fn set_shader<>(&mut self, shader: Option<&Self::Shader>);
+    fn set_shader(&mut self, shader: Option<&Self::Shader>);
     fn update_custom_shader(&mut self, shader: Option<&Self::Shader>);
     fn set_alpha(&mut self, alpha: f32);
     fn set_blend(&mut self, mode: BlendMode);

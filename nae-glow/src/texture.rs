@@ -17,8 +17,6 @@ impl Texture {
 }
 
 impl BaseTexture for Texture {
-    type Context2d = Context2d;
-
     fn width(&self) -> f32 {
         self.inner.borrow().width as _
     }
@@ -39,10 +37,10 @@ impl BaseTexture for Texture {
             width,
             height,
             &vec![0; (width * height) as usize * bpp],
-            internal_format.into(),
-            format.into(),
-            min_filter.into(),
-            mag_filter.into(),
+            internal_format.glow_value() as _,
+            format.glow_value() as _,
+            min_filter.glow_value() as _,
+            mag_filter.glow_value() as _,
             bpp,
         )?;
         inner.gl = Some(app.graphics().gl.clone());
@@ -58,18 +56,40 @@ impl BaseTexture for Texture {
 }
 
 impl Resource for Texture {
-    fn parse<T: BaseApp>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String> {
-        unimplemented!()
+    type Context2d = Context2d;
+
+    fn parse<T: BaseApp<Graphics = Self::Context2d>>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String> {
+        let data = image::load_from_memory(&data)
+            .map_err(|e| e.to_string())?
+            .to_rgba();
+
+        let width = data.width() as _;
+        let height = data.height() as _;
+        let raw = data.to_vec();
+        let gl = app.graphics().gl.clone();
+        let tex = create_gl_tex_ext(&gl, width, height, &raw, TextureFormat::Rgba.glow_value() as _, TextureFormat::Rgba.glow_value() as _, TextureFilter::Nearest.glow_value() as _, TextureFilter::Nearest.glow_value() as _, byte_per_pixel(TextureFormat::Rgba, TextureFormat::Rgba))?;
+
+        *self.inner.borrow_mut() = InnerTexture {
+            width,
+            height,
+            raw,
+            gl: Some(gl),
+            tex: Some(tex),
+            format: TextureFormat::Rgba,
+        };
+        Ok(())
     }
 
     fn is_loaded(&self) -> bool {
-        unimplemented!()
+        self.inner.borrow().tex.is_some()
     }
 }
 
 impl ResourceConstructor for Texture {
     fn new(file: &str) -> Self {
-        unimplemented!()
+        Self {
+            inner: Rc::new(RefCell::new(InnerTexture::empty(1, 1))),
+        }
     }
 }
 
@@ -165,27 +185,24 @@ fn create_gl_tex_ext(
     }
 }
 
-impl From<TextureFilter> for u32 {
-    fn from(f: TextureFilter) -> Self {
+trait GlowValue {
+    fn glow_value(&self) -> u32;
+}
+
+impl GlowValue for TextureFilter {
+    fn glow_value(&self) -> u32 {
         use TextureFilter::*;
-        match f {
+        match self {
             Linear => glow::LINEAR,
             Nearest => glow::NEAREST,
         }
     }
 }
 
-impl From<TextureFilter> for i32 {
-    fn from(f: TextureFilter) -> Self {
-        let f: u32 = f.into();
-        f as _
-    }
-}
-
-impl From<TextureFormat> for u32 {
-    fn from(f: TextureFormat) -> Self {
+impl GlowValue for TextureFormat {
+    fn glow_value(&self) -> u32 {
         use TextureFormat::*;
-        match f {
+        match self {
             Rgba => glow::RGBA,
             Red => glow::RED,
             R8 => glow::R8,
@@ -193,9 +210,3 @@ impl From<TextureFormat> for u32 {
     }
 }
 
-impl From<TextureFormat> for i32 {
-    fn from(f: TextureFormat) -> Self {
-        let f: u32 = f.into();
-        f as _
-    }
-}
