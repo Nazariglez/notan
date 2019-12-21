@@ -4,7 +4,19 @@ use crate::shader::Shader;
 use crate::texture::Texture;
 use crate::{GlContext, Surface};
 use nae_core::graphics::{BaseContext2d, BlendMode, Color, Geometry, Transform2d, Vertex};
+use nae_core::math::*;
 use nae_core::resources::{BaseFont, HorizontalAlign, VerticalAlign};
+
+pub(crate) struct DrawData {
+    pub alpha: f32,
+    pub color: Color,
+    pub shader: Option<Shader>,
+    pub transform: Transform2d,
+    pub width: i32,
+    pub height: i32,
+    pub flipped: bool,
+    pub projection: Mat3,
+}
 
 pub struct Context2d {
     pub(crate) gl: GlContext,

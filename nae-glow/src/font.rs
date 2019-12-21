@@ -159,18 +159,23 @@ pub(crate) struct FontManager<'a> {
 impl<'a> FontManager<'a> {
     const DEFAULT_DATA: &'a [u8] = include_bytes!("../resources/ubuntu/Ubuntu-B.ttf");
 
-    pub fn new<T>(app: &mut T) -> Result<Self, String>
-    where
-        T: BaseApp<Graphics = Context2d>,
-    {
+    pub fn new(gl: &GlContext) -> Result<Self, String> {
         let cache = GlyphBrushBuilder::using_font_bytes(FontManager::DEFAULT_DATA).build();
         let (width, height) = cache.texture_dimensions();
-        let texture = <Texture as BaseTexture>::from_size(app, width as _, height as _)?;
+        let texture = texture_from_gl_context(
+            gl,
+            width as _,
+            height as _,
+            TextureFormat::Rgba,
+            TextureFormat::Rgba,
+            TextureFilter::Nearest,
+            TextureFilter::Nearest,
+        )?;
         Ok(Self {
             cache,
             texture,
             data: vec![],
-            max_texture_size: max_texture_size(&app.graphics().gl),
+            max_texture_size: max_texture_size(gl),
             width: width,
             height: height,
         })
