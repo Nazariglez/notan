@@ -67,6 +67,8 @@ pub type GlContext = Rc<glow::Context>;
 enum Driver {
     WebGL,
     WebGL2,
+    //    WebGPU,
+    //    Custom(String),
     //    OpenGL,
     //    OpenGLES,
     //    Metal,

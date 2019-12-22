@@ -7,7 +7,7 @@ mod transform;
 use crate::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
 pub use blend::*;
 pub use color::Color;
-pub use geometry::Geometry;
+pub use geometry::*;
 pub use transform::Transform2d;
 
 pub trait BaseSurface
@@ -62,8 +62,8 @@ where
 }
 
 pub struct Vertex {
-    pos: (f32, f32),
-    color: Color,
+    pub pos: (f32, f32),
+    pub color: Color,
 }
 
 impl Vertex {

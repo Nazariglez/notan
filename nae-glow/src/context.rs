@@ -5,15 +5,28 @@ use crate::texture::Texture;
 use crate::{GlContext, GlowValue, Surface};
 use glow::HasContext;
 use glyph_brush::BrushAction::Draw;
+use lyon::lyon_tessellation as tess;
 use nae_core::graphics::{
-    BaseContext2d, BaseShader, BlendFactor, BlendMode, Color, Geometry, Transform2d, Vertex,
+    lyon_vbuff_to_vertex, BaseContext2d, BaseShader, BaseSurface, BlendFactor, BlendMode, Color,
+    Geometry, LyonVertex, Transform2d, Vertex,
 };
 use nae_core::math::*;
-use nae_core::resources::{BaseFont, HorizontalAlign, VerticalAlign};
+use nae_core::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
 use std::rc::Rc;
+use tess::basic_shapes::stroke_triangle;
+use tess::{BuffersBuilder, VertexBuffers};
 
+use lyon::lyon_tessellation::basic_shapes::{
+    fill_rounded_rectangle, stroke_circle, stroke_rectangle, stroke_rounded_rectangle, BorderRadii,
+};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
+
+#[cfg(target_arch = "wasm32")]
+type Device = web_sys::HtmlCanvasElement;
+
+#[cfg(not(target_arch = "wasm32"))]
+type Device = ();
 
 pub struct Context2d {
     pub(crate) gl: GlContext,
@@ -30,11 +43,60 @@ pub struct Context2d {
     height: i32,
 }
 
-#[cfg(target_arch = "wasm32")]
-type Device = web_sys::HtmlCanvasElement;
+impl Context2d {
+    fn flush_text(&mut self) {
+        self.text_batcher.flush(&self.gl, &self.data);
+    }
 
-#[cfg(not(target_arch = "wasm32"))]
-type Device = ();
+    fn flush_color(&mut self) {
+        self.color_batcher.flush(&self.gl, &self.data);
+    }
+
+    fn flush_sprite(&mut self) {
+        self.sprite_batcher.flush(&self.gl, &self.data);
+    }
+
+    fn set_paint_mode(&mut self, mode: PaintMode) {
+        if mode == self.paint_mode {
+            return;
+        }
+        self.paint_mode = mode;
+        match &self.paint_mode {
+            PaintMode::Color => {
+                self.flush_sprite();
+                self.flush_text();
+            }
+            PaintMode::Image => {
+                self.flush_color();
+                self.flush_text();
+            }
+            PaintMode::Text => {
+                self.flush_color();
+                self.flush_sprite();
+            }
+            _ => {}
+        }
+    }
+
+    fn draw_color(&mut self, vertex: &[f32], color: Option<&[Color]>) {
+        self.set_paint_mode(PaintMode::Color);
+        let color_vertex = match color {
+            Some(c) => c.iter().fold(vec![], |mut acc, v| {
+                acc.extend_from_slice(&v.to_rgba());
+                acc
+            }),
+            _ => vec![],
+        };
+
+        let color = if color.is_some() {
+            Some(color_vertex.as_slice())
+        } else {
+            None
+        };
+
+        self.color_batcher.draw(&self.gl, &self.data, vertex, color)
+    }
+}
 
 impl BaseContext2d for Context2d {
     type Device = Device;
@@ -118,47 +180,125 @@ impl BaseContext2d for Context2d {
     }
 
     fn begin_to_surface(&mut self, surface: Option<&Surface>) {
-        unimplemented!()
+        if self.is_drawing {
+            return;
+        }
+        self.is_drawing = true;
+
+        let (fbo, ww, hh) = if let Some(rt) = surface {
+            self.is_drawing_surface = true;
+            (Some(rt.fbo), rt.width() as _, rt.height() as _)
+        } else {
+            (None, self.width(), self.height())
+        };
+
+        self.data.set_size(ww, hh, self.is_drawing_surface);
+        unsafe {
+            self.gl.bind_framebuffer(glow::FRAMEBUFFER, fbo);
+
+            if fbo.is_some() {
+                self.gl.draw_buffer(glow::COLOR_ATTACHMENT0);
+            }
+
+            self.gl.viewport(0, 0, ww, hh);
+        }
+
+        self.color_batcher.reset();
+        self.text_batcher.reset();
+        self.sprite_batcher.reset();
     }
 
     fn begin(&mut self) {
-        unimplemented!()
+        self.begin_to_surface(None);
     }
 
     fn end(&mut self) {
-        unimplemented!()
+        if !self.is_drawing {
+            return;
+        }
+        self.is_drawing = false;
+        self.clear_mask(); //this is already doing flush
+
+        self.data
+            .set_size(self.width, self.height, self.is_drawing_surface);
+        self.is_drawing_surface = false;
+
+        unsafe {
+            self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+            self.gl.bind_texture(glow::TEXTURE_2D, None);
+            self.gl.viewport(0, 0, self.width(), self.height());
+        }
     }
 
     fn clear(&mut self, color: Color) {
-        unimplemented!()
+        let [r, g, b, a] = color.to_rgba();
+        unsafe {
+            self.gl.clear_color(r, g, b, a);
+            let mut flags = glow::COLOR_BUFFER_BIT;
+            if self.stencil {
+                flags |= glow::STENCIL_BUFFER_BIT;
+            }
+
+            self.gl.clear(flags);
+        }
     }
 
     fn begin_mask(&mut self) {
-        unimplemented!()
+        self.flush();
+        unsafe {
+            self.stencil = true;
+            self.gl.enable(glow::STENCIL_TEST);
+            self.gl.stencil_op(glow::KEEP, glow::KEEP, glow::REPLACE);
+            self.gl.stencil_func(glow::ALWAYS, 1, 0xff);
+            self.gl.stencil_mask(0xff);
+            self.gl.depth_mask(false);
+            self.gl.color_mask(false, false, false, false);
+        }
     }
 
     fn end_mask(&mut self) {
-        unimplemented!()
+        self.flush();
+        unsafe {
+            self.gl.stencil_func(glow::EQUAL, 1, 0xff);
+            self.gl.stencil_mask(0x00);
+            self.gl.depth_mask(true);
+            self.gl.color_mask(true, true, true, true);
+        }
     }
 
     fn clear_mask(&mut self) {
-        unimplemented!()
+        self.flush();
+        unsafe {
+            self.gl.flush();
+            self.stencil = false;
+            self.gl.disable(glow::STENCIL_TEST);
+        }
     }
 
     fn flush(&mut self) {
-        unimplemented!()
+        self.flush_color();
+        self.flush_sprite();
+        self.flush_text();
     }
 
     fn set_font(&mut self, font: &Self::Font) {
-        unimplemented!()
+        self.text_batcher.set_font(font);
     }
 
     fn font(&self) -> &Self::Font {
-        unimplemented!()
+        &self.text_batcher.font
     }
 
     fn text(&mut self, text: &str, x: f32, y: f32, size: f32) {
-        unimplemented!()
+        self.text_ext(
+            text,
+            x,
+            y,
+            size,
+            HorizontalAlign::Left,
+            VerticalAlign::Top,
+            None,
+        );
     }
 
     fn text_ext(
@@ -171,11 +311,14 @@ impl BaseContext2d for Context2d {
         v_align: VerticalAlign,
         max_width: Option<f32>,
     ) {
-        unimplemented!()
+        self.set_paint_mode(PaintMode::Text);
+        self.text_batcher.draw_text(
+            &self.gl, &self.data, text, x, y, size, h_align, v_align, max_width,
+        );
     }
 
     fn triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
-        unimplemented!()
+        self.draw_color(&[x1, y1, x2, y2, x3, y3], None);
     }
 
     fn stroke_triangle(
@@ -188,27 +331,89 @@ impl BaseContext2d for Context2d {
         y3: f32,
         line_width: f32,
     ) {
-        unimplemented!()
+        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        let mut opts = tess::StrokeOptions::tolerance(0.01);
+        opts = opts.with_line_width(line_width);
+        stroke_triangle(
+            tess::math::point(x1, y1),
+            tess::math::point(x2, y2),
+            tess::math::point(x3, y3),
+            &mut opts,
+            &mut BuffersBuilder::new(&mut output, LyonVertex),
+        )
+        .unwrap();
+
+        self.draw_color(&lyon_vbuff_to_vertex(output), None)
     }
 
     fn rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
-        unimplemented!()
+        let x2 = x + width;
+        let y2 = y + height;
+        let vertices = [x, y, x2, y, x, y2, x, y2, x2, y, x2, y2];
+
+        self.draw_color(&vertices, None);
     }
 
     fn stroke_rect(&mut self, x: f32, y: f32, width: f32, height: f32, line_width: f32) {
-        unimplemented!()
+        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        let mut opts = tess::StrokeOptions::tolerance(0.01);
+        opts = opts.with_line_width(line_width);
+        stroke_rectangle(
+            &tess::math::rect(x, y, width, height),
+            &mut opts,
+            &mut BuffersBuilder::new(&mut output, LyonVertex),
+        )
+        .unwrap();
+
+        self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
     fn line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, strength: f32) {
-        unimplemented!()
+        let (mut xx, mut yy) = if eq_float(y1, y2) {
+            (0.0, -1.0)
+        } else {
+            (1.0, -(x2 - x1) / (y2 - y1))
+        };
+
+        let len = (xx * xx + yy * yy).sqrt();
+        if len != 0.0 {
+            //TODO use epsilon to check this floats?
+            let mul = strength / len;
+            xx *= mul;
+            yy *= mul;
+        }
+
+        let px1 = x1 + 0.5 * xx;
+        let py1 = y1 + 0.5 * yy;
+        let px2 = x2 + 0.5 * xx;
+        let py2 = y2 + 0.5 * yy;
+        let px3 = px1 - xx;
+        let py3 = py1 - yy;
+        let px4 = px2 - xx;
+        let py4 = py2 - yy;
+
+        self.draw_color(
+            &[px1, py1, px2, py2, px3, py3, px3, py3, px2, py2, px4, py4],
+            None,
+        );
     }
 
     fn circle(&mut self, x: f32, y: f32, radius: f32) {
-        unimplemented!()
+        self.draw_color(&get_circle_vertices(x, y, radius, None), None);
     }
 
     fn rounded_rect(&mut self, x: f32, y: f32, width: f32, height: f32, radius: f32) {
-        unimplemented!()
+        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        let opts = tess::FillOptions::tolerance(0.01);
+        fill_rounded_rectangle(
+            &tess::math::rect(x, y, width, height),
+            &BorderRadii::new(radius, radius, radius, radius),
+            &opts,
+            &mut BuffersBuilder::new(&mut output, LyonVertex),
+        )
+        .unwrap();
+
+        self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
     fn stroke_rounded_rect(
@@ -220,19 +425,43 @@ impl BaseContext2d for Context2d {
         radius: f32,
         line_width: f32,
     ) {
-        unimplemented!()
+        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        let mut opts = tess::StrokeOptions::tolerance(0.01);
+        opts = opts.with_line_width(line_width);
+        stroke_rounded_rectangle(
+            &tess::math::rect(x, y, width, height),
+            &BorderRadii::new(radius, radius, radius, radius),
+            &opts,
+            &mut BuffersBuilder::new(&mut output, LyonVertex),
+        )
+        .unwrap();
+
+        self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
     fn stroke_circle(&mut self, x: f32, y: f32, radius: f32, line_width: f32) {
-        unimplemented!()
+        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        let mut opts = tess::StrokeOptions::tolerance(0.01);
+        opts = opts.with_line_width(line_width);
+        stroke_circle(
+            tess::math::point(x, y),
+            radius,
+            &mut opts,
+            &mut BuffersBuilder::new(&mut output, LyonVertex),
+        )
+        .unwrap();
+        self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
     fn geometry(&mut self, geometry: &mut Geometry) {
-        unimplemented!()
+        geometry.build();
+        if let Some((v, vc)) = &geometry.vertices {
+            self.draw_color(v, Some(vc));
+        }
     }
 
     fn image(&mut self, img: &Self::Texture, x: f32, y: f32) {
-        unimplemented!()
+        self.image_ext(img, x, y, img.width(), img.height(), 0.0, 0.0, 0.0, 0.0);
     }
 
     fn image_crop(
@@ -245,7 +474,17 @@ impl BaseContext2d for Context2d {
         source_width: f32,
         source_height: f32,
     ) {
-        unimplemented!()
+        self.image_ext(
+            img,
+            x,
+            y,
+            source_width,
+            source_height,
+            source_x,
+            source_y,
+            source_width,
+            source_height,
+        );
     }
 
     fn image_ext(
@@ -260,7 +499,21 @@ impl BaseContext2d for Context2d {
         source_width: f32,
         source_height: f32,
     ) {
-        unimplemented!()
+        self.set_paint_mode(PaintMode::Image);
+        self.sprite_batcher.draw_image(
+            &self.gl,
+            &self.data,
+            x,
+            y,
+            width,
+            height,
+            img,
+            source_x,
+            source_y,
+            source_width,
+            source_height,
+            None,
+        );
     }
 
     fn pattern(
@@ -273,7 +526,7 @@ impl BaseContext2d for Context2d {
         offset_x: f32,
         offset_y: f32,
     ) {
-        unimplemented!()
+        self.pattern_ext(img, x, y, width, height, offset_x, offset_y, 1.0, 1.0);
     }
 
     fn pattern_ext(
@@ -288,15 +541,31 @@ impl BaseContext2d for Context2d {
         scale_x: f32,
         scale_y: f32,
     ) {
-        unimplemented!()
+        self.set_paint_mode(PaintMode::Image);
+        self.sprite_batcher.draw_pattern(
+            &self.gl, &self.data, x, y, img, width, height, offset_x, offset_y, scale_x, scale_y,
+            None,
+        );
     }
 
     fn vertex(&mut self, vertices: &[Vertex]) {
-        unimplemented!()
+        let (vert, color_vert) =
+            vertices
+                .iter()
+                .fold((vec![], vec![]), |(mut v_acc, mut vc_acc), v| {
+                    v_acc.push(v.pos.0);
+                    v_acc.push(v.pos.1);
+                    vc_acc.push(v.color);
+                    (v_acc, vc_acc)
+                });
+
+        self.draw_color(&vert, Some(&color_vert));
     }
 
     fn image_9slice(&mut self, img: &Self::Texture, x: f32, y: f32, width: f32, height: f32) {
-        unimplemented!()
+        let ww = img.width() / 3.0;
+        let hh = img.height() / 3.0;
+        self.image_9slice_ext(img, x, y, width, height, ww, ww, hh, hh);
     }
 
     fn image_9slice_ext(
@@ -311,7 +580,76 @@ impl BaseContext2d for Context2d {
         top: f32,
         bottom: f32,
     ) {
-        unimplemented!()
+        let center_sw = img.width() - (left + right);
+        let center_sh = img.height() - (top + bottom);
+        let center_w = width - (left + right);
+        let center_h = height - (top + bottom);
+
+        self.image_crop(img, x, y, 0.0, 0.0, left, top);
+        self.image_ext(img, x + left, y, center_w, top, left, 0.0, center_sw, top);
+        self.image_crop(
+            img,
+            x + left + center_w,
+            y,
+            left + center_sw,
+            0.0,
+            right,
+            top,
+        );
+
+        self.image_ext(img, x, y + top, left, center_h, 0.0, top, left, center_sh);
+        self.image_ext(
+            img,
+            x + left,
+            y + top,
+            center_w,
+            center_h,
+            left,
+            top,
+            center_sw,
+            center_sh,
+        );
+        self.image_ext(
+            img,
+            x + left + center_w,
+            y + top,
+            right,
+            center_h,
+            left + center_sw,
+            top,
+            right,
+            center_sh,
+        );
+
+        self.image_crop(
+            img,
+            x,
+            y + top + center_h,
+            0.0,
+            top + center_sh,
+            left,
+            bottom,
+        );
+        self.image_ext(
+            img,
+            x + left,
+            y + top + center_h,
+            center_w,
+            bottom,
+            left,
+            top + center_sh,
+            center_sw,
+            bottom,
+        );
+        self.image_crop(
+            img,
+            x + left + center_w,
+            y + top + center_h,
+            left + center_sw,
+            top + center_sh,
+            right,
+            bottom,
+        );
     }
 }
 
@@ -483,4 +821,35 @@ impl GlowValue for BlendFactor {
             InverseDestinationAlpha => glow::ONE_MINUS_DST_ALPHA,
         }
     }
+}
+
+fn get_circle_vertices(x: f32, y: f32, radius: f32, segments: Option<i32>) -> Vec<f32> {
+    let segments = if let Some(s) = segments {
+        s
+    } else {
+        (10.0 * radius.sqrt()).floor() as i32
+    };
+    let theta = 2.0 * PI / segments as f32;
+    let cos = theta.cos();
+    let sin = theta.sin();
+    let mut xx = radius;
+    let mut yy = 0.0;
+
+    let mut vertices = vec![];
+    for _i in 0..segments {
+        let x1 = xx + x;
+        let y1 = yy + y;
+        let last_x = xx;
+        xx = cos * xx - sin * yy;
+        yy = cos * yy + sin * last_x;
+        vertices.push(x1);
+        vertices.push(y1);
+        vertices.push(xx + x);
+        vertices.push(yy + y);
+        vertices.push(x);
+        vertices.push(y);
+        //        vertices.append(&mut vec![x1, y1, xx+x, yy+y, x, y]);
+    }
+
+    vertices
 }

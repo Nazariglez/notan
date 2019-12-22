@@ -14,7 +14,7 @@ use tess::{
 
 // The vertex constructor. This is the object that will be used to create the custom
 // verticex from the information provided by the tessellators.
-pub(crate) struct LyonVertex;
+pub struct LyonVertex;
 impl tess::VertexConstructor<tess::StrokeVertex, (f32, f32)> for LyonVertex {
     fn new_vertex(&mut self, vertex: tess::StrokeVertex) -> (f32, f32) {
         (vertex.position.x, vertex.position.y)
@@ -27,7 +27,7 @@ impl tess::VertexConstructor<tess::FillVertex, (f32, f32)> for LyonVertex {
     }
 }
 
-pub(crate) fn lyon_vbuff_to_vertex(buff: VertexBuffers<(f32, f32), u16>) -> Vec<f32> {
+pub fn lyon_vbuff_to_vertex(buff: VertexBuffers<(f32, f32), u16>) -> Vec<f32> {
     //TODO use rayon par_iter when it's not wasm32
     buff.indices.iter().fold(vec![], |mut acc, v| {
         let v = *v as usize;
@@ -77,7 +77,7 @@ enum GeomMode {
 }
 
 pub struct Geometry {
-    pub(crate) vertices: Option<(Vec<f32>, Vec<Color>)>,
+    pub vertices: Option<(Vec<f32>, Vec<Color>)>,
     current_path: Option<Builder>,
     mode: Vec<GeomMode>,
     stack: Vec<GeomTypes>,
