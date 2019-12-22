@@ -26,6 +26,7 @@ type UniformLocationKey = glow::WebUniformLocationKey;
 #[cfg(not(target_arch = "wasm32"))]
 type UniformLocationKey = <glow::Context as HasContext>::UniformLocation;
 
+#[derive(Clone)]
 pub struct Shader {
     inner: Rc<InnerShader>,
 }

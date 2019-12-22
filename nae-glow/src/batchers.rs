@@ -22,6 +22,22 @@ type VaoKey = glow::WebVertexArrayKey;
 #[cfg(not(target_arch = "wasm32"))]
 type VaoKey = <glow::Context as HasContext>::VertexArray;
 
+pub(crate) struct ColorBatcher {}
+
+impl ColorBatcher {
+    pub fn new(gl: &GlContext) -> Result<Self, String> {
+        unimplemented!()
+    }
+}
+
+pub(crate) struct SpriteBatcher {}
+
+impl SpriteBatcher {
+    pub fn new(gl: &GlContext) -> Result<Self, String> {
+        unimplemented!()
+    }
+}
+
 pub(crate) struct TextBatcher {
     pub font: Font,
     pub manager: FontManager<'static>,
@@ -38,7 +54,7 @@ pub(crate) struct TextBatcher {
 }
 
 impl TextBatcher {
-    pub fn new(gl: &GlContext, _data: &DrawData) -> Result<Self, String> {
+    pub fn new(gl: &GlContext) -> Result<Self, String> {
         let vao = create_vao(gl)?;
         let shader = text_shader_from_gl_context(gl, None)?;
         let font = Font::default();

@@ -5,7 +5,7 @@ mod geometry;
 mod transform;
 
 use crate::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
-pub use blend::BlendMode;
+pub use blend::*;
 pub use color::Color;
 pub use geometry::Geometry;
 pub use transform::Transform2d;
@@ -72,12 +72,17 @@ impl Vertex {
     }
 }
 
-pub trait BaseContext2d {
+pub trait BaseContext2d
+where
+    Self: Sized,
+{
+    type Device;
     type Shader: BaseShader;
     type Surface: BaseSurface;
     type Texture: BaseTexture;
     type Font: BaseFont;
 
+    fn new(device: &Self::Device) -> Result<Self, String>;
     fn set_shader(&mut self, shader: Option<&Self::Shader>);
     fn update_custom_shader(&mut self, shader: Option<&Self::Shader>);
     fn set_alpha(&mut self, alpha: f32);
