@@ -7,7 +7,12 @@ mod texture;
 
 use glow::{Context, HasContext};
 use std::rc::Rc;
+
+pub use context::*;
+pub use font::*;
+pub use shader::*;
 pub use surface::*;
+pub use texture::*;
 
 pub(crate) type GlContext = Rc<Context>;
 
