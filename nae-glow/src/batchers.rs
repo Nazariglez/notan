@@ -28,12 +28,71 @@ impl ColorBatcher {
     pub fn new(gl: &GlContext) -> Result<Self, String> {
         unimplemented!()
     }
+
+    pub fn flush(&mut self, gl: &GlContext, data: &DrawData) {
+        unimplemented!()
+    }
+
+    pub fn reset(&mut self) {
+        unimplemented!()
+    }
+
+    pub fn draw(&mut self, gl: &GlContext, data: &DrawData, vertex: &[f32], color: Option<&[f32]>) {
+        unimplemented!()
+    }
 }
 
 pub(crate) struct SpriteBatcher {}
 
 impl SpriteBatcher {
     pub fn new(gl: &GlContext) -> Result<Self, String> {
+        unimplemented!()
+    }
+
+    pub fn flush(&mut self, gl: &GlContext, data: &DrawData) {
+        unimplemented!()
+    }
+
+    pub fn reset(&mut self) {
+        unimplemented!()
+    }
+
+    pub fn draw(&mut self, gl: &GlContext, data: &DrawData, vertex: &[f32], color: Option<&[f32]>) {
+        unimplemented!()
+    }
+    pub fn draw_image(
+        &mut self,
+        gl: &GlContext,
+        data: &DrawData,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        img: &Texture,
+        source_x: f32,
+        source_y: f32,
+        source_width: f32,
+        source_height: f32,
+        color: Option<&[f32]>,
+    ) {
+        unimplemented!()
+    }
+
+    pub fn draw_pattern(
+        &mut self,
+        gl: &GlContext,
+        data: &DrawData,
+        x: f32,
+        y: f32,
+        img: &Texture,
+        width: f32,
+        height: f32,
+        offset_x: f32,
+        offset_y: f32,
+        scale_x: f32,
+        scale_y: f32,
+        color: Option<&[f32]>,
+    ) {
         unimplemented!()
     }
 }
