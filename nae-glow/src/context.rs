@@ -14,11 +14,10 @@ use nae_core::math::*;
 use nae_core::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
 use std::rc::Rc;
 use tess::basic_shapes::stroke_triangle;
-use tess::{BuffersBuilder, VertexBuffers};
-
-use lyon::lyon_tessellation::basic_shapes::{
+use tess::basic_shapes::{
     fill_rounded_rectangle, stroke_circle, stroke_rectangle, stroke_rounded_rectangle, BorderRadii,
 };
+use tess::{BuffersBuilder, VertexBuffers};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 

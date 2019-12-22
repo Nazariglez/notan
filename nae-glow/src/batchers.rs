@@ -1,6 +1,9 @@
 use crate::context::DrawData;
 use crate::font::{Font, FontManager, FontTextureData};
-use crate::shader::{text_shader_from_gl_context, Shader};
+use crate::shader::{
+    color_shader_from_gl_context, sprite_shader_from_gl_context, text_shader_from_gl_context,
+    Shader,
+};
 use crate::texture::{texture_from_gl_context, Texture};
 use crate::{BufferKey, GlContext, TextureKey};
 use glow::HasContext;
@@ -22,44 +25,204 @@ type VaoKey = glow::WebVertexArrayKey;
 #[cfg(not(target_arch = "wasm32"))]
 type VaoKey = <glow::Context as HasContext>::VertexArray;
 
-pub(crate) struct ColorBatcher {}
+pub(crate) struct ColorBatcher {
+    shader: Shader,
+    vao: VaoKey,
+    index: i32,
+    vertex: Vec<f32>,
+    vertex_color: Vec<f32>,
+}
 
 impl ColorBatcher {
     pub fn new(gl: &GlContext) -> Result<Self, String> {
-        unimplemented!()
+        let vao = create_vao(gl)?;
+        let shader = color_shader_from_gl_context(gl, None)?;
+        Ok(Self {
+            shader,
+            vao,
+            index: 0,
+            vertex: vec![0.0; MAX_PER_BATCH * VERTICES * VERTICE_SIZE],
+            vertex_color: vec![0.0; MAX_PER_BATCH * VERTICES * COLOR_VERTICE_SIZE],
+        })
     }
 
     pub fn flush(&mut self, gl: &GlContext, data: &DrawData) {
-        unimplemented!()
+        if self.index == 0 {
+            return;
+        }
+
+        self.use_shader(data);
+        unsafe {
+            gl.bind_vertex_array(Some(self.vao));
+            self.bind_buffer(gl, "a_position", &self.vertex, 0);
+            self.bind_buffer(gl, "a_color", &self.vertex_color, 0);
+
+            let primitives = glow::TRIANGLES;
+            let offset = 0;
+            let count = self.index * VERTICES as i32;
+            gl.draw_arrays(primitives, offset, count);
+        }
+
+        self.index = 0;
     }
 
     pub fn reset(&mut self) {
-        unimplemented!()
+        self.index = 0;
     }
 
     pub fn draw(&mut self, gl: &GlContext, data: &DrawData, vertex: &[f32], color: Option<&[f32]>) {
-        unimplemented!()
+        let count = (vertex.len() / (VERTICES * VERTICE_SIZE)) as i32;
+        if count > MAX_PER_BATCH as i32 {
+            return self.split_draw(count, gl, data, vertex, color);
+        }
+
+        let next = self.index + count;
+        if next >= (MAX_PER_BATCH as i32) {
+            self.flush(gl, data);
+        }
+
+        let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
+        for (i, _) in vertex.iter().enumerate().step_by(2) {
+            if let (Some(v1), Some(v2)) = (vertex.get(i), vertex.get(i + 1)) {
+                let v = data.transform.matrix() * vec3(*v1, *v2, 1.0);
+                self.vertex[offset] = v.x;
+                self.vertex[offset + 1] = v.y;
+                offset += 2;
+            }
+        }
+
+        let color = match color {
+            Some(c) => c.to_vec(),
+            None => {
+                let color = data.color.to_rgba();
+                (0..VERTICES * count as usize).fold(vec![], |mut acc, _| {
+                    acc.extend_from_slice(&color);
+                    acc
+                })
+            }
+        };
+
+        let mut offset = self.index as usize * VERTICES * COLOR_VERTICE_SIZE;
+        color.iter().enumerate().for_each(|(i, c)| {
+            let is_alpha = (i + 1) % 4 == 0;
+            self.vertex_color[offset] = if is_alpha { *c * data.alpha } else { *c };
+            offset += 1;
+        });
+
+        self.index += count;
+    }
+
+    fn use_shader(&self, data: &DrawData) {
+        let shader = match &data.shader {
+            Some(s) => s,
+            _ => &self.shader,
+        };
+        shader.use_me();
+        shader.set_uniform("u_matrix", data.projection);
+    }
+
+    fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], offset: usize) {
+        bind_buffer(gl, self.shader.buffer(name), data, offset);
+    }
+
+    fn split_draw(
+        &mut self,
+        count: i32,
+        gl: &GlContext,
+        data: &DrawData,
+        vertex: &[f32],
+        color: Option<&[f32]>,
+    ) {
+        let max_per_batch = (MAX_PER_BATCH * (VERTICES * VERTICE_SIZE)) as i32;
+        let max_color_per_batch = (MAX_PER_BATCH * (VERTICES * COLOR_VERTICE_SIZE)) as i32;
+        let iterations = count / (MAX_PER_BATCH as i32);
+        let len = vertex.len();
+        for i in 0..iterations + 1 {
+            let start = (i * max_per_batch) as usize;
+            let end = ((start as i32 + max_per_batch) as usize).min(len - 1);
+            let color_vertex = if let Some(color) = color {
+                let len = color.len();
+                let start = (i * max_color_per_batch) as usize;
+                let end = ((start as i32 + max_color_per_batch) as usize).min(len - 1);
+                Some(&color[start..end])
+            } else {
+                None
+            };
+            self.draw(gl, data, &vertex[start..end], color_vertex);
+            self.flush(gl, data);
+        }
     }
 }
 
-pub(crate) struct SpriteBatcher {}
+pub(crate) struct SpriteBatcher {
+    shader: Shader,
+    vao: VaoKey,
+    index: i32,
+    vertex: Vec<f32>,
+    vertex_color: Vec<f32>,
+    vertex_tex: Vec<f32>,
+    current_tex: Option<TextureKey>,
+    texture_matrix: Mat3,
+}
 
 impl SpriteBatcher {
     pub fn new(gl: &GlContext) -> Result<Self, String> {
-        unimplemented!()
+        let vao = create_vao(gl)?;
+        let shader = sprite_shader_from_gl_context(gl, None)?;
+        Ok(Self {
+            shader,
+            vao,
+            index: 0,
+            vertex: vec![0.0; MAX_PER_BATCH * VERTICES * VERTICE_SIZE],
+            vertex_color: vec![0.0; MAX_PER_BATCH * VERTICES * COLOR_VERTICE_SIZE],
+            vertex_tex: vec![0.0; MAX_PER_BATCH * VERTICES * VERTICE_SIZE],
+            current_tex: None,
+            texture_matrix: Mat3::identity(),
+        })
+    }
+
+    fn use_shader(&self, data: &DrawData) -> Result<(), String> {
+        let shader = match &data.shader {
+            Some(s) => s,
+            _ => &self.shader,
+        };
+        shader.use_me();
+        shader.set_uniform("u_matrix", data.projection)?;
+        shader.set_uniform("u_tex_matrix", self.texture_matrix)?;
+        shader.set_uniform("u_texture", 0)?;
+        Ok(())
+    }
+
+    fn bind_buffer(&self, gl: &GlContext, name: &str, data: &[f32], offset: usize) {
+        bind_buffer(gl, self.shader.buffer(name), data, offset);
     }
 
     pub fn flush(&mut self, gl: &GlContext, data: &DrawData) {
-        unimplemented!()
+        if self.index == 0 {
+            return;
+        }
+
+        unsafe {
+            gl.bind_vertex_array(Some(self.vao));
+            self.use_shader(data);
+
+            gl.active_texture(glow::TEXTURE0);
+            gl.bind_texture(glow::TEXTURE_2D, self.current_tex);
+
+            self.bind_buffer(gl, "a_position", &self.vertex, 0);
+            self.bind_buffer(gl, "a_texcoord", &self.vertex_tex, 0);
+            self.bind_buffer(gl, "a_color", &self.vertex_color, 0);
+            let count = self.index * VERTICES as i32;
+            gl.draw_arrays(glow::TRIANGLES, 0, count);
+        }
+
+        self.index = 0
     }
 
     pub fn reset(&mut self) {
-        unimplemented!()
+        self.index = 0;
     }
 
-    pub fn draw(&mut self, gl: &GlContext, data: &DrawData, vertex: &[f32], color: Option<&[f32]>) {
-        unimplemented!()
-    }
     pub fn draw_image(
         &mut self,
         gl: &GlContext,
@@ -75,7 +238,108 @@ impl SpriteBatcher {
         source_height: f32,
         color: Option<&[f32]>,
     ) {
-        unimplemented!()
+        if !img.is_loaded() {
+            return;
+        }
+
+        let tex = img.tex().unwrap();
+
+        //        let tex = match img.tex() {
+        //            Some(t) => t,
+        //            _ => init_graphic_texture(gl, img).unwrap(),
+        //        };
+
+        let img_ww = img.width();
+        let img_hh = img.height();
+
+        let ww = if width == 0.0 { img_ww } else { width };
+        let hh = if height == 0.0 { img_hh } else { height };
+
+        let sw = if source_width == 0.0 {
+            img_ww
+        } else {
+            source_width
+        };
+        let sh = if source_height == 0.0 {
+            img_hh
+        } else {
+            source_height
+        };
+
+        let vertex = [
+            x,
+            y,
+            x,
+            y + hh,
+            x + ww,
+            y,
+            x + ww,
+            y,
+            x,
+            y + hh,
+            x + ww,
+            y + hh,
+        ];
+
+        if self.current_tex.is_none() {
+            self.current_tex = Some(tex);
+        }
+
+        if let Some(t) = self.current_tex {
+            if t != tex {
+                self.flush(gl, data);
+                self.current_tex = Some(tex);
+            }
+        }
+
+        let count = (vertex.len() / 6) as i32;
+        let next = self.index + count;
+
+        if next >= (MAX_PER_BATCH as i32) {
+            self.flush(gl, data);
+        }
+
+        let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
+        for (i, _) in vertex.iter().enumerate().step_by(2) {
+            if let (Some(v1), Some(v2)) = (vertex.get(i), vertex.get(i + 1)) {
+                let v = data.transform.matrix() * vec3(*v1, *v2, 1.0);
+                self.vertex[offset] = v.x;
+                self.vertex[offset + 1] = v.y;
+                offset += 2;
+            }
+        }
+
+        let x1 = source_x / img_ww;
+        let y1 = source_y / img_hh;
+        let x2 = (source_x + sw) / img_ww;
+        let y2 = (source_y + sh) / img_hh;
+
+        let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
+        let vertex_tex = [x1, y1, x1, y2, x2, y1, x2, y1, x1, y2, x2, y2];
+        vertex_tex.iter().for_each(|v| {
+            self.vertex_tex[offset] = *v;
+            offset += 1;
+        });
+
+        let color = match color {
+            Some(c) => c.to_vec(),
+            None => {
+                let color = data.color.to_rgba();
+                (0..VERTICES * count as usize).fold(vec![], |mut acc, _| {
+                    acc.extend_from_slice(&color);
+                    acc
+                })
+            }
+        };
+
+        let mut offset = self.index as usize * VERTICES * COLOR_VERTICE_SIZE;
+        color.iter().enumerate().for_each(|(i, c)| {
+            let is_alpha = (i + 1) % 4 == 0;
+            self.vertex_color[offset] = if is_alpha { *c * data.alpha } else { *c };
+            offset += 1;
+        });
+
+        self.index += count;
     }
 
     pub fn draw_pattern(
@@ -93,7 +357,108 @@ impl SpriteBatcher {
         scale_y: f32,
         color: Option<&[f32]>,
     ) {
-        unimplemented!()
+        if !img.is_loaded() {
+            return;
+        }
+
+        let tex = img.tex().unwrap();
+
+        //        let tex = match img.tex() {
+        //            Some(t) => t,
+        //            _ => init_graphic_texture(gl, img).unwrap(),
+        //        };
+
+        let offset_x = offset_x * scale_x;
+        let offset_y = offset_y * scale_y;
+
+        let ww = img.width() * scale_x;
+        let hh = img.height() * scale_y;
+        let quad_scale_x = width / ww;
+        let quad_scale_y = height / hh;
+
+        let sw = width;
+        let sh = height;
+
+        let vertex = [
+            x,
+            y,
+            x,
+            y + sh,
+            x + sw,
+            y,
+            x + sw,
+            y,
+            x,
+            y + sh,
+            x + sw,
+            y + sh,
+        ];
+
+        if self.current_tex.is_none() {
+            self.current_tex = Some(tex);
+        }
+
+        if let Some(t) = self.current_tex {
+            if t != tex {
+                self.flush(gl, data);
+            } else {
+                self.current_tex = Some(tex);
+            }
+        }
+
+        let count = (vertex.len() / 6) as i32;
+        let next = self.index + count;
+
+        if next >= (MAX_PER_BATCH as i32) {
+            self.flush(gl, data);
+        }
+
+        let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
+        for (i, _) in vertex.iter().enumerate().step_by(2) {
+            if let (Some(v1), Some(v2)) = (vertex.get(i), vertex.get(i + 1)) {
+                let v = data.transform.matrix() * vec3(*v1, *v2, 1.0);
+                self.vertex[offset] = v.x;
+                self.vertex[offset + 1] = v.y;
+                offset += 2;
+            }
+        }
+
+        let fract_x = quad_scale_x.fract();
+        let fract_y = quad_scale_y.fract();
+        let tex_offset_x = ((ww - offset_x) / ww).fract();
+        let tex_offset_y = ((hh - offset_y) / hh).fract();
+
+        let x1 = quad_scale_x.floor() + tex_offset_x;
+        let y1 = quad_scale_y.floor() + tex_offset_y;
+        let x2 = (width + sw) / ww - fract_x + tex_offset_x;
+        let y2 = (height + sh) / hh - fract_y + tex_offset_y;
+
+        let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
+        let vertex_tex = [x1, y1, x1, y2, x2, y1, x2, y1, x1, y2, x2, y2];
+        vertex_tex.iter().for_each(|v| {
+            self.vertex_tex[offset] = *v;
+            offset += 1;
+        });
+
+        let color = match color {
+            Some(c) => c.to_vec(),
+            None => {
+                let color = data.color.to_rgba();
+                (0..VERTICES * count as usize).fold(vec![], |mut acc, _| {
+                    acc.extend_from_slice(&color);
+                    acc
+                })
+            }
+        };
+
+        let mut offset = self.index as usize * VERTICES * COLOR_VERTICE_SIZE;
+        color.iter().enumerate().for_each(|(i, c)| {
+            let is_alpha = (i + 1) % 4 == 0;
+            self.vertex_color[offset] = if is_alpha { *c * data.alpha } else { *c };
+            offset += 1;
+        });
+
+        self.index += count;
     }
 }
 
