@@ -1,4 +1,4 @@
-use crate::BaseApp;
+use crate::BaseSystem;
 mod blend;
 mod color;
 mod geometry;
@@ -17,7 +17,7 @@ where
     type Texture: BaseTexture;
     type Context2d: BaseContext2d;
 
-    fn from_size<T: BaseApp<Graphics = Self::Context2d>>(
+    fn from_size<T: BaseSystem<Context2d = Self::Context2d>>(
         app: &mut T,
         width: i32,
         height: i32,
@@ -36,22 +36,22 @@ where
     type Attr;
     type Kind: BaseShader;
 
-    fn new<T: BaseApp<Graphics = Self::Graphics>>(
+    fn new<T: BaseSystem<Context2d = Self::Graphics>>(
         app: &mut T,
         vertex: &str,
         fragment: &str,
         attributes: Vec<Self::Attr>,
     ) -> Result<Self, String>;
     fn buffer(&self, name: &str) -> Option<Self::Buffer>;
-    fn from_image_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+    fn from_image_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
         app: &mut T,
         fragment: &str,
     ) -> Result<Self, String>;
-    fn from_text_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+    fn from_text_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
         app: &mut T,
         fragment: &str,
     ) -> Result<Self, String>;
-    fn from_color_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+    fn from_color_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
         app: &mut T,
         fragment: &str,
     ) -> Result<Self, String>;

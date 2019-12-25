@@ -4,7 +4,7 @@ use glow::HasContext;
 use hashbrown::HashMap;
 use nae_core::graphics::BaseShader;
 use nae_core::math::Mat3;
-use nae_core::BaseApp;
+use nae_core::BaseSystem;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -73,13 +73,13 @@ impl BaseShader for Shader {
     type Attr = Attr;
     type Kind = Self;
 
-    fn new<T: BaseApp<Graphics = Self::Graphics>>(
+    fn new<T: BaseSystem<Context2d = Self::Graphics>>(
         app: &mut T,
         vertex: &str,
         fragment: &str,
         attributes: Vec<Self::Attr>,
     ) -> Result<Self, String> {
-        shader_from_gl_context(&app.graphics().gl, vertex, fragment, attributes)
+        shader_from_gl_context(&app.ctx2().gl, vertex, fragment, attributes)
     }
 
     fn buffer(&self, name: &str) -> Option<Self::Buffer> {
@@ -90,25 +90,25 @@ impl BaseShader for Shader {
         None
     }
 
-    fn from_image_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+    fn from_image_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
         app: &mut T,
         fragment: &str,
     ) -> Result<Self, String> {
-        sprite_shader_from_gl_context(&app.graphics().gl, Some(fragment))
+        sprite_shader_from_gl_context(&app.ctx2().gl, Some(fragment))
     }
 
-    fn from_text_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+    fn from_text_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
         app: &mut T,
         fragment: &str,
     ) -> Result<Self, String> {
-        text_shader_from_gl_context(&app.graphics().gl, Some(fragment))
+        text_shader_from_gl_context(&app.ctx2().gl, Some(fragment))
     }
 
-    fn from_color_fragment<T: BaseApp<Graphics = Self::Graphics>>(
+    fn from_color_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
         app: &mut T,
         fragment: &str,
     ) -> Result<Self, String> {
-        color_shader_from_gl_context(&app.graphics().gl, Some(fragment))
+        color_shader_from_gl_context(&app.ctx2().gl, Some(fragment))
     }
 
     fn is_equal(&self, shader: &Shader) -> bool {
