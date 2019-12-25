@@ -4,7 +4,7 @@ use glow::HasContext;
 use nae_core::resources::{
     BaseTexture, Resource, ResourceConstructor, TextureFilter, TextureFormat,
 };
-use nae_core::BaseApp;
+use nae_core::BaseSystem;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -27,7 +27,7 @@ impl BaseTexture for Texture {
         self.inner.borrow().height as _
     }
 
-    fn from_size<T: BaseApp<Graphics = Self::Context2d>>(
+    fn from_size<T: BaseSystem<Context2d = Self::Context2d>>(
         app: &mut T,
         width: i32,
         height: i32,
@@ -43,7 +43,7 @@ impl BaseTexture for Texture {
         )
     }
 
-    fn from<T: BaseApp<Graphics = Self::Context2d>>(
+    fn from<T: BaseSystem<Context2d = Self::Context2d>>(
         app: &mut T,
         width: i32,
         height: i32,
@@ -53,7 +53,7 @@ impl BaseTexture for Texture {
         mag_filter: TextureFilter,
     ) -> Result<Self, String> {
         texture_from_gl_context(
-            &app.graphics().gl,
+            &app.ctx2().gl,
             width,
             height,
             internal_format,
@@ -108,7 +108,7 @@ pub(crate) fn texture_from_gl_context(
 impl Resource for Texture {
     type Context2d = Context2d;
 
-    fn parse<T: BaseApp<Graphics = Self::Context2d>>(
+    fn parse<T: BaseSystem<Context2d = Self::Context2d>>(
         &mut self,
         app: &mut T,
         data: Vec<u8>,
@@ -120,7 +120,7 @@ impl Resource for Texture {
         let width = data.width() as _;
         let height = data.height() as _;
         let raw = data.to_vec();
-        let gl = app.graphics().gl.clone();
+        let gl = app.ctx2().gl.clone();
         let tex = create_gl_tex_ext(
             &gl,
             width,

@@ -4,7 +4,7 @@ use crate::{GlContext, TextureKey};
 use glow::HasContext;
 use nae_core::graphics::BaseSurface;
 use nae_core::resources::BaseTexture;
-use nae_core::BaseApp;
+use nae_core::BaseSystem;
 
 #[cfg(target_arch = "wasm32")]
 type FramebufferKey = glow::WebFramebufferKey;
@@ -21,13 +21,13 @@ impl BaseSurface for Surface {
     type Texture = Texture;
     type Context2d = Context2d;
 
-    fn from_size<T: BaseApp<Graphics = Self::Context2d>>(
+    fn from_size<T: BaseSystem<Context2d = Self::Context2d>>(
         app: &mut T,
         width: i32,
         height: i32,
     ) -> Result<Self, String> {
         let texture = Texture::from_size(app, width, height)?;
-        let fbo = create_framebuffer(&app.graphics().gl, texture.tex())?;
+        let fbo = create_framebuffer(&app.ctx2().gl, texture.tex())?;
         Ok(Self { texture, fbo })
     }
 

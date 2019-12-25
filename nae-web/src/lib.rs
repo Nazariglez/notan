@@ -1,38 +1,31 @@
+mod file;
 mod window;
 
+use file::*;
 use nae_core::graphics::BaseContext2d;
 use nae_core::*;
 use nae_glow::*;
 use window::*;
 
-pub struct App {
+pub struct System {
     window: Window,
     context2d: Context2d,
 }
 
-impl BaseApp for App {
+impl BaseSystem for System {
     type Kind = Self;
-    type Graphics = Context2d;
+    type Context2d = Context2d;
 
-    fn build<S>(mut opts: BuilderOpts<S, App>) -> Result<(), String> {
+    fn new(mut opts: BuilderOpts) -> Result<Self, String> {
         let win = window::Window::new(&opts.title, opts.width, opts.height)?;
         let ctx2 = Context2d::new(&win.canvas)?;
-        let mut app = App {
+        Ok(Self {
             window: win,
             context2d: ctx2,
-        };
-
-        let mut state = (opts.state_cb)(&mut app);
-        let draw_cb = opts.draw_callback.take().unwrap_or(|_, _| {});
-        let update_cb = opts.update_callback.take().unwrap_or(|_, _| {});
-        let start_cb = opts.start_callback.take().unwrap_or(|_, _| {});
-
-        start_cb(&mut app, &mut state);
-
-        Ok(())
+        })
     }
 
-    fn graphics(&mut self) -> &mut Self::Graphics {
+    fn ctx2(&mut self) -> &mut Self::Context2d {
         &mut self.context2d
     }
 }

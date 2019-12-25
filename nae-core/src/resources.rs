@@ -1,5 +1,5 @@
 use crate::graphics::BaseContext2d;
-use crate::BaseApp;
+use crate::BaseSystem;
 
 /// Represent a resource
 pub trait Resource {
@@ -8,7 +8,7 @@ pub trait Resource {
     /// Dispatched when the resource is loaded on memory
     fn parse<T>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
     where
-        T: BaseApp<Graphics = Self::Context2d>;
+        T: BaseSystem<Context2d = Self::Context2d>;
 
     /// Should return true if the resource is ready to use it
     fn is_loaded(&self) -> bool;
@@ -39,12 +39,12 @@ where
 {
     fn width(&self) -> f32;
     fn height(&self) -> f32;
-    fn from_size<T: BaseApp<Graphics = Self::Context2d>>(
+    fn from_size<T: BaseSystem<Context2d = Self::Context2d>>(
         app: &mut T,
         width: i32,
         height: i32,
     ) -> Result<Self, String>;
-    fn from<T: BaseApp<Graphics = Self::Context2d>>(
+    fn from<T: BaseSystem<Context2d = Self::Context2d>>(
         app: &mut T,
         width: i32,
         height: i32,
@@ -75,7 +75,7 @@ pub trait BaseFont: Resource {
 
     fn text_size<T>(app: &mut T, font: &Self::Kind, text: &str, size: f32) -> (f32, f32)
     where
-        T: BaseApp<Graphics = Self::Context2d>;
+        T: BaseSystem<Context2d = Self::Context2d>;
 
     fn text_size_ext<T>(
         app: &mut T,
@@ -87,5 +87,5 @@ pub trait BaseFont: Resource {
         max_width: Option<f32>,
     ) -> (f32, f32)
     where
-        T: BaseApp<Graphics = Self::Context2d>;
+        T: BaseSystem<Context2d = Self::Context2d>;
 }

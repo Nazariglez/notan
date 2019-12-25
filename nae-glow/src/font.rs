@@ -12,7 +12,7 @@ use nae_core::resources::{
     BaseFont, BaseTexture, HorizontalAlign, Resource, ResourceConstructor, TextureFilter,
     TextureFormat, VerticalAlign,
 };
-use nae_core::BaseApp;
+use nae_core::BaseSystem;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -30,7 +30,7 @@ impl Font {
 impl BaseFont for Font {
     type Kind = Self;
 
-    fn text_size<T: BaseApp<Graphics = Self::Context2d>>(
+    fn text_size<T: BaseSystem<Context2d = Self::Context2d>>(
         app: &mut T,
         font: &Font,
         text: &str,
@@ -47,7 +47,7 @@ impl BaseFont for Font {
         )
     }
 
-    fn text_size_ext<T: BaseApp<Graphics = Self::Context2d>>(
+    fn text_size_ext<T: BaseSystem<Context2d = Self::Context2d>>(
         app: &mut T,
         font: &Font,
         text: &str,
@@ -56,15 +56,7 @@ impl BaseFont for Font {
         v_align: VerticalAlign,
         max_width: Option<f32>,
     ) -> (f32, f32) {
-        text_size(
-            app.graphics(),
-            font,
-            text,
-            size,
-            h_align,
-            v_align,
-            max_width,
-        )
+        text_size(app.ctx2(), font, text, size, h_align, v_align, max_width)
     }
 }
 
@@ -82,12 +74,12 @@ impl Default for Font {
 impl Resource for Font {
     type Context2d = Context2d;
 
-    fn parse<T: BaseApp<Graphics = Self::Context2d>>(
+    fn parse<T: BaseSystem<Context2d = Self::Context2d>>(
         &mut self,
         app: &mut T,
         data: Vec<u8>,
     ) -> Result<(), String> {
-        let id = add_font(app.graphics(), data);
+        let id = add_font(app.ctx2(), data);
         *self.inner.borrow_mut() = InnerFont {
             id: FontId(id),
             loaded: true,
