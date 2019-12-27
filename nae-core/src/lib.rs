@@ -6,6 +6,7 @@ pub mod window;
 
 pub use graphics::*;
 pub use logger::{debug, error, info, trace, warn};
+pub use resources::*;
 
 pub struct BuilderOpts {
     pub title: String,
@@ -23,6 +24,11 @@ impl Default for BuilderOpts {
             fullscreen: false,
         }
     }
+}
+
+pub trait BaseApp {
+    type System: BaseSystem;
+    fn system(&mut self) -> &mut Self::System;
 }
 
 pub trait BaseSystem {

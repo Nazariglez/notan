@@ -1,10 +1,10 @@
+use nae_core::logger;
 use nae_core::window::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlCanvasElement;
-use nae_core::logger;
 
 pub struct Window {
     pub(crate) canvas: HtmlCanvasElement,
@@ -52,4 +52,36 @@ impl BaseWindow for Window {
     fn title(&self) -> &str {
         &self.title
     }
+}
+
+fn request_animation_frame(win: web_sys::Window, f: &Closure<dyn FnMut()>) {
+    win.request_animation_frame(f.as_ref().unchecked_ref())
+        .expect("should register `requestAnimationFrame` OK");
+}
+
+pub fn run<F>(callback: F)
+where
+    F: FnMut() + 'static,
+{
+    //        self.cb = cb;
+    let cb = Rc::new(RefCell::new(None));
+    let cb_copy = cb.clone();
+    let callback = Rc::new(RefCell::new(callback));
+
+    *cb_copy.borrow_mut() = Some(Closure::wrap(Box::new(move || {
+        //            let mut ctx = ctx.borrow_mut();
+        //            ctx.fps_tracker.tick();
+
+        let mut tick_handler = callback.borrow_mut();
+        (&mut *tick_handler)();
+
+        //            if ctx.running {
+        //Web always run at max speed using raf (setTimeout has drawbacks)
+        let win = web_sys::window().unwrap();
+        request_animation_frame(win, cb.borrow().as_ref().unwrap());
+        //            }
+    }) as Box<dyn FnMut()>));
+
+    let win = web_sys::window().unwrap();
+    request_animation_frame(win, cb_copy.borrow().as_ref().unwrap());
 }

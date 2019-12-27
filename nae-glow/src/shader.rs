@@ -4,7 +4,7 @@ use glow::HasContext;
 use hashbrown::HashMap;
 use nae_core::graphics::BaseShader;
 use nae_core::math::Mat3;
-use nae_core::BaseSystem;
+use nae_core::{BaseApp, BaseContext2d, BaseSystem};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -90,11 +90,20 @@ impl BaseShader for Shader {
         None
     }
 
-    fn from_image_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
-        app: &mut T,
-        fragment: &str,
-    ) -> Result<Self, String> {
-        sprite_shader_from_gl_context(&app.ctx2().gl, Some(fragment))
+    fn from_test<T, S>(app: &mut T)
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Graphics>,
+    {
+        sprite_shader_from_gl_context(&app.system().ctx2().gl, Some(""));
+    }
+
+    fn from_image_fragment<T, S>(app: &mut T, fragment: &str) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Graphics>,
+    {
+        sprite_shader_from_gl_context(&app.system().ctx2().gl, Some(fragment))
     }
 
     fn from_text_fragment<T: BaseSystem<Context2d = Self::Graphics>>(

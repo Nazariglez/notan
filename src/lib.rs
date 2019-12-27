@@ -27,9 +27,9 @@ pub fn log(msg: &str) {
 }
 
 pub mod prelude {
-    pub use backend::*;
     pub use super::app::*;
-//    pub use super::graphics::{color::*, shader::*, *};
+    pub use backend::*;
+    //    pub use super::graphics::{color::*, shader::*, *};
     pub use super::log;
     pub use super::res::*;
     pub use nae_core::*;
