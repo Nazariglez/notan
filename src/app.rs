@@ -1,10 +1,10 @@
 //use super::graphics::Context2d;
 //use super::res::*;
 //use super::{window, window::*};
+use crate::res::{ResourceLoaderManager, ResourceParser};
 use backend::*;
-use nae_core::{BuilderOpts, BaseSystem};
 use nae_core::resources::*;
-use crate::res::ResourceLoaderManager;
+use nae_core::{BaseSystem, BuilderOpts};
 
 /*TODO
     - Custom Error like Nae::NotFound, Nae::GraphicsX
@@ -22,21 +22,29 @@ use crate::res::ResourceLoaderManager;
 
 //TODO backend requirements for resvg https://github.com/RazrFalcon/resvg/blob/master/docs/backend_requirements.md
 
-pub struct App {
-    resources: ResourceLoaderManager,
+pub struct App<'a> {
+    resources: ResourceLoaderManager<'a>,
     sys: System,
-//    pub(crate) window: Window,
-//    pub(crate) graphics: Context2d,
+    //    pub(crate) window: Window,
+    //    pub(crate) graphics: Context2d,
 }
 
-impl App {
+impl BaseApp for App<'_> {
+    type System = System;
+
+    fn system(&mut self) -> &mut Self::System {
+        &mut self.sys
+    }
+}
+
+impl<'a> App<'a> {
     pub fn draw(&mut self) -> &mut backend::Context2d {
         self.sys.ctx2()
     }
 
     pub fn load_file<A>(&mut self, file: &str) -> Result<A, String>
     where
-        A: BaseResource + ResourceConstructor + Resource + Clone,
+        A: ResourceParser + ResourceConstructor + Resource + Clone + 'a,
     {
         self.resources.add(file)
     }
@@ -60,15 +68,15 @@ impl<S> AppBuilder<S> {
     pub fn build(&mut self) -> Result<(), String> {
         let sys = System::new(BuilderOpts::default())?;
 
-//        let win = Window::new();
-//        let gfx = Context2d::new(win.window())?;
+        //        let win = Window::new();
+        //        let gfx = Context2d::new(win.window())?;
 
-//        unimplemented!();
+        //        unimplemented!();
 
         let mut app = App {
             sys: sys,
-//            window: win,
-//            graphics: gfx,
+            //            window: win,
+            //            graphics: gfx,
             resources: ResourceLoaderManager::new(),
         };
 
@@ -78,16 +86,21 @@ impl<S> AppBuilder<S> {
         let start_cb = self.start_callback.take().unwrap_or(|_, _| {});
 
         start_cb(&mut app, &mut state);
-        try_load_resources(&mut app).unwrap();
-        update_cb(&mut app, &mut state);
-        draw_cb(&mut app, &mut state);
+        //        while app.resources.len() != 0 {
+        //            try_load_resources(&mut app).unwrap();
+        //        }
+        //        update_cb(&mut app, &mut state);
+        //        draw_cb(&mut app, &mut state);
 
-//        window::run(move || {
-//            try_load_resources(&mut app).unwrap();
-//
-//            update_cb(&mut app, &mut state);
-//            draw_cb(&mut app, &mut state);
-//        });
+        backend::run(move || {
+            try_load_resources(&mut app).unwrap();
+
+            update_cb(&mut app, &mut state);
+            draw_cb(&mut app, &mut state);
+        });
+
+        //        window::run(move || {
+        //        });
         Ok(())
     }
 
@@ -117,14 +130,14 @@ use mopa::*;
 fn try_load_resources(app: &mut App) -> Result<(), String> {
     if let Some(mut assets_loaded) = app.resources.try_load()? {
         while let Some((data, mut asset)) = assets_loaded.pop() {
-//            let a = asset.upcast_object();
-//            let r = Box::<Resource<Context2d = Context2d>>::downcast_object_ref(&*a).unwrap();
-//            let r = asset.is::<Resource>();
-//            let res:Box<ResourceConstructor> = BaseResource::downcast_object_ref(&*asset).unwrap();
-//            let res:Resource<Context2d = <System as BaseSystem>::Context2d> = BaseResource::downcast_object_ref(&*asset).unwrap();
-//            if !asset.is_loaded() {
-//                asset.parse(&mut app.sys, data)?;
-//            }
+            //            let a = asset.upcast_object();
+            //            let r = Box::<Resource<Context2d = Context2d>>::downcast_object_ref(&*a).unwrap();
+            //            let r = asset.is::<Resource>();
+            //            let res:Box<ResourceConstructor> = BaseResource::downcast_object_ref(&*asset).unwrap();
+            //            let res:Resource<Context2d = <System as BaseSystem>::Context2d> = BaseResource::downcast_object_ref(&*asset).unwrap();
+            if !asset.already_loaded() {
+                asset.parse_res(&mut app.sys, data)?;
+            }
         }
     }
 

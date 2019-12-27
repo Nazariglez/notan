@@ -8,7 +8,6 @@ use nae_core::BaseSystem;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-
 #[derive(Clone)]
 pub struct Texture {
     inner: Rc<RefCell<InnerTexture>>,

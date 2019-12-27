@@ -1,4 +1,4 @@
-use crate::BaseSystem;
+use crate::{BaseApp, BaseSystem};
 mod blend;
 mod color;
 mod geometry;
@@ -43,10 +43,10 @@ where
         attributes: Vec<Self::Attr>,
     ) -> Result<Self, String>;
     fn buffer(&self, name: &str) -> Option<Self::Buffer>;
-    fn from_image_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
-        app: &mut T,
-        fragment: &str,
-    ) -> Result<Self, String>;
+    fn from_image_fragment<T, S>(app: &mut T, fragment: &str) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Graphics>;
     fn from_text_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
         app: &mut T,
         fragment: &str,
@@ -55,6 +55,13 @@ where
         app: &mut T,
         fragment: &str,
     ) -> Result<Self, String>;
+    fn from_test<T, S>(app: &mut T)
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Graphics>,
+    {
+    }
+
     fn is_equal(&self, shader: &Self::Kind) -> bool;
 
     //TODO find a way to include this in this trait keeping flexible to do something like fn<T: UniformTrait>(name: &str, value: T); where UniformTrait is defined on the impl not here...
