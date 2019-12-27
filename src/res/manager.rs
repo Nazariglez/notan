@@ -1,24 +1,27 @@
 use super::loader::load_file;
-use super::resource::*;
+use nae_core::resources::*;
+//use super::resource::*;
 use futures::{Async, Future};
+use nae_core::BaseSystem;
+use backend::System;
 
-type ResourceLoader<'a> = (
-    Box<dyn Resource + 'a>,
+type ResourceLoader = (
+    Box<dyn BaseResource>,
     Box<dyn Future<Item = Vec<u8>, Error = String>>,
 );
 
-pub(crate) struct ResourceLoaderManager<'a> {
-    to_load: Vec<ResourceLoader<'a>>,
+pub(crate) struct ResourceLoaderManager {
+    to_load: Vec<ResourceLoader>,
 }
 
-impl<'a> ResourceLoaderManager<'a> {
+impl ResourceLoaderManager {
     pub fn new() -> Self {
         Self { to_load: vec![] }
     }
 
     pub fn add<T>(&mut self, file: &str) -> Result<T, String>
     where
-        T: Resource + ResourceConstructor + Clone + 'a,
+        T: BaseResource + Resource + ResourceConstructor + Clone,
     {
         let fut = load_file(file);
         let asset = T::new(file);
@@ -28,12 +31,12 @@ impl<'a> ResourceLoaderManager<'a> {
 
     pub fn add_from_memory<T>(&mut self, data: &[u8]) -> Result<T, String>
     where
-        T: Resource + ResourceConstructor + Clone + 'a,
+        T: Resource + ResourceConstructor + Clone,
     {
         unimplemented!()
     }
 
-    pub fn try_load(&mut self) -> Result<Option<Vec<(Vec<u8>, Box<dyn Resource + 'a>)>>, String> {
+    pub fn try_load(&mut self) -> Result<Option<Vec<(Vec<u8>, Box<dyn BaseResource>)>>, String> {
         if self.to_load.len() == 0 {
             return Ok(None);
         }

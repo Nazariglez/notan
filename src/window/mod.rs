@@ -25,7 +25,7 @@ impl Window {
         let canvas = window
             .document()
             .unwrap()
-            .get_element_by_id("canvas")
+            .get_element_by_id("nae_canvas")
             .unwrap()
             .dyn_into::<web_sys::HtmlCanvasElement>()
             .unwrap();

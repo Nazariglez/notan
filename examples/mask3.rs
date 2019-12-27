@@ -1,4 +1,3 @@
-use nae::math::Geometry;
 use nae::prelude::*;
 
 struct State {

@@ -8,10 +8,7 @@ use glyph_brush::{
     BrushAction, BrushError, FontId, GlyphBrush, GlyphBrushBuilder, GlyphCruncher, GlyphVertex,
     Section,
 };
-use nae_core::resources::{
-    BaseFont, BaseTexture, HorizontalAlign, Resource, ResourceConstructor, TextureFilter,
-    TextureFormat, VerticalAlign,
-};
+use nae_core::resources::{BaseFont, BaseTexture, HorizontalAlign, Resource, ResourceConstructor, TextureFilter, TextureFormat, VerticalAlign, BaseResource};
 use nae_core::BaseSystem;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -20,6 +17,8 @@ use std::rc::Rc;
 pub struct Font {
     inner: Rc<RefCell<InnerFont>>,
 }
+
+impl BaseResource for Font {}
 
 impl Font {
     pub(crate) fn id(&self) -> FontId {

@@ -4,6 +4,7 @@ use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlCanvasElement;
+use nae_core::logger;
 
 pub struct Window {
     pub(crate) canvas: HtmlCanvasElement,
@@ -15,8 +16,8 @@ pub struct Window {
 
 impl Window {
     pub(crate) fn new(title: &str, width: i32, height: i32) -> Result<Self, String> {
+        logger::info!("hello!");
         let win = web_sys::window().ok_or(String::from("Can't access window dom object."))?;
-
         let canvas = win
             .document()
             .ok_or("Can't access document dom object ")?

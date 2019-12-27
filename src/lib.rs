@@ -1,9 +1,9 @@
 mod app;
 //mod glm;
-mod graphics;
-pub mod math;
+//mod graphics;
+//pub mod math;
 pub mod res;
-mod window;
+//mod window;
 
 pub use nae_derive::main;
 pub use nae_extras as extras;
@@ -27,8 +27,9 @@ pub fn log(msg: &str) {
 }
 
 pub mod prelude {
+    pub use backend::*;
     pub use super::app::*;
-    pub use super::graphics::{color::*, shader::*, *};
+//    pub use super::graphics::{color::*, shader::*, *};
     pub use super::log;
     pub use super::res::*;
     pub use nae_core::*;

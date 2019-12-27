@@ -1,11 +1,11 @@
 mod file;
 mod window;
 
-use file::*;
 use nae_core::graphics::BaseContext2d;
-use nae_core::*;
-use nae_glow::*;
-use window::*;
+pub use nae_core::*;
+pub use nae_glow::*;
+pub use window::*;
+pub use file::*;
 
 pub struct System {
     window: Window,

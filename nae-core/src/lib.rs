@@ -4,7 +4,7 @@ pub mod math;
 pub mod resources;
 pub mod window;
 
-use crate::graphics::BaseContext2d;
+pub use graphics::*;
 pub use logger::{debug, error, info, trace, warn};
 
 pub struct BuilderOpts {
