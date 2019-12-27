@@ -1,5 +1,31 @@
 use crate::graphics::BaseContext2d;
 use crate::BaseSystem;
+use mopa::*;
+
+pub trait BaseResource: mopa::Any {
+    fn upcast_object(self) -> Box<BaseResource> where Self: Sized {
+        Box::new(self)
+    }
+    fn downcast_object_ref(obj: &BaseResource) -> Option<&Self> where Self: Sized {
+        obj.downcast_ref()
+    }
+}
+
+mopafy!(BaseResource);
+
+#[macro_export]
+macro_rules! declare_supertype {
+    ($type:ty, $supertype:ty) => {
+        impl BaseResource for $type {
+            fn upcast_object(self) -> Box<BaseResource> where Self: Sized {
+                Box::<$supertype>::upcast_object(Box::new(self))
+            }
+            fn downcast_object_ref(obj: &BaseResource) -> Option<&Self> where Self: Sized {
+                Box::<$supertype>::downcast_object_ref(obj)?.downcast_ref()
+            }
+        }
+    }
+}
 
 /// Represent a resource
 pub trait Resource {
@@ -12,6 +38,20 @@ pub trait Resource {
 
     /// Should return true if the resource is ready to use it
     fn is_loaded(&self) -> bool;
+}
+
+
+impl<G: Resource + ?Sized> Resource for Box<G> where Box<G>: BaseResource {
+    type Context2d = G::Context2d;
+
+    fn parse<T>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String> where
+        T: BaseSystem<Context2d=Self::Context2d> {
+        unimplemented!()
+    }
+
+    fn is_loaded(&self) -> bool {
+        unimplemented!()
+    }
 }
 
 /// Represent a resource that can be created from the trait

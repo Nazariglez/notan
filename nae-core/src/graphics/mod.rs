@@ -6,7 +6,7 @@ mod transform;
 
 use crate::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
 pub use blend::*;
-pub use color::Color;
+pub use color::*;
 pub use geometry::*;
 pub use transform::Transform2d;
 

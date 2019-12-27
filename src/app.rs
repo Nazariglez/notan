@@ -1,6 +1,10 @@
-use super::graphics::Context2d;
-use super::res::*;
-use super::{window, window::*};
+//use super::graphics::Context2d;
+//use super::res::*;
+//use super::{window, window::*};
+use backend::*;
+use nae_core::{BuilderOpts, BaseSystem};
+use nae_core::resources::*;
+use crate::res::ResourceLoaderManager;
 
 /*TODO
     - Custom Error like Nae::NotFound, Nae::GraphicsX
@@ -18,20 +22,21 @@ use super::{window, window::*};
 
 //TODO backend requirements for resvg https://github.com/RazrFalcon/resvg/blob/master/docs/backend_requirements.md
 
-pub struct App<'a> {
-    pub(crate) window: Window,
-    pub(crate) graphics: Context2d,
-    resources: ResourceLoaderManager<'a>,
+pub struct App {
+    resources: ResourceLoaderManager,
+    sys: System,
+//    pub(crate) window: Window,
+//    pub(crate) graphics: Context2d,
 }
 
-impl<'a> App<'a> {
-    pub fn draw(&mut self) -> &mut Context2d {
-        &mut self.graphics
+impl App {
+    pub fn draw(&mut self) -> &mut backend::Context2d {
+        self.sys.ctx2()
     }
 
     pub fn load_file<A>(&mut self, file: &str) -> Result<A, String>
     where
-        A: ResourceConstructor + Resource + Clone + 'a,
+        A: BaseResource + ResourceConstructor + Resource + Clone,
     {
         self.resources.add(file)
     }
@@ -53,12 +58,17 @@ where
 
 impl<S> AppBuilder<S> {
     pub fn build(&mut self) -> Result<(), String> {
-        let win = Window::new();
-        let gfx = Context2d::new(win.window())?;
+        let sys = System::new(BuilderOpts::default())?;
+
+//        let win = Window::new();
+//        let gfx = Context2d::new(win.window())?;
+
+//        unimplemented!();
 
         let mut app = App {
-            window: win,
-            graphics: gfx,
+            sys: sys,
+//            window: win,
+//            graphics: gfx,
             resources: ResourceLoaderManager::new(),
         };
 
@@ -68,12 +78,16 @@ impl<S> AppBuilder<S> {
         let start_cb = self.start_callback.take().unwrap_or(|_, _| {});
 
         start_cb(&mut app, &mut state);
-        window::run(move || {
-            try_load_resources(&mut app).unwrap();
+        try_load_resources(&mut app).unwrap();
+        update_cb(&mut app, &mut state);
+        draw_cb(&mut app, &mut state);
 
-            update_cb(&mut app, &mut state);
-            draw_cb(&mut app, &mut state);
-        });
+//        window::run(move || {
+//            try_load_resources(&mut app).unwrap();
+//
+//            update_cb(&mut app, &mut state);
+//            draw_cb(&mut app, &mut state);
+//        });
         Ok(())
     }
 
@@ -98,13 +112,19 @@ impl<S> AppBuilder<S> {
     }
 }
 
+use mopa::*;
 //TODO don't stop the loop, just return Vec<String> with the errors, and the user will decide what to do instead of stop the program
 fn try_load_resources(app: &mut App) -> Result<(), String> {
     if let Some(mut assets_loaded) = app.resources.try_load()? {
         while let Some((data, mut asset)) = assets_loaded.pop() {
-            if !asset.is_loaded() {
-                asset.parse(app, data)?;
-            }
+//            let a = asset.upcast_object();
+//            let r = Box::<Resource<Context2d = Context2d>>::downcast_object_ref(&*a).unwrap();
+//            let r = asset.is::<Resource>();
+//            let res:Box<ResourceConstructor> = BaseResource::downcast_object_ref(&*asset).unwrap();
+//            let res:Resource<Context2d = <System as BaseSystem>::Context2d> = BaseResource::downcast_object_ref(&*asset).unwrap();
+//            if !asset.is_loaded() {
+//                asset.parse(&mut app.sys, data)?;
+//            }
         }
     }
 
