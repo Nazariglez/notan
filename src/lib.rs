@@ -1,9 +1,5 @@
 mod app;
-//mod glm;
-//mod graphics;
-//pub mod math;
-pub mod res;
-//mod window;
+mod res;
 
 pub use nae_derive::main;
 pub use nae_extras as extras;
@@ -24,8 +20,7 @@ pub use app::{init, with_state};
 
 pub mod prelude {
     pub use super::app::*;
-    pub use backend::{Resource, *};
-    //    pub use super::graphics::{color::*, shader::*, *};
     pub use super::res::*;
+    pub use backend::{Resource, *};
     pub use nae_core::*;
 }
