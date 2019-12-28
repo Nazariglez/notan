@@ -1,6 +1,3 @@
-//use super::graphics::Context2d;
-//use super::res::*;
-//use super::{window, window::*};
 use crate::res::{ResourceLoaderManager, ResourceParser};
 use backend::*;
 use nae_core::resources::*;
@@ -44,7 +41,7 @@ impl<'a> App<'a> {
 
     pub fn load_file<A>(&mut self, file: &str) -> Result<A, String>
     where
-        A: ResourceParser + ResourceConstructor + Resource + Clone + 'a,
+        A: ResourceParser + Resource + Clone + 'a,
     {
         self.resources.add(file)
     }
@@ -125,16 +122,10 @@ impl<S> AppBuilder<S> {
     }
 }
 
-use mopa::*;
 //TODO don't stop the loop, just return Vec<String> with the errors, and the user will decide what to do instead of stop the program
 fn try_load_resources(app: &mut App) -> Result<(), String> {
     if let Some(mut assets_loaded) = app.resources.try_load()? {
         while let Some((data, mut asset)) = assets_loaded.pop() {
-            //            let a = asset.upcast_object();
-            //            let r = Box::<Resource<Context2d = Context2d>>::downcast_object_ref(&*a).unwrap();
-            //            let r = asset.is::<Resource>();
-            //            let res:Box<ResourceConstructor> = BaseResource::downcast_object_ref(&*asset).unwrap();
-            //            let res:Resource<Context2d = <System as BaseSystem>::Context2d> = BaseResource::downcast_object_ref(&*asset).unwrap();
             if !asset.already_loaded() {
                 asset.parse_res(&mut app.sys, data)?;
             }

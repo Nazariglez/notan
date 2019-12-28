@@ -27,8 +27,6 @@ nae-derive = { path = "./nae-derive" }
 nae-core = { path = "./nae-core" }
 nae-extras = { path = "./nae-extras" }
 glyph_brush = "0.6.1"
-downcast-rs = "1.1.1"
-mopa = "0.2.2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 backend = { path = "./nae-web", package = "nae-web" }
