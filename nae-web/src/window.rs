@@ -1,4 +1,4 @@
-use nae_core::logger;
+use nae_core::log;
 use nae_core::window::*;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -16,7 +16,7 @@ pub struct Window {
 
 impl Window {
     pub(crate) fn new(title: &str, width: i32, height: i32) -> Result<Self, String> {
-        logger::info!("hello!");
+        log::info!("hello!");
         let win = web_sys::window().ok_or(String::from("Can't access window dom object."))?;
         let canvas = win
             .document()

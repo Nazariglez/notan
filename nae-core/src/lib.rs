@@ -1,11 +1,10 @@
 pub mod graphics;
-pub mod logger;
+pub mod log;
 pub mod math;
 pub mod resources;
 pub mod window;
 
 pub use graphics::*;
-pub use logger::{debug, error, info, trace, warn};
 pub use resources::*;
 
 pub struct BuilderOpts {
