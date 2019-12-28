@@ -1,9 +1,7 @@
 use crate::context::Context2d;
 use crate::{GlContext, GlowValue, TextureKey};
 use glow::HasContext;
-use nae_core::resources::{
-    BaseTexture, Resource, ResourceConstructor, TextureFilter, TextureFormat,
-};
+use nae_core::resources::{BaseTexture, Resource, TextureFilter, TextureFormat};
 use nae_core::{BaseApp, BaseSystem};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -113,6 +111,12 @@ pub(crate) fn texture_from_gl_context(
 impl Resource for Texture {
     type Context2d = Context2d;
 
+    fn new(file: &str) -> Self {
+        Self {
+            inner: Rc::new(RefCell::new(InnerTexture::empty(1, 1))),
+        }
+    }
+
     fn parse<T: BaseSystem<Context2d = Self::Context2d>>(
         &mut self,
         app: &mut T,
@@ -151,14 +155,6 @@ impl Resource for Texture {
 
     fn is_loaded(&self) -> bool {
         self.inner.borrow().tex.is_some()
-    }
-}
-
-impl ResourceConstructor for Texture {
-    fn new(file: &str) -> Self {
-        Self {
-            inner: Rc::new(RefCell::new(InnerTexture::empty(1, 1))),
-        }
     }
 }
 

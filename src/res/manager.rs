@@ -1,40 +1,31 @@
 use super::loader::load_file;
-use nae_core::resources::*;
-//use super::resource::*;
 use backend::System;
 use futures::{Async, Future};
 use nae_core::BaseSystem;
-
-//https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=4da80a3618ce54c5b4003d3eb424ae83
-//https://github.com/Rufflewind/_urandom/blob/da71b8b23bc90407c371d651a09d3128654c76d7/rust/dyn_trait_hierarchy.rs
-//http://idubrov.name/rust/2018/06/16/dynamic-casting-traits.html
-//https://crates.io/crates/mopa
-//https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=a13a0ddcc11fe83d8adb967d75187332
+use nae_core::*;
 
 pub trait ResourceParser {
     fn parse_res(&mut self, app: &mut System, data: Vec<u8>) -> Result<(), String>;
     fn already_loaded(&mut self) -> bool;
 }
 
-impl ResourceParser for backend::Texture {
-    fn parse_res(&mut self, sys: &mut System, data: Vec<u8>) -> Result<(), String> {
-        self.parse(sys, data)
-    }
+#[macro_export]
+macro_rules! resource_parser {
+    ($type:ty, $system:ty) => {
+        impl ResourceParser for $type {
+            fn parse_res(&mut self, sys: &mut $system, data: Vec<u8>) -> Result<(), String> {
+                self.parse(sys, data)
+            }
 
-    fn already_loaded(&mut self) -> bool {
-        self.is_loaded()
-    }
+            fn already_loaded(&mut self) -> bool {
+                self.is_loaded()
+            }
+        }
+    };
 }
 
-impl ResourceParser for backend::Font {
-    fn parse_res(&mut self, sys: &mut System, data: Vec<u8>) -> Result<(), String> {
-        self.parse(sys, data)
-    }
-
-    fn already_loaded(&mut self) -> bool {
-        self.is_loaded()
-    }
-}
+resource_parser!(backend::Texture, System);
+resource_parser!(backend::Font, System);
 
 type ResourceLoader<'a> = (
     Box<dyn ResourceParser + 'a>,
@@ -56,7 +47,7 @@ impl<'a> ResourceLoaderManager<'a> {
 
     pub fn add<T>(&mut self, file: &str) -> Result<T, String>
     where
-        T: ResourceParser + Resource + ResourceConstructor + Clone + 'a,
+        T: ResourceParser + Resource + Clone + 'a,
     {
         let fut = load_file(file);
         let asset = T::new(file);
@@ -66,7 +57,7 @@ impl<'a> ResourceLoaderManager<'a> {
 
     pub fn add_from_memory<T>(&mut self, data: &[u8]) -> Result<T, String>
     where
-        T: ResourceParser + Resource + ResourceConstructor + Clone + 'a,
+        T: ResourceParser + Resource + Clone + 'a,
     {
         unimplemented!()
     }

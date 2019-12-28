@@ -5,6 +5,9 @@ use crate::{BaseApp, BaseSystem};
 pub trait Resource {
     type Context2d: BaseContext2d;
 
+    /// Create a new resource
+    fn new(file: &str) -> Self;
+
     /// Dispatched when the resource is loaded on memory
     fn parse<T>(&mut self, sys: &mut T, data: Vec<u8>) -> Result<(), String>
     where
@@ -12,12 +15,6 @@ pub trait Resource {
 
     /// Should return true if the resource is ready to use it
     fn is_loaded(&self) -> bool;
-}
-
-/// Represent a resource that can be created from the trait
-pub trait ResourceConstructor {
-    /// Create a new resource
-    fn new(file: &str) -> Self;
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

@@ -9,8 +9,7 @@ use glyph_brush::{
     Section,
 };
 use nae_core::resources::{
-    BaseFont, BaseTexture, HorizontalAlign, Resource, ResourceConstructor, TextureFilter,
-    TextureFormat, VerticalAlign,
+    BaseFont, BaseTexture, HorizontalAlign, Resource, TextureFilter, TextureFormat, VerticalAlign,
 };
 use nae_core::BaseSystem;
 use std::cell::RefCell;
@@ -74,6 +73,15 @@ impl Default for Font {
 impl Resource for Font {
     type Context2d = Context2d;
 
+    fn new(file: &str) -> Self {
+        Self {
+            inner: Rc::new(RefCell::new(InnerFont {
+                id: FontId(0),
+                loaded: false,
+            })),
+        }
+    }
+
     fn parse<T: BaseSystem<Context2d = Self::Context2d>>(
         &mut self,
         app: &mut T,
@@ -89,17 +97,6 @@ impl Resource for Font {
 
     fn is_loaded(&self) -> bool {
         self.inner.borrow().loaded
-    }
-}
-
-impl ResourceConstructor for Font {
-    fn new(file: &str) -> Self {
-        Self {
-            inner: Rc::new(RefCell::new(InnerFont {
-                id: FontId(0),
-                loaded: false,
-            })),
-        }
     }
 }
 
