@@ -1,5 +1,7 @@
+use super::{Resource, ResourceParser};
 use crate::app::App;
-use crate::res::{Resource, ResourceConstructor};
+use crate::resource_parser;
+use nae_core::BaseSystem;
 use std::cell::{Ref, RefCell, RefMut};
 use std::rc::Rc;
 
@@ -23,7 +25,18 @@ impl Blob {
 }
 
 impl Resource for Blob {
-    fn parse(&mut self, _app: &mut App, data: Vec<u8>) -> Result<(), String> {
+    type Context2d = backend::Context2d;
+
+    fn new(file: &str) -> Self {
+        Self {
+            inner: Rc::new(RefCell::new(vec![])),
+        }
+    }
+
+    fn parse<T>(&mut self, sys: &mut T, data: Vec<u8>) -> Result<(), String>
+    where
+        T: BaseSystem<Context2d = Self::Context2d>,
+    {
         *self.inner.borrow_mut() = data;
         Ok(())
     }
@@ -33,10 +46,4 @@ impl Resource for Blob {
     }
 }
 
-impl ResourceConstructor for Blob {
-    fn new(file: &str) -> Self {
-        Self {
-            inner: Rc::new(RefCell::new(vec![])),
-        }
-    }
-}
+resource_parser!(Blob, backend::System);

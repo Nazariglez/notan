@@ -1,34 +1,12 @@
-use super::loader::load_file;
+use super::ResourceParser;
+use backend::load_file;
 use backend::System;
 use futures::{Async, Future};
 use nae_core::BaseSystem;
 use nae_core::*;
 
-pub trait ResourceParser {
-    fn parse_res(&mut self, app: &mut System, data: Vec<u8>) -> Result<(), String>;
-    fn already_loaded(&mut self) -> bool;
-}
-
-#[macro_export]
-macro_rules! resource_parser {
-    ($type:ty, $system:ty) => {
-        impl ResourceParser for $type {
-            fn parse_res(&mut self, sys: &mut $system, data: Vec<u8>) -> Result<(), String> {
-                self.parse(sys, data)
-            }
-
-            fn already_loaded(&mut self) -> bool {
-                self.is_loaded()
-            }
-        }
-    };
-}
-
-resource_parser!(backend::Texture, System);
-resource_parser!(backend::Font, System);
-
 type ResourceLoader<'a> = (
-    Box<dyn ResourceParser + 'a>,
+    Box<dyn ResourceParser<System = System> + 'a>,
     Box<dyn Future<Item = Vec<u8>, Error = String>>,
 );
 
@@ -47,7 +25,7 @@ impl<'a> ResourceLoaderManager<'a> {
 
     pub fn add<T>(&mut self, file: &str) -> Result<T, String>
     where
-        T: ResourceParser + Resource + Clone + 'a,
+        T: ResourceParser<System = System> + Resource + Clone + 'a,
     {
         let fut = load_file(file);
         let asset = T::new(file);
@@ -64,7 +42,7 @@ impl<'a> ResourceLoaderManager<'a> {
 
     pub fn try_load(
         &mut self,
-    ) -> Result<Option<Vec<(Vec<u8>, Box<dyn ResourceParser + 'a>)>>, String> {
+    ) -> Result<Option<Vec<(Vec<u8>, Box<dyn ResourceParser<System = System> + 'a>)>>, String> {
         if self.to_load.len() == 0 {
             return Ok(None);
         }

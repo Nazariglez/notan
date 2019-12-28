@@ -22,8 +22,6 @@ use nae_core::{BaseSystem, BuilderOpts};
 pub struct App<'a> {
     resources: ResourceLoaderManager<'a>,
     sys: System,
-    //    pub(crate) window: Window,
-    //    pub(crate) graphics: Context2d,
 }
 
 impl BaseApp for App<'_> {
@@ -41,7 +39,7 @@ impl<'a> App<'a> {
 
     pub fn load_file<A>(&mut self, file: &str) -> Result<A, String>
     where
-        A: ResourceParser + Resource + Clone + 'a,
+        A: ResourceParser<System = System> + Resource + Clone + 'a,
     {
         self.resources.add(file)
     }
@@ -65,15 +63,8 @@ impl<S> AppBuilder<S> {
     pub fn build(&mut self) -> Result<(), String> {
         let sys = System::new(BuilderOpts::default())?;
 
-        //        let win = Window::new();
-        //        let gfx = Context2d::new(win.window())?;
-
-        //        unimplemented!();
-
         let mut app = App {
             sys: sys,
-            //            window: win,
-            //            graphics: gfx,
             resources: ResourceLoaderManager::new(),
         };
 
@@ -83,12 +74,6 @@ impl<S> AppBuilder<S> {
         let start_cb = self.start_callback.take().unwrap_or(|_, _| {});
 
         start_cb(&mut app, &mut state);
-        //        while app.resources.len() != 0 {
-        //            try_load_resources(&mut app).unwrap();
-        //        }
-        //        update_cb(&mut app, &mut state);
-        //        draw_cb(&mut app, &mut state);
-
         backend::run(move || {
             try_load_resources(&mut app).unwrap();
 
@@ -96,8 +81,6 @@ impl<S> AppBuilder<S> {
             draw_cb(&mut app, &mut state);
         });
 
-        //        window::run(move || {
-        //        });
         Ok(())
     }
 
