@@ -22,15 +22,10 @@ pub use nae_extras as extras;
 
 pub use app::{init, with_state};
 
-pub fn log(msg: &str) {
-    web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(msg));
-}
-
 pub mod prelude {
     pub use super::app::*;
-    pub use backend::*;
+    pub use backend::{Resource, *};
     //    pub use super::graphics::{color::*, shader::*, *};
-    pub use super::log;
     pub use super::res::*;
     pub use nae_core::*;
 }

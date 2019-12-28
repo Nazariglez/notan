@@ -20,10 +20,6 @@ fn init(app: &mut App) -> State {
 }
 
 fn draw(app: &mut App, state: &mut State) {
-    if !state.tex.is_loaded() {
-        return;
-    }
-
     let image = &state.tex;
     let shader = &state.shader;
     let size = 5.0 + state.count.sin();
