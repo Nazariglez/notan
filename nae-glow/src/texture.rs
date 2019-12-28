@@ -4,7 +4,7 @@ use glow::HasContext;
 use nae_core::resources::{
     BaseTexture, Resource, ResourceConstructor, TextureFilter, TextureFormat,
 };
-use nae_core::BaseSystem;
+use nae_core::{BaseApp, BaseSystem};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -28,11 +28,11 @@ impl BaseTexture for Texture {
         self.inner.borrow().height as _
     }
 
-    fn from_size<T: BaseSystem<Context2d = Self::Context2d>>(
-        app: &mut T,
-        width: i32,
-        height: i32,
-    ) -> Result<Self, String> {
+    fn from_size<T, S>(app: &mut T, width: i32, height: i32) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Context2d>,
+    {
         <Texture as BaseTexture>::from(
             app,
             width,
@@ -44,7 +44,7 @@ impl BaseTexture for Texture {
         )
     }
 
-    fn from<T: BaseSystem<Context2d = Self::Context2d>>(
+    fn from<T, S>(
         app: &mut T,
         width: i32,
         height: i32,
@@ -52,9 +52,13 @@ impl BaseTexture for Texture {
         format: TextureFormat,
         min_filter: TextureFilter,
         mag_filter: TextureFilter,
-    ) -> Result<Self, String> {
+    ) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Context2d>,
+    {
         texture_from_gl_context(
-            &app.ctx2().gl,
+            &app.system().ctx2().gl,
             width,
             height,
             internal_format,

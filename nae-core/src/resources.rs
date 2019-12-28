@@ -1,5 +1,5 @@
 use crate::graphics::BaseContext2d;
-use crate::BaseSystem;
+use crate::{BaseApp, BaseSystem};
 
 /// Represent a resource
 pub trait Resource {
@@ -39,12 +39,11 @@ where
 {
     fn width(&self) -> f32;
     fn height(&self) -> f32;
-    fn from_size<T: BaseSystem<Context2d = Self::Context2d>>(
-        app: &mut T,
-        width: i32,
-        height: i32,
-    ) -> Result<Self, String>;
-    fn from<T: BaseSystem<Context2d = Self::Context2d>>(
+    fn from_size<T, S>(app: &mut T, width: i32, height: i32) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Context2d>;
+    fn from<T, S>(
         app: &mut T,
         width: i32,
         height: i32,
@@ -52,7 +51,10 @@ where
         format: TextureFormat,
         min_filter: TextureFilter,
         mag_filter: TextureFilter,
-    ) -> Result<Self, String>;
+    ) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Context2d>;
     fn format(&self) -> TextureFormat;
 }
 
