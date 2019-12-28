@@ -47,20 +47,14 @@ where
     where
         T: BaseApp<System = S>,
         S: BaseSystem<Context2d = Self::Graphics>;
-    fn from_text_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
-        app: &mut T,
-        fragment: &str,
-    ) -> Result<Self, String>;
-    fn from_color_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
-        app: &mut T,
-        fragment: &str,
-    ) -> Result<Self, String>;
-    fn from_test<T, S>(app: &mut T)
+    fn from_text_fragment<T, S>(app: &mut T, fragment: &str) -> Result<Self, String>
     where
         T: BaseApp<System = S>,
-        S: BaseSystem<Context2d = Self::Graphics>,
-    {
-    }
+        S: BaseSystem<Context2d = Self::Graphics>;
+    fn from_color_fragment<T, S>(app: &mut T, fragment: &str) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Graphics>;
 
     fn is_equal(&self, shader: &Self::Kind) -> bool;
 

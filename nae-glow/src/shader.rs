@@ -90,14 +90,6 @@ impl BaseShader for Shader {
         None
     }
 
-    fn from_test<T, S>(app: &mut T)
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Context2d = Self::Graphics>,
-    {
-        sprite_shader_from_gl_context(&app.system().ctx2().gl, Some(""));
-    }
-
     fn from_image_fragment<T, S>(app: &mut T, fragment: &str) -> Result<Self, String>
     where
         T: BaseApp<System = S>,
@@ -106,18 +98,20 @@ impl BaseShader for Shader {
         sprite_shader_from_gl_context(&app.system().ctx2().gl, Some(fragment))
     }
 
-    fn from_text_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
-        app: &mut T,
-        fragment: &str,
-    ) -> Result<Self, String> {
-        text_shader_from_gl_context(&app.ctx2().gl, Some(fragment))
+    fn from_text_fragment<T, S>(app: &mut T, fragment: &str) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Graphics>,
+    {
+        text_shader_from_gl_context(&app.system().ctx2().gl, Some(fragment))
     }
 
-    fn from_color_fragment<T: BaseSystem<Context2d = Self::Graphics>>(
-        app: &mut T,
-        fragment: &str,
-    ) -> Result<Self, String> {
-        color_shader_from_gl_context(&app.ctx2().gl, Some(fragment))
+    fn from_color_fragment<T, S>(app: &mut T, fragment: &str) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Graphics>,
+    {
+        color_shader_from_gl_context(&app.system().ctx2().gl, Some(fragment))
     }
 
     fn is_equal(&self, shader: &Shader) -> bool {
