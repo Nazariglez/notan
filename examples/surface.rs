@@ -1,4 +1,3 @@
-use nae::prelude::surface::Surface;
 use nae::prelude::*;
 
 #[nae::main]

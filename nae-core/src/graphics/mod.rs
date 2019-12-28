@@ -17,11 +17,10 @@ where
     type Texture: BaseTexture;
     type Context2d: BaseContext2d;
 
-    fn from_size<T: BaseSystem<Context2d = Self::Context2d>>(
-        app: &mut T,
-        width: i32,
-        height: i32,
-    ) -> Result<Self, String>;
+    fn from_size<T, S>(app: &mut T, width: i32, height: i32) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Context2d>;
     fn width(&self) -> f32;
     fn height(&self) -> f32;
     fn texture(&self) -> &Self::Texture;
