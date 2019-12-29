@@ -4,7 +4,7 @@ use crate::shader::Shader;
 use crate::texture::Texture;
 use crate::{GlContext, GlowValue, Surface};
 use glow::HasContext;
-use glutin::{PossiblyCurrent, WindowedContext};
+
 use glyph_brush::BrushAction::Draw;
 use lyon::lyon_tessellation as tess;
 use nae_core::graphics::{
@@ -19,6 +19,10 @@ use tess::basic_shapes::{
     fill_rounded_rectangle, stroke_circle, stroke_rectangle, stroke_rounded_rectangle, BorderRadii,
 };
 use tess::{BuffersBuilder, VertexBuffers};
+
+#[cfg(not(target_arch = "wasm32"))]
+use glutin::{PossiblyCurrent, WindowedContext};
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
@@ -790,11 +794,15 @@ fn create_context_2d(win: &web_sys::HtmlCanvasElement) -> Result<Context2d, Stri
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn create_context_2d(win: &WindowedContext<PossiblyCurrent>) -> Result<Context2d, String> {
-    let width = 800; //TODO
-    let height = 600;
+fn create_context_2d(win_ctx: &WindowedContext<PossiblyCurrent>) -> Result<Context2d, String> {
+    let win: &glutin::Window = win_ctx.window();
+    let (width, height) = if let Some(size) = win.get_inner_size() {
+        (size.width as _, size.height as _)
+    } else {
+        (800, 600)
+    };
 
-    let ctx = glow::Context::from_loader_function(|s| win.get_proc_address(s) as *const _);
+    let ctx = glow::Context::from_loader_function(|s| win_ctx.get_proc_address(s) as *const _);
 
     let gl = Rc::new(ctx);
     let blend_mode = BlendMode::NORMAL;

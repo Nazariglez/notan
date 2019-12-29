@@ -1,11 +1,14 @@
 use super::System;
 use glutin::{
-    dpi::LogicalSize, ContextBuilder, ControlFlow, EventsLoop, PossiblyCurrent, WindowBuilder,
-    WindowedContext,
+    dpi::LogicalSize, ContextBuilder, ControlFlow, Event, EventsLoop, PossiblyCurrent,
+    WindowBuilder, WindowEvent, WindowedContext,
 };
 use nae_core::window::BaseWindow;
 use nae_core::{BaseApp, BaseSystem};
 use nae_glow::Context2d;
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::sync::atomic::AtomicBool;
 
 pub struct Window {
     pub(crate) win: WindowedContext<PossiblyCurrent>,
@@ -33,6 +36,7 @@ impl Window {
                 opengles_version: (2, 0),
             })
             .with_gl_profile(glutin::GlProfile::Core)
+            .with_multisampling(8)
             .build_windowed(win_builder, event_loop)
             .map_err(|e| format!("{}", e))?;
 
@@ -75,9 +79,24 @@ where
     let mut cb = callback;
     let mut event_loop = app.system().event_loop.take().unwrap();
 
-    event_loop.run_forever(move |event| {
+    let running = Rc::new(RefCell::new(true));
+    loop {
+        let is_running = running.clone();
+        event_loop.poll_events(move |event| match event {
+            Event::WindowEvent { ref event, .. } => match event {
+                WindowEvent::CloseRequested => {
+                    println!("hello");
+                    *is_running.borrow_mut() = false;
+                }
+                _ => {}
+            },
+            _ => {}
+        });
+
         cb(&mut app);
 
-        ControlFlow::Continue
-    });
+        if !*running.borrow() {
+            break;
+        }
+    }
 }

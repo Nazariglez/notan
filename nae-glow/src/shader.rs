@@ -168,10 +168,24 @@ fn shader_from_gl_context(
     })
 }
 
+fn source_with_header(source: &str) -> String {
+    if source.contains("#version") {
+        return String::from(source);
+    }
+
+    let is_gl_es =
+        cfg!(target_arch = "wasm32") || cfg!(target_os = "ios") || cfg!(target_os = "android");
+    if is_gl_es {
+        format!("#version 300 es\n{}", source)
+    } else {
+        format!("#version 410\n{}", source)
+    }
+}
+
 fn create_shader(gl: &GlContext, typ: u32, source: &str) -> Result<ShaderKey, String> {
     unsafe {
         let shader = gl.create_shader(typ)?;
-        gl.shader_source(shader, source);
+        gl.shader_source(shader, &source_with_header(source));
         gl.compile_shader(shader);
 
         let success = gl.get_shader_compile_status(shader);

@@ -30,4 +30,6 @@ impl BaseSystem for System {
     fn ctx2(&mut self) -> &mut Self::Context2d {
         &mut self.context2d
     }
+
+    fn swap_buffers(&mut self) {}
 }

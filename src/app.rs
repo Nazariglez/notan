@@ -79,6 +79,7 @@ impl<S> AppBuilder<S> {
 
             update_cb(&mut app, &mut state);
             draw_cb(&mut app, &mut state);
+            app.system().swap_buffers();
         });
 
         Ok(())
