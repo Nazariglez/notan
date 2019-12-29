@@ -10,45 +10,20 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-glow = "0.3.0-alpha2"
-wasm-bindgen = "0.2.51"
-console_error_panic_hook = "0.1.6"
-nalgebra-glm = "0.4.2"
-lyon = "0.14.1"
-rayon = "1.2.0"
 futures = "0.1.29"
-wasm-bindgen-futures = "0.3"
-js-sys = "0.3.30"
-image = "0.22.3"
-rand = "0.7.2"
-hashbrown = "0.6.3"
-vek = "0.9.10"
 nae-derive = { path = "./nae-derive" }
 nae-core = { path = "./nae-core" }
 nae-extras = { path = "./nae-extras" }
-glyph_brush = "0.6.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 backend = { path = "./nae-web", package = "nae-web" }
 
-[dependencies.web-sys]
-version = "0.3.28"
-#package = "web_sys"
-features = [
-    "console",
-    "Document",
-    "Window",
-    "HtmlCanvasElement",
-    'HtmlImageElement',
-  'XmlHttpRequest',
-  'XmlHttpRequestEventTarget',
-  'XmlHttpRequestResponseType',
-  'WebGlContextAttributes'
-]
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+backend = { path = "./nae-native", package = "nae-native" }
 
 [features]
 
-[dev-dependencies]
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 wasm-bindgen = "0.2.51"
 
 [workspace]
@@ -57,5 +32,6 @@ members = [
     "nae-core",
     "nae-glow",
     "nae-web",
-    "nae-extras"
+    "nae-extras",
+    "nae-native"
 ]
