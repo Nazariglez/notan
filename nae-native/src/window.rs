@@ -1,12 +1,14 @@
 use super::System;
+use glutin::{
+    dpi::LogicalSize, ContextBuilder, ControlFlow, EventsLoop, PossiblyCurrent, WindowBuilder,
+    WindowedContext,
+};
 use nae_core::window::BaseWindow;
 use nae_core::{BaseApp, BaseSystem};
 use nae_glow::Context2d;
-use winit;
-use winit::{dpi::LogicalSize, ControlFlow, EventsLoop, WindowBuilder};
 
 pub struct Window {
-    win: winit::Window,
+    pub(crate) win: WindowedContext<PossiblyCurrent>,
     title: String,
     width: i32,
     height: i32,
@@ -20,18 +22,28 @@ impl Window {
         height: i32,
         event_loop: &EventsLoop,
     ) -> Result<Self, String> {
-        let win = WindowBuilder::new()
+        let win_builder = WindowBuilder::new()
             .with_title(title)
-            .with_dimensions(LogicalSize::new(width as f64, height as f64))
-            .build(&event_loop)
+            .with_dimensions(LogicalSize::new(width as f64, height as f64));
+
+        let win_ctx = ContextBuilder::new()
+            .with_vsync(true)
+            .with_gl(glutin::GlRequest::GlThenGles {
+                opengl_version: (3, 3),
+                opengles_version: (2, 0),
+            })
+            .with_gl_profile(glutin::GlProfile::Core)
+            .build_windowed(win_builder, event_loop)
             .map_err(|e| format!("{}", e))?;
+
+        let win_ctx = unsafe { win_ctx.make_current().unwrap() };
 
         Ok(Self {
             width,
             height,
             title: title.to_string(),
             fullscreen: false,
-            win,
+            win: win_ctx,
         })
     }
 }

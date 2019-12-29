@@ -22,7 +22,7 @@ fn load_from_disk(path: impl AsRef<Path>) -> Result<Vec<u8>, std::io::Error> {
 
 pub struct System {
     window: Window,
-    //    context2d: Context2d,
+    context2d: Context2d,
     pub(crate) event_loop: Option<EventsLoop>,
 }
 
@@ -33,16 +33,15 @@ impl BaseSystem for System {
     fn new(mut opts: BuilderOpts) -> Result<Self, String> {
         let event_loop = EventsLoop::new();
         let win = window::Window::new(&opts.title, opts.width, opts.height, &event_loop)?;
-        //        let ctx2 = Context2d::new(&())?;
+        let ctx2 = Context2d::new(&win.win)?;
         Ok(Self {
             window: win,
-            //            context2d: ctx2,
+            context2d: ctx2,
             event_loop: Some(event_loop),
         })
     }
 
     fn ctx2(&mut self) -> &mut Self::Context2d {
-        unimplemented!()
-        //&mut self.context2d
+        &mut self.context2d
     }
 }

@@ -4,6 +4,7 @@ use crate::shader::Shader;
 use crate::texture::Texture;
 use crate::{GlContext, GlowValue, Surface};
 use glow::HasContext;
+use glutin::{PossiblyCurrent, WindowedContext};
 use glyph_brush::BrushAction::Draw;
 use lyon::lyon_tessellation as tess;
 use nae_core::graphics::{
@@ -25,7 +26,7 @@ use wasm_bindgen::JsCast;
 type Device = web_sys::HtmlCanvasElement;
 
 #[cfg(not(target_arch = "wasm32"))]
-type Device = ();
+type Device = WindowedContext<PossiblyCurrent>;
 
 pub struct Context2d {
     pub(crate) gl: GlContext,
@@ -789,8 +790,37 @@ fn create_context_2d(win: &web_sys::HtmlCanvasElement) -> Result<Context2d, Stri
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn create_context_2d(win: &()) -> Result<Context2d, String> {
-    unimplemented!()
+fn create_context_2d(win: &WindowedContext<PossiblyCurrent>) -> Result<Context2d, String> {
+    let width = 800; //TODO
+    let height = 600;
+
+    let ctx = glow::Context::from_loader_function(|s| win.get_proc_address(s) as *const _);
+
+    let gl = Rc::new(ctx);
+    let blend_mode = BlendMode::NORMAL;
+
+    let text_batcher = TextBatcher::new(&gl)?;
+    let sprite_batcher = SpriteBatcher::new(&gl)?;
+    let color_batcher = ColorBatcher::new(&gl)?;
+
+    let data = DrawData::new(width, height);
+
+    initialize_gl_2d(&gl, blend_mode);
+
+    Ok(Context2d {
+        data,
+        gl,
+        text_batcher,
+        sprite_batcher,
+        color_batcher,
+        blend_mode,
+        is_drawing: false,
+        is_drawing_surface: false,
+        paint_mode: PaintMode::Empty,
+        stencil: false,
+        width,
+        height,
+    })
 }
 
 fn initialize_gl_2d(gl: &GlContext, blend_mode: BlendMode) {
