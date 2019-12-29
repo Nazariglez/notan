@@ -12,7 +12,7 @@ fn main() {
 
 fn init(app: &mut App) -> State {
     State {
-        tex: app.load_file("../assets/ferris.png").unwrap(),
+        tex: app.load_file("./examples/assets/ferris.png").unwrap(),
         count: 0.0,
     }
 }

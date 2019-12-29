@@ -7,7 +7,7 @@ struct State {
 
 fn init(app: &mut App) -> State {
     State {
-        image: app.load_file("../assets/t.png").unwrap(),
+        image: app.load_file("./examples/assets/t.png").unwrap(),
         count: 0.0,
     }
 }

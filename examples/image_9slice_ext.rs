@@ -7,7 +7,7 @@ struct State {
 
 fn init(app: &mut App) -> State {
     State {
-        btn: app.load_file("../assets/grey_button.png").unwrap(),
+        btn: app.load_file("./examples/assets/grey_button.png").unwrap(),
         count: 0.0,
     }
 }

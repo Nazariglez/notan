@@ -5,10 +5,10 @@
 </head>
 <body>
 <canvas id="nae_canvas" width="800" height="600"></canvas>
-<script src="./{{ EXAMPLE }}.js"></script>
+<script src="./{{ EXAMPLE }}/{{ EXAMPLE }}.js"></script>
 <script>
       window.addEventListener("load", async () => {
-        await wasm_bindgen("./{{ EXAMPLE }}_bg.wasm");
+        await wasm_bindgen("./{{ EXAMPLE }}/{{ EXAMPLE }}_bg.wasm");
       });
     </script>
 </body>
