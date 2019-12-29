@@ -1,7 +1,7 @@
 use nae::prelude::*;
 
 fn init(app: &mut App) -> Blob {
-    app.load_file("../assets/blob.txt").unwrap()
+    app.load_file("./examples/assets/blob.txt").unwrap()
 }
 
 fn draw(app: &mut App, blob: &mut Blob) {

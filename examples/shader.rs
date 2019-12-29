@@ -14,7 +14,7 @@ fn main() {
 fn init(app: &mut App) -> State {
     State {
         shader: Shader::from_image_fragment(app, include_str!("./assets/pixel.frag.glsl")).unwrap(),
-        tex: app.load_file("../assets/ferris.png").unwrap(),
+        tex: app.load_file("./examples/assets/ferris.png").unwrap(),
         count: 0.0,
     }
 }

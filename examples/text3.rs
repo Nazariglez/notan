@@ -13,7 +13,7 @@ fn main() {
 fn init(app: &mut App) -> State {
     State {
         ubuntu: Font::default(),
-        ubuntu_mono: app.load_file("../assets/UbuntuMono-R.ttf").unwrap(),
+        ubuntu_mono: app.load_file("./examples/assets/UbuntuMono-R.ttf").unwrap(),
     }
 }
 

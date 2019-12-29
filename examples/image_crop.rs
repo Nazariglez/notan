@@ -1,7 +1,7 @@
 use nae::prelude::*;
 
 fn init(app: &mut App) -> Texture {
-    app.load_file("../assets/rust.png").unwrap()
+    app.load_file("./examples/assets/rust.png").unwrap()
 }
 
 fn draw(app: &mut App, logo: &mut Texture) {
