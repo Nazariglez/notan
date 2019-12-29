@@ -36,6 +36,7 @@ pub trait BaseSystem {
 
     fn new(opts: BuilderOpts) -> Result<Self::Kind, String>;
     fn ctx2(&mut self) -> &mut Self::Context2d;
+    fn swap_buffers(&mut self);
 }
 
 #[cfg(target_arch = "wasm32")]
