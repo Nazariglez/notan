@@ -1,5 +1,6 @@
-use nae_core::log;
+use super::System;
 use nae_core::window::*;
+use nae_core::{log, BaseApp};
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
@@ -59,27 +60,23 @@ fn request_animation_frame(win: web_sys::Window, f: &Closure<dyn FnMut()>) {
         .expect("should register `requestAnimationFrame` OK");
 }
 
-pub fn run<F>(callback: F)
+pub fn run<A, F>(app: A, callback: F)
 where
-    F: FnMut() + 'static,
+    A: BaseApp<System = System> + 'static,
+    F: FnMut(&mut A) + 'static,
 {
-    //        self.cb = cb;
+    let mut app = app;
     let cb = Rc::new(RefCell::new(None));
     let cb_copy = cb.clone();
     let callback = Rc::new(RefCell::new(callback));
 
     *cb_copy.borrow_mut() = Some(Closure::wrap(Box::new(move || {
-        //            let mut ctx = ctx.borrow_mut();
-        //            ctx.fps_tracker.tick();
-
         let mut tick_handler = callback.borrow_mut();
-        (&mut *tick_handler)();
+        (&mut *tick_handler)(&mut app);
 
-        //            if ctx.running {
         //Web always run at max speed using raf (setTimeout has drawbacks)
         let win = web_sys::window().unwrap();
         request_animation_frame(win, cb.borrow().as_ref().unwrap());
-        //            }
     }) as Box<dyn FnMut()>));
 
     let win = web_sys::window().unwrap();

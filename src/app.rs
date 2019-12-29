@@ -74,7 +74,7 @@ impl<S> AppBuilder<S> {
         let start_cb = self.start_callback.take().unwrap_or(|_, _| {});
 
         start_cb(&mut app, &mut state);
-        backend::run(move || {
+        backend::run(app, move |mut app| {
             try_load_resources(&mut app).unwrap();
 
             update_cb(&mut app, &mut state);

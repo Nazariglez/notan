@@ -5,8 +5,8 @@ pub use file::*;
 use nae_core::graphics::BaseContext2d;
 pub use nae_core::*;
 pub use nae_glow::*;
-pub use window::*;
 use std::panic;
+pub use window::*;
 
 pub struct System {
     window: Window,
