@@ -36,6 +36,7 @@ fn draw(app: &mut App, state: &mut State) {
     draw.stroke_rect(-210.0, -210.0, 200.0, 200.0, 5.0);
 
     draw.begin_mask();
+    draw.clear(Color::TRANSPARENT);
     draw.geometry(&mut state.geom);
     draw.end_mask();
 

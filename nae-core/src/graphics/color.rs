@@ -7,6 +7,7 @@ pub enum Color {
 }
 
 impl Color {
+    pub const TRANSPARENT: Color = Color::Rgba(0.0, 0.0, 0.0, 0.0);
     pub const WHITE: Color = Color::Rgba(1.0, 1.0, 1.0, 1.0);
     pub const BLACK: Color = Color::Rgba(0.0, 0.0, 0.0, 1.0);
     pub const RED: Color = Color::Rgba(1.0, 0.0, 0.0, 1.0);
