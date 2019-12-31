@@ -14,12 +14,7 @@ futures = "0.1.29"
 nae-derive = { path = "./nae-derive" }
 nae-core = { path = "./nae-core" }
 nae-extras = { path = "./nae-extras" }
-
-#[target.'cfg(target_arch = "wasm32")'.dependencies]
-#backend = { path = "./nae-web", package = "nae-web" }
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-backend = { path = "./nae-native", package = "nae-native" }
+backend = { path = "./nae-backend", package = "nae-backend" }
 
 [features]
 
@@ -33,5 +28,6 @@ members = [
     "nae-glow",
     "nae-web",
     "nae-extras",
-    "nae-native"
+    "nae-native",
+    "nae-backend"
 ]
