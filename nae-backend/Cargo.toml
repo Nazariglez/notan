@@ -1,0 +1,13 @@
+[package]
+name = "nae-backend"
+version = "0.1.0"
+authors = ["Nazarí González <nazari.nz@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+nae-web = { path = "../nae-web" }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+nae-native = { path = "../nae-native" }
