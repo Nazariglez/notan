@@ -3,4 +3,5 @@ pub trait BaseWindow {
     fn height(&self) -> i32;
     fn fullscreen(&self) -> bool;
     fn title(&self) -> &str;
+    fn dpi(&self) -> f32;
 }

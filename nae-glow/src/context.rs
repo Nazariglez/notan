@@ -204,7 +204,9 @@ impl BaseContext2d for Context2d {
                 self.gl.draw_buffer(glow::COLOR_ATTACHMENT0);
             }
 
-            self.gl.viewport(0, 0, ww, hh);
+            let v_width = (ww as f32 * self.data.dpi) as _;
+            let v_height = (hh as f32 * self.data.dpi) as _;
+            self.gl.viewport(0, 0, v_width, v_height);
         }
 
         self.color_batcher.reset();
@@ -666,11 +668,12 @@ pub(crate) struct DrawData {
     pub height: i32,
     pub flipped: bool,
     pub projection: Mat3,
+    pub dpi: f32,
 }
 
 impl DrawData {
-    pub fn new(width: i32, height: i32) -> Self {
-        let projection = projection_2d(width, height, false);
+    pub fn new(width: i32, height: i32, dpi: f32) -> Self {
+        let projection = projection_2d(width, height, false, dpi);
         let transform = Transform2d::new();
         Self {
             width,
@@ -681,6 +684,7 @@ impl DrawData {
             color: Color::WHITE,
             projection,
             flipped: false,
+            dpi,
         }
     }
 
@@ -698,7 +702,7 @@ impl DrawData {
         self.width = width;
         self.height = height;
         self.flipped = flipped;
-        self.projection = projection_2d(self.width, self.height, flipped);
+        self.projection = projection_2d(self.width, self.height, flipped, self.dpi);
     }
 }
 
@@ -768,7 +772,7 @@ fn create_context_2d(win: &web_sys::HtmlCanvasElement) -> Result<Context2d, Stri
     let width = win.width() as _;
     let height = win.height() as _;
     let (gl, driver) = create_gl_context(win)?;
-    let data = DrawData::new(width, height);
+    let data = DrawData::new(width, height, 1.0);
     let blend_mode = BlendMode::NORMAL;
 
     let text_batcher = TextBatcher::new(&gl)?;
@@ -811,7 +815,8 @@ fn create_context_2d(win_ctx: &WindowedContext<PossiblyCurrent>) -> Result<Conte
     let sprite_batcher = SpriteBatcher::new(&gl)?;
     let color_batcher = ColorBatcher::new(&gl)?;
 
-    let data = DrawData::new(width, height);
+    let dpi = win_ctx.window().get_hidpi_factor() as f32;
+    let data = DrawData::new(width, height, dpi);
 
     initialize_gl_2d(&gl, blend_mode);
 

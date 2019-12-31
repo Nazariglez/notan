@@ -16,6 +16,7 @@ pub struct Window {
     width: i32,
     height: i32,
     fullscreen: bool,
+    dpi: f32,
 }
 
 impl Window {
@@ -40,14 +41,16 @@ impl Window {
             .build_windowed(win_builder, event_loop)
             .map_err(|e| format!("{}", e))?;
 
-        let win_ctx = unsafe { win_ctx.make_current().unwrap() };
+        let win = unsafe { win_ctx.make_current().unwrap() };
+        let dpi = win.window().get_hidpi_factor() as f32;
 
         Ok(Self {
             width,
             height,
             title: title.to_string(),
             fullscreen: false,
-            win: win_ctx,
+            win,
+            dpi,
         })
     }
 }
@@ -68,6 +71,10 @@ impl BaseWindow for Window {
     fn title(&self) -> &str {
         &self.title
     }
+
+    fn dpi(&self) -> f32 {
+        self.dpi
+    }
 }
 
 pub fn run<A, F>(app: A, callback: F)
@@ -83,9 +90,9 @@ where
     loop {
         let is_running = running.clone();
         event_loop.poll_events(move |event| match event {
+            //TODO Listen for dpi change and resize
             Event::WindowEvent { ref event, .. } => match event {
                 WindowEvent::CloseRequested => {
-                    println!("hello");
                     *is_running.borrow_mut() = false;
                 }
                 _ => {}
