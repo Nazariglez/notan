@@ -12,7 +12,7 @@ Nae is Not An Engine, is a portable multimedia layer with an easy API designed t
 
 ## Goals
 - HTML5 must be a first class citizen using Webassembly.
-- Support all hte major platforms.
+- Support all the major platforms.
 - Provide an abstraction layer to add new platforms easily (even privates like consoles). 
 - Make easy to deploy on these platforms with a CLI.
 - Provide an API that run on each platform without changes.
@@ -21,21 +21,20 @@ Nae is Not An Engine, is a portable multimedia layer with an easy API designed t
 ```rust 
 use nae::prelude::*;
 
-#[nae_start]
+#[nae::main]
 fn main() {
-    nae::init()
-        .draw(draw)
-        .build()
-        .unwrap();
+    nae::init().draw(draw).build().unwrap();
 }
 
 fn draw(app: &mut App, _: &mut ()) {
     let draw = app.draw();
     draw.begin();
-    draw.set_color(Color::Green);
+    draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
+    draw.set_color(Color::GREEN);
     draw.triangle(400.0, 100.0, 100.0, 500.0, 700.0, 500.0);
     draw.end();
 }
+
 ```
 ![Triangle](./assets/triangle.png)
 
@@ -50,9 +49,9 @@ Instructions to init and build a project
     - [x] Web Browsers
     - [ ] iOS
     - [ ] Android
-    - [ ] MacOS
+    - [x] MacOS
     - [ ] Linux 
-    - [ ] Windows
+    - [x] Windows
 - 2D renderer
     - [x] Primitives
     - [x] Polylines
@@ -71,7 +70,7 @@ Instructions to init and build a project
     - [ ] Dx11
     - [ ] Dx12
     - [ ] Vulkan
-    - [ ] OpenGL
+    - [x] OpenGL
     - [ ] OpenGL ES
 - API 
     - [ ] Window
