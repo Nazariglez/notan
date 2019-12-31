@@ -20,10 +20,6 @@ type ProgramKey = glow::WebProgramKey;
 #[cfg(not(target_arch = "wasm32"))]
 type ProgramKey = <glow::Context as HasContext>::Program;
 
-#[cfg(target_arch = "wasm32")]
-type UniformLocationKey = glow::WebUniformLocationKey;
-
-#[cfg(not(target_arch = "wasm32"))]
 type UniformLocationKey = <glow::Context as HasContext>::UniformLocation;
 
 #[derive(Clone)]
@@ -45,7 +41,7 @@ impl Shader {
     pub fn set_uniform<T: UniformType>(&self, name: &str, value: T) -> Result<(), String> {
         let mut uniforms = self.inner.uniforms.borrow_mut();
         if let Some(location) = uniforms.get(name) {
-            value.set_uniform_value(&self.inner.gl, *location);
+            value.set_uniform_value(&self.inner.gl, location.clone());
         } else {
             let location = unsafe {
                 self.inner
@@ -53,7 +49,7 @@ impl Shader {
                     .get_uniform_location(self.inner.program, name)
                     .ok_or(format!("Invalid uniform name: {}", name))?
             };
-            value.set_uniform_value(&self.inner.gl, location);
+            value.set_uniform_value(&self.inner.gl, location.clone());
             uniforms.insert(name.to_string(), location);
         }
         Ok(())
@@ -133,7 +129,9 @@ fn shader_from_gl_context(
     let mut attrs = HashMap::new();
     unsafe {
         while let Some(attr) = attributes.pop() {
-            let location = gl.get_attrib_location(program, &attr.name).ok_or("Invalid location")? as u32;
+            let location = gl
+                .get_attrib_location(program, &attr.name)
+                .ok_or("Invalid location")? as u32;
             let buffer = gl.create_buffer()?;
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(buffer));
             gl.enable_vertex_attrib_array(location);
