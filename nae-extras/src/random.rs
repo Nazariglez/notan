@@ -1,3 +1,5 @@
+use nae_core::rand;
+use nae_core::rand_pcg;
 use rand::distributions::uniform::{SampleBorrow, SampleUniform};
 use rand::distributions::{Distribution, Standard};
 use rand::prelude::*;

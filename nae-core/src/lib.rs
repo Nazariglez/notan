@@ -7,6 +7,9 @@ pub mod window;
 pub use graphics::*;
 pub use resources::*;
 
+pub use rand;
+pub use rand_pcg;
+
 pub struct BuilderOpts {
     pub title: String,
     pub width: i32,
