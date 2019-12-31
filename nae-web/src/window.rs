@@ -17,7 +17,6 @@ pub struct Window {
 
 impl Window {
     pub(crate) fn new(title: &str, width: i32, height: i32) -> Result<Self, String> {
-        log::info!("hello!");
         let win = web_sys::window().ok_or(String::from("Can't access window dom object."))?;
         let canvas = win
             .document()
@@ -52,6 +51,10 @@ impl BaseWindow for Window {
 
     fn title(&self) -> &str {
         &self.title
+    }
+
+    fn dpi(&self) -> f32 {
+        1.0
     }
 }
 
