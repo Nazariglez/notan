@@ -133,7 +133,7 @@ fn shader_from_gl_context(
     let mut attrs = HashMap::new();
     unsafe {
         while let Some(attr) = attributes.pop() {
-            let location = gl.get_attrib_location(program, &attr.name) as u32;
+            let location = gl.get_attrib_location(program, &attr.name).ok_or("Invalid location")? as u32;
             let buffer = gl.create_buffer()?;
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(buffer));
             gl.enable_vertex_attrib_array(location);
