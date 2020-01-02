@@ -2,13 +2,12 @@ use crate::{BaseApp, BaseSystem};
 mod blend;
 mod color;
 mod geometry;
-mod transform;
 
+use super::math::Mat3;
 use crate::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
 pub use blend::*;
 pub use color::*;
 pub use geometry::*;
-pub use transform::Transform2d;
 
 pub trait BaseSurface
 where
@@ -82,6 +81,16 @@ where
     type Texture: BaseTexture;
     type Font: BaseFont;
 
+    fn push_matrix(&mut self, matrix: &Mat3);
+    fn push_scale(&mut self, sx: f32, sy: f32);
+    fn push_translate(&mut self, x: f32, y: f32);
+    fn push_skew(&mut self, x: f32, y: f32);
+    fn push_rotation(&mut self, rad: f32);
+    fn pop_matrix(&mut self);
+
+    fn matrix_mut(&mut self) -> &mut Mat3;
+    fn matrix(&self) -> &Mat3;
+
     fn new(device: &Self::Device) -> Result<Self, String>;
     fn set_shader(&mut self, shader: Option<&Self::Shader>);
     fn update_custom_shader(&mut self, shader: Option<&Self::Shader>);
@@ -91,7 +100,6 @@ where
     fn width(&self) -> i32;
     fn height(&self) -> i32;
     fn set_color(&mut self, color: Color);
-    fn transform(&mut self) -> &mut Transform2d;
     fn begin_to_surface(&mut self, surface: Option<&Self::Surface>);
     fn begin(&mut self);
     fn end(&mut self);
