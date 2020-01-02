@@ -4,12 +4,13 @@ use crate::shader::Shader;
 use crate::texture::Texture;
 use crate::{GlContext, GlowValue, Surface};
 use glow::HasContext;
+use nae_core::math::glm::*;
 
 use glyph_brush::BrushAction::Draw;
 use lyon::lyon_tessellation as tess;
 use nae_core::graphics::{
     lyon_vbuff_to_vertex, BaseContext2d, BaseShader, BaseSurface, BlendFactor, BlendMode, Color,
-    Geometry, LyonVertex, Transform2d, Vertex,
+    Geometry, LyonVertex, Vertex,
 };
 use nae_core::math::*;
 use nae_core::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
@@ -45,6 +46,7 @@ pub struct Context2d {
     is_drawing_surface: bool,
     width: i32,
     height: i32,
+    transform: Vec<Mat3>,
 }
 
 impl Context2d {
@@ -179,9 +181,9 @@ impl BaseContext2d for Context2d {
         self.data.color = color;
     }
 
-    fn transform(&mut self) -> &mut Transform2d {
-        &mut self.data.transform
-    }
+    //    fn transform(&mut self) -> &mut Transform2d {
+    //        &mut self.data.transform
+    //    }
 
     fn begin_to_surface(&mut self, surface: Option<&Surface>) {
         if self.is_drawing {
@@ -657,13 +659,48 @@ impl BaseContext2d for Context2d {
             bottom,
         );
     }
+
+    fn push_matrix(&mut self, matrix: &Mat3) {
+        self.data.transform.push(self.matrix() * matrix);
+    }
+
+    fn push_scale(&mut self, sx: f32, sy: f32) {
+        self.push_matrix(&scaling2d(&vec2(sx, sy)));
+    }
+
+    fn push_translate(&mut self, x: f32, y: f32) {
+        self.push_matrix(&translation2d(&vec2(x, y)));
+    }
+
+    fn push_skew(&mut self, x: f32, y: f32) {
+        self.push_matrix(&mat3(1.0, x.tan(), 0.0, y.tan(), 1.0, 0.0, 0.0, 0.0, 1.0));
+    }
+
+    fn push_rotation(&mut self, angle: f32) {
+        self.push_matrix(&rotation2d(angle));
+    }
+
+    fn pop_matrix(&mut self) {
+        if self.data.transform.len() <= 1 {
+            return;
+        }
+        self.data.transform.pop();
+    }
+
+    fn matrix(&self) -> &Mat3 {
+        self.data.matrix()
+    }
+
+    fn matrix_mut(&mut self) -> &mut Mat3 {
+        self.data.matrix_mut()
+    }
 }
 
 pub(crate) struct DrawData {
     pub alpha: f32,
     pub color: Color,
     pub shader: Option<Shader>,
-    pub transform: Transform2d,
+    pub transform: Vec<Mat3>,
     pub width: i32,
     pub height: i32,
     pub flipped: bool,
@@ -674,18 +711,26 @@ pub(crate) struct DrawData {
 impl DrawData {
     pub fn new(width: i32, height: i32, dpi: f32) -> Self {
         let projection = projection_2d(width, height, false, dpi);
-        let transform = Transform2d::new();
         Self {
             width,
             height,
             alpha: 1.0,
             shader: None,
-            transform,
+            transform: vec![identity()],
             color: Color::WHITE,
             projection,
             flipped: false,
             dpi,
         }
+    }
+
+    pub fn matrix(&self) -> &Mat3 {
+        &self.transform[self.transform.len() - 1]
+    }
+
+    pub fn matrix_mut(&mut self) -> &mut Mat3 {
+        let len = self.transform.len();
+        &mut self.transform[len - 1]
     }
 
     pub fn set_size(&mut self, width: i32, height: i32, flipped: bool) {
@@ -722,11 +767,6 @@ fn create_gl_context(win: &web_sys::HtmlCanvasElement) -> Result<(GlContext, Str
 
     let ctx = create_webgl_context(win)?;
     Ok((ctx, String::from("webgl")))
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn create_gl_context(device: &()) -> Result<(GlContext, String), String> {
-    unimplemented!()
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -794,6 +834,7 @@ fn create_context_2d(win: &web_sys::HtmlCanvasElement) -> Result<Context2d, Stri
         stencil: false,
         width,
         height,
+        transform: vec![identity()],
     })
 }
 
@@ -833,6 +874,7 @@ fn create_context_2d(win_ctx: &WindowedContext<PossiblyCurrent>) -> Result<Conte
         stencil: false,
         width,
         height,
+        transform: vec![identity()],
     })
 }
 

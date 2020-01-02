@@ -30,8 +30,8 @@ fn draw(app: &mut App, state: &mut State) {
     draw.begin();
     draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
 
-    draw.transform().translate(400.0, 300.0);
-    draw.transform().rotate_deg(state.rot);
+    draw.push_translate(400.0, 300.0);
+    draw.push_rotation(state.rot * math::PI / 180.0);
 
     draw.stroke_rect(-210.0, -210.0, 200.0, 200.0, 5.0);
 
@@ -40,8 +40,8 @@ fn draw(app: &mut App, state: &mut State) {
     draw.geometry(&mut state.geom);
     draw.end_mask();
 
-    draw.transform().pop();
-    draw.transform().pop();
+    draw.pop_matrix();
+    draw.pop_matrix();
 
     draw.set_color(Color::GREEN);
     draw.triangle(400.0, 120.0, 200.0, 400.0, 600.0, 400.0);

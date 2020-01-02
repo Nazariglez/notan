@@ -2,7 +2,7 @@ pub use glm::{
     identity, mat3, mat4, rotation2d, scaling2d, translation2d, vec2, vec3, Mat3, Mat4, Vec2, Vec3,
 };
 use lazy_static::lazy_static;
-use nalgebra_glm as glm;
+pub use nalgebra_glm as glm;
 use rand::distributions::uniform::{SampleBorrow, SampleUniform};
 use rand::distributions::{Distribution, Standard};
 use rand::{Rng, SeedableRng};
@@ -35,7 +35,7 @@ where
     RNG.lock().unwrap().gen_range(min, max)
 }
 
-//TODO evluate replace all the vecs and mats with the `vek` crate? (SIMD = performace) (nalgebra is needed to collision libs?)
+//TODO evluate replace all the vecs and mats with the `ultraviolet` crate? (SIMD = performace) (nalgebra is needed to collision libs?)
 
 pub fn eq_float(a: f32, b: f32) -> bool {
     //TODO improve this? https://floating-point-gui.de/errors/comparison/ it worth it? performance problems?

@@ -84,7 +84,7 @@ impl ColorBatcher {
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
         for (i, _) in vertex.iter().enumerate().step_by(2) {
             if let (Some(v1), Some(v2)) = (vertex.get(i), vertex.get(i + 1)) {
-                let v = data.transform.matrix() * vec3(*v1, *v2, 1.0);
+                let v = data.matrix() * vec3(*v1, *v2, 1.0);
                 self.vertex[offset] = v.x;
                 self.vertex[offset + 1] = v.y;
                 offset += 2;
@@ -302,7 +302,7 @@ impl SpriteBatcher {
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
         for (i, _) in vertex.iter().enumerate().step_by(2) {
             if let (Some(v1), Some(v2)) = (vertex.get(i), vertex.get(i + 1)) {
-                let v = data.transform.matrix() * vec3(*v1, *v2, 1.0);
+                let v = data.matrix() * vec3(*v1, *v2, 1.0);
                 self.vertex[offset] = v.x;
                 self.vertex[offset + 1] = v.y;
                 offset += 2;
@@ -416,7 +416,7 @@ impl SpriteBatcher {
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
         for (i, _) in vertex.iter().enumerate().step_by(2) {
             if let (Some(v1), Some(v2)) = (vertex.get(i), vertex.get(i + 1)) {
-                let v = data.transform.matrix() * vec3(*v1, *v2, 1.0);
+                let v = data.matrix() * vec3(*v1, *v2, 1.0);
                 self.vertex[offset] = v.x;
                 self.vertex[offset + 1] = v.y;
                 offset += 2;
@@ -570,9 +570,9 @@ impl TextBatcher {
         /*TODO avoid to flush because the matrix change, store it by section and
            process it in the same draw call
         */
-        if data.transform.matrix() != &self.current_matrix {
+        if data.matrix() != &self.current_matrix {
             self.flush(gl, data);
-            self.current_matrix = *data.transform.matrix();
+            self.current_matrix = *data.matrix();
         }
 
         let max_width = max_width.unwrap_or(std::f32::INFINITY);
