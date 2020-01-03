@@ -59,8 +59,6 @@ fn init_transforms(img: &Texture) -> Vec<Transform2d> {
 }
 
 fn draw(app: &mut App, state: &mut State) {
-    //    let img = &state.tex;
-
     let draw = app.draw();
     draw.begin();
     draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
@@ -77,8 +75,14 @@ fn draw(app: &mut App, state: &mut State) {
     }
 
     //Debug info
+    draw_debug(draw, state);
+
+    draw.end();
+}
+
+fn draw_debug(draw: &mut Context2d, state: &mut State) {
     draw.set_color(Color::BLACK);
-    for (i, t) in state.transforms.iter_mut().enumerate() {
+    for t in state.transforms.iter() {
         draw.text_ext(
             &format!(
                 "pos: ({}, {})\nanchor: ({}, {})\npivot: ({}, {})",
@@ -92,6 +96,4 @@ fn draw(app: &mut App, state: &mut State) {
             None,
         );
     }
-
-    draw.end();
 }
