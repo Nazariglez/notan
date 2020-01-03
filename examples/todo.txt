@@ -1,7 +1,6 @@
 snake
 tetris
 15puzzle
-transform -> scale, rotation, skew, etc...
 primitives
 audio
 mouse
