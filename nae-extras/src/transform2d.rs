@@ -47,6 +47,53 @@ impl Transform2d {
         self.update();
         &self.cached.matrix()
     }
+
+    pub fn set_position(&mut self, x: f32, y: f32) -> &mut Self {
+        self.x = x;
+        self.y = y;
+        self
+    }
+
+    pub fn set_size(&mut self, width: f32, height: f32) -> &mut Self {
+        self.width = width;
+        self.height = height;
+        self
+    }
+
+    pub fn set_rotation(&mut self, rad: f32) -> &mut Self {
+        self.rotation = rad;
+        self
+    }
+
+    pub fn set_anchor(&mut self, anchor_x: f32, anchor_y: f32) -> &mut Self {
+        self.anchor_x = anchor_x;
+        self.anchor_y = anchor_y;
+        self
+    }
+
+    pub fn set_pivot(&mut self, pivot_x: f32, pivot_y: f32) -> &mut Self {
+        self.pivot_x = pivot_x;
+        self.pivot_y = pivot_y;
+        self
+    }
+
+    pub fn set_scale(&mut self, scale_x: f32, scale_y: f32) -> &mut Self {
+        self.scale_x = scale_x;
+        self.scale_y = scale_y;
+        self
+    }
+
+    pub fn set_skew(&mut self, skew_x: f32, skew_y: f32) -> &mut Self {
+        self.skew_x = skew_x;
+        self.skew_y = skew_y;
+        self
+    }
+
+    pub fn set_flip(&mut self, flip_x: bool, flip_y: bool) -> &mut Self {
+        self.flip_x = flip_x;
+        self.flip_y = flip_y;
+        self
+    }
 }
 
 #[derive(Debug)]
