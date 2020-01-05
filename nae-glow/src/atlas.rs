@@ -1,9 +1,20 @@
-use backend::{BaseSystem, Context2d, Resource};
+use crate::{Context2d, Texture};
+use nae_core::{BaseSystem, Resource};
 use serde::{Deserialize, Serialize};
+use std::cell::RefCell;
+use std::rc::Rc;
 
-struct Atlas {}
+struct InnerAtlas {
+    data: AtlasRoot,
+    root: String,
+}
 
-impl Resource for Atlas {
+struct TextureAtlas {
+    data: Rc<RefCell<Option<InnerAtlas>>>,
+    texture: Texture,
+}
+
+impl Resource for TextureAtlas {
     type Context2d = Context2d;
 
     fn new(file: &str) -> Self {
