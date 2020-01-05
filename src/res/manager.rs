@@ -1,4 +1,5 @@
 use super::ResourceParser;
+use crate::app::App;
 use backend::load_file;
 use backend::System;
 use futures::{Async, Future};
@@ -6,7 +7,7 @@ use nae_core::BaseSystem;
 use nae_core::*;
 
 type ResourceLoader<'a> = (
-    Box<dyn ResourceParser<System = System> + 'a>,
+    Box<dyn ResourceParser<App = App> + 'a>,
     Box<dyn Future<Item = Vec<u8>, Error = String>>,
 );
 
@@ -25,7 +26,7 @@ impl<'a> ResourceLoaderManager<'a> {
 
     pub fn add<T>(&mut self, file: &str) -> Result<T, String>
     where
-        T: ResourceParser<System = System> + Resource + Clone + 'a,
+        T: ResourceParser<App = App> + Resource + Clone + 'a,
     {
         let fut = load_file(file);
         let asset = T::new(file);
@@ -33,16 +34,9 @@ impl<'a> ResourceLoaderManager<'a> {
         Ok(asset)
     }
 
-    pub fn add_from_memory<T>(&mut self, data: &[u8]) -> Result<T, String>
-    where
-        T: ResourceParser + Resource + Clone + 'a,
-    {
-        unimplemented!()
-    }
-
     pub fn try_load(
         &mut self,
-    ) -> Result<Option<Vec<(Vec<u8>, Box<dyn ResourceParser<System = System> + 'a>)>>, String> {
+    ) -> Result<Option<Vec<(Vec<u8>, Box<dyn ResourceParser<App = App> + 'a>)>>, String> {
         if self.to_load.len() == 0 {
             return Ok(None);
         }

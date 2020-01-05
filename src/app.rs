@@ -19,12 +19,12 @@ use nae_core::{BaseSystem, BuilderOpts};
 
 //TODO backend requirements for resvg https://github.com/RazrFalcon/resvg/blob/master/docs/backend_requirements.md
 
-pub struct App<'a> {
-    resources: ResourceLoaderManager<'a>,
+pub struct App {
+    resources: ResourceLoaderManager<'static>,
     sys: System,
 }
 
-impl BaseApp for App<'_> {
+impl BaseApp for App {
     type System = System;
 
     fn system(&mut self) -> &mut Self::System {
@@ -32,14 +32,14 @@ impl BaseApp for App<'_> {
     }
 }
 
-impl<'a> App<'a> {
-    pub fn draw(&mut self) -> &mut backend::Context2d {
+impl App {
+    pub fn draw(&mut self) -> &mut Context2d {
         self.sys.ctx2()
     }
 
     pub fn load_file<A>(&mut self, file: &str) -> Result<A, String>
     where
-        A: ResourceParser<System = System> + Resource + Clone + 'a,
+        A: ResourceParser<App = Self> + Resource + Clone + 'static,
     {
         self.resources.add(file)
     }
@@ -111,7 +111,7 @@ fn try_load_resources(app: &mut App) -> Result<(), String> {
     if let Some(mut assets_loaded) = app.resources.try_load()? {
         while let Some((data, mut asset)) = assets_loaded.pop() {
             if !asset.already_loaded() {
-                asset.parse_res(&mut app.sys, data)?;
+                asset.parse_res(app, data)?;
             }
         }
     }

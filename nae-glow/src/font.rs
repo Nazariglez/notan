@@ -11,7 +11,7 @@ use glyph_brush::{
 use nae_core::resources::{
     BaseFont, BaseTexture, HorizontalAlign, Resource, TextureFilter, TextureFormat, VerticalAlign,
 };
-use nae_core::BaseSystem;
+use nae_core::{BaseApp, BaseSystem};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -82,12 +82,12 @@ impl Resource for Font {
         }
     }
 
-    fn parse<T: BaseSystem<Context2d = Self::Context2d>>(
-        &mut self,
-        app: &mut T,
-        data: Vec<u8>,
-    ) -> Result<(), String> {
-        let id = add_font(app.ctx2(), data);
+    fn parse<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Context2d>,
+    {
+        let id = add_font(app.system().ctx2(), data);
         *self.inner.borrow_mut() = InnerFont {
             id: FontId(id),
             loaded: true,

@@ -1,7 +1,7 @@
 mod app;
 mod res;
 
-#[cfg(target_feature = "extras")]
+#[cfg(feature = "extras")]
 pub mod extras;
 
 pub use nae_derive::main;
@@ -18,7 +18,7 @@ pub use nae_derive::main;
     this allow to alter the event cycle without change the original code
 */
 
-pub use app::{init, with_state};
+pub use app::{init, with_state, App};
 
 pub mod prelude {
     pub use super::app::*;
