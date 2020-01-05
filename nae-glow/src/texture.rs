@@ -6,24 +6,70 @@ use nae_core::{BaseApp, BaseSystem};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[derive(Clone, Default)]
+pub struct Frame {
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+}
+
 #[derive(Clone)]
 pub struct Texture {
     inner: Rc<RefCell<InnerTexture>>,
+    frame: Option<Frame>,
 }
 
 impl Texture {
     pub(crate) fn tex(&self) -> Option<TextureKey> {
         self.inner.borrow().tex
     }
+
+    pub fn frame(&self) -> (f32, f32, f32, f32) {
+        if let Some(frame) = &self.frame {
+            (frame.x, frame.y, frame.width, frame.height)
+        } else {
+            let inner = self.inner.borrow();
+            (0.0, 0.0, inner.width as _, inner.height as _)
+        }
+    }
+
+    pub fn with_frame(&self, x: f32, y: f32, width: f32, height: f32) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            frame: Some(Frame {
+                x,
+                y,
+                width,
+                height,
+            }),
+        }
+    }
+
+    pub fn base_width(&self) -> f32 {
+        self.inner.borrow().width as _
+    }
+
+    pub fn base_height(&self) -> f32 {
+        self.inner.borrow().height as _
+    }
 }
 
 impl BaseTexture for Texture {
     fn width(&self) -> f32 {
-        self.inner.borrow().width as _
+        if let Some(f) = &self.frame {
+            f.width
+        } else {
+            self.inner.borrow().width as _
+        }
     }
 
     fn height(&self) -> f32 {
-        self.inner.borrow().height as _
+        if let Some(f) = &self.frame {
+            f.height
+        } else {
+            self.inner.borrow().height as _
+        }
     }
 
     fn from_size<T, S>(app: &mut T, width: i32, height: i32) -> Result<Self, String>
@@ -105,6 +151,7 @@ pub(crate) fn texture_from_gl_context(
     inner.tex = Some(tex);
     Ok(Texture {
         inner: Rc::new(RefCell::new(inner)),
+        frame: None,
     })
 }
 
@@ -114,6 +161,7 @@ impl Resource for Texture {
     fn new(file: &str) -> Self {
         Self {
             inner: Rc::new(RefCell::new(InnerTexture::empty(1, 1))),
+            frame: None,
         }
     }
 

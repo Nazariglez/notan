@@ -243,25 +243,23 @@ impl SpriteBatcher {
         }
 
         let tex = img.tex().unwrap();
+        let (fx, fy, fw, fh) = img.frame();
 
-        //        let tex = match img.tex() {
-        //            Some(t) => t,
-        //            _ => init_graphic_texture(gl, img).unwrap(),
-        //        };
-
-        let img_ww = img.width();
-        let img_hh = img.height();
+        let img_ww = img.base_width();
+        let img_hh = img.base_height();
 
         let ww = if width == 0.0 { img_ww } else { width };
         let hh = if height == 0.0 { img_hh } else { height };
 
+        let sx = fx + source_x;
+        let sy = fy + source_y;
         let sw = if source_width == 0.0 {
-            img_ww
+            fw
         } else {
             source_width
         };
         let sh = if source_height == 0.0 {
-            img_hh
+            fh
         } else {
             source_height
         };
@@ -309,10 +307,10 @@ impl SpriteBatcher {
             }
         }
 
-        let x1 = source_x / img_ww;
-        let y1 = source_y / img_hh;
-        let x2 = (source_x + sw) / img_ww;
-        let y2 = (source_y + sh) / img_hh;
+        let x1 = sx / img_ww;
+        let y1 = sy / img_hh;
+        let x2 = (sx + sw) / img_ww;
+        let y2 = (sy + sh) / img_hh;
 
         let mut offset = self.index as usize * VERTICES * VERTICE_SIZE;
         let vertex_tex = [x1, y1, x1, y2, x2, y1, x2, y1, x1, y2, x2, y2];
@@ -362,11 +360,6 @@ impl SpriteBatcher {
         }
 
         let tex = img.tex().unwrap();
-
-        //        let tex = match img.tex() {
-        //            Some(t) => t,
-        //            _ => init_graphic_texture(gl, img).unwrap(),
-        //        };
 
         let offset_x = offset_x * scale_x;
         let offset_y = offset_y * scale_y;
