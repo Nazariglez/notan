@@ -1,8 +1,10 @@
 mod app;
 mod res;
 
+#[cfg(target_feature = "extras")]
+pub mod extras;
+
 pub use nae_derive::main;
-pub use nae_extras as extras;
 
 /*
   TODO think about a plugin trait?
