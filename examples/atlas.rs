@@ -1,46 +1,39 @@
+use nae::extras::TextureAtlas;
 use nae::prelude::*;
 use std::collections::HashMap;
 
 struct State {
-    tex: Texture,
-    atlas: HashMap<String, Texture>,
+    atlas: TextureAtlas,
 }
 
 fn init(app: &mut App) -> State {
     State {
-        tex: app.load_file("./examples/assets/sunnyland.png").unwrap(),
-        atlas: HashMap::new(),
+        atlas: app.load_file("./examples/assets/sunnyland.json").unwrap(),
     }
 }
 
 fn draw(app: &mut App, state: &mut State) {
-    if state.tex.is_loaded() && !state.atlas.contains_key("house") {
-        state.atlas.insert(
-            "house".to_string(),
-            state.tex.with_frame(2.0, 223.0, 87.0, 108.0),
-        );
-        state.atlas.insert(
-            "tree".to_string(),
-            state.tex.with_frame(2.0, 128.0, 105.0, 93.0),
-        );
+    if !state.atlas.is_loaded() {
+        return;
     }
+    let textures = state.atlas.textures();
+
+    let house = textures.get("house").unwrap();
+    let tree = textures.get("tree").unwrap();
+    let door = textures.get("door").unwrap();
 
     let draw = app.draw();
     draw.begin();
     draw.clear(Color::ORANGE);
-    draw.image(&state.tex, 0.0, 0.0);
-    draw.set_color(Color::RED);
-    draw.stroke_rect(0.0, 0.0, state.tex.width(), state.tex.height(), 2.0);
 
-    draw.set_color(Color::WHITE);
-    if let Some(t) = state.atlas.get("house") {
-        draw.image(t, 300.0, 300.0);
+    draw.image(house, 300.0, 300.0);
+
+    for i in 0..3 {
+        draw.image(tree, 400.0 + tree.width() * i as f32, 0.0)
     }
 
-    if let Some(t) = state.atlas.get("tree") {
-        for i in 0..3 {
-            draw.image(t, 400.0 + t.width() * i as f32, 0.0)
-        }
+    for i in 0..20 {
+        draw.image(door, 20.0 + door.width() * i as f32, 200.0);
     }
 
     draw.end();

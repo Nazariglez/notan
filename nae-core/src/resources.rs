@@ -9,9 +9,10 @@ pub trait Resource {
     fn new(file: &str) -> Self;
 
     /// Dispatched when the resource is loaded on memory
-    fn parse<T>(&mut self, sys: &mut T, data: Vec<u8>) -> Result<(), String>
+    fn parse<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
     where
-        T: BaseSystem<Context2d = Self::Context2d>;
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Context2d>;
 
     /// Should return true if the resource is ready to use it
     fn is_loaded(&self) -> bool;

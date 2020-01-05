@@ -165,11 +165,11 @@ impl Resource for Texture {
         }
     }
 
-    fn parse<T: BaseSystem<Context2d = Self::Context2d>>(
-        &mut self,
-        app: &mut T,
-        data: Vec<u8>,
-    ) -> Result<(), String> {
+    fn parse<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = Self::Context2d>,
+    {
         let data = image::load_from_memory(&data)
             .map_err(|e| e.to_string())?
             .to_rgba();
@@ -177,7 +177,7 @@ impl Resource for Texture {
         let width = data.width() as _;
         let height = data.height() as _;
         let raw = data.to_vec();
-        let gl = app.ctx2().gl.clone();
+        let gl = app.system().ctx2().gl.clone();
         let tex = create_gl_tex_ext(
             &gl,
             width,

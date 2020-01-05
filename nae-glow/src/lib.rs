@@ -1,4 +1,3 @@
-mod atlas;
 mod batchers;
 mod context;
 mod font;
@@ -9,8 +8,6 @@ mod texture;
 use glow::{Context, HasContext};
 use std::rc::Rc;
 
-pub use atlas::*;
-pub use atlas::*;
 pub use context::*;
 pub use font::*;
 pub use shader::*;
