@@ -360,12 +360,14 @@ impl SpriteBatcher {
         }
 
         let tex = img.tex().unwrap();
+        let (fx, fy, fw, fh) = img.frame();
 
         let offset_x = offset_x * scale_x;
         let offset_y = offset_y * scale_y;
 
-        let ww = img.width() * scale_x;
-        let hh = img.height() * scale_y;
+        let ww = img.base_width() * scale_x;
+        let hh = img.base_height() * scale_y;
+
         let quad_scale_x = width / ww;
         let quad_scale_y = height / hh;
 
@@ -398,6 +400,8 @@ impl SpriteBatcher {
                 self.current_tex = Some(tex);
             }
         }
+
+        //TODO https://stackoverflow.com/questions/32400210/how-to-fill-a-polygon-with-a-repeatable-image-cropped-from-a-texture
 
         let count = (vertex.len() / 6) as i32;
         let next = self.index + count;

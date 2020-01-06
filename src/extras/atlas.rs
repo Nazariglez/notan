@@ -21,7 +21,7 @@ pub struct TextureAtlas {
 }
 
 impl TextureAtlas {
-    pub fn textures(&mut self) -> Ref<HashMap<String, Texture>> {
+    pub fn textures(&self) -> Ref<HashMap<String, Texture>> {
         return Ref::map(self.textures.borrow(), |textures| textures);
     }
 }

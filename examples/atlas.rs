@@ -36,6 +36,18 @@ fn draw(app: &mut App, state: &mut State) {
         draw.image(door, 20.0 + door.width() * i as f32, 200.0);
     }
 
+    draw.pattern(house, 10.0, 300.0, house.width() * 2.0, house.height() * 2.0, 0.0, 0.0);
+//    panic!();
+    draw.image_crop(
+        house,
+        550.0,
+        300.0,
+        house.width() * 0.5,
+        house.height() * 0.5,
+        house.width() * 0.5,
+        house.height() * 0.5,
+    );
+
     draw.end();
 }
 
