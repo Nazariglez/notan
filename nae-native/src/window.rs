@@ -1,14 +1,15 @@
 use super::System;
-use glutin::{
-    dpi::LogicalSize, ContextBuilder, ControlFlow, Event, EventsLoop, PossiblyCurrent,
-    WindowBuilder, WindowEvent, WindowedContext,
-};
+use glutin::{dpi::LogicalSize, ContextBuilder, PossiblyCurrent, WindowedContext};
 use nae_core::window::BaseWindow;
 use nae_core::{BaseApp, BaseSystem};
 use nae_glow::Context2d;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
+use std::time::{Duration, Instant};
+use winit::event::{Event, WindowEvent};
+use winit::event_loop::{ControlFlow, EventLoop};
+use winit::window::WindowBuilder;
 
 pub struct Window {
     pub(crate) win: WindowedContext<PossiblyCurrent>,
@@ -24,11 +25,11 @@ impl Window {
         title: &str,
         width: i32,
         height: i32,
-        event_loop: &EventsLoop,
+        event_loop: &EventLoop<()>,
     ) -> Result<Self, String> {
         let win_builder = WindowBuilder::new()
             .with_title(title)
-            .with_dimensions(LogicalSize::new(width as f64, height as f64));
+            .with_inner_size(LogicalSize::new(width as f64, height as f64));
 
         let win_ctx = ContextBuilder::new()
             .with_vsync(true)
@@ -42,7 +43,7 @@ impl Window {
             .map_err(|e| format!("{}", e))?;
 
         let win = unsafe { win_ctx.make_current().unwrap() };
-        let dpi = win.window().get_hidpi_factor() as f32;
+        let dpi = win.window().scale_factor() as f32;
 
         Ok(Self {
             width,
@@ -77,33 +78,42 @@ impl BaseWindow for Window {
     }
 }
 
-pub fn run<A, F>(app: A, callback: F)
+pub fn run<A, F>(mut app: A, mut update: F)
+//TODO new callback for draw
 where
-    A: BaseApp<System = System>,
+    A: BaseApp<System = System> + 'static,
     F: FnMut(&mut A) + 'static,
 {
-    let mut app = app;
-    let mut cb = callback;
     let mut event_loop = app.system().event_loop.take().unwrap();
-
-    let running = Rc::new(RefCell::new(true));
-    loop {
-        let is_running = running.clone();
-        event_loop.poll_events(move |event| match event {
-            //TODO Listen for dpi change and resize
+    let mut running = true;
+    event_loop.run(move |event, target, mut control| {
+        if !running {
+            return;
+        }
+        match event {
             Event::WindowEvent { ref event, .. } => match event {
                 WindowEvent::CloseRequested => {
-                    *is_running.borrow_mut() = false;
+                    running = false;
+                    *control = ControlFlow::Exit;
+                    return;
+                }
+                WindowEvent::ScaleFactorChanged {
+                    scale_factor,
+                    new_inner_size,
+                } => {
+                    println!("scale_factor: {} {:?}", scale_factor, new_inner_size);
                 }
                 _ => {}
             },
+            Event::MainEventsCleared => {
+                update(&mut app);
+            }
             _ => {}
-        });
-
-        cb(&mut app);
-
-        if !*running.borrow() {
-            break;
         }
-    }
+
+        let mut time = Instant::now();
+        time = time + Duration::from_secs_f32(1.0 / 60.0);
+        *control = ControlFlow::WaitUntil(time);
+        //            *control = ControlFlow::Poll;
+    });
 }

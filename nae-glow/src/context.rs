@@ -181,10 +181,6 @@ impl BaseContext2d for Context2d {
         self.data.color = color;
     }
 
-    //    fn transform(&mut self) -> &mut Transform2d {
-    //        &mut self.data.transform
-    //    }
-
     fn begin_to_surface(&mut self, surface: Option<&Surface>) {
         if self.is_drawing {
             return;
@@ -206,9 +202,7 @@ impl BaseContext2d for Context2d {
                 self.gl.draw_buffer(glow::COLOR_ATTACHMENT0);
             }
 
-            let v_width = (ww as f32 * self.data.dpi) as _;
-            let v_height = (hh as f32 * self.data.dpi) as _;
-            self.gl.viewport(0, 0, v_width, v_height);
+            self.gl.viewport(0, 0, ww, hh);
         }
 
         self.color_batcher.reset();
@@ -840,13 +834,10 @@ fn create_context_2d(win: &web_sys::HtmlCanvasElement) -> Result<Context2d, Stri
 
 #[cfg(not(target_arch = "wasm32"))]
 fn create_context_2d(win_ctx: &WindowedContext<PossiblyCurrent>) -> Result<Context2d, String> {
-    let win: &glutin::Window = win_ctx.window();
-    let (width, height) = if let Some(size) = win.get_inner_size() {
-        (size.width as _, size.height as _)
-    } else {
-        (800, 600)
-    };
-
+    let win: &glutin::window::Window = win_ctx.window();
+    let size = win.inner_size();
+    let width = size.width as _;
+    let height = size.height as _;
     let ctx = glow::Context::from_loader_function(|s| win_ctx.get_proc_address(s) as *const _);
 
     let gl = Rc::new(ctx);
@@ -856,7 +847,7 @@ fn create_context_2d(win_ctx: &WindowedContext<PossiblyCurrent>) -> Result<Conte
     let sprite_batcher = SpriteBatcher::new(&gl)?;
     let color_batcher = ColorBatcher::new(&gl)?;
 
-    let dpi = win_ctx.window().get_hidpi_factor() as f32;
+    let dpi = win_ctx.window().scale_factor() as f32;
     let data = DrawData::new(width, height, dpi);
 
     initialize_gl_2d(&gl, blend_mode);
