@@ -2,7 +2,7 @@ use nae::prelude::*;
 
 #[nae::main]
 fn main() {
-    nae::with_state(init).draw(draw).build().unwrap();
+    nae::init_with(init).draw(draw).build().unwrap();
 }
 
 fn init(app: &mut App) -> Surface {

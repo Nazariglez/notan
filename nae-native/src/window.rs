@@ -1,13 +1,13 @@
 use super::System;
 use glutin::{dpi::LogicalSize, ContextBuilder, PossiblyCurrent, WindowedContext};
 use nae_core::window::BaseWindow;
-use nae_core::{BaseApp, BaseSystem};
+use nae_core::{BaseApp, BaseSystem, Event, MouseButton};
 use nae_glow::Context2d;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
 use std::time::{Duration, Instant};
-use winit::event::{Event, WindowEvent};
+use winit::event::{ElementState, Event as WinitEvent, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 
@@ -87,12 +87,13 @@ where
 {
     let mut event_loop = app.system().event_loop.take().unwrap();
     let mut running = true;
+    let (mut last_mouse_x, mut last_mouse_y) = (0, 0);
     event_loop.run(move |event, target, mut control| {
         if !running {
             return;
         }
         match event {
-            Event::WindowEvent { ref event, .. } => match event {
+            WinitEvent::WindowEvent { ref event, .. } => match event {
                 WindowEvent::CloseRequested => {
                     running = false;
                     *control = ControlFlow::Exit;
@@ -104,13 +105,36 @@ where
                 } => {
                     println!("scale_factor: {} {:?}", scale_factor, new_inner_size);
                 }
+                WindowEvent::MouseInput { state, button, .. } => {
+                    let evt = match state {
+                        ElementState::Pressed => Event::MouseDown {
+                            button: button.to_nae(),
+                            x: last_mouse_x,
+                            y: last_mouse_y,
+                        },
+                        _ => Event::MouseUp {
+                            button: button.to_nae(),
+                            x: last_mouse_x,
+                            y: last_mouse_y,
+                        },
+                    };
+                    app.system().events.push(evt);
+                }
+                WindowEvent::CursorMoved { position, .. } => {
+                    last_mouse_x = position.x;
+                    last_mouse_y = position.y;
+                    app.system().events.push(Event::MouseMove {
+                        x: last_mouse_x,
+                        y: last_mouse_y,
+                    });
+                }
                 _ => {}
             },
-            Event::MainEventsCleared => {
+            WinitEvent::MainEventsCleared => {
                 update(&mut app, &mut state);
                 app.system().window.win.window().request_redraw();
             }
-            Event::RedrawRequested(_) => {
+            WinitEvent::RedrawRequested(_) => {
                 draw(&mut app, &mut state);
                 app.system().window.win.swap_buffers();
             }
@@ -122,4 +146,25 @@ where
         *control = ControlFlow::WaitUntil(time);
         //            *control = ControlFlow::Poll;
     });
+}
+
+trait ToNaeValue {
+    type Kind;
+
+    fn to_nae(&self) -> Self::Kind;
+}
+
+use winit::event::MouseButton as WinitMB;
+
+impl ToNaeValue for WinitMB {
+    type Kind = MouseButton;
+
+    fn to_nae(&self) -> Self::Kind {
+        match &self {
+            WinitMB::Left => MouseButton::Left,
+            WinitMB::Middle => MouseButton::Middle,
+            WinitMB::Right => MouseButton::Right,
+            WinitMB::Other(n) => MouseButton::Other(*n),
+        }
+    }
 }

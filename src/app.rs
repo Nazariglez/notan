@@ -1,7 +1,7 @@
 use crate::res::{ResourceLoaderManager, ResourceParser};
 use backend::*;
 use nae_core::resources::*;
-use nae_core::{BaseSystem, BuilderOpts};
+use nae_core::{BaseSystem, BuilderOpts, Event};
 
 /*TODO
     - Custom Error like Nae::NotFound, Nae::GraphicsX
@@ -57,6 +57,7 @@ where
     draw_callback: Option<fn(&mut App, &mut S)>,
     update_callback: Option<fn(&mut App, &mut S)>,
     start_callback: Option<fn(&mut App, &mut S)>,
+    event_callback: Option<fn(&mut App, &mut S, event: Event)>,
 }
 
 impl<S> AppBuilder<S> {
@@ -72,6 +73,7 @@ impl<S> AppBuilder<S> {
         let draw_cb = self.draw_callback.take().unwrap_or(|_, _| {});
         let update_cb = self.update_callback.take().unwrap_or(|_, _| {});
         let start_cb = self.start_callback.take().unwrap_or(|_, _| {});
+        let event_cb = self.event_callback.take().unwrap_or(|_, _, _| {});
 
         start_cb(&mut app, &mut state);
         backend::run(
@@ -79,11 +81,14 @@ impl<S> AppBuilder<S> {
             state,
             move |mut app, mut state| {
                 try_load_resources(&mut app).unwrap();
+                let mut events = app.sys.events().take_events();
+                for evt in events {
+                    event_cb(&mut app, &mut state, evt);
+                }
                 update_cb(&mut app, &mut state);
             },
             move |mut app, mut state| {
                 draw_cb(&mut app, &mut state);
-                //            app.system().swap_buffers();
             },
         );
 
@@ -100,13 +105,18 @@ impl<S> AppBuilder<S> {
         self
     }
 
-    pub fn resource(&mut self, _cb: fn(&mut App, &mut S, res: &str)) -> &mut Self {
-        //TODO call this every time a new resource is loaded
-        self
-    }
+    //    pub fn resource(&mut self, _cb: fn(&mut App, &mut S, res: &str)) -> &mut Self {
+    //        //TODO call this every time a new resource is loaded
+    //        self
+    //    }
 
     pub fn update(&mut self, cb: fn(&mut App, &mut S)) -> &mut Self {
         self.update_callback = Some(cb);
+        self
+    }
+
+    pub fn event(&mut self, cb: fn(&mut App, &mut S, event: Event)) -> &mut Self {
+        self.event_callback = Some(cb);
         self
     }
 }
@@ -125,19 +135,15 @@ fn try_load_resources(app: &mut App) -> Result<(), String> {
 }
 
 pub fn init() -> AppBuilder<()> {
-    AppBuilder {
-        state_cb: |_| (),
-        draw_callback: None,
-        update_callback: None,
-        start_callback: None,
-    }
+    init_with(|_| ())
 }
 
-pub fn with_state<S>(cb: fn(&mut App) -> S) -> AppBuilder<S> {
+pub fn init_with<S>(cb: fn(&mut App) -> S) -> AppBuilder<S> {
     AppBuilder {
         state_cb: cb,
         draw_callback: None,
         update_callback: None,
         start_callback: None,
+        event_callback: None,
     }
 }

@@ -8,7 +8,7 @@ struct State {
 
 #[nae::main]
 fn main() {
-    nae::with_state(init)
+    nae::init_with(init)
         .draw(draw)
         .update(update)
         .build()

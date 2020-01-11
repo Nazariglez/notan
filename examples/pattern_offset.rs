@@ -32,5 +32,5 @@ fn draw(app: &mut App, state: &mut State) {
 
 #[nae::main]
 fn main() {
-    nae::with_state(init).draw(draw).build();
+    nae::init_with(init).draw(draw).build();
 }
