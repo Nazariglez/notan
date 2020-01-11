@@ -63,19 +63,23 @@ fn request_animation_frame(win: web_sys::Window, f: &Closure<dyn FnMut()>) {
         .expect("should register `requestAnimationFrame` OK");
 }
 
-pub fn run<A, F>(app: A, callback: F)
+pub fn run<A, S, F, D>(mut app: A, mut state: S, mut update: F, mut draw: D)
 where
     A: BaseApp<System = System> + 'static,
-    F: FnMut(&mut A) + 'static,
+    S: 'static,
+    F: FnMut(&mut A, &mut S) + 'static,
+    D: FnMut(&mut A, &mut S) + 'static,
 {
-    let mut app = app;
     let cb = Rc::new(RefCell::new(None));
     let cb_copy = cb.clone();
-    let callback = Rc::new(RefCell::new(callback));
+    let callback = Rc::new(RefCell::new(move |app: &mut A, state: &mut S| {
+        update(app, state);
+        draw(app, state);
+    }));
 
     *cb_copy.borrow_mut() = Some(Closure::wrap(Box::new(move || {
         let mut tick_handler = callback.borrow_mut();
-        (&mut *tick_handler)(&mut app);
+        (&mut *tick_handler)(&mut app, &mut state);
 
         //Web always run at max speed using raf (setTimeout has drawbacks)
         let win = web_sys::window().unwrap();
