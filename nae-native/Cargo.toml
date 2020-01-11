@@ -10,5 +10,5 @@ edition = "2018"
 nae-core = { path = "../nae-core" }
 nae-glow = { path = "../nae-glow" }
 futures = "0.1.29"
-winit = "0.19.5"
-glutin = "0.21.2"
+winit = "0.20"
+glutin = "0.22"

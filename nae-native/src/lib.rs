@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 pub use window::*;
-use winit::EventsLoop;
+use winit::event_loop::EventLoop;
 
 /// Read the content of a file and return a future with the content
 pub fn load_file(path: &str) -> impl Future<Item = Vec<u8>, Error = String> {
@@ -23,7 +23,7 @@ fn load_from_disk(path: impl AsRef<Path>) -> Result<Vec<u8>, std::io::Error> {
 pub struct System {
     window: Window,
     context2d: Context2d,
-    pub(crate) event_loop: Option<EventsLoop>,
+    pub(crate) event_loop: Option<EventLoop<()>>,
 }
 
 impl BaseSystem for System {
@@ -31,7 +31,7 @@ impl BaseSystem for System {
     type Context2d = Context2d;
 
     fn new(mut opts: BuilderOpts) -> Result<Self, String> {
-        let event_loop = EventsLoop::new();
+        let event_loop = EventLoop::new();
         let win = window::Window::new(&opts.title, opts.width, opts.height, &event_loop)?;
         let ctx2 = Context2d::new(&win.win)?;
         Ok(Self {

@@ -45,12 +45,10 @@ pub fn eq_float(a: f32, b: f32) -> bool {
 pub fn projection_2d(width: i32, height: i32, flipped: bool, dpi: f32) -> Mat3 {
     let ww = width as f32 / dpi;
     let hh = height as f32 / dpi;
-    let bottom = if flipped { 0.0 } else { height as f32 };
-    let top = if flipped { height as f32 } else { 0.0 };
-    let xx = -ww * 0.5 * dpi;
-    let yy = -hh * 0.5 * dpi;
-    glm::translate2d(
-        &glm::mat4_to_mat3(&glm::ortho(0.0, width as f32, bottom, top, -1.0, 1.0)),
-        &vec2(xx, yy),
-    )
+    let bottom = if flipped { 0.0 } else { hh };
+    let top = if flipped { hh } else { 0.0 };
+    let translate = vec2(-ww * 0.5, -hh * 0.5);
+    let ortho = glm::mat4_to_mat3(&glm::ortho(0.0, ww, bottom, top, -1.0, 1.0));
+
+    glm::translate2d(&ortho, &translate)
 }
