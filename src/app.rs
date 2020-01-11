@@ -74,13 +74,18 @@ impl<S> AppBuilder<S> {
         let start_cb = self.start_callback.take().unwrap_or(|_, _| {});
 
         start_cb(&mut app, &mut state);
-        backend::run(app, move |mut app| {
-            try_load_resources(&mut app).unwrap();
-
-            update_cb(&mut app, &mut state);
-            draw_cb(&mut app, &mut state);
-            app.system().swap_buffers();
-        });
+        backend::run(
+            app,
+            state,
+            move |mut app, mut state| {
+                try_load_resources(&mut app).unwrap();
+                update_cb(&mut app, &mut state);
+            },
+            move |mut app, mut state| {
+                draw_cb(&mut app, &mut state);
+                //            app.system().swap_buffers();
+            },
+        );
 
         Ok(())
     }

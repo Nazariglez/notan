@@ -78,11 +78,12 @@ impl BaseWindow for Window {
     }
 }
 
-pub fn run<A, F>(mut app: A, mut update: F)
-//TODO new callback for draw
+pub fn run<A, S, F, D>(mut app: A, mut state: S, mut update: F, mut draw: D)
 where
     A: BaseApp<System = System> + 'static,
-    F: FnMut(&mut A) + 'static,
+    S: 'static,
+    F: FnMut(&mut A, &mut S) + 'static,
+    D: FnMut(&mut A, &mut S) + 'static,
 {
     let mut event_loop = app.system().event_loop.take().unwrap();
     let mut running = true;
@@ -106,7 +107,12 @@ where
                 _ => {}
             },
             Event::MainEventsCleared => {
-                update(&mut app);
+                update(&mut app, &mut state);
+                app.system().window.win.window().request_redraw();
+            }
+            Event::RedrawRequested(_) => {
+                draw(&mut app, &mut state);
+                app.system().window.win.swap_buffers();
             }
             _ => {}
         }
