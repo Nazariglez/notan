@@ -9,7 +9,7 @@ struct State {
 
 #[nae::main]
 fn main() {
-    nae::with_state(init).draw(draw).build().unwrap();
+    nae::init_with(init).draw(draw).build().unwrap();
 }
 
 fn draw(app: &mut App, state: &mut State) {

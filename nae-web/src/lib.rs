@@ -11,6 +11,7 @@ pub use window::*;
 pub struct System {
     window: Window,
     context2d: Context2d,
+    events: EventIterator,
 }
 
 impl BaseSystem for System {
@@ -24,6 +25,7 @@ impl BaseSystem for System {
         Ok(Self {
             window: win,
             context2d: ctx2,
+            events: EventIterator::new(),
         })
     }
 
@@ -31,5 +33,7 @@ impl BaseSystem for System {
         &mut self.context2d
     }
 
-    fn swap_buffers(&mut self) {}
+    fn events(&mut self) -> &mut EventIterator {
+        &mut self.events
+    }
 }

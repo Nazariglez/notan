@@ -18,7 +18,7 @@ pub use nae_derive::main;
     this allow to alter the event cycle without change the original code
 */
 
-pub use app::{init, with_state, App};
+pub use app::{init, init_with, App};
 
 pub mod prelude {
     pub use super::app::*;

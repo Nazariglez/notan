@@ -24,6 +24,7 @@ pub struct System {
     window: Window,
     context2d: Context2d,
     pub(crate) event_loop: Option<EventLoop<()>>,
+    events: EventIterator,
 }
 
 impl BaseSystem for System {
@@ -38,6 +39,7 @@ impl BaseSystem for System {
             window: win,
             context2d: ctx2,
             event_loop: Some(event_loop),
+            events: EventIterator::new(),
         })
     }
 
@@ -45,7 +47,7 @@ impl BaseSystem for System {
         &mut self.context2d
     }
 
-    fn swap_buffers(&mut self) {
-        self.window.win.swap_buffers();
+    fn events(&mut self) -> &mut EventIterator {
+        &mut self.events
     }
 }

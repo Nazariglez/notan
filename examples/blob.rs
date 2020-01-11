@@ -25,5 +25,5 @@ fn draw(app: &mut App, blob: &mut Blob) {
 
 #[nae::main]
 fn main() {
-    nae::with_state(init).draw(draw).build().unwrap();
+    nae::init_with(init).draw(draw).build().unwrap();
 }
