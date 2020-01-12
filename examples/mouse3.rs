@@ -81,6 +81,17 @@ fn draw(app: &mut App, state: &mut State) {
     draw.begin();
     draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
 
+    draw.set_color(Color::WHITE);
+    draw.text_ext(
+        "Click and drag to paint!",
+        400.0,
+        300.0,
+        40.0,
+        HorizontalAlign::Center,
+        VerticalAlign::Center,
+        None,
+    );
+
     state.lines.iter().for_each(|line| {
         draw.set_color(line.color);
         if line.points.len() > 1 {
