@@ -14,7 +14,6 @@ Nae is a portable multimedia layer designed to make your own multimedia apps on 
 The main goal of Nae is to be the foundation for cross-platform multimedia applications, game engines or games while keeping the user code simple
 and free as much as possible of "platform" dependent code. This means, that you can write your code once, and export to multiple targets without changes.
 
-### More goals
 - The Web is treated as a first class citizen, you can export to Webassembly your apps easily with Nae. We use (web_sys and wasm_bindgen).
 - Support the major platforms at this moment. (Web, MacOS, Windows, Linux, Android, iOS)
 - The structure of the lib makes relative easy to add new platforms just replacing the backend dependency. (Maybe will be useful for consoles eventually)
@@ -82,7 +81,7 @@ that can be used as a foundation for this purpose.
 - API 
     - [ ] Window
     - [ ] Keyboard
-    - [ ] Mouse
+    - [x] Mouse
     - [ ] Touch
     - [ ] Gamepad
     - [ ] Audio
