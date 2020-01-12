@@ -86,7 +86,7 @@ pub fn date_now() -> u64 {
         .as_millis() as u64
 }
 
-#[derive(Debug, Hash, Eq, PartialEq, PartialOrd, Ord, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 /// Input events made by the user
 pub enum Event {
     /// Dispatched when the window is about to close
@@ -119,7 +119,13 @@ pub enum Event {
     //#[cfg(feature = "mouse")]
     /// Mouse wheel was moved and this are his delta
     /// `mouse` feature must be enabled
-    MouseWheel { delta_x: i32, delta_y: i32 },
+    MouseWheel { delta_x: f32, delta_y: f32 },
+
+    /// Mouse cursor enter to the window's app
+    MouseEnter { x: i32, y: i32 },
+
+    /// Mouse cursor has left the window's app
+    MouseLeft { x: i32, y: i32 },
 }
 
 //#[cfg(feature = "mouse")]

@@ -120,10 +120,47 @@ where
                     };
                     app.system().events.push(evt);
                 }
+                WindowEvent::MouseWheel { delta, .. } => {
+                    let evt = match delta {
+                        winit::event::MouseScrollDelta::LineDelta(x, y) => Event::MouseWheel {
+                            delta_x: *x,
+                            delta_y: *y,
+                        },
+                        winit::event::MouseScrollDelta::PixelDelta(
+                            winit::dpi::LogicalPosition { x, y },
+                        ) => {
+                            let delta_x = if *x > 0.0 {
+                                (*x / 10.0).max(0.1)
+                            } else {
+                                (*x / 10.0).min(-0.1)
+                            } as f32;
+
+                            let delta_y = if *y > 0.0 {
+                                (*y / 10.0).max(0.1)
+                            } else {
+                                (*y / 10.0).min(-0.1)
+                            } as f32;
+                            Event::MouseWheel { delta_x, delta_y }
+                        }
+                    };
+                    app.system().events.push(evt);
+                }
                 WindowEvent::CursorMoved { position, .. } => {
                     last_mouse_x = position.x;
                     last_mouse_y = position.y;
                     app.system().events.push(Event::MouseMove {
+                        x: last_mouse_x,
+                        y: last_mouse_y,
+                    });
+                }
+                WindowEvent::CursorEntered { .. } => {
+                    app.system().events.push(Event::MouseEnter {
+                        x: last_mouse_x,
+                        y: last_mouse_y,
+                    });
+                }
+                WindowEvent::CursorLeft { .. } => {
+                    app.system().events.push(Event::MouseLeft {
                         x: last_mouse_x,
                         y: last_mouse_y,
                     });
