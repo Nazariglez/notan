@@ -12,6 +12,7 @@ pub struct System {
     window: Window,
     context2d: Context2d,
     events: EventIterator,
+    mouse_ctx: Option<MouseContext>,
 }
 
 impl BaseSystem for System {
@@ -26,6 +27,7 @@ impl BaseSystem for System {
             window: win,
             context2d: ctx2,
             events: EventIterator::new(),
+            mouse_ctx: None,
         })
     }
 

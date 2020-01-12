@@ -20,9 +20,17 @@ version = "0.3.28"
 features = [
     "Document",
     "Window",
+    "Element",
+    "DomRect",
+    "DomRectReadOnly",
     "HtmlCanvasElement",
     "XmlHttpRequest",
     "XmlHttpRequestEventTarget",
-    "XmlHttpRequestResponseType"
+    "XmlHttpRequestResponseType",
+    "Event",
+    "EventListener",
+    "EventTarget",
+    "MouseEvent",
+    "WheelEvent"
 ]
 
