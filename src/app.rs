@@ -2,6 +2,7 @@ use crate::res::{ResourceLoaderManager, ResourceParser};
 use backend::*;
 use nae_core::resources::*;
 use nae_core::{BaseSystem, BuilderOpts, Event};
+use std::collections::VecDeque;
 
 /*TODO
     - Custom Error like Nae::NotFound, Nae::GraphicsX
@@ -22,6 +23,9 @@ use nae_core::{BaseSystem, BuilderOpts, Event};
 pub struct App {
     resources: ResourceLoaderManager<'static>,
     sys: System,
+    fps: VecDeque<f64>,
+    last_time: u64,
+    last_delta: f64,
 }
 
 impl BaseApp for App {
@@ -44,8 +48,22 @@ impl App {
         self.resources.add(file)
     }
 
-    pub fn delta(&self) -> f32 {
-        1.0
+    fn tick(&mut self) {
+        let now = date_now();
+        let elapsed = (now - self.last_time) as f64;
+        self.last_time = now;
+        self.last_delta = elapsed / 1000.0;
+        self.fps.pop_front();
+        self.fps.push_back(elapsed);
+    }
+
+    pub fn fps(&self) -> f64 {
+        let average: f64 = self.fps.iter().sum::<f64>() / self.fps.len() as f64;
+        1000.0 / average
+    }
+
+    pub fn delta(&self) -> f64 {
+        self.last_delta
     }
 }
 
@@ -64,9 +82,15 @@ impl<S> AppBuilder<S> {
     pub fn build(&mut self) -> Result<(), String> {
         let sys = System::new(BuilderOpts::default())?;
 
+        let mut fps = VecDeque::with_capacity(300);
+        fps.resize(fps.capacity(), 1000.0 / 60.0);
+
         let mut app = App {
             sys: sys,
             resources: ResourceLoaderManager::new(),
+            fps: fps,
+            last_time: date_now(),
+            last_delta: 0.0,
         };
 
         let mut state = (self.state_cb)(&mut app);
@@ -80,6 +104,7 @@ impl<S> AppBuilder<S> {
             app,
             state,
             move |mut app, mut state| {
+                app.tick();
                 try_load_resources(&mut app).unwrap();
                 let mut events = app.sys.events().take_events();
                 for evt in events {
