@@ -1,7 +1,7 @@
 use super::System;
 use glutin::{dpi::LogicalSize, ContextBuilder, PossiblyCurrent, WindowedContext};
 use nae_core::window::BaseWindow;
-use nae_core::{BaseApp, BaseSystem, Event, MouseButton};
+use nae_core::{BaseApp, BaseSystem, Event, KeyCode, MouseButton};
 use nae_glow::Context2d;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -88,6 +88,8 @@ where
     let mut event_loop = app.system().event_loop.take().unwrap();
     let mut running = true;
     let (mut last_mouse_x, mut last_mouse_y) = (0, 0);
+    let mut last_key_code: Option<Event> = None;
+
     event_loop.run(move |event, target, mut control| {
         if !running {
             return;
@@ -164,6 +166,32 @@ where
                         x: last_mouse_x,
                         y: last_mouse_y,
                     });
+                }
+                WindowEvent::KeyboardInput { input, .. } => {
+                    let was_pressed = match input.state {
+                        ElementState::Pressed => true,
+                        _ => false,
+                    };
+                    let code = input.scancode;
+                    let key = input.virtual_keycode;
+                    //                    println!("{:?} {:?} {:?}", was_pressed, code, key);
+
+                    if last_key_code.is_some() {
+                        println!("sent last: {:?}", last_key_code);
+                        last_key_code = None;
+                    }
+
+                    last_key_code = Some(Event::KeyDown {
+                        key: nae_core::KeyCode::R,
+                        character: '\0',
+                    });
+                }
+                WindowEvent::ReceivedCharacter(c) => {
+                    println!("char: {} {}", c, *c as u32);
+                    if let Some(Event::KeyDown { key, character }) = &mut last_key_code {
+                        *character = *c;
+                    }
+                    println!("sent last: {:?}", last_key_code);
                 }
                 _ => {}
             },
