@@ -26,12 +26,14 @@ fn main() {
 }
 
 fn init(app: &mut App) -> State {
-    State {
+    let mut state = State {
         rng: Random::default(),
-        img: app.load_file("./examples/assets/t.png").unwrap(),
+        img: app.load_file("./examples/assets/bunny.png").unwrap(),
         bunnies: vec![],
         spawning: false,
-    }
+    };
+    spawn(&mut state);
+    state
 }
 
 fn event(app: &mut App, state: &mut State, event: Event) {
@@ -46,16 +48,20 @@ fn event(app: &mut App, state: &mut State, event: Event) {
     }
 }
 
+fn spawn(state: &mut State) {
+    for _ in 0..50 {
+        state.bunnies.push(Bunny {
+            x: 0.0,
+            y: 0.0,
+            speed_x: state.rng.gen_range(0.0, 10.0),
+            speed_y: state.rng.gen_range(-5.0, 5.0),
+        });
+    }
+}
+
 fn update(app: &mut App, state: &mut State) {
     if state.spawning {
-        for _ in 0..50 {
-            state.bunnies.push(Bunny {
-                x: 0.0,
-                y: 0.0,
-                speed_x: state.rng.gen_range(0.0, 10.0),
-                speed_y: state.rng.gen_range(-5.0, 5.0),
-            });
-        }
+        spawn(state);
     }
 
     for b in &mut state.bunnies {
@@ -85,8 +91,7 @@ fn update(app: &mut App, state: &mut State) {
 }
 
 fn draw(app: &mut App, state: &mut State) {
-    let fps = app.fps();
-    let ms = app.delta();
+    let fps = app.fps().round();
 
     let draw = app.draw();
     draw.begin();
@@ -96,7 +101,7 @@ fn draw(app: &mut App, state: &mut State) {
     }
 
     draw.text(
-        &format!("Bunnies: {} - Fps: {:.0}", state.bunnies.len(), fps),
+        &format!("Bunnies: {} - Fps: {}", state.bunnies.len(), fps),
         10.0,
         1.0,
         24.0,
