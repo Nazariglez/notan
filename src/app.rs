@@ -144,6 +144,11 @@ impl<S> AppBuilder<S> {
         self.event_callback = Some(cb);
         self
     }
+
+    pub fn fps_target(&mut self, fps: i32) -> &mut Self {
+        // TODO by default will be None
+        self
+    }
 }
 
 //TODO don't stop the loop, just return Vec<String> with the errors, and the user will decide what to do instead of stop the program

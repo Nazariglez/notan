@@ -16,6 +16,7 @@ pub struct BuilderOpts {
     pub width: i32,
     pub height: i32,
     pub fullscreen: bool,
+    pub fps_target: Option<i32>,
 }
 
 impl Default for BuilderOpts {
@@ -25,6 +26,7 @@ impl Default for BuilderOpts {
             width: 800,
             height: 600,
             fullscreen: false,
+            fps_target: None,
         }
     }
 }
@@ -128,10 +130,13 @@ pub enum Event {
     MouseLeft { x: i32, y: i32 },
 
     /// Keyboard's key down
-    KeyDown { key: KeyCode, character: char },
+    KeyDown { key: KeyCode },
 
     /// Keyboard's key up
-    KeyUp { key: KeyCode, character: char },
+    KeyUp { key: KeyCode },
+
+    /// Unicode char pressed
+    ReceivedCharacter(char),
 }
 
 //#[cfg(feature = "mouse")]
@@ -145,7 +150,7 @@ pub enum MouseButton {
 }
 
 /// Represent a key
-/// Enum from winit.
+/// Enum from winit but added an Unknown key.
 #[derive(Clone, Hash, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[repr(u32)]
 pub enum KeyCode {

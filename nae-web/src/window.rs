@@ -1,6 +1,6 @@
 use super::System;
 use nae_core::window::*;
-use nae_core::{log, BaseApp, Event, MouseButton};
+use nae_core::{log, BaseApp, Event, KeyCode, MouseButton};
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
@@ -69,6 +69,64 @@ impl BaseWindow for Window {
 fn request_animation_frame(win: web_sys::Window, f: &Closure<dyn FnMut()>) {
     win.request_animation_frame(f.as_ref().unchecked_ref())
         .expect("should register `requestAnimationFrame` OK");
+}
+
+pub(crate) struct KeyboardContext {
+    up_cb: Option<Closure<FnMut(web_sys::KeyboardEvent)>>,
+    down_cb: Option<Closure<FnMut(web_sys::KeyboardEvent)>>,
+}
+
+impl KeyboardContext {
+    fn new() -> Self {
+        Self {
+            up_cb: None,
+            down_cb: None,
+        }
+    }
+}
+
+fn enable_keyboard_events(
+    events: Rc<RefCell<VecDeque<Event>>>,
+    canvas: &HtmlCanvasElement,
+    ctx: &mut KeyboardContext,
+) -> Result<(), String> {
+    let events_copy = events.clone();
+    let canvas_clone = canvas.clone();
+    ctx.down_cb = Some(window_add_event_listener(
+        "keydown",
+        move |e: web_sys::KeyboardEvent| {
+            let mut events = events_copy.borrow_mut();
+
+            if let Some(k) = keyboard_code(&e.code()) {
+                let down_evt = Event::KeyDown { key: k };
+                events.push_back(down_evt);
+            }
+
+            let key_char = e.key();
+            if key_char.len() <= 2 {
+                //special keys like enter has "Enter" as key
+                if let Some(c) = key_char.chars().next() {
+                    events.push_back(Event::ReceivedCharacter(c));
+                }
+            }
+        },
+    )?);
+
+    let events_copy = events.clone();
+    let canvas_clone = canvas.clone();
+    ctx.up_cb = Some(window_add_event_listener(
+        "keyup",
+        move |e: web_sys::KeyboardEvent| {
+            let mut events = events_copy.borrow_mut();
+
+            if let Some(k) = keyboard_code(&e.code()) {
+                let down_evt = Event::KeyUp { key: k };
+                events.push_back(down_evt);
+            }
+        },
+    )?);
+
+    Ok(())
 }
 
 pub(crate) struct MouseContext {
@@ -196,11 +254,20 @@ where
     let cb_copy = cb.clone();
 
     let events = Rc::new(RefCell::new(VecDeque::new()));
+
     let mut mouse_ctx = MouseContext::new();
     enable_mouse_events(events.clone(), &app.system().window.canvas, &mut mouse_ctx);
 
+    let mut keyboard_ctx = KeyboardContext::new();
+    enable_keyboard_events(
+        events.clone(),
+        &app.system().window.canvas,
+        &mut keyboard_ctx,
+    );
+
     //Store the ref to the mouse context to avoid drop the closures, another option could be use forget but seems more clean.
     app.system().mouse_ctx = Some(mouse_ctx);
+    app.system().keyboard_ctx = Some(keyboard_ctx);
 
     let callback = Rc::new(RefCell::new(move |app: &mut A, state: &mut S| {
         let mut frame_evts = events.borrow_mut();
@@ -269,4 +336,168 @@ fn canvas_position_from_global(canvas: &HtmlCanvasElement, evt: web_sys::MouseEv
     let x = (client_x - rect.left()) / (rect.right() - rect.left()) * (canvas.width() as f64);
     let y = (client_y - rect.top()) / (rect.bottom() - rect.top()) * (canvas.height() as f64);
     (x as i32, y as i32)
+}
+
+//Code from winit
+pub fn keyboard_code(code: &str) -> Option<KeyCode> {
+    Some(match code {
+        "Digit1" => KeyCode::Key1,
+        "Digit2" => KeyCode::Key2,
+        "Digit3" => KeyCode::Key3,
+        "Digit4" => KeyCode::Key4,
+        "Digit5" => KeyCode::Key5,
+        "Digit6" => KeyCode::Key6,
+        "Digit7" => KeyCode::Key7,
+        "Digit8" => KeyCode::Key8,
+        "Digit9" => KeyCode::Key9,
+        "Digit0" => KeyCode::Key0,
+        "KeyA" => KeyCode::A,
+        "KeyB" => KeyCode::B,
+        "KeyC" => KeyCode::C,
+        "KeyD" => KeyCode::D,
+        "KeyE" => KeyCode::E,
+        "KeyF" => KeyCode::F,
+        "KeyG" => KeyCode::G,
+        "KeyH" => KeyCode::H,
+        "KeyI" => KeyCode::I,
+        "KeyJ" => KeyCode::J,
+        "KeyK" => KeyCode::K,
+        "KeyL" => KeyCode::L,
+        "KeyM" => KeyCode::M,
+        "KeyN" => KeyCode::N,
+        "KeyO" => KeyCode::O,
+        "KeyP" => KeyCode::P,
+        "KeyQ" => KeyCode::Q,
+        "KeyR" => KeyCode::R,
+        "KeyS" => KeyCode::S,
+        "KeyT" => KeyCode::T,
+        "KeyU" => KeyCode::U,
+        "KeyV" => KeyCode::V,
+        "KeyW" => KeyCode::W,
+        "KeyX" => KeyCode::X,
+        "KeyY" => KeyCode::Y,
+        "KeyZ" => KeyCode::Z,
+        "Escape" => KeyCode::Escape,
+        "F1" => KeyCode::F1,
+        "F2" => KeyCode::F2,
+        "F3" => KeyCode::F3,
+        "F4" => KeyCode::F4,
+        "F5" => KeyCode::F5,
+        "F6" => KeyCode::F6,
+        "F7" => KeyCode::F7,
+        "F8" => KeyCode::F8,
+        "F9" => KeyCode::F9,
+        "F10" => KeyCode::F10,
+        "F11" => KeyCode::F11,
+        "F12" => KeyCode::F12,
+        "F13" => KeyCode::F13,
+        "F14" => KeyCode::F14,
+        "F15" => KeyCode::F15,
+        "F16" => KeyCode::F16,
+        "F17" => KeyCode::F17,
+        "F18" => KeyCode::F18,
+        "F19" => KeyCode::F19,
+        "F20" => KeyCode::F20,
+        "F21" => KeyCode::F21,
+        "F22" => KeyCode::F22,
+        "F23" => KeyCode::F23,
+        "F24" => KeyCode::F24,
+        "PrintScreen" => KeyCode::Snapshot,
+        "ScrollLock" => KeyCode::Scroll,
+        "Pause" => KeyCode::Pause,
+        "Insert" => KeyCode::Insert,
+        "Home" => KeyCode::Home,
+        "Delete" => KeyCode::Delete,
+        "End" => KeyCode::End,
+        "PageDown" => KeyCode::PageDown,
+        "PageUp" => KeyCode::PageUp,
+        "ArrowLeft" => KeyCode::Left,
+        "ArrowUp" => KeyCode::Up,
+        "ArrowRight" => KeyCode::Right,
+        "ArrowDown" => KeyCode::Down,
+        "Backspace" => KeyCode::Back,
+        "Enter" => KeyCode::Return,
+        "Space" => KeyCode::Space,
+        "Compose" => KeyCode::Compose,
+        "Caret" => KeyCode::Caret,
+        "NumLock" => KeyCode::Numlock,
+        "Numpad0" => KeyCode::Numpad0,
+        "Numpad1" => KeyCode::Numpad1,
+        "Numpad2" => KeyCode::Numpad2,
+        "Numpad3" => KeyCode::Numpad3,
+        "Numpad4" => KeyCode::Numpad4,
+        "Numpad5" => KeyCode::Numpad5,
+        "Numpad6" => KeyCode::Numpad6,
+        "Numpad7" => KeyCode::Numpad7,
+        "Numpad8" => KeyCode::Numpad8,
+        "Numpad9" => KeyCode::Numpad9,
+        "AbntC1" => KeyCode::AbntC1,
+        "AbntC2" => KeyCode::AbntC2,
+        "NumpadAdd" => KeyCode::Add,
+        "Quote" => KeyCode::Apostrophe,
+        "Apps" => KeyCode::Apps,
+        "At" => KeyCode::At,
+        "Ax" => KeyCode::Ax,
+        "Backslash" => KeyCode::Backslash,
+        "Calculator" => KeyCode::Calculator,
+        "Capital" => KeyCode::Capital,
+        "Semicolon" => KeyCode::Semicolon,
+        "Comma" => KeyCode::Comma,
+        "Convert" => KeyCode::Convert,
+        "NumpadDecimal" => KeyCode::Decimal,
+        "NumpadDivide" => KeyCode::Divide,
+        "Equal" => KeyCode::Equals,
+        "Backquote" => KeyCode::Grave,
+        "Kana" => KeyCode::Kana,
+        "Kanji" => KeyCode::Kanji,
+        "AltLeft" => KeyCode::LAlt,
+        "BracketLeft" => KeyCode::LBracket,
+        "ControlLeft" => KeyCode::LControl,
+        "ShiftLeft" => KeyCode::LShift,
+        "MetaLeft" => KeyCode::LWin,
+        "Mail" => KeyCode::Mail,
+        "MediaSelect" => KeyCode::MediaSelect,
+        "MediaStop" => KeyCode::MediaStop,
+        "Minus" => KeyCode::Minus,
+        "NumpadMultiply" => KeyCode::Multiply,
+        "Mute" => KeyCode::Mute,
+        "LaunchMyComputer" => KeyCode::MyComputer,
+        "NavigateForward" => KeyCode::NavigateForward,
+        "NavigateBackward" => KeyCode::NavigateBackward,
+        "NextTrack" => KeyCode::NextTrack,
+        "NoConvert" => KeyCode::NoConvert,
+        "NumpadComma" => KeyCode::NumpadComma,
+        "NumpadEnter" => KeyCode::NumpadEnter,
+        "NumpadEquals" => KeyCode::NumpadEquals,
+        "OEM102" => KeyCode::OEM102,
+        "Period" => KeyCode::Period,
+        "PlayPause" => KeyCode::PlayPause,
+        "Power" => KeyCode::Power,
+        "PrevTrack" => KeyCode::PrevTrack,
+        "AltRight" => KeyCode::RAlt,
+        "BracketRight" => KeyCode::RBracket,
+        "ControlRight" => KeyCode::RControl,
+        "ShiftRight" => KeyCode::RShift,
+        "MetaRight" => KeyCode::RWin,
+        "Slash" => KeyCode::Slash,
+        "Sleep" => KeyCode::Sleep,
+        "Stop" => KeyCode::Stop,
+        "NumpadSubtract" => KeyCode::Subtract,
+        "Sysrq" => KeyCode::Sysrq,
+        "Tab" => KeyCode::Tab,
+        "Underline" => KeyCode::Underline,
+        "Unlabeled" => KeyCode::Unlabeled,
+        "AudioVolumeDown" => KeyCode::VolumeDown,
+        "AudioVolumeUp" => KeyCode::VolumeUp,
+        "Wake" => KeyCode::Wake,
+        "WebBack" => KeyCode::WebBack,
+        "WebFavorites" => KeyCode::WebFavorites,
+        "WebForward" => KeyCode::WebForward,
+        "WebHome" => KeyCode::WebHome,
+        "WebRefresh" => KeyCode::WebRefresh,
+        "WebSearch" => KeyCode::WebSearch,
+        "WebStop" => KeyCode::WebStop,
+        "Yen" => KeyCode::Yen,
+        _ => return None,
+    })
 }
