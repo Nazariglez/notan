@@ -31,6 +31,7 @@ features = [
     "EventListener",
     "EventTarget",
     "MouseEvent",
-    "WheelEvent"
+    "WheelEvent",
+    "KeyboardEvent",
 ]
 

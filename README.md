@@ -9,6 +9,7 @@
 
 ## About
 Nae is a portable multimedia layer designed to make your own multimedia apps on top of it with a mid-level and easy to use API.
+//TODO if you want to star fast making a game or a simple app, this is your framework
 
 ## Goals
 The main goal of Nae is to be the foundation for cross-platform multimedia applications, game engines or games while keeping the user code simple
@@ -18,6 +19,9 @@ and free as much as possible of "platform" dependent code. This means, that you 
 - Support the major platforms at this moment. (Web, MacOS, Windows, Linux, Android, iOS)
 - The structure of the lib makes relative easy to add new platforms just replacing the backend dependency. (Maybe will be useful for consoles eventually)
 - Provide a basic set of features and also some extras as optional dependency 
+
+## Demo
+//TODO add a youtube video introducing some examples, or interactive ones.
 
 ## Examples
 ```rust 
