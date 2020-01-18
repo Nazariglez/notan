@@ -26,8 +26,8 @@ pub struct App {
     sys: System,
     fps: VecDeque<f64>,
     last_time: u64,
-    last_delta: f64,
 
+    pub delta: f32,
     pub mouse: Mouse,
     pub keyboard: Keyboard,
 }
@@ -56,7 +56,7 @@ impl App {
         let now = date_now();
         let elapsed = (now - self.last_time) as f64;
         self.last_time = now;
-        self.last_delta = elapsed / 1000.0;
+        self.delta = (elapsed / 1000.0) as f32;
         self.fps.pop_front();
         self.fps.push_back(elapsed);
     }
@@ -64,10 +64,6 @@ impl App {
     pub fn fps(&self) -> f64 {
         let average: f64 = self.fps.iter().sum::<f64>() / self.fps.len() as f64;
         1000.0 / average
-    }
-
-    pub fn delta(&self) -> f64 {
-        self.last_delta
     }
 }
 
@@ -94,7 +90,7 @@ impl<S> AppBuilder<S> {
             resources: ResourceLoaderManager::new(),
             fps: fps,
             last_time: date_now(),
-            last_delta: 0.0,
+            delta: 0.0,
             mouse: Mouse::new(),
             keyboard: Keyboard::new(),
         };
@@ -159,9 +155,8 @@ fn process_events<S>(app: &mut App, state: &mut S, cb: fn(&mut App, &mut S, Even
     app.keyboard.clear();
     let mut events = app.sys.events().take_events();
     for evt in events {
-        let delta = app.delta() as f32;
-        app.mouse.process(&evt, delta);
-        app.keyboard.process(&evt, delta);
+        app.mouse.process(&evt, app.delta);
+        app.keyboard.process(&evt, app.delta);
         cb(app, state, evt);
     }
 }

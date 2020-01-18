@@ -37,7 +37,7 @@ fn draw(app: &mut App, state: &mut State) {
     );
     draw.end();
 
-    state.offset += 2.5 * app.delta();
+    state.offset += 50.0 * app.delta;
 }
 
 #[nae::main]

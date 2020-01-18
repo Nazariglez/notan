@@ -29,7 +29,7 @@ fn draw(app: &mut App, state: &mut State) {
     );
     draw.end();
 
-    state.count += 0.005 * app.delta();
+    state.count += 0.5 * app.delta;
 }
 
 #[nae::main]
