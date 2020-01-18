@@ -17,7 +17,6 @@ struct Line {
 }
 
 struct State {
-    is_drawing: bool,
     color_index: usize,
     lines: Vec<Line>,
 }
@@ -26,53 +25,38 @@ struct State {
 fn main() {
     nae::init_with(init)
         .draw(draw)
-        .event(event)
+        .update(process_input)
         .build()
         .unwrap();
 }
 
 fn init(app: &mut App) -> State {
     State {
-        is_drawing: false,
         color_index: 0,
         lines: vec![],
     }
 }
 
-fn event(app: &mut App, state: &mut State, evt: Event) {
-    match evt {
-        Event::MouseDown { x, y, .. } => {
-            if state.is_drawing {
-                return;
-            }
-            state.is_drawing = true;
-            state.lines.push(Line {
-                color: LINE_COLORS[state.color_index],
-                points: vec![(x as _, y as _)],
-            });
-        }
-        Event::MouseMove { x, y } => {
-            if !state.is_drawing {
-                return;
-            }
+fn process_input(app: &mut App, state: &mut State) {
+    if app.mouse.was_pressed(MouseButton::Left) {
+        state.lines.push(Line {
+            color: LINE_COLORS[state.color_index],
+            points: vec![(app.mouse.x, app.mouse.y)],
+        });
+    }
 
-            if let Some(line) = state.lines.last_mut() {
-                line.points.push((x as _, y as _));
-            }
+    if app.mouse.is_down(MouseButton::Left) {
+        if let Some(line) = state.lines.last_mut() {
+            line.points.push((app.mouse.x, app.mouse.y));
         }
-        Event::MouseUp { x, y, .. } => {
-            if !state.is_drawing {
-                return;
-            }
+    }
 
-            if let Some(line) = state.lines.last_mut() {
-                line.points.push((x as _, y as _));
-            }
-
-            state.color_index = (state.color_index + 1) % (LINE_COLORS.len() - 1);
-            state.is_drawing = false;
+    if app.mouse.was_released(MouseButton::Left) {
+        if let Some(line) = state.lines.last_mut() {
+            line.points.push((app.mouse.x, app.mouse.y));
         }
-        _ => {}
+
+        state.color_index = (state.color_index + 1) % (LINE_COLORS.len() - 1);
     }
 }
 

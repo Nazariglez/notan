@@ -140,7 +140,7 @@ pub enum Event {
 }
 
 //#[cfg(feature = "mouse")]
-#[derive(Clone, Hash, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Hash, Debug, Eq, PartialEq, Ord, PartialOrd)]
 /// Represents a button of a mouse
 pub enum MouseButton {
     Left,
@@ -151,7 +151,7 @@ pub enum MouseButton {
 
 /// Represent a key
 /// Enum from winit but added an Unknown key.
-#[derive(Clone, Hash, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Hash, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[repr(u32)]
 pub enum KeyCode {
     /// The '1' key over the letters.
