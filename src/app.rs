@@ -1,3 +1,4 @@
+use crate::input::Mouse;
 use crate::res::{ResourceLoaderManager, ResourceParser};
 use backend::*;
 use nae_core::resources::*;
@@ -26,6 +27,8 @@ pub struct App {
     fps: VecDeque<f64>,
     last_time: u64,
     last_delta: f64,
+
+    pub mouse: Mouse,
 }
 
 impl BaseApp for App {
@@ -91,6 +94,7 @@ impl<S> AppBuilder<S> {
             fps: fps,
             last_time: date_now(),
             last_delta: 0.0,
+            mouse: Mouse::new(),
         };
 
         let mut state = (self.state_cb)(&mut app);
@@ -106,10 +110,7 @@ impl<S> AppBuilder<S> {
             move |mut app, mut state| {
                 app.tick();
                 try_load_resources(&mut app).unwrap();
-                let mut events = app.sys.events().take_events();
-                for evt in events {
-                    event_cb(&mut app, &mut state, evt);
-                }
+                process_events(app, state, event_cb);
                 update_cb(&mut app, &mut state);
             },
             move |mut app, mut state| {
@@ -148,6 +149,14 @@ impl<S> AppBuilder<S> {
     pub fn fps_target(&mut self, fps: i32) -> &mut Self {
         // TODO by default will be None
         self
+    }
+}
+
+fn process_events<S>(app: &mut App, state: &mut S, cb: fn(&mut App, &mut S, Event)) {
+    let mut events = app.sys.events().take_events();
+    for evt in events {
+        app.mouse.process(&evt);
+        cb(app, state, evt);
     }
 }
 

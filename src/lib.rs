@@ -1,4 +1,5 @@
 mod app;
+mod input;
 mod res;
 
 #[cfg(feature = "extras")]
