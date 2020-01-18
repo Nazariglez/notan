@@ -1,4 +1,4 @@
-use crate::input::Mouse;
+use crate::input::{Keyboard, Mouse};
 use crate::res::{ResourceLoaderManager, ResourceParser};
 use backend::*;
 use nae_core::resources::*;
@@ -29,6 +29,7 @@ pub struct App {
     last_delta: f64,
 
     pub mouse: Mouse,
+    pub keyboard: Keyboard,
 }
 
 impl BaseApp for App {
@@ -95,6 +96,7 @@ impl<S> AppBuilder<S> {
             last_time: date_now(),
             last_delta: 0.0,
             mouse: Mouse::new(),
+            keyboard: Keyboard::new(),
         };
 
         let mut state = (self.state_cb)(&mut app);
@@ -153,9 +155,13 @@ impl<S> AppBuilder<S> {
 }
 
 fn process_events<S>(app: &mut App, state: &mut S, cb: fn(&mut App, &mut S, Event)) {
+    app.mouse.clear();
+    app.keyboard.clear();
     let mut events = app.sys.events().take_events();
     for evt in events {
-        app.mouse.process(&evt);
+        let delta = app.delta() as f32;
+        app.mouse.process(&evt, delta);
+        app.keyboard.process(&evt, delta);
         cb(app, state, evt);
     }
 }
