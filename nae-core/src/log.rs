@@ -12,7 +12,7 @@ pub fn init_with_level(level: Level) {
 
 #[cfg(target_arch = "wasm32")]
 pub fn init() {
-    console_log::init_with_level(Level::Warn);
+    console_log::init_with_level(Level::Trace);
 }
 
 #[cfg(not(target_arch = "wasm32"))]
