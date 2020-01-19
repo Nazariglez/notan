@@ -7,7 +7,7 @@ const LINE_COLORS: [Color; 8] = [
     Color::RED,
     Color::PINK,
     Color::BLUE,
-    Color::FUCHSIA,
+    Color::MAGENTA,
     Color::YELLOW,
 ];
 

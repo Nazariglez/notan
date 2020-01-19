@@ -14,7 +14,7 @@ impl Color {
     pub const GREEN: Color = Color::Rgba(0.0, 1.0, 0.0, 1.0);
     pub const BLUE: Color = Color::Rgba(0.0, 0.0, 1.0, 1.0);
     pub const YELLOW: Color = Color::Rgba(1.0, 1.0, 0.0, 1.0);
-    pub const FUCHSIA: Color = Color::Rgba(1.0, 0.0, 1.0, 1.0);
+    pub const MAGENTA: Color = Color::Rgba(1.0, 0.0, 1.0, 1.0);
     pub const SILVER: Color = Color::Rgba(0.753, 0.753, 0.753, 1.0);
     pub const GRAY: Color = Color::Rgba(0.5, 0.5, 0.5, 1.0);
     pub const OLIVE: Color = Color::Rgba(0.5, 0.5, 0.0, 1.0);

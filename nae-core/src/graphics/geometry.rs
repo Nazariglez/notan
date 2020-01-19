@@ -285,6 +285,7 @@ impl Geometry {
     pub fn clear(&mut self) -> &mut Self {
         self.vertices = None;
         self.stack = vec![];
+        self.mode = vec![];
         self.current_path = None;
         self.is_builded = false;
         self
