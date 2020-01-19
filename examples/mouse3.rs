@@ -17,6 +17,7 @@ struct Line {
 }
 
 struct State {
+    geom: Geometry,
     color_index: usize,
     lines: Vec<Line>,
 }
@@ -32,6 +33,7 @@ fn main() {
 
 fn init(app: &mut App) -> State {
     State {
+        geom: Geometry::new(),
         color_index: 0,
         lines: vec![],
     }
@@ -76,16 +78,18 @@ fn draw(app: &mut App, state: &mut State) {
         None,
     );
 
-    state.lines.iter().for_each(|line| {
-        draw.set_color(line.color);
-        if line.points.len() > 1 {
-            for i in 1..line.points.len() {
-                let p1 = line.points[i - 1];
-                let p2 = line.points[i];
-                draw.line(p1.0, p1.1, p2.0, p2.1, 10.0);
+    state.geom.clear();
+    for line in &state.lines {
+        for (i, (x, y)) in line.points.iter().enumerate() {
+            if i == 0 {
+                state.geom.move_to(*x, *y);
+            } else {
+                state.geom.line_to(*x, *y);
             }
         }
-    });
+        state.geom.stroke(line.color, 10.0);
+    }
 
+    draw.geometry(&mut state.geom);
     draw.end();
 }
