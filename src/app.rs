@@ -30,6 +30,7 @@ pub struct App {
     pub delta: f32,
     pub mouse: Mouse,
     pub keyboard: Keyboard,
+    pub time: f32,
 }
 
 impl BaseApp for App {
@@ -57,6 +58,7 @@ impl App {
         let elapsed = (now - self.last_time) as f64;
         self.last_time = now;
         self.delta = (elapsed / 1000.0) as f32;
+        self.time += self.delta;
         self.fps.pop_front();
         self.fps.push_back(elapsed);
     }
@@ -91,6 +93,7 @@ impl<S> AppBuilder<S> {
             fps: fps,
             last_time: date_now(),
             delta: 0.0,
+            time: 0.0,
             mouse: Mouse::new(),
             keyboard: Keyboard::new(),
         };
