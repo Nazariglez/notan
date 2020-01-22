@@ -2,14 +2,12 @@ use nae::extras::Random;
 use nae::prelude::*;
 use std::collections::VecDeque;
 
-//https://www.youtube.com/watch?v=bOYoBkZV9RU
-
 const TILE_SIZE: i32 = 30;
 const COLS: i32 = 10;
 const ROWS: i32 = 18;
 const MOVE_DOWN_MS: f32 = 0.5;
 const MIN_MOVE_DOWN_MS: f32 = 0.1;
-const ACCELERATION_BY_LINE: f32 = 0.05;
+const ACCELERATION_BY_LINE: f32 = 0.02;
 
 #[nae::main]
 fn main() {
@@ -21,7 +19,7 @@ fn main() {
 }
 
 fn init(app: &mut App) -> State {
-    State::new()
+    State::new(create_texture(app))
 }
 
 fn update(app: &mut App, state: &mut State) {
@@ -54,20 +52,20 @@ fn draw(app: &mut App, state: &mut State) {
 
     let draw = app.draw();
     draw.begin();
-    draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
+    draw.clear(rgba(0.176, 0.176, 0.176, 1.0));
 
     // draw grid
     for i in 0..COLS * ROWS {
         let (x, y) = xy(i);
         let pos_x = (x * TILE_SIZE) as f32;
         let pos_y = (y * TILE_SIZE) as f32;
-        draw.set_color(Color::WHITE.with_alpha(0.1));
+        draw.set_color(Color::WHITE.with_alpha(0.05));
         draw.stroke_rect(pos_x, pos_y, tile_size, tile_size, 1.0);
 
         if let Some(tile) = state.grid.get(i as usize) {
-            if tile.is_some() {
-                draw.set_color(Color::MAGENTA);
-                draw.rect(pos_x, pos_y, tile_size, tile_size);
+            if let Some(s) = tile {
+                draw.set_color(s.color());
+                draw.image(&state.texture, pos_x, pos_y);
             }
         }
     }
@@ -75,27 +73,29 @@ fn draw(app: &mut App, state: &mut State) {
     // draw the current piece
     let total_movement_time = movement_time(state.score_lines);
     let interpolated_y = ((state.time / total_movement_time) * tile_size) - tile_size;
-    draw_piece(draw, 0.0, interpolated_y, &state.piece);
+    draw_piece(draw, &state.texture, 0.0, interpolated_y, &state.piece);
 
     // draw the next piece
-    let next_x = (COLS * TILE_SIZE + TILE_SIZE * 2) as f32;
-    let next_y = (TILE_SIZE * 5) as f32;
-    draw_piece(draw, next_x, next_y, &state.next);
+    let next_x = (COLS / 2 * TILE_SIZE + TILE_SIZE * 2) as f32;
+    let next_y = (TILE_SIZE * 6) as f32;
+    draw_piece(draw, &state.texture, next_x, next_y, &state.next);
 
+    let text_x = (COLS * TILE_SIZE + TILE_SIZE) as f32;
     draw.set_color(Color::WHITE);
+    draw.text("NEXT", text_x, 10.0, 30.0);
+
     draw.text(
         &format!("Score: {}", state.score_lines),
-        next_x,
-        next_y + tile_size * 10.0,
-        20.0,
+        text_x,
+        next_y + tile_size * 4.0,
+        40.0,
     );
 
     if let Some(lines) = state.last_score {
-        draw.set_color(Color::WHITE);
         draw.text(
             &format!("Last score: {}", lines),
-            next_x,
-            next_y + tile_size * 10.0,
+            text_x,
+            next_y + tile_size * 6.0,
             20.0,
         );
     }
@@ -103,13 +103,13 @@ fn draw(app: &mut App, state: &mut State) {
     draw.end();
 }
 
-fn draw_piece(draw: &mut Context2d, x: f32, y: f32, piece: &Piece) {
-    let tile_size = TILE_SIZE as f32;
+fn draw_piece(draw: &mut Context2d, img: &Texture, x: f32, y: f32, piece: &Piece) {
+    let color = piece.shape.color().with_alpha(0.7);
     piece.points.iter().for_each(|(px, py)| {
         let pos_x = x + (px * TILE_SIZE) as f32;
         let pos_y = y + (py * TILE_SIZE) as f32;
-        draw.set_color(Color::RED);
-        draw.rect(pos_x, pos_y, tile_size, tile_size);
+        draw.set_color(color);
+        draw.image(img, pos_x, pos_y);
     });
 }
 
@@ -125,6 +125,16 @@ enum Shape {
 }
 
 impl Shape {
+    fn color(&self) -> Color {
+        use Shape::*;
+        match self {
+            I => Color::RED,
+            J | L => Color::ORANGE,
+            O => Color::YELLOW,
+            T => Color::PINK,
+            Z | S => Color::GREEN,
+        }
+    }
     fn pos(&self, x: i32, y: i32) -> [(i32, i32); 4] {
         use Shape::*;
         match self {
@@ -264,10 +274,11 @@ struct State {
     time: f32,
     score_lines: i32,
     last_score: Option<i32>,
+    texture: Texture,
 }
 
 impl State {
-    fn new() -> Self {
+    fn new(texture: Texture) -> Self {
         let mut rng = Random::default();
         let piece = random_piece(&mut rng);
         let next = random_piece(&mut rng);
@@ -282,6 +293,7 @@ impl State {
             time: 0.0,
             score_lines: 0,
             last_score: None,
+            texture,
         }
     }
 
@@ -387,7 +399,7 @@ impl State {
     }
 
     fn is_out(&self) -> bool {
-        for (x, y) in self.piece.points.iter() {
+        for (_, y) in self.piece.points.iter() {
             if *y >= 0 {
                 return false;
             }
@@ -428,4 +440,34 @@ fn xy(index: i32) -> (i32, i32) {
 
 fn index(x: i32, y: i32) -> usize {
     (y * COLS + x) as usize
+}
+
+fn create_texture(app: &mut App) -> Texture {
+    let tile_size = TILE_SIZE as f32;
+    let surface = Surface::from_size(app, TILE_SIZE, TILE_SIZE).unwrap();
+
+    let draw = app.draw();
+    draw.begin_to_surface(Some(&surface));
+    draw.set_color(Color::WHITE);
+    draw.rect(0.0, 0.0, tile_size, tile_size);
+    draw.set_color(Color::BLACK);
+    draw.stroke_rect(2.0, 2.0, tile_size - 4.0, tile_size - 4.0, 4.0);
+    draw.set_color(hex(0xc0c0c0ff));
+    draw.rect(
+        tile_size * 0.3,
+        tile_size * 0.3,
+        tile_size * 0.4,
+        tile_size * 0.4,
+    );
+    draw.set_color(hex(0x5a5a5ff));
+    draw.stroke_rect(
+        tile_size * 0.3 + 1.0,
+        tile_size * 0.3 + 1.0,
+        tile_size * 0.4 - 2.0,
+        tile_size * 0.4 - 2.0,
+        2.0,
+    );
+    draw.end();
+
+    surface.texture().clone()
 }
