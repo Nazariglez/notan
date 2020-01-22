@@ -678,7 +678,7 @@ fn create_vao(gl: &GlContext) -> Result<VaoKey, String> {
 fn bind_buffer(gl: &GlContext, buffer: Option<BufferKey>, data: &[f32], _offset: usize) {
     unsafe {
         gl.bind_buffer(glow::ARRAY_BUFFER, buffer);
-        gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vf_to_u8(&data), glow::STATIC_DRAW);
+        gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vf_to_u8(&data), glow::DYNAMIC_DRAW);
     }
 }
 

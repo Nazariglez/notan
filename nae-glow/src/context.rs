@@ -165,7 +165,7 @@ impl BaseContext2d for Context2d {
         self.height = height;
 
         if !self.is_drawing {
-            self.data.set_size(width, height, false);
+            self.data.set_size(width, height, false, false);
         }
     }
 
@@ -194,7 +194,8 @@ impl BaseContext2d for Context2d {
             (None, self.width(), self.height())
         };
 
-        self.data.set_size(ww, hh, self.is_drawing_surface);
+        self.data
+            .set_size(ww, hh, self.is_drawing_surface, self.is_drawing_surface);
         unsafe {
             self.gl.bind_framebuffer(glow::FRAMEBUFFER, fbo);
 
@@ -221,8 +222,12 @@ impl BaseContext2d for Context2d {
         self.is_drawing = false;
         self.clear_mask(); //this is already doing flush
 
-        self.data
-            .set_size(self.width, self.height, self.is_drawing_surface);
+        self.data.set_size(
+            self.width,
+            self.height,
+            self.is_drawing_surface,
+            self.is_drawing_surface,
+        );
         self.is_drawing_surface = false;
 
         unsafe {
@@ -727,9 +732,9 @@ impl DrawData {
         &mut self.transform[len - 1]
     }
 
-    pub fn set_size(&mut self, width: i32, height: i32, flipped: bool) {
+    pub fn set_size(&mut self, width: i32, height: i32, flipped: bool, is_surface: bool) {
         if width != self.width || height != self.height || flipped != self.flipped {
-            self.upadte_projection(width, height, flipped);
+            self.upadte_projection(width, height, flipped, is_surface);
         }
     }
 
@@ -737,11 +742,16 @@ impl DrawData {
         self.shader = shader.map(|v| v.clone());
     }
 
-    fn upadte_projection(&mut self, width: i32, height: i32, flipped: bool) {
+    fn upadte_projection(&mut self, width: i32, height: i32, flipped: bool, is_surface: bool) {
         self.width = width;
         self.height = height;
         self.flipped = flipped;
-        self.projection = projection_2d(self.width, self.height, flipped, self.dpi);
+        self.projection = projection_2d(
+            self.width,
+            self.height,
+            flipped,
+            if is_surface { 1.0 } else { self.dpi },
+        );
     }
 }
 
