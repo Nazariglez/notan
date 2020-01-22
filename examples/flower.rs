@@ -6,13 +6,11 @@ struct State {
     geom: Geometry,
     cx: f32,
     cy: f32,
-    time: f32,
 }
 
 impl State {
     pub fn new() -> Self {
         Self {
-            time: 0.0,
             geom: Geometry::new(),
             cx: 400.0,
             cy: 300.0,
@@ -26,7 +24,7 @@ fn main() {
 }
 
 fn draw(app: &mut App, state: &mut State) {
-    state.time += app.delta * 1000.0;
+    let time = app.time * 1000.0;
 
     let draw = app.draw();
     draw.begin();
@@ -43,7 +41,7 @@ fn draw(app: &mut App, state: &mut State) {
     let max_lines = ((max_radius - start_radius) / radius_increment).ceil();
 
     for i in (start_radius as i32..max_radius as i32).step_by(radius_increment as usize) {
-        let ti = ((state.time + line_index * 79.0) % 2000.0) / 2000.0;
+        let ti = ((time + line_index * 79.0) % 2000.0) / 2000.0;
         draw_flower(
             &mut state.geom,
             state.cx,
@@ -52,7 +50,7 @@ fn draw(app: &mut App, state: &mut State) {
             30.0,
             6.0,
             i as f32,
-            ((state.time % 38000.0) / 38000.0) * 2.0 * math::PI,
+            ((time % 38000.0) / 38000.0) * 2.0 * math::PI,
             count as f32,
             (ti * math::PI * 2.0).cos(),
         );
