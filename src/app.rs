@@ -78,11 +78,12 @@ where
     update_callback: Option<fn(&mut App, &mut S)>,
     start_callback: Option<fn(&mut App, &mut S)>,
     event_callback: Option<fn(&mut App, &mut S, event: Event)>,
+    options: BuilderOpts,
 }
 
 impl<S> AppBuilder<S> {
     pub fn build(&mut self) -> Result<(), String> {
-        let sys = System::new(BuilderOpts::default())?;
+        let sys = System::new(self.options.clone())?;
 
         let mut fps = VecDeque::with_capacity(300);
         fps.resize(fps.capacity(), 1000.0 / 60.0);
@@ -120,6 +121,12 @@ impl<S> AppBuilder<S> {
         );
 
         Ok(())
+    }
+
+    pub fn size(&mut self, width: i32, height: i32) -> &mut Self {
+        self.options.width = width;
+        self.options.height = height;
+        self
     }
 
     pub fn draw(&mut self, cb: fn(&mut App, &mut S)) -> &mut Self {
@@ -188,5 +195,6 @@ pub fn init_with<S>(cb: fn(&mut App) -> S) -> AppBuilder<S> {
         update_callback: None,
         start_callback: None,
         event_callback: None,
+        options: BuilderOpts::default(),
     }
 }

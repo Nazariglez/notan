@@ -11,6 +11,7 @@ pub use rand;
 pub use rand_pcg;
 use std::collections::VecDeque;
 
+#[derive(Clone, Debug)]
 pub struct BuilderOpts {
     pub title: String,
     pub width: i32,
