@@ -14,6 +14,7 @@ fn main() {
     nae::init_with(init)
         .update(update)
         .draw(draw)
+        .size(500, TILE_SIZE * ROWS)
         .build()
         .unwrap();
 }

@@ -20,13 +20,16 @@ pub struct Window {
 impl Window {
     pub(crate) fn new(title: &str, width: i32, height: i32) -> Result<Self, String> {
         let win = web_sys::window().ok_or(String::from("Can't access window dom object."))?;
-        let canvas = win
+        let mut canvas = win
             .document()
             .ok_or("Can't access document dom object ")?
             .get_element_by_id("nae_canvas")
             .ok_or("Can't get the element HtmlCanvasElement#nae_canvas")?
             .dyn_into::<HtmlCanvasElement>()
             .map_err(|e| e.to_string())?;
+
+        canvas.set_width(width as u32);
+        canvas.set_height(height as u32);
 
         let ctx_menu_cb =
             canvas_add_event_listener(&canvas, "contextmenu", |e: web_sys::Event| {
