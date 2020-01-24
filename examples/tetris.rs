@@ -46,6 +46,13 @@ fn update(app: &mut App, state: &mut State) {
         state.time = 0.0;
         state.move_to(MoveTo::Down);
     }
+
+    if state.drop_lines.len() != 0 {
+        state.remove_lines_time -= app.delta;
+        if state.remove_lines_time <= 0.0 {
+            state.remove_lines();
+        }
+    }
 }
 
 fn draw(app: &mut App, state: &mut State) {
@@ -276,6 +283,7 @@ struct State {
     score_lines: i32,
     last_score: Option<i32>,
     texture: Texture,
+    remove_lines_time: f32,
 }
 
 impl State {
@@ -295,6 +303,7 @@ impl State {
             score_lines: 0,
             last_score: None,
             texture,
+            remove_lines_time: 0.0,
         }
     }
 
@@ -328,7 +337,9 @@ impl State {
 
         self.add_shape();
         self.check_lines();
-        self.remove_lines();
+        if self.drop_lines.len() != 0 {
+            self.remove_lines_time = movement_time(self.score_lines) * 0.9;
+        }
     }
 
     fn remove_lines(&mut self) {
