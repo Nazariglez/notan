@@ -1,4 +1,4 @@
-use nae::extras::Random;
+use nae::extras::ShuffleBag;
 use nae::prelude::*;
 use std::collections::VecDeque;
 
@@ -274,7 +274,6 @@ fn movement_time(lines: i32) -> f32 {
 }
 
 struct State {
-    rng: Random,
     piece: Piece,
     grid: VecDeque<Option<Shape>>,
     next: Piece,
@@ -284,17 +283,22 @@ struct State {
     last_score: Option<i32>,
     texture: Texture,
     remove_lines_time: f32,
+    shape_bag: ShuffleBag<Shape>,
 }
 
 impl State {
     fn new(texture: Texture) -> Self {
-        let mut rng = Random::default();
-        let piece = random_piece(&mut rng);
-        let next = random_piece(&mut rng);
+        use Shape::*;
+        let shapes = [I, J, L, O, Z, T, S];
+        let mut shape_bag = ShuffleBag::new(date_now(), 7);
+        shapes.iter().for_each(|s| shape_bag.add(*s, 1));
+
+        let piece = random_piece(&mut shape_bag);
+        let next = random_piece(&mut shape_bag);
         let mut grid = VecDeque::with_capacity((COLS * ROWS) as usize);
         grid.resize(grid.capacity(), None);
+
         Self {
-            rng,
             piece,
             grid,
             next,
@@ -304,6 +308,7 @@ impl State {
             last_score: None,
             texture,
             remove_lines_time: 0.0,
+            shape_bag,
         }
     }
 
@@ -323,7 +328,7 @@ impl State {
     }
 
     fn add_shape(&mut self) -> bool {
-        let next = std::mem::replace(&mut self.next, random_piece(&mut self.rng));
+        let next = std::mem::replace(&mut self.next, random_piece(&mut self.shape_bag));
         self.piece = next;
         true
     }
@@ -439,11 +444,8 @@ impl State {
     }
 }
 
-fn random_piece(rng: &mut Random) -> Piece {
-    use Shape::*;
-    let shapes = [I, J, L, O, Z, T, S];
-    let shape = shapes[rng.gen_range(0, shapes.len())];
-    Piece::new(shape)
+fn random_piece(bag: &mut ShuffleBag<Shape>) -> Piece {
+    Piece::new(bag.item().unwrap().clone())
 }
 
 fn xy(index: i32) -> (i32, i32) {
