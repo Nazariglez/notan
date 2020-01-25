@@ -1,7 +1,7 @@
 use super::System;
 use glutin::{dpi::LogicalSize, ContextBuilder, PossiblyCurrent, WindowedContext};
 use nae_core::window::BaseWindow;
-use nae_core::{BaseApp, BaseSystem, Event, KeyCode, MouseButton};
+use nae_core::{BaseApp, BaseSystem, BuilderOpts, Event, KeyCode, MouseButton};
 use nae_glow::Context2d;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -21,15 +21,20 @@ pub struct Window {
 }
 
 impl Window {
-    pub(crate) fn new(
-        title: &str,
-        width: i32,
-        height: i32,
-        event_loop: &EventLoop<()>,
-    ) -> Result<Self, String> {
-        let win_builder = WindowBuilder::new()
-            .with_title(title)
-            .with_inner_size(LogicalSize::new(width as f64, height as f64));
+    pub(crate) fn new(opts: &BuilderOpts, event_loop: &EventLoop<()>) -> Result<Self, String> {
+        let mut win_builder = WindowBuilder::new()
+            .with_title(&opts.title)
+            .with_resizable(opts.resizable)
+            .with_maximized(opts.maximized)
+            .with_inner_size(LogicalSize::new(opts.width as f64, opts.height as f64));
+
+        if let Some((w, h)) = opts.max_size {
+            win_builder = win_builder.with_max_inner_size(LogicalSize::new(w, h));
+        }
+
+        if let Some((w, h)) = opts.min_size {
+            win_builder = win_builder.with_min_inner_size(LogicalSize::new(w, h));
+        }
 
         let win_ctx = ContextBuilder::new()
             .with_vsync(true)
@@ -45,10 +50,15 @@ impl Window {
         let win = unsafe { win_ctx.make_current().unwrap() };
         let dpi = win.window().scale_factor() as f32;
 
+        if opts.fullscreen {
+            let monitor = win.window().current_monitor();
+            win.window().set_fullscreen(Some(Borderless(monitor)));
+        }
+
         Ok(Self {
-            width,
-            height,
-            title: title.to_string(),
+            width: opts.width,
+            height: opts.height,
+            title: opts.title.to_string(),
             fullscreen: false,
             win,
             dpi,
@@ -205,6 +215,8 @@ trait ToNaeValue {
 
 use std::collections::VecDeque;
 use winit::event::MouseButton as WinitMB;
+use winit::monitor::MonitorHandle;
+use winit::window::Fullscreen::Borderless;
 
 impl ToNaeValue for WinitMB {
     type Kind = MouseButton;

@@ -18,6 +18,10 @@ pub struct BuilderOpts {
     pub height: i32,
     pub fullscreen: bool,
     pub fps_target: Option<i32>,
+    pub min_size: Option<(i32, i32)>,
+    pub max_size: Option<(i32, i32)>,
+    pub maximized: bool,
+    pub resizable: bool,
 }
 
 impl Default for BuilderOpts {
@@ -28,6 +32,10 @@ impl Default for BuilderOpts {
             height: 600,
             fullscreen: false,
             fps_target: None,
+            min_size: None,
+            max_size: None,
+            maximized: false,
+            resizable: false,
         }
     }
 }

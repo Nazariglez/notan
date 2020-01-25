@@ -88,6 +88,7 @@ fn update(app: &mut App, state: &mut State) {
         }
     }
 
+    //Goals
     let ball_bounds = state.ball.bounds();
     if ball_bounds.max_x <= 0.0 {
         state.scores.1 += 1;
