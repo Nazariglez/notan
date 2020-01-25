@@ -7,7 +7,6 @@ use std::collections::VecDeque;
 
 /*TODO
     - Custom Error like Nae::NotFound, Nae::GraphicsX
-    - math functions like random, random::seed() (crossplatform)
     - use rayon when it's necessary for example processing the batch before draw
     -
 */
@@ -129,6 +128,41 @@ impl<S> AppBuilder<S> {
         self
     }
 
+    pub fn min_size(&mut self, width: i32, height: i32) -> &mut Self {
+        self.options.min_size = Some((width, height));
+        self
+    }
+
+    pub fn max_size(&mut self, width: i32, height: i32) -> &mut Self {
+        self.options.max_size = Some((width, height));
+        self
+    }
+
+    pub fn title(&mut self, title: &str) -> &mut Self {
+        self.options.title = title.to_string();
+        self
+    }
+
+    pub fn fullscreen(&mut self) -> &mut Self {
+        self.options.fullscreen = true;
+        self
+    }
+
+    pub fn maximized(&mut self) -> &mut Self {
+        self.options.maximized = true;
+        self
+    }
+
+    pub fn icon(&mut self) -> &mut Self {
+        //TODO set window icon
+        unimplemented!()
+    }
+
+    pub fn resizable(&mut self) -> &mut Self {
+        self.options.resizable = true;
+        self
+    }
+
     pub fn draw(&mut self, cb: fn(&mut App, &mut S)) -> &mut Self {
         self.draw_callback = Some(cb);
         self
@@ -138,11 +172,6 @@ impl<S> AppBuilder<S> {
         self.start_callback = Some(cb);
         self
     }
-
-    //    pub fn resource(&mut self, _cb: fn(&mut App, &mut S, res: &str)) -> &mut Self {
-    //        //TODO call this every time a new resource is loaded
-    //        self
-    //    }
 
     pub fn update(&mut self, cb: fn(&mut App, &mut S)) -> &mut Self {
         self.update_callback = Some(cb);
@@ -155,7 +184,7 @@ impl<S> AppBuilder<S> {
     }
 
     pub fn fps_target(&mut self, fps: i32) -> &mut Self {
-        // TODO by default will be None
+        self.options.fps_target = Some(fps);
         self
     }
 }

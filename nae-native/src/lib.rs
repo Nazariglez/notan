@@ -33,7 +33,7 @@ impl BaseSystem for System {
 
     fn new(mut opts: BuilderOpts) -> Result<Self, String> {
         let event_loop = EventLoop::new();
-        let win = window::Window::new(&opts.title, opts.width, opts.height, &event_loop)?;
+        let win = window::Window::new(&opts, &event_loop)?;
         let ctx2 = Context2d::new(&win.win)?;
         Ok(Self {
             window: win,

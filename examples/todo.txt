@@ -1,8 +1,4 @@
-snake
-tetris
 15puzzle
 primitives
 audio
-mouse
-keyboard
 file_sandbox
