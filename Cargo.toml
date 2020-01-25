@@ -34,3 +34,6 @@ members = [
     "nae-native",
     "nae-backend"
 ]
+
+[profile.release]
+lto = true
