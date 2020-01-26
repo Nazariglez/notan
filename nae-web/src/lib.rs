@@ -22,7 +22,7 @@ impl BaseSystem for System {
 
     fn new(mut opts: BuilderOpts) -> Result<Self, String> {
         panic::set_hook(Box::new(console_error_panic_hook::hook));
-        let win = window::Window::new(&opts.title, opts.width, opts.height)?;
+        let win = window::Window::new(&opts)?;
         let ctx2 = Context2d::new(&win.canvas)?;
         Ok(Self {
             window: win,

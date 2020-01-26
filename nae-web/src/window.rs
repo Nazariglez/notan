@@ -1,6 +1,6 @@
 use super::System;
 use nae_core::window::*;
-use nae_core::{log, BaseApp, Event, KeyCode, MouseButton};
+use nae_core::{log, BaseApp, BuilderOpts, Event, KeyCode, MouseButton};
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
@@ -17,19 +17,35 @@ pub struct Window {
     ctx_menu_cb: Closure<FnMut(web_sys::Event)>,
 }
 
-impl Window {
-    pub(crate) fn new(title: &str, width: i32, height: i32) -> Result<Self, String> {
-        let win = web_sys::window().ok_or(String::from("Can't access window dom object."))?;
-        let mut canvas = win
-            .document()
-            .ok_or("Can't access document dom object ")?
-            .get_element_by_id("nae_canvas")
-            .ok_or("Can't get the element HtmlCanvasElement#nae_canvas")?
-            .dyn_into::<HtmlCanvasElement>()
-            .map_err(|e| e.to_string())?;
+fn get_or_create_canvas(win: &web_sys::Window) -> Result<HtmlCanvasElement, String> {
+    let doc = win.document().ok_or("Can't access document dom object ")?;
+    let canvas = match doc.get_element_by_id("nae_canvas") {
+        Some(c) => c,
+        None => {
+            let c = doc
+                .create_element("canvas")
+                .map_err(|e| format!("{:?}", e))?;
 
-        canvas.set_width(width as u32);
-        canvas.set_height(height as u32);
+            let body = doc
+                .body()
+                .ok_or("body doesn't exists on document.".to_string())?;
+            body.append_child(&c).map_err(|e| format!("{:?}", e))?;
+
+            c.set_id("nae_canvas");
+            c
+        }
+    };
+    canvas
+        .dyn_into::<HtmlCanvasElement>()
+        .map_err(|e| format!("{:?}", e))
+}
+
+impl Window {
+    pub(crate) fn new(opts: &BuilderOpts) -> Result<Self, String> {
+        let win = web_sys::window().ok_or(String::from("Can't access window dom object."))?;
+        let mut canvas = get_or_create_canvas(&win)?;
+        canvas.set_width(opts.width as u32);
+        canvas.set_height(opts.height as u32);
 
         let ctx_menu_cb =
             canvas_add_event_listener(&canvas, "contextmenu", |e: web_sys::Event| {
@@ -37,10 +53,10 @@ impl Window {
             })?;
 
         Ok(Self {
-            title: title.to_string(),
+            title: opts.title.to_string(),
             canvas,
-            width,
-            height,
+            width: opts.width,
+            height: opts.height,
             fullscreen: false,
             ctx_menu_cb,
         })
