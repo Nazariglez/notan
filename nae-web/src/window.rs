@@ -6,15 +6,20 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::HtmlCanvasElement;
+use web_sys::{Element, HtmlCanvasElement};
 
 pub struct Window {
     pub(crate) canvas: HtmlCanvasElement,
+    canvas_parent: Element,
     title: String,
     width: i32,
     height: i32,
     fullscreen: bool,
     ctx_menu_cb: Closure<FnMut(web_sys::Event)>,
+    resize_cb: Option<Closure<FnMut(web_sys::Event)>>,
+    resizable: bool,
+    min_size: Option<(i32, i32)>,
+    max_size: Option<(i32, i32)>,
 }
 
 fn get_or_create_canvas(win: &web_sys::Window) -> Result<HtmlCanvasElement, String> {
@@ -52,13 +57,33 @@ impl Window {
                 e.prevent_default();
             })?;
 
+        if opts.fullscreen {
+            log::warn!("Web target can't support init the application window at fullscreen");
+        }
+
+        let parent = canvas
+            .parent_element()
+            .ok_or("Can't find the canvas parent element.")?;
+
+        if opts.maximized {
+            let p_width = parent.client_width();
+            let p_height = parent.client_height();
+            canvas.set_width(p_width as u32);
+            canvas.set_height(p_height as u32);
+        }
+
         Ok(Self {
             title: opts.title.to_string(),
             canvas,
+            canvas_parent: parent,
             width: opts.width,
             height: opts.height,
             fullscreen: false,
             ctx_menu_cb,
+            resize_cb: None,
+            resizable: opts.resizable,
+            min_size: opts.min_size.clone(),
+            max_size: opts.max_size.clone(),
         })
     }
 }
@@ -284,6 +309,10 @@ where
         &mut keyboard_ctx,
     );
 
+    if app.system().window.resizable {
+        enable_resize_event(events.clone(), &mut app.system().window);
+    }
+
     //Store the ref to the mouse context to avoid drop the closures, another option could be use forget but seems more clean.
     app.system().mouse_ctx = Some(mouse_ctx);
     app.system().keyboard_ctx = Some(keyboard_ctx);
@@ -309,6 +338,52 @@ where
 
     let win = web_sys::window().unwrap();
     request_animation_frame(win, cb_copy.borrow().as_ref().unwrap());
+}
+
+fn enable_resize_event(
+    events: Rc<RefCell<VecDeque<Event>>>,
+    win: &mut Window,
+) -> Result<(), String> {
+    let canvas = win.canvas.clone();
+    let parent = win.canvas_parent.clone();
+    let min_size = win.min_size.clone();
+    let max_size = win.max_size.clone();
+    win.resize_cb = Some(window_add_event_listener(
+        "resize",
+        move |e: web_sys::Event| {
+            let mut p_width = parent.client_width();
+            let mut p_height = parent.client_height();
+
+            if let Some((w, h)) = min_size {
+                if p_width < w {
+                    p_width = w;
+                }
+
+                if p_height < h {
+                    p_height = h;
+                }
+            }
+
+            if let Some((w, h)) = max_size {
+                if p_width > w {
+                    p_width = w;
+                }
+
+                if p_height > h {
+                    p_height = h;
+                }
+            }
+
+            canvas.set_width(p_width as _);
+            canvas.set_height(p_height as _);
+            events.borrow_mut().push_back(Event::WindowResize {
+                width: p_width,
+                height: p_height,
+            });
+        },
+    )?);
+
+    Ok(())
 }
 
 fn canvas_add_event_listener<F, E>(
