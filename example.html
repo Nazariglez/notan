@@ -1,7 +1,33 @@
 <html>
 <head>
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <title>nae - {{ EXAMPLE }}</title>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            background-color: #252526;
+        }
+
+        * {
+            outline: none;
+        }
+
+        div#container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+    </style>
 </head>
 <body>
 <script src="./{{ EXAMPLE }}/{{ EXAMPLE }}.js"></script>
@@ -9,6 +35,9 @@
       window.addEventListener("load", async () => {
         await wasm_bindgen("./{{ EXAMPLE }}/{{ EXAMPLE }}_bg.wasm");
       });
-    </script>
+</script>
+<div id="container">
+    <canvas id="nae_canvas"></canvas>
+</div>
 </body>
 </html>
