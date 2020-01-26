@@ -14,8 +14,6 @@ use winit::window::WindowBuilder;
 pub struct Window {
     pub(crate) win: WindowedContext<PossiblyCurrent>,
     title: String,
-    width: i32,
-    height: i32,
     fullscreen: bool,
     dpi: f32,
 }
@@ -56,8 +54,6 @@ impl Window {
         }
 
         Ok(Self {
-            width: opts.width,
-            height: opts.height,
             title: opts.title.to_string(),
             fullscreen: false,
             win,
@@ -68,11 +64,11 @@ impl Window {
 
 impl BaseWindow for Window {
     fn width(&self) -> i32 {
-        self.width
+        self.win.window().inner_size().width as _
     }
 
     fn height(&self) -> i32 {
-        self.height
+        self.win.window().inner_size().height as _
     }
 
     fn fullscreen(&self) -> bool {
@@ -105,6 +101,15 @@ where
         }
         match event {
             WinitEvent::WindowEvent { ref event, .. } => match event {
+                WindowEvent::Resized(size) => {
+                    let ww = size.width as _;
+                    let hh = size.height as _;
+
+                    app.system().events.push(Event::WindowResize {
+                        width: ww,
+                        height: hh,
+                    });
+                }
                 WindowEvent::CloseRequested => {
                     running = false;
                     *control = ControlFlow::Exit;
@@ -114,7 +119,8 @@ where
                     scale_factor,
                     new_inner_size,
                 } => {
-                    println!("scale_factor: {} {:?}", scale_factor, new_inner_size);
+                    //TODO
+                    println!("TODO scale_factor: {} {:?}", scale_factor, new_inner_size);
                 }
                 WindowEvent::MouseInput { state, button, .. } => {
                     let evt = match state {

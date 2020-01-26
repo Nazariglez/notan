@@ -12,8 +12,6 @@ pub struct Window {
     pub(crate) canvas: HtmlCanvasElement,
     canvas_parent: Element,
     title: String,
-    width: i32,
-    height: i32,
     fullscreen: bool,
     ctx_menu_cb: Closure<FnMut(web_sys::Event)>,
     resize_cb: Option<Closure<FnMut(web_sys::Event)>>,
@@ -76,8 +74,6 @@ impl Window {
             title: opts.title.to_string(),
             canvas,
             canvas_parent: parent,
-            width: opts.width,
-            height: opts.height,
             fullscreen: false,
             ctx_menu_cb,
             resize_cb: None,
@@ -90,11 +86,11 @@ impl Window {
 
 impl BaseWindow for Window {
     fn width(&self) -> i32 {
-        self.width
+        self.canvas.client_width()
     }
 
     fn height(&self) -> i32 {
-        self.height
+        self.canvas.client_height()
     }
 
     fn fullscreen(&self) -> bool {
