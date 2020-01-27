@@ -6,22 +6,23 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{Element, HtmlCanvasElement};
+use web_sys::{Document, Element, HtmlCanvasElement};
 
 pub struct Window {
     pub(crate) canvas: HtmlCanvasElement,
+    doc: Document,
     canvas_parent: Element,
     title: String,
-    fullscreen: bool,
+    pub(crate) fullscreen: bool,
     ctx_menu_cb: Closure<FnMut(web_sys::Event)>,
     resize_cb: Option<Closure<FnMut(web_sys::Event)>>,
     resizable: bool,
     min_size: Option<(i32, i32)>,
     max_size: Option<(i32, i32)>,
+    pub(crate) request_fullscreen: Rc<RefCell<Option<bool>>>,
 }
 
-fn get_or_create_canvas(win: &web_sys::Window) -> Result<HtmlCanvasElement, String> {
-    let doc = win.document().ok_or("Can't access document dom object ")?;
+fn get_or_create_canvas(doc: &web_sys::Document) -> Result<HtmlCanvasElement, String> {
     let canvas = match doc.get_element_by_id("nae_canvas") {
         Some(c) => c,
         None => {
@@ -46,7 +47,8 @@ fn get_or_create_canvas(win: &web_sys::Window) -> Result<HtmlCanvasElement, Stri
 impl Window {
     pub(crate) fn new(opts: &BuilderOpts) -> Result<Self, String> {
         let win = web_sys::window().ok_or(String::from("Can't access window dom object."))?;
-        let mut canvas = get_or_create_canvas(&win)?;
+        let doc = win.document().ok_or("Can't access document dom object ")?;
+        let mut canvas = get_or_create_canvas(&doc)?;
         canvas.set_width(opts.width as u32);
         canvas.set_height(opts.height as u32);
 
@@ -73,6 +75,7 @@ impl Window {
         Ok(Self {
             title: opts.title.to_string(),
             canvas,
+            doc,
             canvas_parent: parent,
             fullscreen: false,
             ctx_menu_cb,
@@ -80,6 +83,7 @@ impl Window {
             resizable: opts.resizable,
             min_size: opts.min_size.clone(),
             max_size: opts.max_size.clone(),
+            request_fullscreen: Rc::new(RefCell::new(None)),
         })
     }
 }
@@ -94,7 +98,7 @@ impl BaseWindow for Window {
     }
 
     fn fullscreen(&self) -> bool {
-        self.fullscreen
+        self.doc.fullscreen()
     }
 
     fn title(&self) -> &str {
@@ -129,12 +133,15 @@ fn enable_keyboard_events(
     events: Rc<RefCell<VecDeque<Event>>>,
     canvas: &HtmlCanvasElement,
     ctx: &mut KeyboardContext,
+    fullscreen_cb: Rc<RefCell<Fn()>>,
 ) -> Result<(), String> {
     let events_copy = events.clone();
     let canvas_clone = canvas.clone();
+    let fullscreen_cb_copy = fullscreen_cb.clone();
     ctx.down_cb = Some(window_add_event_listener(
         "keydown",
         move |e: web_sys::KeyboardEvent| {
+            (*fullscreen_cb_copy.borrow())();
             let mut events = events_copy.borrow_mut();
 
             if let Some(k) = keyboard_code(&e.code()) {
@@ -154,9 +161,11 @@ fn enable_keyboard_events(
 
     let events_copy = events.clone();
     let canvas_clone = canvas.clone();
+    let fullscreen_cb_copy = fullscreen_cb.clone();
     ctx.up_cb = Some(window_add_event_listener(
         "keyup",
         move |e: web_sys::KeyboardEvent| {
+            (*fullscreen_cb_copy.borrow())();
             let mut events = events_copy.borrow_mut();
 
             if let Some(k) = keyboard_code(&e.code()) {
@@ -195,6 +204,7 @@ fn enable_mouse_events(
     events: Rc<RefCell<VecDeque<Event>>>,
     canvas: &HtmlCanvasElement,
     ctx: &mut MouseContext,
+    fullscreen_cb: Rc<RefCell<Fn()>>,
 ) -> Result<(), String> {
     let events_copy = events.clone();
     let canvas_clone = canvas.clone();
@@ -207,10 +217,12 @@ fn enable_mouse_events(
 
     let events_copy = events.clone();
     let canvas_clone = canvas.clone();
+    let fullscreen_cb_copy = fullscreen_cb.clone();
     ctx.down_cb = Some(canvas_add_event_listener(
         canvas,
         "mousedown",
         move |e: web_sys::MouseEvent| {
+            (*fullscreen_cb_copy.borrow())();
             let btn = mouse_button_to_nae(e.button());
             let (x, y) = canvas_position_from_global(&canvas_clone, e);
             events_copy
@@ -221,9 +233,11 @@ fn enable_mouse_events(
 
     let events_copy = events.clone();
     let canvas_clone = canvas.clone();
+    let fullscreen_cb_copy = fullscreen_cb.clone();
     ctx.up_cb = Some(window_add_event_listener(
         "mouseup",
         move |e: web_sys::MouseEvent| {
+            (*fullscreen_cb_copy.borrow())();
             let btn = mouse_button_to_nae(e.button());
             let (x, y) = canvas_position_from_global(&canvas_clone, e);
             events_copy
@@ -234,10 +248,12 @@ fn enable_mouse_events(
 
     let events_copy = events.clone();
     let canvas_clone = canvas.clone();
+    let fullscreen_cb_copy = fullscreen_cb.clone();
     ctx.left_cb = Some(canvas_add_event_listener(
         canvas,
         "mouseout",
         move |e: web_sys::MouseEvent| {
+            (*fullscreen_cb_copy.borrow())();
             let (x, y) = canvas_position_from_global(&canvas_clone, e);
             events_copy
                 .borrow_mut()
@@ -247,10 +263,12 @@ fn enable_mouse_events(
 
     let events_copy = events.clone();
     let canvas_clone = canvas.clone();
+    let fullscreen_cb_copy = fullscreen_cb.clone();
     ctx.enter_cb = Some(canvas_add_event_listener(
         canvas,
         "mouseover",
         move |e: web_sys::MouseEvent| {
+            (*fullscreen_cb_copy.borrow())();
             let (x, y) = canvas_position_from_global(&canvas_clone, e);
             events_copy
                 .borrow_mut()
@@ -283,6 +301,23 @@ fn mouse_button_to_nae(btn: i16) -> MouseButton {
     }
 }
 
+fn fullscreen_cb<A: BaseApp<System = System> + 'static>(app: &mut A) -> Rc<RefCell<Fn()>> {
+    let request_fullscreen = app.system().window.request_fullscreen.clone();
+    let canvas = app.system().window.canvas.clone();
+    let doc = app.system().window.doc.clone();
+    Rc::new(RefCell::new(move || {
+        if let Some(full) = request_fullscreen.borrow_mut().take() {
+            if full {
+                if let Err(e) = canvas.request_fullscreen() {
+                    log::error!("{:?}", e);
+                }
+            } else {
+                doc.exit_fullscreen();
+            }
+        }
+    }))
+}
+
 pub fn run<A, S, F, D>(mut app: A, mut state: S, mut update: F, mut draw: D)
 where
     A: BaseApp<System = System> + 'static,
@@ -294,19 +329,30 @@ where
     let cb_copy = cb.clone();
 
     let events = Rc::new(RefCell::new(VecDeque::new()));
+    let fullscreen_cb = fullscreen_cb(&mut app);
 
     let mut mouse_ctx = MouseContext::new();
-    enable_mouse_events(events.clone(), &app.system().window.canvas, &mut mouse_ctx);
+    enable_mouse_events(
+        events.clone(),
+        &app.system().window.canvas,
+        &mut mouse_ctx,
+        fullscreen_cb.clone(),
+    );
 
     let mut keyboard_ctx = KeyboardContext::new();
     enable_keyboard_events(
         events.clone(),
         &app.system().window.canvas,
         &mut keyboard_ctx,
+        fullscreen_cb.clone(),
     );
 
     if app.system().window.resizable {
-        enable_resize_event(events.clone(), &mut app.system().window);
+        enable_resize_event(
+            events.clone(),
+            &mut app.system().window,
+            fullscreen_cb.clone(),
+        );
     }
 
     //Store the ref to the mouse context to avoid drop the closures, another option could be use forget but seems more clean.
@@ -339,6 +385,7 @@ where
 fn enable_resize_event(
     events: Rc<RefCell<VecDeque<Event>>>,
     win: &mut Window,
+    fullscreen_cb: Rc<RefCell<Fn()>>,
 ) -> Result<(), String> {
     let canvas = win.canvas.clone();
     let parent = win.canvas_parent.clone();
@@ -347,6 +394,7 @@ fn enable_resize_event(
     win.resize_cb = Some(window_add_event_listener(
         "resize",
         move |e: web_sys::Event| {
+            (*fullscreen_cb.borrow())();
             let mut p_width = parent.client_width();
             let mut p_height = parent.client_height();
 

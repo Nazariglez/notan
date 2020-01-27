@@ -3,9 +3,12 @@ mod window;
 
 pub use file::*;
 use nae_core::graphics::BaseContext2d;
+use nae_core::window::BaseWindow;
 pub use nae_core::*;
 pub use nae_glow::*;
+use std::cell::RefCell;
 use std::panic;
+use std::rc::Rc;
 pub use window::*;
 
 pub struct System {
@@ -39,5 +42,21 @@ impl BaseSystem for System {
 
     fn events(&mut self) -> &mut EventIterator {
         &mut self.events
+    }
+
+    fn width(&self) -> f32 {
+        self.window.width() as _
+    }
+
+    fn height(&self) -> f32 {
+        self.window.height() as _
+    }
+
+    fn set_fullscreen(&mut self, full: bool) {
+        *self.window.request_fullscreen.borrow_mut() = Some(full);
+    }
+
+    fn fullscreen(&self) -> bool {
+        self.window.fullscreen()
     }
 }
