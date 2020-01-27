@@ -48,17 +48,29 @@ impl Window {
         let win = unsafe { win_ctx.make_current().unwrap() };
         let dpi = win.window().scale_factor() as f32;
 
+        let mut fullscreen = false;
         if opts.fullscreen {
             let monitor = win.window().current_monitor();
             win.window().set_fullscreen(Some(Borderless(monitor)));
+            fullscreen = true;
         }
 
         Ok(Self {
             title: opts.title.to_string(),
-            fullscreen: false,
+            fullscreen,
             win,
             dpi,
         })
+    }
+
+    pub(crate) fn set_fullscreen(&mut self, full: bool) {
+        self.fullscreen = full;
+        if full {
+            let monitor = self.win.window().current_monitor();
+            self.win.window().set_fullscreen(Some(Borderless(monitor)));
+        } else {
+            self.win.window().set_fullscreen(None);
+        }
     }
 }
 

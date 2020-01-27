@@ -52,6 +52,10 @@ pub trait BaseSystem {
     fn new(opts: BuilderOpts) -> Result<Self::Kind, String>;
     fn ctx2(&mut self) -> &mut Self::Context2d;
     fn events(&mut self) -> &mut EventIterator;
+    fn width(&self) -> f32;
+    fn height(&self) -> f32;
+    fn set_fullscreen(&mut self, full: bool);
+    fn fullscreen(&self) -> bool;
 }
 
 #[cfg(target_arch = "wasm32")]

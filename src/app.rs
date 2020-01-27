@@ -66,6 +66,22 @@ impl App {
         let average: f64 = self.fps.iter().sum::<f64>() / self.fps.len() as f64;
         1000.0 / average
     }
+
+    pub fn width(&self) -> f32 {
+        self.sys.width()
+    }
+
+    pub fn height(&self) -> f32 {
+        self.sys.height()
+    }
+
+    pub fn set_fullscreen(&mut self, full: bool) {
+        self.system().set_fullscreen(full);
+    }
+
+    pub fn fullscreen(&mut self) -> bool {
+        self.system().fullscreen()
+    }
 }
 
 pub struct AppBuilder<S>

@@ -1,6 +1,7 @@
 mod window;
 
 use futures::{future, Future};
+use nae_core::window::BaseWindow;
 pub use nae_core::*;
 pub use nae_glow::*;
 use std::fs::File;
@@ -49,5 +50,21 @@ impl BaseSystem for System {
 
     fn events(&mut self) -> &mut EventIterator {
         &mut self.events
+    }
+
+    fn width(&self) -> f32 {
+        self.window.width() as _
+    }
+
+    fn height(&self) -> f32 {
+        self.window.height() as _
+    }
+
+    fn set_fullscreen(&mut self, full: bool) {
+        self.window.set_fullscreen(full);
+    }
+
+    fn fullscreen(&self) -> bool {
+        self.window.fullscreen()
     }
 }
