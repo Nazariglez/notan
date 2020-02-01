@@ -20,4 +20,5 @@ Cargo.lock
 /generated
 /output
 .idea
+.vscode
 pkg

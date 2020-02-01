@@ -161,12 +161,13 @@ impl BaseContext2d for Context2d {
     }
 
     fn set_size(&mut self, width: i32, height: i32) {
-        self.width = width;
-        self.height = height;
+        self.width = (width as f32 * self.data.dpi) as _;
+        self.height = (height as f32 * self.data.dpi) as _;
+        println!("ctx -> w:{} h:{}", self.width, self.height);
 
-        if !self.is_drawing {
+//        if !self.is_drawing {
             self.data.set_size(width, height, false, false);
-        }
+//        }
     }
 
     fn width(&self) -> i32 {
@@ -203,6 +204,7 @@ impl BaseContext2d for Context2d {
                 self.gl.draw_buffer(glow::COLOR_ATTACHMENT0);
             }
 
+//            println!("{} {}", ww, hh);
             self.gl.viewport(0, 0, ww, hh);
         }
 
@@ -231,9 +233,10 @@ impl BaseContext2d for Context2d {
         self.is_drawing_surface = false;
 
         unsafe {
+            //This can be removed?
             self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
             self.gl.bind_texture(glow::TEXTURE_2D, None);
-            self.gl.viewport(0, 0, self.width(), self.height());
+//            self.gl.viewport(0, 0, self.width(), self.height());
         }
     }
 
@@ -734,6 +737,7 @@ impl DrawData {
 
     pub fn set_size(&mut self, width: i32, height: i32, flipped: bool, is_surface: bool) {
         if width != self.width || height != self.height || flipped != self.flipped {
+            println!("ctx set size {} {} {} {}", width, height, flipped, is_surface);
             self.upadte_projection(width, height, flipped, is_surface);
         }
     }
@@ -861,6 +865,8 @@ fn create_context_2d(win_ctx: &WindowedContext<PossiblyCurrent>) -> Result<Conte
     let data = DrawData::new(width, height, dpi);
 
     initialize_gl_2d(&gl, blend_mode);
+
+    println!("ctx -> new size {} {}", width, height);
 
     Ok(Context2d {
         data,

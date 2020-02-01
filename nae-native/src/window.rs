@@ -76,11 +76,11 @@ impl Window {
 
 impl BaseWindow for Window {
     fn width(&self) -> i32 {
-        self.win.window().inner_size().width as _
+        (self.win.window().inner_size().width as f32 / self.dpi) as _
     }
 
     fn height(&self) -> i32 {
-        self.win.window().inner_size().height as _
+        (self.win.window().inner_size().height as f32 / self.dpi) as _
     }
 
     fn fullscreen(&self) -> bool {
@@ -114,8 +114,12 @@ where
         match event {
             WinitEvent::WindowEvent { ref event, .. } => match event {
                 WindowEvent::Resized(size) => {
-                    let ww = size.width as _;
-                    let hh = size.height as _;
+                    println!("{:?}", size);
+                    let dpi = app.system().window.dpi;
+                    let ww = (size.width as f32 / dpi) as _;
+                    let hh = (size.height as f32 / dpi) as _;
+
+                    println!("{} {}", ww, hh);
 
                     app.system().events.push(Event::WindowResize {
                         width: ww,
