@@ -1,6 +1,7 @@
 use crate::input::{Keyboard, Mouse};
 use crate::res::{ResourceLoaderManager, ResourceParser};
 use backend::*;
+use nae_core::graphics::*;
 use nae_core::resources::*;
 use nae_core::{BaseSystem, BuilderOpts, Event};
 use std::collections::VecDeque;
@@ -25,6 +26,8 @@ pub struct App {
     sys: System,
     fps: VecDeque<f64>,
     last_time: u64,
+    width: f32,
+    height: f32,
 
     pub delta: f32,
     pub mouse: Mouse,
@@ -99,6 +102,8 @@ where
 impl<S> AppBuilder<S> {
     pub fn build(&mut self) -> Result<(), String> {
         let sys = System::new(self.options.clone())?;
+        let width = sys.width();
+        let height = sys.height();
 
         let mut fps = VecDeque::with_capacity(300);
         fps.resize(fps.capacity(), 1000.0 / 60.0);
@@ -112,6 +117,8 @@ impl<S> AppBuilder<S> {
             time: 0.0,
             mouse: Mouse::new(),
             keyboard: Keyboard::new(),
+            width: width,
+            height: height
         };
 
         let mut state = (self.state_cb)(&mut app);
@@ -213,6 +220,16 @@ fn process_events<S>(app: &mut App, state: &mut S, cb: fn(&mut App, &mut S, Even
     for evt in events {
         app.mouse.process(&evt, app.delta);
         app.keyboard.process(&evt, app.delta);
+
+        match evt {
+            Event::WindowResize { width, height } => {
+                app.width = width as _;
+                app.height = height as _;
+                app.sys.ctx2().set_size(width, height)
+            },
+            _ => {}
+        }
+
         cb(app, state, evt);
     }
 }

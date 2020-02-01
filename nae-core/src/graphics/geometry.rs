@@ -10,6 +10,8 @@ use tess::{
     BuffersBuilder, FillOptions, FillTessellator, StrokeOptions, StrokeTessellator, VertexBuffers,
 };
 
+//TODO remove the build flag, use a dirty flag that is false everytime the user stroke or fill, and save the ast vertices removing the new state on the fill/stroke.
+// Just reset using clear, this will allow to "cache" old pathsz or shapes and not "build" them again every frame if we want to reuse the geomtry.
 //TODO check if avoiding the shape tessellators like stroke_circle, and doing this with arcs and bezier we can achieve winding rules.
 
 // The vertex constructor. This is the object that will be used to create the custom
