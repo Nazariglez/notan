@@ -114,12 +114,10 @@ where
         match event {
             WinitEvent::WindowEvent { ref event, .. } => match event {
                 WindowEvent::Resized(size) => {
-                    println!("{:?}", size);
+                    app.system().window.win.resize(*size);
                     let dpi = app.system().window.dpi;
                     let ww = (size.width as f32 / dpi) as _;
                     let hh = (size.height as f32 / dpi) as _;
-
-                    println!("{} {}", ww, hh);
 
                     app.system().events.push(Event::WindowResize {
                         width: ww,
