@@ -54,6 +54,7 @@ pub trait BaseSystem {
     fn events(&mut self) -> &mut EventIterator;
     fn width(&self) -> f32;
     fn height(&self) -> f32;
+    fn dpi(&self) -> f32;
     fn set_fullscreen(&mut self, full: bool);
     fn fullscreen(&self) -> bool;
 }

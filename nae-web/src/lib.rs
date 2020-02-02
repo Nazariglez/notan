@@ -52,6 +52,10 @@ impl BaseSystem for System {
         self.window.height() as _
     }
 
+    fn dpi(&self) -> f32 {
+        self.window.dpi()
+    }
+
     fn set_fullscreen(&mut self, full: bool) {
         *self.window.request_fullscreen.borrow_mut() = Some(full);
     }

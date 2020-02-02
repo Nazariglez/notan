@@ -226,13 +226,6 @@ impl BaseContext2d for Context2d {
             self.is_drawing_surface,
         );
         self.is_drawing_surface = false;
-
-        unsafe {
-            //This can be removed?
-            self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
-            self.gl.bind_texture(glow::TEXTURE_2D, None);
-            //            self.gl.viewport(0, 0, self.width(), self.height());
-        }
     }
 
     fn clear(&mut self, color: Color) {
