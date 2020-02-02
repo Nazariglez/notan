@@ -145,6 +145,11 @@ impl<S> AppBuilder<S> {
         Ok(())
     }
 
+    pub fn keep_window_aspect(&mut self) -> &mut Self {
+        //TODO just for wasm32, if it's enabled keep the canvas apsect/ratio when resizable or maximized is enabled
+        unimplemented!()
+    }
+
     pub fn size(&mut self, width: i32, height: i32) -> &mut Self {
         self.options.width = width;
         self.options.height = height;
