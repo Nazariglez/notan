@@ -83,8 +83,8 @@ that can be used as a foundation for this purpose.
     - [x] OpenGL
     - [ ] OpenGL ES
 - API 
-    - [ ] Window
-    - [ ] Keyboard
+    - [x] Window
+    - [x] Keyboard
     - [x] Mouse
     - [ ] Touch
     - [ ] Gamepad
