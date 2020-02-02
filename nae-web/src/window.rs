@@ -13,13 +13,15 @@ pub struct Window {
     doc: Document,
     canvas_parent: Element,
     title: String,
-    pub(crate) fullscreen: bool,
+    fullscreen: bool,
     ctx_menu_cb: Closure<FnMut(web_sys::Event)>,
     resize_cb: Option<Closure<FnMut(web_sys::Event)>>,
     resizable: bool,
     min_size: Option<(i32, i32)>,
     max_size: Option<(i32, i32)>,
     pub(crate) request_fullscreen: Rc<RefCell<Option<bool>>>,
+    pub(crate) fullscreen_last_size: Rc<RefCell<Option<(i32, i32)>>>,
+    pub(crate) fullscreen_change_cb: Option<Closure<FnMut(web_sys::Event)>>,
 }
 
 fn get_or_create_canvas(doc: &web_sys::Document) -> Result<HtmlCanvasElement, String> {
@@ -84,6 +86,8 @@ impl Window {
             min_size: opts.min_size.clone(),
             max_size: opts.max_size.clone(),
             request_fullscreen: Rc::new(RefCell::new(None)),
+            fullscreen_last_size: Rc::new(RefCell::new(None)),
+            fullscreen_change_cb: None,
         })
     }
 }
@@ -301,13 +305,17 @@ fn mouse_button_to_nae(btn: i16) -> MouseButton {
     }
 }
 
-fn fullscreen_cb<A: BaseApp<System = System> + 'static>(app: &mut A) -> Rc<RefCell<Fn()>> {
-    let request_fullscreen = app.system().window.request_fullscreen.clone();
-    let canvas = app.system().window.canvas.clone();
-    let doc = app.system().window.doc.clone();
+fn fullscreen_cb(win: &Window) -> Rc<RefCell<Fn()>> {
+    let request_fullscreen = win.request_fullscreen.clone();
+    let canvas = win.canvas.clone();
+    let doc = win.doc.clone();
+    let last_size = win.fullscreen_last_size.clone();
     Rc::new(RefCell::new(move || {
         if let Some(full) = request_fullscreen.borrow_mut().take() {
             if full {
+                let width = canvas.client_width();
+                let height = canvas.client_height();
+                *last_size.borrow_mut() = Some((width, height));
                 if let Err(e) = canvas.request_fullscreen() {
                     log::error!("{:?}", e);
                 }
@@ -329,7 +337,7 @@ where
     let cb_copy = cb.clone();
 
     let events = Rc::new(RefCell::new(VecDeque::new()));
-    let fullscreen_cb = fullscreen_cb(&mut app);
+    let fullscreen_cb = fullscreen_cb(&app.system().window);
 
     let mut mouse_ctx = MouseContext::new();
     enable_mouse_events(
@@ -354,6 +362,8 @@ where
             fullscreen_cb.clone(),
         );
     }
+
+    enable_fullscreen_event(events.clone(), &mut app.system().window);
 
     //Store the ref to the mouse context to avoid drop the closures, another option could be use forget but seems more clean.
     app.system().mouse_ctx = Some(mouse_ctx);
@@ -380,6 +390,41 @@ where
 
     let win = web_sys::window().unwrap();
     request_animation_frame(win, cb_copy.borrow().as_ref().unwrap());
+}
+
+fn enable_fullscreen_event(
+    events: Rc<RefCell<VecDeque<Event>>>,
+    win: &mut Window,
+) -> Result<(), String> {
+    let canvas = win.canvas.clone();
+    let parent = win.canvas_parent.clone();
+    let doc = win.doc.clone();
+    let last_size = win.fullscreen_last_size.clone();
+    win.fullscreen_change_cb = Some(window_add_event_listener(
+        "fullscreenchange",
+        move |e: web_sys::Event| {
+            let (width, height) = if doc.fullscreen() {
+                (canvas.client_width(), canvas.client_height())
+            } else {
+                match *last_size.borrow() {
+                    Some(size) => size,
+                    _ => {
+                        log::error!("Invalid fullscreen disabled size.");
+                        (800, 600)
+                    }
+                }
+            };
+
+            canvas.set_width(width as _);
+            canvas.set_height(height as _);
+            events.borrow_mut().push_back(Event::WindowResize {
+                width: width,
+                height: height,
+            });
+        },
+    )?);
+
+    Ok(())
 }
 
 fn enable_resize_event(
