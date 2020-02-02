@@ -326,7 +326,7 @@ fn fullscreen_cb(win: &Window) -> Rc<RefCell<Fn()>> {
     }))
 }
 
-pub fn run<A, S, F, D>(mut app: A, mut state: S, mut update: F, mut draw: D)
+pub fn run<A, S, F, D>(mut app: A, mut state: S, mut update: F, mut draw: D) -> Result<(), String>
 where
     A: BaseApp<System = System> + 'static,
     S: 'static,
@@ -345,7 +345,7 @@ where
         &app.system().window.canvas,
         &mut mouse_ctx,
         fullscreen_cb.clone(),
-    );
+    )?;
 
     let mut keyboard_ctx = KeyboardContext::new();
     enable_keyboard_events(
@@ -353,17 +353,17 @@ where
         &app.system().window.canvas,
         &mut keyboard_ctx,
         fullscreen_cb.clone(),
-    );
+    )?;
 
     if app.system().window.resizable {
         enable_resize_event(
             events.clone(),
             &mut app.system().window,
             fullscreen_cb.clone(),
-        );
+        )?;
     }
 
-    enable_fullscreen_event(events.clone(), &mut app.system().window);
+    enable_fullscreen_event(events.clone(), &mut app.system().window)?;
 
     //Store the ref to the mouse context to avoid drop the closures, another option could be use forget but seems more clean.
     app.system().mouse_ctx = Some(mouse_ctx);
@@ -390,6 +390,8 @@ where
 
     let win = web_sys::window().unwrap();
     request_animation_frame(win, cb_copy.borrow().as_ref().unwrap());
+
+    Ok(())
 }
 
 fn enable_fullscreen_event(
