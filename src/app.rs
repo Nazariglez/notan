@@ -76,6 +76,10 @@ impl App {
         self.sys.height()
     }
 
+    pub fn dpi(&self) -> f32 {
+        self.sys.dpi()
+    }
+
     pub fn set_fullscreen(&mut self, full: bool) {
         self.system().set_fullscreen(full);
     }
