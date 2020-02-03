@@ -37,7 +37,7 @@ fn draw(app: &mut App, state: &mut State) {
 
     draw.begin_mask();
     draw.clear(Color::TRANSPARENT);
-    draw.geometry(&mut state.geom);
+    draw.geometry(&state.geom);
     draw.end_mask();
 
     draw.pop_matrix();

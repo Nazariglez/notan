@@ -147,7 +147,7 @@ where
         line_width: f32,
     );
     fn stroke_circle(&mut self, x: f32, y: f32, radius: f32, line_width: f32);
-    fn geometry(&mut self, geometry: &mut Geometry);
+    fn geometry(&mut self, geometry: &Geometry);
     fn image(&mut self, img: &Self::Texture, x: f32, y: f32);
     fn image_crop(
         &mut self,

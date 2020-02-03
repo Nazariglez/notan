@@ -60,7 +60,7 @@ fn draw(app: &mut App, state: &mut State) {
     }
 
     state.geom.stroke(Color::MAGENTA, 3.0);
-    draw.geometry(&mut state.geom);
+    draw.geometry(&state.geom);
     draw.end();
 }
 
