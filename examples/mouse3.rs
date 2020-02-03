@@ -11,15 +11,10 @@ const LINE_COLORS: [Color; 8] = [
     Color::YELLOW,
 ];
 
-struct Line {
-    color: Color,
-    points: Vec<(f32, f32)>,
-}
-
 struct State {
     geom: Geometry,
     color_index: usize,
-    lines: Vec<Line>,
+    drawing: bool,
 }
 
 #[nae::main]
@@ -35,30 +30,33 @@ fn init(app: &mut App) -> State {
     State {
         geom: Geometry::new(),
         color_index: 0,
-        lines: vec![],
+        drawing: false,
     }
 }
 
 fn process_input(app: &mut App, state: &mut State) {
     if app.mouse.was_pressed(MouseButton::Left) {
-        state.lines.push(Line {
-            color: LINE_COLORS[state.color_index],
-            points: vec![(app.mouse.x, app.mouse.y)],
-        });
+        state.geom.move_to(app.mouse.x, app.mouse.y);
+        state.drawing = true;
     }
 
     if app.mouse.is_down(MouseButton::Left) {
-        if let Some(line) = state.lines.last_mut() {
-            line.points.push((app.mouse.x, app.mouse.y));
+        if state.drawing {
+            state.geom.line_to(app.mouse.x, app.mouse.y);
         }
     }
 
     if app.mouse.was_released(MouseButton::Left) {
-        if let Some(line) = state.lines.last_mut() {
-            line.points.push((app.mouse.x, app.mouse.y));
-        }
+        if state.drawing {
+            state.drawing = false;
+            state.geom.line_to(app.mouse.x, app.mouse.y);
 
-        state.color_index = (state.color_index + 1) % (LINE_COLORS.len() - 1);
+            let color = LINE_COLORS[state.color_index];
+            state.color_index = (state.color_index + 1) % (LINE_COLORS.len() - 1);
+
+            state.geom.stroke(color, 10.0);
+            println!("stroke {:?} {}", color, state.color_index);
+        }
     }
 }
 
@@ -78,18 +76,6 @@ fn draw(app: &mut App, state: &mut State) {
         None,
     );
 
-    state.geom.clear();
-    for line in &state.lines {
-        for (i, (x, y)) in line.points.iter().enumerate() {
-            if i == 0 {
-                state.geom.move_to(*x, *y);
-            } else {
-                state.geom.line_to(*x, *y);
-            }
-        }
-        state.geom.stroke(line.color, 10.0);
-    }
-
-    draw.geometry(&mut state.geom);
+    draw.geometry(&state.geom);
     draw.end();
 }

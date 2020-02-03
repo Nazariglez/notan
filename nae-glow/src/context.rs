@@ -451,11 +451,9 @@ impl BaseContext2d for Context2d {
         self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
-    fn geometry(&mut self, geometry: &mut Geometry) {
-        geometry.build();
-        if let Some((v, vc)) = &geometry.vertices {
-            self.draw_color(v, Some(vc));
-        }
+    fn geometry(&mut self, geometry: &Geometry) {
+        let (vertex, colors) = geometry.vertices();
+        self.draw_color(vertex, Some(colors));
     }
 
     fn image(&mut self, img: &Self::Texture, x: f32, y: f32) {

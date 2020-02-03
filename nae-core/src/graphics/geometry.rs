@@ -10,8 +10,6 @@ use tess::{
     BuffersBuilder, FillOptions, FillTessellator, StrokeOptions, StrokeTessellator, VertexBuffers,
 };
 
-//TODO remove the build flag, use a dirty flag that is false everytime the user stroke or fill, and save the ast vertices removing the new state on the fill/stroke.
-// Just reset using clear, this will allow to "cache" old pathsz or shapes and not "build" them again every frame if we want to reuse the geomtry.
 //TODO check if avoiding the shape tessellators like stroke_circle, and doing this with arcs and bezier we can achieve winding rules.
 
 // The vertex constructor. This is the object that will be used to create the custom
@@ -30,7 +28,6 @@ impl tess::VertexConstructor<tess::FillVertex, (f32, f32)> for LyonVertex {
 }
 
 pub fn lyon_vbuff_to_vertex(buff: VertexBuffers<(f32, f32), u16>) -> Vec<f32> {
-    //TODO use rayon par_iter when it's not wasm32
     buff.indices.iter().fold(vec![], |mut acc, v| {
         let v = *v as usize;
         acc.push(buff.vertices[v].0);
@@ -66,35 +63,25 @@ enum GeomTypes {
     Path(Path),
 }
 
-enum GeomMode {
-    Fill {
-        geometries: Vec<GeomTypes>,
-        color: Color,
-    },
-    Stroke {
-        geometries: Vec<GeomTypes>,
-        color: Color,
-        strength: f32,
-    },
-}
-
 pub struct Geometry {
-    pub vertices: Option<(Vec<f32>, Vec<Color>)>,
     current_path: Option<Builder>,
-    mode: Vec<GeomMode>,
     stack: Vec<GeomTypes>,
-    is_builded: bool,
+    vertices: Vec<f32>,
+    color_vertices: Vec<Color>,
 }
 
 impl Geometry {
     pub fn new() -> Self {
         Self {
-            vertices: None,
             current_path: None,
-            mode: vec![],
             stack: vec![],
-            is_builded: false,
+            vertices: vec![],
+            color_vertices: vec![],
         }
+    }
+
+    pub fn vertices(&self) -> (&Vec<f32>, &Vec<Color>) {
+        (&self.vertices, &self.color_vertices)
     }
 
     pub fn move_to(&mut self, x: f32, y: f32) -> &mut Self {
@@ -230,66 +217,30 @@ impl Geometry {
     pub fn stroke(&mut self, color: Color, strength: f32) -> &mut Self {
         self.end_path();
         let geometries = std::mem::replace(&mut self.stack, vec![]);
-        self.mode.push(GeomMode::Stroke {
-            geometries,
-            color,
-            strength,
-        });
+        let mut vertices = geometry_stroke(&geometries, strength);
+        self.color_vertices
+            .append(&mut vec![color; vertices.len() / 2]);
+        self.vertices.append(&mut vertices);
         self
     }
 
     pub fn fill(&mut self, color: Color) -> &mut Self {
         self.end_path();
         let geometries = std::mem::replace(&mut self.stack, vec![]);
-        self.mode.push(GeomMode::Fill { geometries, color });
-        self
-    }
-
-    pub fn build(&mut self) -> &mut Self {
-        if self.is_builded {
-            return self;
-        }
-
-        //Use fill mode by default if there is some geometry in the stack without mode
-        if !self.stack.is_empty() {
-            self.fill(Color::WHITE);
-        }
-
-        let (v, vc) = self
-            .mode
-            .iter()
-            .map(|m| {
-                let (v, c) = match m {
-                    GeomMode::Stroke {
-                        geometries,
-                        color,
-                        strength,
-                    } => (geometry_stroke(geometries, *strength), *color),
-                    GeomMode::Fill { geometries, color } => (geometry_fill(geometries), *color),
-                };
-
-                let vc = vec![c; v.len() / 2];
-                (v, vc)
-            })
-            .fold((vec![], vec![]), |(mut v_acc, mut vc_acc), mut v| {
-                v_acc.append(&mut v.0);
-                vc_acc.append(&mut v.1);
-                (v_acc, vc_acc)
-            });
-
-        self.vertices = Some((v, vc));
-        self.is_builded = true;
+        let mut vertices = geometry_fill(&geometries);
+        self.color_vertices
+            .append(&mut vec![color; vertices.len() / 2]);
+        self.vertices.append(&mut vertices);
         self
     }
 
     //TODO line joints and line caps
 
     pub fn clear(&mut self) -> &mut Self {
-        self.vertices = None;
         self.stack = vec![];
-        self.mode = vec![];
+        self.vertices = vec![];
+        self.color_vertices = vec![];
         self.current_path = None;
-        self.is_builded = false;
         self
     }
 
