@@ -15,6 +15,7 @@ struct State {
     geom: Geometry,
     color_index: usize,
     drawing: bool,
+    lines: Vec<(Vec<(f32, f32)>, Color)>,
 }
 
 #[nae::main]
@@ -31,33 +32,39 @@ fn init(app: &mut App) -> State {
         geom: Geometry::new(),
         color_index: 0,
         drawing: false,
+        lines: vec![],
     }
 }
 
 fn process_input(app: &mut App, state: &mut State) {
-    if app.mouse.was_pressed(MouseButton::Left) {
-        state.geom.move_to(app.mouse.x, app.mouse.y);
+    // On press down create a new line
+    if app.mouse.was_pressed(MouseButton::Left) && !state.drawing {
         state.drawing = true;
+
+        let color = LINE_COLORS[state.color_index];
+        state.lines.push((vec![(app.mouse.x, app.mouse.y)], color));
+
+        state.color_index = (state.color_index + 1) % (LINE_COLORS.len() - 1);
     }
 
-    if app.mouse.is_down(MouseButton::Left) {
-        if state.drawing {
-            state.geom.line_to(app.mouse.x, app.mouse.y);
+    // If the user keeps the mouse button down track the position of the cursor
+    if app.mouse.is_down(MouseButton::Left) && state.drawing {
+        if let Some((positions, _)) = state.lines.last_mut() {
+            positions.push((app.mouse.x, app.mouse.y));
         }
     }
 
-    if app.mouse.was_released(MouseButton::Left) {
-        if state.drawing {
-            state.drawing = false;
-            state.geom.line_to(app.mouse.x, app.mouse.y);
+    // When the button is released stops drawing
+    if app.mouse.was_released(MouseButton::Left) && state.drawing {
+        state.drawing = false;
 
-            let color = LINE_COLORS[state.color_index];
-            state.color_index = (state.color_index + 1) % (LINE_COLORS.len() - 1);
-
-            state.geom.stroke(color, 10.0);
-            println!("stroke {:?} {}", color, state.color_index);
+        if let Some((positions, _)) = state.lines.last_mut() {
+            positions.push((app.mouse.x, app.mouse.y));
         }
     }
+
+    // Clear and repopulate the geometry object every frame to see in real time the draw.
+    populate_geometry(state);
 }
 
 fn draw(app: &mut App, state: &mut State) {
@@ -78,4 +85,18 @@ fn draw(app: &mut App, state: &mut State) {
 
     draw.geometry(&state.geom);
     draw.end();
+}
+
+fn populate_geometry(state: &mut State) {
+    state.geom.clear();
+    for (positions, color) in state.lines.iter() {
+        for (i, (x, y)) in positions.iter().enumerate() {
+            if i == 0 {
+                state.geom.move_to(*x, *y);
+            } else {
+                state.geom.line_to(*x, *y);
+            }
+        }
+        state.geom.stroke(*color, 10.0);
+    }
 }
