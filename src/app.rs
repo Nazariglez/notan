@@ -140,7 +140,7 @@ impl<S> AppBuilder<S> {
             move |mut app, mut state| {
                 draw_cb(&mut app, &mut state);
             },
-        );
+        )?;
 
         Ok(())
     }

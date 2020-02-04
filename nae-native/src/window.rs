@@ -96,7 +96,7 @@ impl BaseWindow for Window {
     }
 }
 
-pub fn run<A, S, F, D>(mut app: A, mut state: S, mut update: F, mut draw: D)
+pub fn run<A, S, F, D>(mut app: A, mut state: S, mut update: F, mut draw: D) -> Result<(), String>
 where
     A: BaseApp<System = System> + 'static,
     S: 'static,
@@ -225,6 +225,8 @@ where
         *control = ControlFlow::WaitUntil(time);
         //            *control = ControlFlow::Poll;
     });
+
+    Ok(())
 }
 
 trait ToNaeValue {
