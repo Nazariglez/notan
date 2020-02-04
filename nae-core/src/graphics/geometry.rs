@@ -102,6 +102,7 @@ impl Geometry {
         (&self.vertices, &self.color_vertices)
     }
 
+    /// Sets the initial point of a path
     pub fn move_to(&mut self, x: f32, y: f32) -> &mut Self {
         self.end_path();
 
@@ -116,6 +117,7 @@ impl Geometry {
         self
     }
 
+    /// Creates a straight line to this point from the last one
     pub fn line_to(&mut self, x: f32, y: f32) -> &mut Self {
         match &mut self.current_path {
             Some(b) => b.line_to(point(x, y)),
@@ -127,6 +129,7 @@ impl Geometry {
         self
     }
 
+    /// Creates a cubic bezier curve
     pub fn cubic_bezier_to(
         &mut self,
         x1: f32,
@@ -147,6 +150,7 @@ impl Geometry {
         self
     }
 
+    /// Creates a quadratic bezier curve
     pub fn quadratic_bezier_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) -> &mut Self {
         if self.current_path.is_none() {
             self.move_to(x1, y1);
@@ -159,6 +163,7 @@ impl Geometry {
         self
     }
 
+    /// Creates an arc line
     pub fn arc_to(
         &mut self,
         x: f32,
@@ -178,6 +183,7 @@ impl Geometry {
         self
     }
 
+    /// Create a line between the last point with the first one
     pub fn close_path(&mut self) -> &mut Self {
         if let Some(b) = &mut self.current_path {
             b.close();
@@ -186,12 +192,14 @@ impl Geometry {
         self
     }
 
+    /// Create a circle
     pub fn circle(&mut self, x: f32, y: f32, radius: f32) -> &mut Self {
         self.end_path();
         self.stack.push(GeomTypes::Circle { x, y, radius });
         self
     }
 
+    /// Creates a rectangle
     pub fn rect(&mut self, x: f32, y: f32, width: f32, height: f32) -> &mut Self {
         self.end_path();
         self.stack.push(GeomTypes::Rect {
@@ -203,6 +211,7 @@ impl Geometry {
         self
     }
 
+    /// Creates a rectangle with rounded corners
     pub fn rounded_rect(
         &mut self,
         x: f32,
@@ -222,6 +231,7 @@ impl Geometry {
         self
     }
 
+    /// Creates a triangle
     pub fn triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) -> &mut Self {
         self.end_path();
         self.stack.push(GeomTypes::Triangle {
@@ -232,10 +242,12 @@ impl Geometry {
         self
     }
 
+    /// Stroke the geometries created
     pub fn stroke(&mut self, color: Color, strength: f32) -> &mut Self {
         self.stroke_with_config(color, strength, StrokeConfig::default())
     }
 
+    /// Stroke the geometries created using a custom configuration like line caps or line join
     pub fn stroke_with_config(
         &mut self,
         color: Color,
@@ -260,10 +272,12 @@ impl Geometry {
         self
     }
 
+    /// Fill the geometries created with a color
     pub fn fill(&mut self, color: Color) -> &mut Self {
         self.fill_with_config(color, FillConfig::default())
     }
 
+    /// Fill the geometries created with a color and with some options
     pub fn fill_with_config(&mut self, color: Color, config: FillConfig) -> &mut Self {
         self.end_path();
 

@@ -17,7 +17,8 @@ use nae_core::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign}
 use std::rc::Rc;
 use tess::basic_shapes::stroke_triangle;
 use tess::basic_shapes::{
-    fill_rounded_rectangle, stroke_circle, stroke_rectangle, stroke_rounded_rectangle, BorderRadii,
+    fill_circle, fill_rounded_rectangle, stroke_circle, stroke_rectangle, stroke_rounded_rectangle,
+    BorderRadii,
 };
 use tess::{BuffersBuilder, VertexBuffers};
 
@@ -330,7 +331,7 @@ impl BaseContext2d for Context2d {
         line_width: f32,
     ) {
         let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-        let mut opts = tess::StrokeOptions::tolerance(0.01);
+        let mut opts = tess::StrokeOptions::default();
         opts = opts.with_line_width(line_width);
         stroke_triangle(
             tess::math::point(x1, y1),
@@ -354,7 +355,7 @@ impl BaseContext2d for Context2d {
 
     fn stroke_rect(&mut self, x: f32, y: f32, width: f32, height: f32, line_width: f32) {
         let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-        let mut opts = tess::StrokeOptions::tolerance(0.01);
+        let mut opts = tess::StrokeOptions::default();
         opts = opts.with_line_width(line_width);
         stroke_rectangle(
             &tess::math::rect(x, y, width, height),
@@ -397,12 +398,21 @@ impl BaseContext2d for Context2d {
     }
 
     fn circle(&mut self, x: f32, y: f32, radius: f32) {
-        self.draw_color(&get_circle_vertices(x, y, radius, None), None);
+        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        let mut opts = tess::FillOptions::default();
+        fill_circle(
+            tess::math::point(x, y),
+            radius,
+            &mut opts,
+            &mut BuffersBuilder::new(&mut output, LyonVertex),
+        )
+        .unwrap();
+        self.draw_color(&lyon_vbuff_to_vertex(output), None);
     }
 
     fn rounded_rect(&mut self, x: f32, y: f32, width: f32, height: f32, radius: f32) {
         let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-        let opts = tess::FillOptions::tolerance(0.01);
+        let opts = tess::FillOptions::default();
         fill_rounded_rectangle(
             &tess::math::rect(x, y, width, height),
             &BorderRadii::new(radius, radius, radius, radius),
@@ -424,7 +434,7 @@ impl BaseContext2d for Context2d {
         line_width: f32,
     ) {
         let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-        let mut opts = tess::StrokeOptions::tolerance(0.01);
+        let mut opts = tess::StrokeOptions::default();
         opts = opts.with_line_width(line_width);
         stroke_rounded_rectangle(
             &tess::math::rect(x, y, width, height),
@@ -439,7 +449,7 @@ impl BaseContext2d for Context2d {
 
     fn stroke_circle(&mut self, x: f32, y: f32, radius: f32, line_width: f32) {
         let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-        let mut opts = tess::StrokeOptions::tolerance(0.01);
+        let mut opts = tess::StrokeOptions::default();
         opts = opts.with_line_width(line_width);
         stroke_circle(
             tess::math::point(x, y),
@@ -895,35 +905,4 @@ impl GlowValue for BlendFactor {
             InverseDestinationAlpha => glow::ONE_MINUS_DST_ALPHA,
         }
     }
-}
-
-fn get_circle_vertices(x: f32, y: f32, radius: f32, segments: Option<i32>) -> Vec<f32> {
-    let segments = if let Some(s) = segments {
-        s
-    } else {
-        (10.0 * radius.sqrt()).floor() as i32
-    };
-    let theta = 2.0 * PI / segments as f32;
-    let cos = theta.cos();
-    let sin = theta.sin();
-    let mut xx = radius;
-    let mut yy = 0.0;
-
-    let mut vertices = vec![];
-    for _i in 0..segments {
-        let x1 = xx + x;
-        let y1 = yy + y;
-        let last_x = xx;
-        xx = cos * xx - sin * yy;
-        yy = cos * yy + sin * last_x;
-        vertices.push(x1);
-        vertices.push(y1);
-        vertices.push(xx + x);
-        vertices.push(yy + y);
-        vertices.push(x);
-        vertices.push(y);
-        //        vertices.append(&mut vec![x1, y1, xx+x, yy+y, x, y]);
-    }
-
-    vertices
 }
