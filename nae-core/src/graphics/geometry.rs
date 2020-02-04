@@ -10,30 +10,43 @@ use tess::{
     BuffersBuilder, FillOptions, FillTessellator, StrokeOptions, StrokeTessellator, VertexBuffers,
 };
 
-//TODO check if avoiding the shape tessellators like stroke_circle, and doing this with arcs and bezier we can achieve winding rules.
+pub use tess::{LineCap, LineJoin};
 
-// The vertex constructor. This is the object that will be used to create the custom
-// verticex from the information provided by the tessellators.
-pub struct LyonVertex;
-impl tess::VertexConstructor<tess::StrokeVertex, (f32, f32)> for LyonVertex {
-    fn new_vertex(&mut self, vertex: tess::StrokeVertex) -> (f32, f32) {
-        (vertex.position.x, vertex.position.y)
+/// Options to fill a path
+pub struct FillConfig {
+    /// Maximum allowed distance to the path when building an approximation.
+    pub tolerance: f32,
+}
+
+impl Default for FillConfig {
+    fn default() -> Self {
+        Self {
+            tolerance: FillOptions::DEFAULT_TOLERANCE,
+        }
     }
 }
 
-impl tess::VertexConstructor<tess::FillVertex, (f32, f32)> for LyonVertex {
-    fn new_vertex(&mut self, vertex: tess::FillVertex) -> (f32, f32) {
-        (vertex.position.x, vertex.position.y)
-    }
+/// Options to stroke a path
+pub struct StrokeConfig {
+    /// Maximum allowed distance to the path when building an approximation.
+    pub tolerance: f32,
+    /// What cap uses to start the path
+    pub start_cap: LineCap,
+    /// What cap uses to end the path
+    pub end_cap: LineCap,
+    /// What join uses between line segments
+    pub line_join: LineJoin,
 }
 
-pub fn lyon_vbuff_to_vertex(buff: VertexBuffers<(f32, f32), u16>) -> Vec<f32> {
-    buff.indices.iter().fold(vec![], |mut acc, v| {
-        let v = *v as usize;
-        acc.push(buff.vertices[v].0);
-        acc.push(buff.vertices[v].1);
-        acc
-    })
+impl Default for StrokeConfig {
+    fn default() -> Self {
+        Self {
+            tolerance: StrokeOptions::DEFAULT_TOLERANCE,
+            start_cap: StrokeOptions::DEFAULT_LINE_CAP,
+            end_cap: StrokeOptions::DEFAULT_LINE_CAP,
+            line_join: StrokeOptions::DEFAULT_LINE_JOIN,
+        }
+    }
 }
 
 enum GeomTypes {
@@ -63,6 +76,9 @@ enum GeomTypes {
     Path(Path),
 }
 
+/// A representation of a geometric object.
+/// Useful to cache all the vertices and colors instead of tesselate them every draw frame
+/// using the Context2d API.
 pub struct Geometry {
     current_path: Option<Builder>,
     stack: Vec<GeomTypes>,
@@ -71,6 +87,7 @@ pub struct Geometry {
 }
 
 impl Geometry {
+    /// Create a new Geometry
     pub fn new() -> Self {
         Self {
             current_path: None,
@@ -80,6 +97,7 @@ impl Geometry {
         }
     }
 
+    /// Returns the cached vertices and color vertices.
     pub fn vertices(&self) -> (&Vec<f32>, &Vec<Color>) {
         (&self.vertices, &self.color_vertices)
     }
@@ -215,27 +233,51 @@ impl Geometry {
     }
 
     pub fn stroke(&mut self, color: Color, strength: f32) -> &mut Self {
+        self.stroke_with_config(color, strength, StrokeConfig::default())
+    }
+
+    pub fn stroke_with_config(
+        &mut self,
+        color: Color,
+        strength: f32,
+        config: StrokeConfig,
+    ) -> &mut Self {
         self.end_path();
+
+        let opts = StrokeOptions::tolerance(config.tolerance)
+            .with_line_width(strength)
+            .with_start_cap(config.start_cap)
+            .with_end_cap(config.end_cap)
+            .with_line_join(config.line_join);
+
         let geometries = std::mem::replace(&mut self.stack, vec![]);
-        let mut vertices = geometry_stroke(&geometries, strength);
+        let mut vertices = geometry_stroke(&geometries, opts);
+
         self.color_vertices
             .append(&mut vec![color; vertices.len() / 2]);
         self.vertices.append(&mut vertices);
+
         self
     }
 
     pub fn fill(&mut self, color: Color) -> &mut Self {
+        self.fill_with_config(color, FillConfig::default())
+    }
+
+    pub fn fill_with_config(&mut self, color: Color, config: FillConfig) -> &mut Self {
         self.end_path();
+
+        let opts = FillOptions::tolerance(config.tolerance);
         let geometries = std::mem::replace(&mut self.stack, vec![]);
-        let mut vertices = geometry_fill(&geometries);
+        let mut vertices = geometry_fill(&geometries, opts);
         self.color_vertices
             .append(&mut vec![color; vertices.len() / 2]);
         self.vertices.append(&mut vertices);
+
         self
     }
 
-    //TODO line joints and line caps
-
+    /// Clear all the strokes and fill on this geometry setting it like a empty one
     pub fn clear(&mut self) -> &mut Self {
         self.stack = vec![];
         self.vertices = vec![];
@@ -251,11 +293,10 @@ impl Geometry {
     }
 }
 
-fn geometry_stroke(geometries: &Vec<GeomTypes>, strength: f32) -> Vec<f32> {
+fn geometry_stroke(geometries: &Vec<GeomTypes>, opts: StrokeOptions) -> Vec<f32> {
     let mut tessellator = StrokeTessellator::new();
     let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
     let mut vertex_builder = BuffersBuilder::new(&mut output, LyonVertex);
-    let opts = StrokeOptions::tolerance(0.01).with_line_width(strength);
 
     for g in geometries {
         match g {
@@ -305,11 +346,10 @@ fn geometry_stroke(geometries: &Vec<GeomTypes>, strength: f32) -> Vec<f32> {
     lyon_vbuff_to_vertex(output)
 }
 
-fn geometry_fill(geometries: &Vec<GeomTypes>) -> Vec<f32> {
+fn geometry_fill(geometries: &Vec<GeomTypes>, opts: FillOptions) -> Vec<f32> {
     let mut tessellator = FillTessellator::new();
     let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
     let mut vertex_builder = BuffersBuilder::new(&mut output, LyonVertex);
-    let opts = FillOptions::tolerance(0.01);
 
     for g in geometries {
         match g {
@@ -356,4 +396,28 @@ fn geometry_fill(geometries: &Vec<GeomTypes>) -> Vec<f32> {
     }
 
     lyon_vbuff_to_vertex(output)
+}
+
+// The vertex constructor. This is the object that will be used to create the custom
+// vertices from the information provided by the tessellators.
+pub struct LyonVertex;
+impl tess::VertexConstructor<tess::StrokeVertex, (f32, f32)> for LyonVertex {
+    fn new_vertex(&mut self, vertex: tess::StrokeVertex) -> (f32, f32) {
+        (vertex.position.x, vertex.position.y)
+    }
+}
+
+impl tess::VertexConstructor<tess::FillVertex, (f32, f32)> for LyonVertex {
+    fn new_vertex(&mut self, vertex: tess::FillVertex) -> (f32, f32) {
+        (vertex.position.x, vertex.position.y)
+    }
+}
+
+pub fn lyon_vbuff_to_vertex(buff: VertexBuffers<(f32, f32), u16>) -> Vec<f32> {
+    buff.indices.iter().fold(vec![], |mut acc, v| {
+        let v = *v as usize;
+        acc.push(buff.vertices[v].0);
+        acc.push(buff.vertices[v].1);
+        acc
+    })
 }
