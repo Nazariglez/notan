@@ -171,13 +171,15 @@ fn source_with_header(source: &str) -> String {
         return String::from(source);
     }
 
-    let is_gl_es =
-        cfg!(target_arch = "wasm32") || cfg!(target_os = "ios") || cfg!(target_os = "android");
-    if is_gl_es {
-        format!("#version 300 es\n{}", source)
+    let version = if cfg!(target_arch = "wasm32") {
+        "300 es"
+    } else if cfg!(target_os = "ios") || cfg!(target_os = "android") {
+        "100"
     } else {
-        format!("#version 410\n{}", source)
-    }
+        "410"
+    };
+
+    format!("#version {}\n{}", version, source)
 }
 
 fn create_shader(gl: &GlContext, typ: u32, source: &str) -> Result<ShaderKey, String> {
