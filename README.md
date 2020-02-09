@@ -91,7 +91,9 @@ that can be used as a foundation for this purpose.
     - [ ] Audio
 - Extras
     - [ ] PostProcess 
-    - [ ] Animations
+    - [x] Animations
+    - [ ] Screen Scaler
+    - [x] Transform 
     - [ ] Particles
     - [ ] Tweens
     - [ ] Atlas
