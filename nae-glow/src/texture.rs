@@ -7,13 +7,14 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 #[derive(Clone, Default)]
-pub struct Frame {
+struct Frame {
     x: f32,
     y: f32,
     width: f32,
     height: f32,
 }
 
+/// Represents a texture loaded in memory
 #[derive(Clone)]
 pub struct Texture {
     inner: Rc<RefCell<InnerTexture>>,
@@ -25,6 +26,7 @@ impl Texture {
         self.inner.borrow().tex
     }
 
+    /// Returns the current frame position and frame
     pub fn frame(&self) -> (f32, f32, f32, f32) {
         if let Some(frame) = &self.frame {
             (frame.x, frame.y, frame.width, frame.height)
@@ -34,6 +36,7 @@ impl Texture {
         }
     }
 
+    /// Returns a new texture sharing the base texture but with a new rectangle frame
     pub fn with_frame(&self, x: f32, y: f32, width: f32, height: f32) -> Self {
         Self {
             inner: self.inner.clone(),
@@ -46,14 +49,17 @@ impl Texture {
         }
     }
 
+    /// Width of the base texture without the current frame's size
     pub fn base_width(&self) -> f32 {
         self.inner.borrow().width as _
     }
 
+    /// Height of the base texture without the current frame's size
     pub fn base_height(&self) -> f32 {
         self.inner.borrow().height as _
     }
 
+    /// Creates a new texture from a buffer of bytes
     pub fn from_bytes<T, S>(app: &mut T, bytes: &[u8]) -> Result<Self, String>
     where
         T: BaseApp<System = S>,
