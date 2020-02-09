@@ -22,7 +22,9 @@ fn draw(app: &mut App, state: &mut State) {
     draw.push_scale(2.0, 2.0);
 
     // draw the texture returned by the animation
-    draw.image(state.anim.texture(), 60.0, 50.0);
+    if let Some(tex) = state.anim.texture() {
+        draw.image(tex, 60.0, 50.0);
+    }
 
     draw.pop_matrix();
     draw.end();

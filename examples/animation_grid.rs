@@ -109,8 +109,11 @@ fn draw(app: &mut App, state: &mut State) {
         "right" => &mut state.golem.right,
         _ => &mut state.golem.up,
     };
+
     // draw the texture returned by the animation
-    draw.image(anim.texture(), 100.0, 50.0);
+    if let Some(tex) = anim.texture() {
+        draw.image(tex, 100.0, 50.0);
+    }
 
     draw.pop_matrix();
 
