@@ -53,6 +53,16 @@ impl Texture {
     pub fn base_height(&self) -> f32 {
         self.inner.borrow().height as _
     }
+
+    pub fn from_bytes<T, S>(app: &mut T, bytes: &[u8]) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Context2d = <Self as Resource>::Context2d>,
+    {
+        let mut tex = Texture::new("");
+        tex.parse(app, bytes.to_vec())?;
+        Ok(tex)
+    }
 }
 
 impl BaseTexture for Texture {
