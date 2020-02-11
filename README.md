@@ -9,7 +9,7 @@
 
 ## About
 Nae is a portable multimedia layer designed to make your own multimedia apps on top of it with a mid-level and easy to use API.
-//TODO if you want to star fast making a game or a simple app, this is your framework
+If you're looking to create a multi-platform application or game in a easy way this is your framework. 
 
 ## Goals
 The main goal of Nae is to be the foundation for cross-platform multimedia applications, game engines or games while keeping the user code simple
@@ -51,7 +51,7 @@ fn draw(app: &mut App, _: &mut ()) {
 Instructions to init and build a project
 
 ## What means Nae?
-Nae stands for: Nae is `Not An Engine`. This reference that Nae is not a raw low-level lib nor a high-level game/app engine, is more like a mid-layer 
+Nae stands for: `Not An Engine`. This points that Nae is not a raw low-level lib nor a high-level game/app engine, is more like a mid-layer 
 that can be used as a foundation for this purpose. 
 
 ## Current state
@@ -92,7 +92,7 @@ that can be used as a foundation for this purpose.
 - Extras
     - [ ] PostProcess 
     - [x] Animations
-    - [ ] Screen Scaler
+    - [x] Screen Scaler
     - [x] Transform 
     - [ ] Particles
     - [ ] Tweens
