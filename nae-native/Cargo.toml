@@ -12,3 +12,6 @@ nae-glow = { path = "../nae-glow" }
 futures = "0.1.29"
 winit = "0.20"
 glutin = "0.22"
+
+[features]
+sdl = []
