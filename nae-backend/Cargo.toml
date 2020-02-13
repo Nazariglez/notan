@@ -11,3 +11,6 @@ nae-web = { path = "../nae-web" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 nae-native = { path = "../nae-native" }
+
+[features]
+sdl_desktop = ["nae-native/sdl"]
