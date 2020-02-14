@@ -31,8 +31,11 @@ use wasm_bindgen::JsCast;
 #[cfg(target_arch = "wasm32")]
 type Device = web_sys::HtmlCanvasElement;
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
 type Device = WindowedContext<PossiblyCurrent>;
+
+#[cfg(all(not(target_arch = "wasm32"), feature = "sdl"))]
+type Device = sdl2::video::Window;
 
 pub struct Context2d {
     pub(crate) gl: GlContext,
@@ -48,6 +51,9 @@ pub struct Context2d {
     width: i32,
     height: i32,
     transform: Vec<Mat3>,
+
+    #[cfg(feature = "sdl")]
+    sdl_gl: sdl2::video::GLContext,
 }
 
 impl Context2d {
@@ -841,7 +847,7 @@ fn create_context_2d(win: &web_sys::HtmlCanvasElement) -> Result<Context2d, Stri
     })
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
 fn create_context_2d(win_ctx: &WindowedContext<PossiblyCurrent>) -> Result<Context2d, String> {
     let win: &glutin::window::Window = win_ctx.window();
     let size = win.inner_size();
@@ -863,6 +869,54 @@ fn create_context_2d(win_ctx: &WindowedContext<PossiblyCurrent>) -> Result<Conte
 
     Ok(Context2d {
         data,
+        gl,
+        text_batcher,
+        sprite_batcher,
+        color_batcher,
+        blend_mode,
+        is_drawing: false,
+        is_drawing_surface: false,
+        paint_mode: PaintMode::Empty,
+        stencil: false,
+        width,
+        height,
+        transform: vec![identity()],
+    })
+}
+
+#[cfg(all(not(target_arch = "wasm32"), feature = "sdl"))]
+fn create_context_2d(win_ctx: &sdl2::video::Window) -> Result<Context2d, String> {
+    let size = win_ctx.size();
+    let width = size.0 as _;
+    let height = size.1 as _;
+    let gl_attr = win_ctx.subsystem().gl_attr();
+    gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
+    if cfg!(target_os = "ios") || cfg!(target_os = "android") {
+        gl_attr.set_context_version(2, 0);
+    } else {
+        gl_attr.set_context_version(3, 3);
+    }
+
+    let sdl_gl = win_ctx.gl_create_context()?;
+    let ctx = glow::Context::from_loader_function(|s| {
+        win_ctx.subsystem().gl_get_proc_address(s) as *const _
+    });
+    let gl = Rc::new(ctx);
+
+    let blend_mode = BlendMode::NORMAL;
+
+    let text_batcher = TextBatcher::new(&gl)?;
+    let sprite_batcher = SpriteBatcher::new(&gl)?;
+    let color_batcher = ColorBatcher::new(&gl)?;
+
+    let dpi = 1.0; //TODO get dpi from sdl
+    let data = DrawData::new(width, height, dpi);
+
+    initialize_gl_2d(&gl, blend_mode);
+
+    Ok(Context2d {
+        data,
+        sdl_gl,
         gl,
         text_batcher,
         sprite_batcher,

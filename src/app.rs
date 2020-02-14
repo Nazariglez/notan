@@ -6,6 +6,8 @@ use nae_core::resources::*;
 use nae_core::{BaseSystem, BuilderOpts, Event};
 use std::collections::VecDeque;
 
+// TODO app.gpu() -> 3d API app.draw() -> 2d API with gpu() inside and accesible via draw.gpu() this should use draw.present_to(app|surface)
+
 /*TODO
     - Custom Error like Nae::NotFound, Nae::GraphicsX
     - use rayon when it's necessary for example processing the batch before draw
