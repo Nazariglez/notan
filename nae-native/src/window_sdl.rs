@@ -109,6 +109,10 @@ where
                 _ => {}
             }
         }
+
+        update(&mut app, &mut state);
+        draw(&mut app, &mut state);
+        app.system().window.win.gl_swap_window();
     }
     Ok(())
 }
