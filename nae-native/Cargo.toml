@@ -12,6 +12,7 @@ nae-glow = { path = "../nae-glow" }
 futures = "0.1.29"
 winit = "0.20"
 glutin = "0.22"
+sdl2 = { version="0.33", optional=true }
 
 [features]
-sdl = []
+sdl = ["sdl2", "nae-glow/sdl"]
