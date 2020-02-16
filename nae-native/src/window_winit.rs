@@ -197,6 +197,7 @@ where
                     });
                 }
                 WindowEvent::KeyboardInput { input, .. } => {
+                    println!("v: {:?} k: {:?}", input.virtual_keycode, input.scancode);
                     let key = input.virtual_keycode.to_nae();
                     let evt = match input.state {
                         ElementState::Pressed => Event::KeyDown { key },
@@ -229,12 +230,7 @@ where
     Ok(())
 }
 
-trait ToNaeValue {
-    type Kind;
-
-    fn to_nae(&self) -> Self::Kind;
-}
-
+use crate::ToNaeValue;
 use std::collections::VecDeque;
 use winit::event::MouseButton as WinitMB;
 use winit::monitor::MonitorHandle;

@@ -13,6 +13,12 @@ use std::io::Read;
 use std::path::Path;
 use winit::event_loop::EventLoop;
 
+pub(crate) trait ToNaeValue {
+    type Kind;
+
+    fn to_nae(&self) -> Self::Kind;
+}
+
 #[cfg(not(feature = "sdl"))]
 pub use window_winit::*;
 
