@@ -896,6 +896,8 @@ fn create_context_2d(win_ctx: &sdl2::video::Window) -> Result<Context2d, String>
     } else {
         gl_attr.set_context_version(3, 3);
     }
+    gl_attr.set_multisample_buffers(1);
+    gl_attr.set_multisample_samples(8);
 
     let sdl_gl = win_ctx.gl_create_context()?;
     let ctx = glow::Context::from_loader_function(|s| {
