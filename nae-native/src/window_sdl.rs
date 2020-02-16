@@ -1,7 +1,7 @@
 use crate::{System, ToNaeValue};
 use nae_core::window::BaseWindow;
 use nae_core::{BaseApp, BuilderOpts, Event, KeyCode, MouseButton};
-use sdl2::keyboard::Keycode as SdlKeycode;
+use sdl2::keyboard::{Keycode as SdlKeycode, Scancode};
 use sdl2::mouse::MouseButton as SdlMouseButton;
 use sdl2::video::{FullscreenType, Window as SdlWindow};
 use sdl2::{Sdl, VideoSubsystem};
@@ -167,15 +167,13 @@ where
                 SdlEvent::KeyDown {
                     keycode, scancode, ..
                 } => {
-                    println!("{:?} {:?}", keycode, scancode);
-                    let key = keycode.to_nae();
+                    let key = (keycode, scancode).to_nae();
                     app.system().events.push(Event::KeyDown { key });
                 }
                 SdlEvent::KeyUp {
                     keycode, scancode, ..
                 } => {
-                    println!("{:?} {:?}", keycode, scancode);
-                    let key = keycode.to_nae();
+                    let key = (keycode, scancode).to_nae();
                     app.system().events.push(Event::KeyUp { key });
                 }
                 SdlEvent::TextInput { text, .. } => {
@@ -210,14 +208,16 @@ impl ToNaeValue for SdlMouseButton {
     }
 }
 
-// TODO all the winit keycodes should have an equal here, maybe it's better...
-// TODO to use Sdl scancode to winit keycode instead of keycode to keycode
-impl ToNaeValue for Option<SdlKeycode> {
+/* TODO this sdl keycode to winit keycode are just tested on mac and maybe other platforms
+    behave in some other way. Also, maybe some key could be missing, and jus tto think about
+    it's better use sdl scancodes to winit virtual keycodes?
+*/
+impl ToNaeValue for (Option<SdlKeycode>, Option<Scancode>) {
     type Kind = KeyCode;
 
     fn to_nae(&self) -> Self::Kind {
         use SdlKeycode::*;
-        match self {
+        match self.0 {
             Some(k) => match k {
                 Backspace => KeyCode::Back,
                 Tab => KeyCode::Tab,
@@ -230,11 +230,11 @@ impl ToNaeValue for Option<SdlKeycode> {
                 //                Dollar => KeyCode::Dollar,
                 //                Percent => KeyCode::Percent,
                 //                Ampersand => KeyCode::Ampersand,
-                //                Quote => KeyCode::Quote,
+                Quote => KeyCode::Apostrophe,
                 //                LeftParen => KeyCode::LeftParen,
                 //                RightParen => KeyCode::RightParen,
                 Asterisk => KeyCode::Multiply,
-                //                Plus => KeyCode::Plus,
+                Plus => KeyCode::Equals,
                 Comma => KeyCode::Comma,
                 Minus => KeyCode::Minus,
                 Period => KeyCode::Period,
@@ -261,7 +261,7 @@ impl ToNaeValue for Option<SdlKeycode> {
                 RightBracket => KeyCode::RBracket,
                 Caret => KeyCode::Caret,
                 Underscore => KeyCode::Underline,
-                //                Backquote => KeyCode::Backquote,
+                Backquote => KeyCode::Grave,
                 A => KeyCode::A,
                 B => KeyCode::B,
                 C => KeyCode::C,
@@ -423,11 +423,11 @@ impl ToNaeValue for Option<SdlKeycode> {
                 LCtrl => KeyCode::LControl,
                 LShift => KeyCode::LShift,
                 LAlt => KeyCode::LAlt,
-                //                LGui => KeyCode::LGui,
+                LGui => KeyCode::LWin,
                 RCtrl => KeyCode::RControl,
                 RShift => KeyCode::RShift,
                 RAlt => KeyCode::RAlt,
-                //                RGui => KeyCode::RGui,
+                RGui => KeyCode::RWin,
                 //                Mode => KeyCode::Mode,
                 AudioNext => KeyCode::NextTrack,
                 AudioPrev => KeyCode::PrevTrack,
@@ -456,7 +456,16 @@ impl ToNaeValue for Option<SdlKeycode> {
                 Sleep => KeyCode::Sleep,
                 _ => KeyCode::Unknown,
             },
-            _ => KeyCode::Unknown,
+            _ => match self.1 {
+                Some(k) => match k {
+                    Scancode::NonUsBackslash => KeyCode::Comma,
+                    Scancode::Equals => KeyCode::Equals,
+                    Scancode::Backslash => KeyCode::Backslash,
+                    Scancode::Apostrophe => KeyCode::Apostrophe,
+                    _ => KeyCode::Unknown,
+                },
+                _ => KeyCode::Unknown,
+            },
         }
     }
 }
