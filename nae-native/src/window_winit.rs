@@ -197,7 +197,6 @@ where
                     });
                 }
                 WindowEvent::KeyboardInput { input, .. } => {
-                    println!("v: {:?} k: {:?}", input.virtual_keycode, input.scancode);
                     let key = input.virtual_keycode.to_nae();
                     let evt = match input.state {
                         ElementState::Pressed => Event::KeyDown { key },
