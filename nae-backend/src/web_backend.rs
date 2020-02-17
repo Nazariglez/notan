@@ -1,15 +1,73 @@
-use super::System;
-use nae_core::window::*;
-use nae_core::{log, BaseApp, BuilderOpts, Event, KeyCode, MouseButton};
+use nae_core::log;
+use nae_core::window::BaseWindow;
+use nae_core::{
+    BaseApp, BaseContext2d, BaseSystem, BuilderOpts, Event, EventIterator, KeyCode, MouseButton,
+};
+use nae_glow::Context2d;
 use std::cell::RefCell;
 use std::collections::VecDeque;
+use std::panic;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{Document, Element, HtmlCanvasElement};
 
+pub struct System {
+    window: Window,
+    context2d: Context2d,
+    events: EventIterator,
+    mouse_ctx: Option<MouseContext>,
+    keyboard_ctx: Option<KeyboardContext>,
+}
+
+impl BaseSystem for System {
+    type Kind = Self;
+    type Context2d = Context2d;
+
+    fn new(mut opts: BuilderOpts) -> Result<Self, String> {
+        panic::set_hook(Box::new(console_error_panic_hook::hook));
+        let win = Window::new(&opts)?;
+        let ctx2 = Context2d::new(&win.canvas)?;
+        Ok(Self {
+            window: win,
+            context2d: ctx2,
+            events: EventIterator::new(),
+            mouse_ctx: None,
+            keyboard_ctx: None,
+        })
+    }
+
+    fn ctx2(&mut self) -> &mut Self::Context2d {
+        &mut self.context2d
+    }
+
+    fn events(&mut self) -> &mut EventIterator {
+        &mut self.events
+    }
+
+    fn width(&self) -> f32 {
+        self.window.width() as _
+    }
+
+    fn height(&self) -> f32 {
+        self.window.height() as _
+    }
+
+    fn dpi(&self) -> f32 {
+        self.window.dpi()
+    }
+
+    fn set_fullscreen(&mut self, full: bool) {
+        *self.window.request_fullscreen.borrow_mut() = Some(full);
+    }
+
+    fn fullscreen(&self) -> bool {
+        self.window.fullscreen()
+    }
+}
+
 pub struct Window {
-    pub(crate) canvas: HtmlCanvasElement,
+    canvas: HtmlCanvasElement,
     doc: Document,
     canvas_parent: Element,
     title: String,
@@ -19,9 +77,9 @@ pub struct Window {
     resizable: bool,
     min_size: Option<(i32, i32)>,
     max_size: Option<(i32, i32)>,
-    pub(crate) request_fullscreen: Rc<RefCell<Option<bool>>>,
-    pub(crate) fullscreen_last_size: Rc<RefCell<Option<(i32, i32)>>>,
-    pub(crate) fullscreen_change_cb: Option<Closure<FnMut(web_sys::Event)>>,
+    request_fullscreen: Rc<RefCell<Option<bool>>>,
+    fullscreen_last_size: Rc<RefCell<Option<(i32, i32)>>>,
+    fullscreen_change_cb: Option<Closure<FnMut(web_sys::Event)>>,
 }
 
 fn get_or_create_canvas(doc: &web_sys::Document) -> Result<HtmlCanvasElement, String> {
@@ -47,7 +105,7 @@ fn get_or_create_canvas(doc: &web_sys::Document) -> Result<HtmlCanvasElement, St
 }
 
 impl Window {
-    pub(crate) fn new(opts: &BuilderOpts) -> Result<Self, String> {
+    fn new(opts: &BuilderOpts) -> Result<Self, String> {
         let win = web_sys::window().ok_or(String::from("Can't access window dom object."))?;
         let doc = win.document().ok_or("Can't access document dom object ")?;
         let mut canvas = get_or_create_canvas(&doc)?;
@@ -119,7 +177,7 @@ fn request_animation_frame(win: web_sys::Window, f: &Closure<dyn FnMut()>) {
         .expect("should register `requestAnimationFrame` OK");
 }
 
-pub(crate) struct KeyboardContext {
+struct KeyboardContext {
     up_cb: Option<Closure<FnMut(web_sys::KeyboardEvent)>>,
     down_cb: Option<Closure<FnMut(web_sys::KeyboardEvent)>>,
 }
@@ -182,7 +240,7 @@ fn enable_keyboard_events(
     Ok(())
 }
 
-pub(crate) struct MouseContext {
+struct MouseContext {
     up_cb: Option<Closure<FnMut(web_sys::MouseEvent)>>,
     down_cb: Option<Closure<FnMut(web_sys::MouseEvent)>>,
     move_cb: Option<Closure<FnMut(web_sys::MouseEvent)>>,

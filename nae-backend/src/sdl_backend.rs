@@ -1,19 +1,74 @@
-use crate::{System, ToNaeValue};
+use crate::ToNaeValue;
+use futures::{future, Future};
 use nae_core::window::BaseWindow;
 use nae_core::{BaseApp, BuilderOpts, Event, KeyCode, MouseButton};
+use nae_core::{BaseContext2d, BaseSystem, EventIterator};
+use nae_glow::Context2d;
 use sdl2::keyboard::{Keycode as SdlKeycode, Scancode};
 use sdl2::mouse::MouseButton as SdlMouseButton;
 use sdl2::video::{FullscreenType, Window as SdlWindow};
 use sdl2::{Sdl, VideoSubsystem};
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
+
+pub struct System {
+    window: Window,
+    context2d: Context2d,
+    events: EventIterator,
+}
+
+impl BaseSystem for System {
+    type Kind = Self;
+    type Context2d = Context2d;
+
+    fn new(mut opts: BuilderOpts) -> Result<Self, String> {
+        let win = Window::new(&opts)?;
+        let ctx2 = Context2d::new(&win.win)?;
+        Ok(Self {
+            window: win,
+            context2d: ctx2,
+            events: EventIterator::new(),
+        })
+    }
+
+    fn ctx2(&mut self) -> &mut Self::Context2d {
+        &mut self.context2d
+    }
+
+    fn events(&mut self) -> &mut EventIterator {
+        &mut self.events
+    }
+
+    fn width(&self) -> f32 {
+        self.window.width() as _
+    }
+
+    fn height(&self) -> f32 {
+        self.window.height() as _
+    }
+
+    fn dpi(&self) -> f32 {
+        self.window.dpi()
+    }
+
+    fn set_fullscreen(&mut self, full: bool) {
+        self.window.set_fullscreen(full);
+    }
+
+    fn fullscreen(&self) -> bool {
+        self.window.fullscreen()
+    }
+}
 
 pub struct Window {
-    pub(crate) sdl: sdl2::Sdl,
-    pub(crate) video: VideoSubsystem,
-    pub(crate) win: SdlWindow,
+    sdl: sdl2::Sdl,
+    video: VideoSubsystem,
+    win: SdlWindow,
 }
 
 impl Window {
-    pub(crate) fn new(opts: &BuilderOpts) -> Result<Self, String> {
+    fn new(opts: &BuilderOpts) -> Result<Self, String> {
         let sdl = sdl2::init()?;
         let video = sdl.video()?;
         let mut win_builder = video.window(&opts.title, opts.width as _, opts.height as _);
@@ -44,12 +99,10 @@ impl Window {
             win.set_maximum_size(width as _, height as _);
         }
 
-        dbg!(video.display_dpi(0));
-
         Ok(Self { sdl, video, win })
     }
 
-    pub(crate) fn set_fullscreen(&mut self, full: bool) {
+    fn set_fullscreen(&mut self, full: bool) {
         let state = if full {
             FullscreenType::True
         } else {

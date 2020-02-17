@@ -1,8 +1,34 @@
-use futures::future::{poll_fn, result, Future};
-use futures::Async;
+use futures::future::{poll_fn, result};
+use futures::{future, Async, Future};
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
+
+#[cfg(target_arch = "wasm32")]
 use js_sys::Uint8Array;
+#[cfg(target_arch = "wasm32")]
 use web_sys::{XmlHttpRequest, XmlHttpRequestResponseType};
 
+pub(crate) trait ToNaeValue {
+    type Kind;
+
+    fn to_nae(&self) -> Self::Kind;
+}
+
+/// Read the content of a file and return a future with the content
+#[cfg(not(target_arch = "wasm32"))]
+pub fn load_file(path: &str) -> impl Future<Item = Vec<u8>, Error = String> {
+    future::result(load_from_disk(path)).map_err(|e| e.to_string())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn load_from_disk(path: impl AsRef<Path>) -> Result<Vec<u8>, std::io::Error> {
+    let mut buf = Vec::new();
+    File::open(path)?.read_to_end(&mut buf)?;
+    Ok(buf)
+}
+
+#[cfg(target_arch = "wasm32")]
 fn xhr_req(url: &str) -> Result<XmlHttpRequest, String> {
     let xhr = XmlHttpRequest::new().map_err(|e| e.as_string().unwrap())?;
 
@@ -13,6 +39,7 @@ fn xhr_req(url: &str) -> Result<XmlHttpRequest, String> {
     Ok(xhr)
 }
 
+#[cfg(target_arch = "wasm32")]
 pub fn load_file(path: &str) -> impl Future<Item = Vec<u8>, Error = String> {
     result(xhr_req(path)).and_then(|xhr| {
         // Code ported from quicksilver https://github.com/ryanisaacg/quicksilver/blob/master/src/file.rs#L30
