@@ -1,25 +1,83 @@
-use super::System;
+use crate::common::ToNaeValue;
 use glutin::{dpi::LogicalSize, ContextBuilder, PossiblyCurrent, WindowedContext};
 use nae_core::window::BaseWindow;
-use nae_core::{BaseApp, BaseSystem, BuilderOpts, Event, KeyCode, MouseButton};
+use nae_core::{
+    BaseApp, BaseContext2d, BaseSystem, BuilderOpts, Event, EventIterator, KeyCode, MouseButton,
+};
 use nae_glow::Context2d;
 use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
 use std::time::{Duration, Instant};
+use winit::event::MouseButton as WinitMB;
 use winit::event::{ElementState, Event as WinitEvent, VirtualKeyCode, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
+use winit::monitor::MonitorHandle;
+use winit::window::Fullscreen::Borderless;
 use winit::window::WindowBuilder;
 
+pub struct System {
+    window: Window,
+    context2d: Context2d,
+    events: EventIterator,
+    event_loop: Option<EventLoop<()>>,
+}
+
+impl BaseSystem for System {
+    type Kind = Self;
+    type Context2d = Context2d;
+
+    fn new(mut opts: BuilderOpts) -> Result<Self, String> {
+        let event_loop = EventLoop::new();
+        let win = Window::new(&opts, &event_loop)?;
+        let ctx2 = Context2d::new(&win.win)?;
+        Ok(Self {
+            window: win,
+            context2d: ctx2,
+            event_loop: Some(event_loop),
+            events: EventIterator::new(),
+        })
+    }
+
+    fn ctx2(&mut self) -> &mut Self::Context2d {
+        &mut self.context2d
+    }
+
+    fn events(&mut self) -> &mut EventIterator {
+        &mut self.events
+    }
+
+    fn width(&self) -> f32 {
+        self.window.width() as _
+    }
+
+    fn height(&self) -> f32 {
+        self.window.height() as _
+    }
+
+    fn dpi(&self) -> f32 {
+        self.window.dpi()
+    }
+
+    fn set_fullscreen(&mut self, full: bool) {
+        self.window.set_fullscreen(full);
+    }
+
+    fn fullscreen(&self) -> bool {
+        self.window.fullscreen()
+    }
+}
+
 pub struct Window {
-    pub(crate) win: WindowedContext<PossiblyCurrent>,
+    win: WindowedContext<PossiblyCurrent>,
     title: String,
     fullscreen: bool,
     dpi: f32,
 }
 
 impl Window {
-    pub(crate) fn new(opts: &BuilderOpts, event_loop: &EventLoop<()>) -> Result<Self, String> {
+    fn new(opts: &BuilderOpts, event_loop: &EventLoop<()>) -> Result<Self, String> {
         let mut win_builder = WindowBuilder::new()
             .with_title(&opts.title)
             .with_resizable(opts.resizable)
@@ -63,7 +121,7 @@ impl Window {
         })
     }
 
-    pub(crate) fn set_fullscreen(&mut self, full: bool) {
+    fn set_fullscreen(&mut self, full: bool) {
         self.fullscreen = full;
         if full {
             let monitor = self.win.window().current_monitor();
@@ -228,12 +286,6 @@ where
 
     Ok(())
 }
-
-use crate::ToNaeValue;
-use std::collections::VecDeque;
-use winit::event::MouseButton as WinitMB;
-use winit::monitor::MonitorHandle;
-use winit::window::Fullscreen::Borderless;
 
 impl ToNaeValue for WinitMB {
     type Kind = MouseButton;
