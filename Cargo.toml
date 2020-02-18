@@ -32,8 +32,10 @@ members = [
     "nae-derive",
     "nae-core",
     "nae-glow",
-    "nae-backend"
+    "nae-backend",
+    "nae-gfx"
 ]
 
 [profile.release]
 lto = true
+
