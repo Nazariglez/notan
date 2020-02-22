@@ -10,6 +10,17 @@ edition = "2018"
 glow = "0.4"
 nae-core = { path="../nae-core" }
 spirv_cross = { version = "0.17.1", features = ["glsl"] }
+image = "0.23"
+hashbrown = "0.7"
+lyon = "0.15"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+glutin = "0.22"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2.55"
+js-sys = "0.3.30"
+web-sys = { version = "0.3.28", features = ["Window", "WebGlContextAttributes","HtmlCanvasElement","HtmlImageElement"] }
 
 [build-dependencies]
 shaderc = "0.6"
