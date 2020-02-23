@@ -2,6 +2,14 @@ use std::error::Error;
 use std::io::Read;
 use shaderc::{TargetEnv, OptimizationLevel};
 
+fn is_release() -> bool {
+    if let Ok(profile) = std::env::var("PROFILE") {
+        return profile == "release";
+    }
+
+    false
+}
+
 //Port of https://falseidolfactory.com/2018/06/23/compiling-glsl-to-spirv-at-build-time.html to shaderc
 const SHADER_DIRECTORY: &'static str = "resources/shaders";
 
@@ -10,8 +18,10 @@ fn main() -> Result<(), Box<Error>> {
 
     let mut compiler = shaderc::Compiler::new().unwrap();
     let mut options = shaderc::CompileOptions::new().unwrap();
-    // options.set_target_env(TargetEnv::OpenGL, 0);
-    // options.set_optimization_level(OptimizationLevel::Performance);
+    options.set_target_env(TargetEnv::OpenGL, 0);
+    if is_release() {
+        // options.set_optimization_level(OptimizationLevel::Performance);
+    }
     for entry in std::fs::read_dir(SHADER_DIRECTORY)? {
         let entry = entry?;
 

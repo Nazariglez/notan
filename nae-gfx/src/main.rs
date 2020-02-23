@@ -46,6 +46,11 @@ fn main() {
             .with_inner_size(glutin::dpi::LogicalSize::new(1024.0, 768.0));
         let windowed_context = glutin::ContextBuilder::new()
             .with_vsync(true)
+            .with_gl(glutin::GlRequest::GlThenGles {
+                opengl_version: (3, 3),
+                opengles_version: (2, 0),
+            })
+            .with_gl_profile(glutin::GlProfile::Core)
             .build_windowed(wb, &el)
             .unwrap();
         let windowed_context = windowed_context.make_current().unwrap();
@@ -63,9 +68,13 @@ fn main() {
         include_bytes!("../resources/shaders/color.vert.spv"),
         include_bytes!("../resources/shaders/color.frag.spv"),
         &g,
-    ).unwrap();
+    );
 
+    if let Err(e) = shader {
+        println!("{}", e);
+    }
 
+    // let shader = Shader::from_source(VERTEX, FRAGMENT, &g).unwrap();
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
