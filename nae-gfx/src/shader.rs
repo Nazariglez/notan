@@ -1,20 +1,21 @@
 // use crate::context::Context2d;
 // use crate::{BufferKey, GlContext, GlowValue};
+use crate::{GlContext, Graphics};
 use glow::HasContext;
 use hashbrown::HashMap;
 use nae_core::graphics::BaseShader;
 use nae_core::math::Mat3;
 use nae_core::{BaseApp, BaseContext2d, BaseSystem};
-use std::cell::RefCell;
-use std::rc::Rc;
 use spirv_cross::{glsl, spirv, ErrorCode};
-use std::{io, slice};
+use std::cell::RefCell;
 use std::io::Cursor;
-use crate::{Graphics, GlContext};
+use std::rc::Rc;
+use std::{io, slice};
 
 type ShaderKey = <glow::Context as HasContext>::Shader;
 type ProgramKey = <glow::Context as HasContext>::Program;
 type UniformLocationKey = <glow::Context as HasContext>::UniformLocation;
+pub type BufferKey = <glow::Context as HasContext>::Buffer;
 
 #[derive(Clone, Copy)]
 pub enum Driver {
@@ -39,20 +40,17 @@ impl Driver {
     }
 }
 
-
 #[derive(Clone)]
 pub struct Shader {
-    program: ProgramKey,
+    pub(crate) program: ProgramKey,
     // inner: Rc<InnerShader>,
 }
 
 impl Shader {
     pub fn new(vertex: &[u8], fragment: &[u8], graphics: &Graphics) -> Result<Self, String> {
-        let vert_spv = read_spirv(Cursor::new(&vertex[..]))
-            .map_err(|e| e.to_string())?;
+        let vert_spv = read_spirv(Cursor::new(&vertex[..])).map_err(|e| e.to_string())?;
 
-        let frag_spv = read_spirv(Cursor::new(&fragment[..]))
-            .map_err(|e| e.to_string())?;
+        let frag_spv = read_spirv(Cursor::new(&fragment[..])).map_err(|e| e.to_string())?;
 
         let vert = compile_spirv_to_glsl(&vert_spv, graphics.driver)?;
         let frag = compile_spirv_to_glsl(&frag_spv, graphics.driver)?;
@@ -67,12 +65,9 @@ impl Shader {
         let fragment = create_shader(&graphics.gl, glow::FRAGMENT_SHADER, fragment)?;
 
         let program = create_program(&graphics.gl, vertex, fragment)?;
-        Ok(Self {
-            program
-        })
+        Ok(Self { program })
     }
 }
-
 
 fn compile_spirv_to_glsl(source: &[u32], driver: Driver) -> Result<String, String> {
     let module = spirv::Module::from_words(source);
@@ -82,7 +77,7 @@ fn compile_spirv_to_glsl(source: &[u32], driver: Driver) -> Result<String, Strin
         version: driver.to_glsl_version().ok_or("Invalid driver version")?,
         vertex: glsl::CompilerVertexOptions::default(),
     })
-        .map_err(error_code_to_string)?;
+    .map_err(error_code_to_string)?;
 
     ast.compile().map_err(error_code_to_string)
 }
@@ -93,7 +88,6 @@ fn error_code_to_string(err: ErrorCode) -> String {
         ErrorCode::CompilationError(e) => e,
     }
 }
-
 
 // FUNCTION TAKED FROM GFX
 pub fn read_spirv<R: io::Read + io::Seek>(mut x: R) -> io::Result<Vec<u32>> {
@@ -314,7 +308,6 @@ fn create_program(
     }
 }
 
-/*
 /// Vertex data types
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum VertexData {
@@ -338,6 +331,10 @@ impl VertexData {
     pub fn normalized(&self) -> bool {
         false
     }
+}
+
+pub trait GlowValue {
+    fn glow_value(&self) -> u32;
 }
 
 impl GlowValue for VertexData {
@@ -368,6 +365,7 @@ struct AttributeData {
     buffer: BufferKey,
 }
 
+/*
 /// Represent a shader uniform
 pub trait UniformType {
     fn set_uniform_value(&self, gl: &GlContext, location: UniformLocationKey);
