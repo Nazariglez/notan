@@ -1,6 +1,6 @@
+use shaderc::{OptimizationLevel, TargetEnv};
 use std::error::Error;
 use std::io::Read;
-use shaderc::{TargetEnv, OptimizationLevel};
 
 fn is_release() -> bool {
     if let Ok(profile) = std::env::var("PROFILE") {
@@ -43,7 +43,8 @@ fn main() -> Result<(), Box<Error>> {
             if let Some(kind) = shader_type {
                 let name = in_path.file_name().unwrap().to_string_lossy().to_string();
                 let source = std::fs::read_to_string(&in_path)?;
-                let binary = compiler.compile_into_spirv(&source, kind, &name, "main", Some(&options))?;
+                let binary =
+                    compiler.compile_into_spirv(&source, kind, &name, "main", Some(&options))?;
                 let bytes = binary.as_binary_u8();
 
                 //                let source = std::fs::read_to_string(&in_path)?;
