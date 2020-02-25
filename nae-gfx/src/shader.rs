@@ -312,6 +312,8 @@ fn create_program(
 
 /// Vertex data types
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
+// https://github.com/floooh/sokol/blob/d86d96625d6be0171c99909187e041ae699dbbf0/util/sokol_gfx_imgui.h#L978
+// CHANGE NAME TO VertexFormat and use the formats from sokol https://github.com/floooh/sokol-tools/blob/master/docs/sokol-shdc.md#creating-shaders-and-pipeline-objects
 pub enum VertexData {
     Float1,
     Float2,
