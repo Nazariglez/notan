@@ -43,6 +43,7 @@ impl Driver {
 #[derive(Clone)]
 pub struct Shader {
     pub(crate) program: ProgramKey,
+    pub(crate) gl: GlContext,
     // inner: Rc<InnerShader>,
 }
 
@@ -59,13 +60,14 @@ impl Shader {
     }
 
     pub fn from_source(vertex: &str, fragment: &str, graphics: &Graphics) -> Result<Self, String> {
+        let gl = graphics.gl.clone();
         println!("vertex: {}", vertex);
         println!("fragment: {}", fragment);
-        let vertex = create_shader(&graphics.gl, glow::VERTEX_SHADER, vertex)?;
-        let fragment = create_shader(&graphics.gl, glow::FRAGMENT_SHADER, fragment)?;
+        let vertex = create_shader(&gl, glow::VERTEX_SHADER, vertex)?;
+        let fragment = create_shader(&gl, glow::FRAGMENT_SHADER, fragment)?;
 
-        let program = create_program(&graphics.gl, vertex, fragment)?;
-        Ok(Self { program })
+        let program = create_program(&gl, vertex, fragment)?;
+        Ok(Self { program, gl })
     }
 }
 
@@ -328,8 +330,15 @@ impl VertexData {
         }
     }
 
+    pub fn bytes(&self) -> i32 {
+        self.size() * 4
+    }
+
     pub fn normalized(&self) -> bool {
-        false
+        use VertexData::*;
+        match self {
+            _ => false,
+        }
     }
 }
 
