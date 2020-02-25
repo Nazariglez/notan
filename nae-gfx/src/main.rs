@@ -145,25 +145,23 @@ impl VertexType for Vertex {
 
 pub struct VertexBuffer {
     buffer: BufferKey,
-    data: Vec<f32>,
     usage: Usage,
 }
 
 impl VertexBuffer {
-    pub fn new<T: VertexType>(shader: &Shader, vertex: &[T], usage: Usage) -> Result<Self, String> {
+    pub fn new(shader: &Shader, attributes: &[VertexAttr], usage: Usage) -> Result<Self, String> {
         unsafe {
             shader.gl.use_program(Some(shader.program));
 
             let buffer = shader.gl.create_buffer()?;
             shader.gl.bind_buffer(glow::ARRAY_BUFFER, Some(buffer));
 
-            let structure = T::attributes();
-            let stride = structure
+            let stride = attributes
                 .iter()
                 .fold(0, |acc, data| acc + data.vertex_data.bytes());
 
             let mut offset = 0;
-            for attr in &structure {
+            for attr in attributes {
                 let location = match (attr.location_name.as_ref(), attr.location_id.as_ref()) {
                     (Some(name), _) => shader
                         .gl
@@ -185,27 +183,14 @@ impl VertexBuffer {
                 offset += attr.vertex_data.bytes();
             }
 
-            let mut data = vec![];
-            for v in vertex {
-                data.extend_from_slice(&v.data());
-            }
-
-            Ok(VertexBuffer {
-                buffer,
-                data,
-                usage,
-            })
+            Ok(VertexBuffer { buffer, usage })
         }
     }
 
-    fn bind(&self, gl: &GlContext) {
+    fn bind(&self, gl: &GlContext, data: &[f32]) {
         unsafe {
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.buffer));
-            gl.buffer_data_u8_slice(
-                glow::ARRAY_BUFFER,
-                vf_to_u8(self.data.as_slice()),
-                self.usage.glow_value(),
-            );
+            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vf_to_u8(data), self.usage.glow_value());
         }
     }
 }
@@ -283,22 +268,8 @@ fn main() {
     let buffer = VertexBuffer::new(
         &shader,
         &[
-            Vertex {
-                a_position: [0.5, 1.0],
-                a_color: [0.5, 1.0, 0.5, 1.0],
-            },
-            Vertex {
-                a_position: [0.0, 0.0],
-                a_color: [0.0, 0.0, 0.5, 1.0],
-            },
-            Vertex {
-                a_position: [1.0, 0.0],
-                a_color: [1.0, 0.0, 0.5, 1.0],
-            },
-            Vertex {
-                a_position: [1.5, 1.0],
-                a_color: [1.5, 1.0, 0.5, 1.0],
-            },
+            VertexAttr::with_location(0, VertexData::Float2),
+            VertexAttr::with_location(1, VertexData::Float4),
         ],
         Usage::Dynamic,
     )
@@ -371,7 +342,6 @@ fn main() {
                 Event::RedrawRequested(_) => {
                     g.gl.clear(glow::COLOR_BUFFER_BIT);
 
-                    buffer.bind(&shader.gl);
                     // g.gl.bind_buffer(glow::ARRAY_BUFFER, Some(buff0));
                     //
                     // #[rustfmt::skip]
@@ -397,6 +367,17 @@ fn main() {
                     //     glow::DYNAMIC_DRAW,
                     // );
 
+                    #[rustfmt::skip]
+                    let vertices = [
+                        // position     //color
+                        0.5, 1.0,       0.5, 1.0, 0.0, 1.0,
+                        0.0, 0.0,       0.0, 0.0, 0.4, 1.0,
+                        1.0, 0.0,       1.0, 0.0, 0.6, 1.0,
+                        1.5, 1.0,       1.0, 0.5, 1.0, 1.0,
+                    ];
+                    buffer.bind(&shader.gl, &vertices);
+
+                    // If there is not indexBuffer binded just use drawArrays
                     let indices = [0, 1, 2, 0, 2, 3];
                     index_buffer.bind(&shader.gl, &indices);
 
