@@ -1,4 +1,4 @@
-use crate::shader::{BufferKey, Driver, GlowValue, Shader, VertexData};
+use crate::shader::{BufferKey, Driver, GlowValue, Shader, VertexFormat};
 use glow::{Context, HasContext};
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::ControlFlow;
@@ -25,17 +25,66 @@ pub trait BaseGraphics {
 pub struct Graphics {
     pub(crate) gl: GlContext,
     pub(crate) driver: Driver,
+    vao: <glow::Context as HasContext>::VertexArray,
 }
 
 impl Graphics {
     pub fn new(gl: GlContext) -> Self {
+        let vao = unsafe {
+            let vao = gl.create_vertex_array().unwrap();
+            gl.bind_vertex_array(Some(vao));
+            vao
+        };
+
         Self {
             gl,
             driver: Driver::OpenGl3_3,
+            vao,
         }
     }
 
-    pub fn set_vertex_buffers(&mut self, buffers: Vec<VertexBuffer>) {}
+    pub fn begin(&mut self) {}
+
+    pub fn end(&mut self) {}
+
+    pub fn use_shader(&mut self, shader: &Shader) {
+        unsafe {
+            self.gl.use_program(Some(shader.program));
+        }
+    }
+
+    pub fn clear(&mut self, color: Option<[f32; 4]>) {
+        unsafe {
+            if let Some([r, g, b, a]) = color {
+                self.gl.clear_color(r, g, b, a);
+            }
+            self.gl.clear(glow::COLOR_BUFFER_BIT);
+        }
+    }
+
+    pub fn bind_vertex_buffer(&mut self, buffer: &VertexBuffer, data: &[f32]) {
+        buffer.bind(&self.gl, data);
+    }
+
+    pub fn bind_index_buffer(&mut self, buffer: &IndexBuffer, data: &[u32]) {
+        buffer.bind(&self.gl, data);
+    }
+
+    pub fn draw(&mut self, offset: u32, count: u32) {
+        // TODO draw arrays if doesn't exists index_buffer
+        unsafe {
+            self.gl.draw_elements(
+                glow::TRIANGLES,
+                count as i32,
+                glow::UNSIGNED_INT,
+                offset as i32,
+            );
+        }
+    }
+
+    pub fn bind_uniform(&mut self, location: u32, value: &UniformValue) {
+        value.bind_uniform(&self, location);
+    }
 }
 
 pub enum Usage {
@@ -53,25 +102,15 @@ impl GlowValue for Usage {
 }
 
 pub struct VertexAttr {
-    pub location_id: Option<u32>,
-    pub location_name: Option<String>,
-    pub vertex_data: VertexData,
+    pub location: u32,
+    pub format: VertexFormat,
 }
 
 impl VertexAttr {
-    fn with_location(location: u32, vertex_data: VertexData) -> Self {
+    fn new(location: u32, vertex_data: VertexFormat) -> Self {
         Self {
-            location_id: Some(location),
-            location_name: None,
-            vertex_data,
-        }
-    }
-
-    fn with_name(name: &str, vertex_data: VertexData) -> Self {
-        Self {
-            location_id: None,
-            location_name: Some(name.to_string()),
-            vertex_data,
+            location: location,
+            format: vertex_data,
         }
     }
 }
@@ -94,13 +133,11 @@ pub struct IndexBuffer {
 }
 
 impl IndexBuffer {
-    fn new(shader: &Shader, usage: Usage) -> Result<Self, String> {
+    fn new(graphics: &Graphics, usage: Usage) -> Result<Self, String> {
         unsafe {
-            let buffer = shader.gl.create_buffer()?;
-            shader
-                .gl
-                .bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(buffer));
-
+            let gl = &graphics.gl;
+            let buffer = gl.create_buffer()?;
+            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(buffer));
             Ok(Self { buffer, usage })
         }
     }
@@ -117,70 +154,37 @@ impl IndexBuffer {
     }
 }
 
-pub trait VertexType {
-    fn attributes() -> Vec<VertexAttr>;
-    fn data(&self) -> Vec<f32>;
-}
-
-struct Vertex {
-    a_position: [f32; 2],
-    a_color: [f32; 4],
-}
-
-impl VertexType for Vertex {
-    fn attributes() -> Vec<VertexAttr> {
-        vec![
-            VertexAttr::with_location(0, VertexData::Float2),
-            VertexAttr::with_location(1, VertexData::Float4),
-        ]
-    }
-
-    fn data(&self) -> Vec<f32> {
-        let mut buff = vec![];
-        buff.extend_from_slice(&self.a_position);
-        buff.extend_from_slice(&self.a_color);
-        buff
-    }
-}
-
 pub struct VertexBuffer {
     buffer: BufferKey,
     usage: Usage,
 }
 
 impl VertexBuffer {
-    pub fn new(shader: &Shader, attributes: &[VertexAttr], usage: Usage) -> Result<Self, String> {
+    pub fn new(
+        graphics: &Graphics,
+        attributes: &[VertexAttr],
+        usage: Usage,
+    ) -> Result<Self, String> {
         unsafe {
-            shader.gl.use_program(Some(shader.program));
-
-            let buffer = shader.gl.create_buffer()?;
-            shader.gl.bind_buffer(glow::ARRAY_BUFFER, Some(buffer));
+            let gl = &graphics.gl;
+            let buffer = gl.create_buffer()?;
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(buffer));
 
             let stride = attributes
                 .iter()
-                .fold(0, |acc, data| acc + data.vertex_data.bytes());
+                .fold(0, |acc, data| acc + data.format.bytes());
 
             let mut offset = 0;
             for attr in attributes {
-                let location = match (attr.location_name.as_ref(), attr.location_id.as_ref()) {
-                    (Some(name), _) => shader
-                        .gl
-                        .get_attrib_location(shader.program, name)
-                        .ok_or("Invalid location id")?,
-                    (_, Some(id)) => *id,
-                    _ => return Err("Invalid location id".to_string()),
-                };
+                let location = attr.location;
+                let size = attr.format.size();
+                let data_type = attr.format.glow_value();
+                let normalized = attr.format.normalized();
 
-                let size = attr.vertex_data.size();
-                let data_type = attr.vertex_data.glow_value();
-                let normalized = attr.vertex_data.normalized();
+                gl.enable_vertex_attrib_array(location);
+                gl.vertex_attrib_pointer_f32(location, size, data_type, normalized, stride, offset);
 
-                shader.gl.enable_vertex_attrib_array(location);
-                shader.gl.vertex_attrib_pointer_f32(
-                    location, size, data_type, normalized, stride, offset,
-                );
-
-                offset += attr.vertex_data.bytes();
+                offset += attr.format.bytes();
             }
 
             Ok(VertexBuffer { buffer, usage })
@@ -220,6 +224,67 @@ impl AttrLocationId for String {
     }
 }
 
+pub trait UniformValue {
+    fn bind_uniform(&self, graphics: &Graphics, location: u32);
+}
+
+impl UniformValue for i32 {
+    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+        unsafe {
+            graphics.gl.uniform_1_i32(Some(location), *self);
+        }
+    }
+}
+
+impl UniformValue for f32 {
+    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+        unsafe {
+            graphics.gl.uniform_1_f32(Some(location), *self);
+        }
+    }
+}
+
+impl UniformValue for [f32; 2] {
+    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+        unsafe {
+            graphics.gl.uniform_2_f32(Some(location), self[0], self[1]);
+        }
+    }
+}
+
+impl UniformValue for [f32; 3] {
+    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+        unsafe {
+            graphics
+                .gl
+                .uniform_3_f32(Some(location), self[0], self[1], self[2]);
+        }
+    }
+}
+
+impl UniformValue for [f32; 4] {
+    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+        unsafe {
+            graphics
+                .gl
+                .uniform_4_f32(Some(location), self[0], self[1], self[2], self[3]);
+        }
+    }
+}
+
+impl UniformValue for Mat3 {
+    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+        let matrix = self.as_slice().as_ptr() as *const [f32; 9];
+        unsafe {
+            graphics
+                .gl
+                .uniform_matrix_3_f32_slice(Some(location), false, &*matrix);
+        }
+    }
+}
+
+// TODO uniform value for matrix values
+
 fn main() {
     let (gl, event_loop, windowed_context, shader_version) = unsafe {
         let el = glutin::event_loop::EventLoop::new();
@@ -244,89 +309,40 @@ fn main() {
 
     let gl = Rc::new(gl);
 
-    let g = Graphics::new(gl);
-
-    let vao = unsafe {
-        let vao = g.gl.create_vertex_array().unwrap();
-
-        g.gl.bind_vertex_array(Some(vao));
-        vao
-    };
+    let mut gfx = Graphics::new(gl);
 
     let shader = Shader::new(
+        &gfx,
         include_bytes!("../resources/shaders/color.vert.spv"),
         include_bytes!("../resources/shaders/color.frag.spv"),
-        &g,
     )
     .unwrap();
 
-    unsafe {
-        // g.gl.use_program(Some(shader.program));
-        g.gl.clear_color(0.1, 0.2, 0.4, 1.0);
-    }
-
     let buffer = VertexBuffer::new(
-        &shader,
+        &gfx,
         &[
-            VertexAttr::with_location(0, VertexData::Float2),
-            VertexAttr::with_location(1, VertexData::Float4),
+            VertexAttr::new(0, VertexFormat::Float2),
+            VertexAttr::new(1, VertexFormat::Float4),
         ],
         Usage::Dynamic,
     )
     .unwrap();
 
-    let index_buffer = IndexBuffer::new(&shader, Usage::Dynamic).unwrap();
+    let index_buffer = IndexBuffer::new(&gfx, Usage::Dynamic).unwrap();
 
-    // let buff0 = unsafe {
-    //     let a_position = 0;
-    //     let a_color = 1;
-    //     let a_position_vertex_data = VertexData::Float2;
-    //     let a_color_vertex_data = VertexData::Float4;
-    //
-    //     let buff = g.gl.create_buffer().unwrap();
-    //     g.gl.bind_buffer(glow::ARRAY_BUFFER, Some(buff));
-    //     g.gl.enable_vertex_attrib_array(a_position);
-    //     g.gl.enable_vertex_attrib_array(a_color);
-    //
-    //     let stride = a_position_vertex_data.bytes() + a_color_vertex_data.bytes();
-    //     g.gl.vertex_attrib_pointer_f32(
-    //         a_position,
-    //         a_position_vertex_data.size(),
-    //         a_position_vertex_data.glow_value(),
-    //         a_position_vertex_data.normalized(),
-    //         stride,
-    //         0,
-    //     );
-    //     g.gl.vertex_attrib_pointer_f32(
-    //         a_color,
-    //         a_color_vertex_data.size(),
-    //         a_color_vertex_data.glow_value(),
-    //         a_color_vertex_data.normalized(),
-    //         stride,
-    //         a_position_vertex_data.bytes(),
-    //     );
-    //
-    //     buff
-    // };
+    #[rustfmt::skip]
+    let vertices = [
+        // position     //color
+        0.5, 1.0,       0.5, 1.0, 0.0, 1.0,
+        0.0, 0.0,       0.0, 0.0, 0.4, 1.0,
+        1.0, 0.0,       1.0, 0.0, 0.6, 1.0,
+        1.5, 1.0,       1.0, 0.5, 1.0, 1.0,
+    ];
 
-    // let buff1 = unsafe {
-    //     let location = 1;
-    //     let vertex_data = VertexData::Float4;
-    //     let buff = g.gl.create_buffer().unwrap();
-    //     g.gl.bind_buffer(glow::ARRAY_BUFFER, Some(buff));
-    //     g.gl.enable_vertex_attrib_array(location);
-    //
-    //     let stride = 0;
-    //     let offset = 0;
-    //     let size = vertex_data.size();
-    //     let data_type = vertex_data.glow_value();
-    //     let normalized = vertex_data.normalized();
-    //     g.gl.vertex_attrib_pointer_f32(location, size, data_type, normalized, stride, offset);
-    //     buff
-    // };
+    let indices = [0, 1, 2, 0, 2, 3];
 
     let identity: Mat3 = identity();
-
+    let mm = identity;
     println!("identity {:?}", identity);
 
     unsafe {
@@ -340,61 +356,14 @@ fn main() {
                     windowed_context.window().request_redraw();
                 }
                 Event::RedrawRequested(_) => {
-                    g.gl.clear(glow::COLOR_BUFFER_BIT);
-
-                    // g.gl.bind_buffer(glow::ARRAY_BUFFER, Some(buff0));
-                    //
-                    // #[rustfmt::skip]
-                    // g.gl.buffer_data_u8_slice(
-                    //     glow::ARRAY_BUFFER,
-                    //     vf_to_u8(&[
-                    //         0.5, 1.0, 0.5, 1.0, 0.5, 1.0,
-                    //         0.0, 0.0, 0.5, 1.0, 0.5, 1.0,
-                    //         1.0, 0.0, 0.5, 1.0, 0.5, 1.0,
-                    //         1.5, 1.0, 0.5, 1.0, 0.5, 1.0,
-                    //     ]),
-                    //     glow::DYNAMIC_DRAW,
-                    // );
-                    // g.gl.bind_buffer(glow::ARRAY_BUFFER, Some(buff1));
-                    // g.gl.buffer_data_u8_slice(
-                    //     glow::ARRAY_BUFFER,
-                    //     vf_to_u8(&[
-                    //         0.5, 1.0, 0.5, 1.0,
-                    //         0.0, 0.0, 0.5, 1.0,
-                    //         1.0, 0.0, 0.5, 1.0,
-                    //         1.0, 1.0, 0.5, 1.0,
-                    //     ]),
-                    //     glow::DYNAMIC_DRAW,
-                    // );
-
-                    #[rustfmt::skip]
-                    let vertices = [
-                        // position     //color
-                        0.5, 1.0,       0.5, 1.0, 0.0, 1.0,
-                        0.0, 0.0,       0.0, 0.0, 0.4, 1.0,
-                        1.0, 0.0,       1.0, 0.0, 0.6, 1.0,
-                        1.5, 1.0,       1.0, 0.5, 1.0, 1.0,
-                    ];
-                    buffer.bind(&shader.gl, &vertices);
-
-                    // If there is not indexBuffer binded just use drawArrays
-                    let indices = [0, 1, 2, 0, 2, 3];
-                    index_buffer.bind(&shader.gl, &indices);
-
-                    // g.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(ebo));
-                    // g.gl.buffer_data_u8_slice(
-                    //     glow::ELEMENT_ARRAY_BUFFER,
-                    //     vfi_to_u8(&indices),
-                    //     glow::STATIC_DRAW,
-                    // );
-                    //
-                    // g.gl.use_program(Some(shader.program));
-                    let mm = identity;
-                    // let mm = mm * scaling2d(&vec2(2.0, 2.0));
-                    g.gl.uniform_matrix_3_f32_slice(Some(0), false, &*m3_to_slice(&mm));
-                    //
-                    // g.gl.draw_arrays(glow::TRIANGLES, 0, 3);
-                    g.gl.draw_elements(glow::TRIANGLES, 6, glow::UNSIGNED_INT, 0);
+                    gfx.begin();
+                    gfx.clear(Some([0.1, 0.2, 0.4, 1.0]));
+                    gfx.use_shader(&shader);
+                    gfx.bind_vertex_buffer(&buffer, &vertices);
+                    gfx.bind_index_buffer(&index_buffer, &indices);
+                    gfx.bind_uniform(0, &mm);
+                    gfx.draw(0, 6);
+                    gfx.end();
 
                     windowed_context.swap_buffers().unwrap();
                 }
@@ -403,10 +372,6 @@ fn main() {
                         windowed_context.resize(*physical_size);
                     }
                     WindowEvent::CloseRequested => {
-                        // unsafe {
-                        //     gl.delete_program(program);
-                        //     gl.delete_vertex_array(vertex_array);
-                        // }
                         *control_flow = ControlFlow::Exit
                     }
                     _ => (),
