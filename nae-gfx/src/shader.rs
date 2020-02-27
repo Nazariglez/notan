@@ -48,21 +48,18 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn new(vertex: &[u8], fragment: &[u8], graphics: &Graphics) -> Result<Self, String> {
+    pub fn new(graphics: &Graphics, vertex: &[u8], fragment: &[u8]) -> Result<Self, String> {
         let vert_spv = read_spirv(Cursor::new(&vertex[..])).map_err(|e| e.to_string())?;
-
         let frag_spv = read_spirv(Cursor::new(&fragment[..])).map_err(|e| e.to_string())?;
 
         let vert = compile_spirv_to_glsl(&vert_spv, graphics.driver)?;
         let frag = compile_spirv_to_glsl(&frag_spv, graphics.driver)?;
 
-        Self::from_source(&vert, &frag, graphics)
+        Self::from_source(graphics, &vert, &frag)
     }
 
-    pub fn from_source(vertex: &str, fragment: &str, graphics: &Graphics) -> Result<Self, String> {
+    pub fn from_source(graphics: &Graphics, vertex: &str, fragment: &str) -> Result<Self, String> {
         let gl = graphics.gl.clone();
-        println!("vertex: {}", vertex);
-        println!("fragment: {}", fragment);
         let vertex = create_shader(&gl, glow::VERTEX_SHADER, vertex)?;
         let fragment = create_shader(&gl, glow::FRAGMENT_SHADER, fragment)?;
 
@@ -129,44 +126,8 @@ pub fn read_spirv<R: io::Read + io::Seek>(mut x: R) -> io::Result<Vec<u32>> {
     }
     Ok(result)
 }
+
 /*
-
-impl Shader {
-    // pub const COLOR_VERTEX: &'static str = include_str!("../resources/shaders/color.vert.glsl");
-    // pub const COLOR_FRAG: &'static str = include_str!("../resources/shaders/color.frag.glsl");
-    //
-    // pub const IMAGE_VERTEX: &'static str = include_str!("../resources/shaders/image.vert.glsl");
-    // pub const IMAGE_FRAG: &'static str = include_str!("../resources/shaders/image.frag.glsl");
-    //
-    // pub const TEXT_VERTEX: &'static str = include_str!("../resources/shaders/text.vert.glsl");
-    // pub const TEXT_FRAG: &'static str = include_str!("../resources/shaders/text.frag.glsl");
-    //
-    /// Send to the GPU an uniform value
-    pub fn set_uniform<T: UniformType>(&self, name: &str, value: T) -> Result<(), String> {
-        let mut uniforms = self.inner.uniforms.borrow_mut();
-        if let Some(location) = uniforms.get(name) {
-            value.set_uniform_value(&self.inner.gl, location.clone());
-        } else {
-            let location = unsafe {
-                self.inner
-                    .gl
-                    .get_uniform_location(self.inner.program, name)
-                    .ok_or(format!("Invalid uniform name: {}", name))?
-            };
-            value.set_uniform_value(&self.inner.gl, location.clone());
-            uniforms.insert(name.to_string(), location);
-        }
-        Ok(())
-    }
-
-    /// Tell to the GPU to use this shader
-    pub(crate) fn use_me(&self) {
-        unsafe {
-            self.inner.gl.use_program(Some(self.inner.program));
-        }
-    }
-}
-
 impl BaseShader for Shader {
     type Graphics = Context2d;
     type Buffer = BufferKey;
@@ -314,16 +275,16 @@ fn create_program(
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 // https://github.com/floooh/sokol/blob/d86d96625d6be0171c99909187e041ae699dbbf0/util/sokol_gfx_imgui.h#L978
 // CHANGE NAME TO VertexFormat and use the formats from sokol https://github.com/floooh/sokol-tools/blob/master/docs/sokol-shdc.md#creating-shaders-and-pipeline-objects
-pub enum VertexData {
+pub enum VertexFormat {
     Float1,
     Float2,
     Float3,
     Float4,
 }
 
-impl VertexData {
+impl VertexFormat {
     pub fn size(&self) -> i32 {
-        use VertexData::*;
+        use VertexFormat::*;
         match self {
             Float1 => 1,
             Float2 => 2,
@@ -337,7 +298,7 @@ impl VertexData {
     }
 
     pub fn normalized(&self) -> bool {
-        use VertexData::*;
+        use VertexFormat::*;
         match self {
             _ => false,
         }
@@ -348,7 +309,7 @@ pub trait GlowValue {
     fn glow_value(&self) -> u32;
 }
 
-impl GlowValue for VertexData {
+impl GlowValue for VertexFormat {
     fn glow_value(&self) -> u32 {
         glow::FLOAT
     }
@@ -357,11 +318,11 @@ impl GlowValue for VertexData {
 #[derive(Clone)]
 pub struct Attr {
     name: String,
-    vertex_data: VertexData,
+    vertex_data: VertexFormat,
 }
 
 impl Attr {
-    pub fn new(name: &str, data_type: VertexData) -> Self {
+    pub fn new(name: &str, data_type: VertexFormat) -> Self {
         Self {
             name: name.to_string(),
             vertex_data: data_type,
