@@ -2,11 +2,15 @@ use crate::shader::{BufferKey, Driver, GlowValue, Shader, VertexFormat};
 use glow::{Context, HasContext};
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::ControlFlow;
-use nae_core::math::{identity, scaling2d, vec2, Mat3};
+use nae_core::math::{identity, scaling2d, vec2, Mat3, Mat4, glm, vec3};
 use nae_core::{BlendFactor, BlendMode, Color};
 use std::cell::Ref;
 use std::rc::Rc;
 //Sample texture array limit https://stackoverflow.com/questions/20836102/how-many-textures-can-i-use-in-a-webgl-fragment-shader
+
+//PORT OPENGL TUTORIALS TO NAE
+//http://www.opengl-tutorial.org/beginners-tutorials/tutorial-4-a-colored-cube/
+//https://github.com/bwasty/learn-opengl-rs
 
 mod shader;
 //https://github.com/glium/glium/blob/master/examples/triangle.rs
@@ -26,6 +30,7 @@ pub struct Graphics {
     pub(crate) gl: GlContext,
     pub(crate) driver: Driver,
     vao: <glow::Context as HasContext>::VertexArray,
+    use_indices: bool,
 }
 
 impl Graphics {
@@ -40,12 +45,34 @@ impl Graphics {
             gl,
             driver: Driver::OpenGl3_3,
             vao,
+            use_indices: false,
         }
     }
 
-    pub fn begin(&mut self) {}
+    pub fn viewport(&mut self, x: i32, y: i32, width: i32, height: i32) {
+        unsafe {
+            self.gl.viewport(x, y, width, height);
+        }
+    }
 
-    pub fn end(&mut self) {}
+    pub fn begin(&mut self) {
+        unsafe {
+            self.gl.bind_vertex_array(Some(self.vao));
+            self.gl.enable(glow::DEPTH_TEST);
+            self.gl.depth_func(glow::LESS);
+            // self.gl.enable(glow::CULL_FACE);
+            // self.gl.cull_face(glow::BACK);
+        }
+    }
+
+    pub fn end(&mut self) {
+        unsafe {
+            self.use_indices = false;
+            self.gl.bind_vertex_array(None);
+            self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
+            self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
+        }
+    }
 
     pub fn use_shader(&mut self, shader: &Shader) {
         unsafe {
@@ -58,7 +85,7 @@ impl Graphics {
             if let Some([r, g, b, a]) = color {
                 self.gl.clear_color(r, g, b, a);
             }
-            self.gl.clear(glow::COLOR_BUFFER_BIT);
+            self.gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
         }
     }
 
@@ -67,18 +94,27 @@ impl Graphics {
     }
 
     pub fn bind_index_buffer(&mut self, buffer: &IndexBuffer, data: &[u32]) {
+        self.use_indices = true;
         buffer.bind(&self.gl, data);
     }
 
-    pub fn draw(&mut self, offset: u32, count: u32) {
-        // TODO draw arrays if doesn't exists index_buffer
+    pub fn draw(&mut self, offset: i32, count: i32) {
+        // TODO draw instanced?
         unsafe {
-            self.gl.draw_elements(
-                glow::TRIANGLES,
-                count as i32,
-                glow::UNSIGNED_INT,
-                offset as i32,
-            );
+            if self.use_indices {
+                self.gl.draw_elements(
+                    glow::TRIANGLES,
+                    count,
+                    glow::UNSIGNED_INT,
+                    offset * 4,
+                );
+            } else {
+                self.gl.draw_arrays(
+                    glow::TRIANGLES,
+                    offset,
+                    count,
+                );
+            }
         }
     }
 
@@ -283,6 +319,25 @@ impl UniformValue for Mat3 {
     }
 }
 
+impl UniformValue for Mat4 {
+    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+        let matrix = self.as_slice().as_ptr() as *const [f32; 16];
+        unsafe {
+            graphics
+                .gl
+                .uniform_matrix_4_f32_slice(Some(location), false, &*matrix);
+        }
+    }
+}
+
+pub struct Texture {
+
+}
+
+pub struct RenderTarget {
+
+}
+
 // TODO uniform value for matrix values
 
 fn main() {
@@ -297,6 +352,8 @@ fn main() {
                 opengl_version: (3, 3),
                 opengles_version: (2, 0),
             })
+            .with_depth_buffer(24)
+            .with_stencil_buffer(8)
             .with_gl_profile(glutin::GlProfile::Core)
             .build_windowed(wb, &el)
             .unwrap();
@@ -321,7 +378,7 @@ fn main() {
     let buffer = VertexBuffer::new(
         &gfx,
         &[
-            VertexAttr::new(0, VertexFormat::Float2),
+            VertexAttr::new(0, VertexFormat::Float3),
             VertexAttr::new(1, VertexFormat::Float4),
         ],
         Usage::Dynamic,
@@ -330,21 +387,61 @@ fn main() {
 
     let index_buffer = IndexBuffer::new(&gfx, Usage::Dynamic).unwrap();
 
+    // #[rustfmt::skip]
+    // let vertices = [
+    //     // position         //color
+    //     0.5, 1.0, 0.0,       0.5, 1.0, 0.0, 1.0,
+    //     0.0, 0.0, 0.0,       0.0, 0.0, 0.4, 1.0,
+    //     1.0, 0.0, 0.0,       1.0, 0.0, 0.6, 1.0,
+    //     1.5, 1.0, 0.0,       1.0, 0.5, 1.0, 1.0,
+    // ];
+
     #[rustfmt::skip]
-    let vertices = [
-        // position     //color
-        0.5, 1.0,       0.5, 1.0, 0.0, 1.0,
-        0.0, 0.0,       0.0, 0.0, 0.4, 1.0,
-        1.0, 0.0,       1.0, 0.0, 0.6, 1.0,
-        1.5, 1.0,       1.0, 0.5, 1.0, 1.0,
+    let vertices= [
+        -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+        1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+        1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+        -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+
+        -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+        1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+        1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+        -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+
+        -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+
+        1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+        1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+        1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+        1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+
+        -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+        -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+        1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+        1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+
+        -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
+        -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+        1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+        1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
     ];
 
-    let indices = [0, 1, 2, 0, 2, 3];
+    let indices = [
+        0, 1, 2,  0, 2, 3,
+        6, 5, 4,  7, 6, 4,
+        8, 9, 10,  8, 10, 11,
+        14, 13, 12,  15, 14, 12,
+        16, 17, 18,  16, 18, 19,
+        22, 21, 20,  23, 22, 20
+    ];
 
-    let identity: Mat3 = identity();
-    let mm = identity;
-    println!("identity {:?}", identity);
-
+    // let identity: Mat3 = identity();
+    let mut look = vec3(0.0, 1.5, 6.0);
+    let mut rx = 0.0;
+    let mut ry = 0.0;
     unsafe {
         event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Wait;
@@ -356,13 +453,37 @@ fn main() {
                     windowed_context.window().request_redraw();
                 }
                 Event::RedrawRequested(_) => {
+                    rx += 0.1;
+                    ry += 0.2;
+                    // look.data[1] -= 0.01;
+                    let projection: Mat4 = glm::perspective(60.0, 4.0 / 3.0, 0.1, 10.0);
+                    let view = glm::look_at(&look, &vec3(0.0, 0.0, 0.0), &vec3(0.0, 1.0, 0.0));
+
+                    let model:Mat4 = identity();
+                    let mut mvp:Mat4 = identity();
+                    mvp = mvp * projection;
+                    mvp = mvp * view;
+                    let rxm = glm::rotation(rx, &vec3(1.0, 0.0, 0.0));
+                    let rym = glm::rotation(ry, &vec3(0.0, 1.0, 0.0));
+                    let model2 = rxm * rym;
+                    // mvp = mvp * model;
+                    mvp = mvp * model2;
+
                     gfx.begin();
+                    gfx.viewport(0, 0, 1024, 768);
                     gfx.clear(Some([0.1, 0.2, 0.4, 1.0]));
                     gfx.use_shader(&shader);
                     gfx.bind_vertex_buffer(&buffer, &vertices);
                     gfx.bind_index_buffer(&index_buffer, &indices);
-                    gfx.bind_uniform(0, &mm);
-                    gfx.draw(0, 6);
+                    gfx.bind_uniform(0, &mvp);
+                    // gfx.bind_vertex_buffer(&buffer, &[
+                    //     -1.0, -1.0, 0.0,    1.0, 0.2, 0.3, 1.0,
+                    //     1.0, -1.0, 0.0,     0.1, 1.0, 0.3, 1.0,
+                    //     0.0, 1.0, 0.0,      0.1, 0.2, 1.0, 1.0,
+                    // ]);
+                    // gfx.draw(0, 3);
+                    // gfx.draw(0, indices.len() as i32);
+                    gfx.draw(0, 36);
                     gfx.end();
 
                     windowed_context.swap_buffers().unwrap();
