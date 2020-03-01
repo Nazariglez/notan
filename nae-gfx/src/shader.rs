@@ -44,6 +44,7 @@ impl Driver {
 pub struct Shader {
     pub(crate) program: ProgramKey,
     pub(crate) gl: GlContext,
+    pub(crate) vao: <glow::Context as HasContext>::VertexArray,
     // inner: Rc<InnerShader>,
 }
 
@@ -64,7 +65,14 @@ impl Shader {
         let fragment = create_shader(&gl, glow::FRAGMENT_SHADER, fragment)?;
 
         let program = create_program(&gl, vertex, fragment)?;
-        Ok(Self { program, gl })
+
+        let vao = unsafe {
+            let vao = gl.create_vertex_array().unwrap();
+            gl.bind_vertex_array(Some(vao));
+            vao
+        };
+
+        Ok(Self { program, gl, vao })
     }
 }
 

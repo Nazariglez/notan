@@ -2,10 +2,13 @@ use crate::shader::{BufferKey, Driver, GlowValue, Shader, VertexFormat};
 use glow::{Context, HasContext};
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::ControlFlow;
-use nae_core::math::{identity, scaling2d, vec2, Mat3, Mat4, glm, vec3};
 use nae_core::{BlendFactor, BlendMode, Color};
 use std::cell::Ref;
 use std::rc::Rc;
+use ultraviolet::projection::perspective_gl as perspective;
+use ultraviolet::mat::Mat4;
+use ultraviolet::vec::Vec3;
+
 //Sample texture array limit https://stackoverflow.com/questions/20836102/how-many-textures-can-i-use-in-a-webgl-fragment-shader
 
 //PORT OPENGL TUTORIALS TO NAE
@@ -13,7 +16,9 @@ use std::rc::Rc;
 //https://github.com/bwasty/learn-opengl-rs
 
 mod shader;
-//https://github.com/glium/glium/blob/master/examples/triangle.rs
+fn mat4_to_slice(m: &ultraviolet::mat::Mat4) -> *const [f32; 16] {
+    m.as_slice().as_ptr() as *const [f32; 16]
+}
 
 pub(crate) type GlContext = Rc<Context>;
 
@@ -29,22 +34,14 @@ pub trait BaseGraphics {
 pub struct Graphics {
     pub(crate) gl: GlContext,
     pub(crate) driver: Driver,
-    vao: <glow::Context as HasContext>::VertexArray,
     use_indices: bool,
 }
 
 impl Graphics {
     pub fn new(gl: GlContext) -> Self {
-        let vao = unsafe {
-            let vao = gl.create_vertex_array().unwrap();
-            gl.bind_vertex_array(Some(vao));
-            vao
-        };
-
         Self {
             gl,
             driver: Driver::OpenGl3_3,
-            vao,
             use_indices: false,
         }
     }
@@ -57,7 +54,6 @@ impl Graphics {
 
     pub fn begin(&mut self) {
         unsafe {
-            self.gl.bind_vertex_array(Some(self.vao));
             self.gl.enable(glow::DEPTH_TEST);
             self.gl.depth_func(glow::LESS);
             // self.gl.enable(glow::CULL_FACE);
@@ -76,6 +72,7 @@ impl Graphics {
 
     pub fn use_shader(&mut self, shader: &Shader) {
         unsafe {
+            self.gl.bind_vertex_array(Some(shader.vao));
             self.gl.use_program(Some(shader.program));
         }
     }
@@ -99,9 +96,11 @@ impl Graphics {
     }
 
     pub fn draw(&mut self, offset: i32, count: i32) {
+        println!("{} {} {:?}", offset, count, self.use_indices);
         // TODO draw instanced?
         unsafe {
             if self.use_indices {
+                println!("draw_elements, {} {}", count, offset*4);
                 self.gl.draw_elements(
                     glow::TRIANGLES,
                     count,
@@ -109,12 +108,14 @@ impl Graphics {
                     offset * 4,
                 );
             } else {
+                println!("draw_array, {} {}", count, offset);
                 self.gl.draw_arrays(
                     glow::TRIANGLES,
                     offset,
                     count,
                 );
             }
+            println!("done");
         }
     }
 
@@ -149,10 +150,6 @@ impl VertexAttr {
             format: vertex_data,
         }
     }
-}
-
-fn m3_to_slice(m: &Mat3) -> *const [f32; 9] {
-    m.as_slice().as_ptr() as *const [f32; 9]
 }
 
 fn vf_to_u8(v: &[f32]) -> &[u8] {
@@ -308,18 +305,7 @@ impl UniformValue for [f32; 4] {
     }
 }
 
-impl UniformValue for Mat3 {
-    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
-        let matrix = self.as_slice().as_ptr() as *const [f32; 9];
-        unsafe {
-            graphics
-                .gl
-                .uniform_matrix_3_f32_slice(Some(location), false, &*matrix);
-        }
-    }
-}
-
-impl UniformValue for Mat4 {
+impl UniformValue for ultraviolet::mat::Mat4 {
     fn bind_uniform(&self, graphics: &Graphics, location: u32) {
         let matrix = self.as_slice().as_ptr() as *const [f32; 16];
         unsafe {
@@ -367,81 +353,9 @@ fn main() {
     let gl = Rc::new(gl);
 
     let mut gfx = Graphics::new(gl);
+    let mut cube = Cube::new(&mut gfx);
+    let mut triangle = Triangle::new(&mut gfx);
 
-    let shader = Shader::new(
-        &gfx,
-        include_bytes!("../resources/shaders/color.vert.spv"),
-        include_bytes!("../resources/shaders/color.frag.spv"),
-    )
-    .unwrap();
-
-    let buffer = VertexBuffer::new(
-        &gfx,
-        &[
-            VertexAttr::new(0, VertexFormat::Float3),
-            VertexAttr::new(1, VertexFormat::Float4),
-        ],
-        Usage::Dynamic,
-    )
-    .unwrap();
-
-    let index_buffer = IndexBuffer::new(&gfx, Usage::Dynamic).unwrap();
-
-    // #[rustfmt::skip]
-    // let vertices = [
-    //     // position         //color
-    //     0.5, 1.0, 0.0,       0.5, 1.0, 0.0, 1.0,
-    //     0.0, 0.0, 0.0,       0.0, 0.0, 0.4, 1.0,
-    //     1.0, 0.0, 0.0,       1.0, 0.0, 0.6, 1.0,
-    //     1.5, 1.0, 0.0,       1.0, 0.5, 1.0, 1.0,
-    // ];
-
-    #[rustfmt::skip]
-    let vertices= [
-        -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-        1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-        1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-        -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-
-        -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-        1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-        1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-        -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-
-        -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
-        -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
-        -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
-        -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
-
-        1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
-        1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
-        1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
-        1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
-
-        -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
-        -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
-        1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
-        1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
-
-        -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
-        -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
-        1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
-        1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
-    ];
-
-    let indices = [
-        0, 1, 2,  0, 2, 3,
-        6, 5, 4,  7, 6, 4,
-        8, 9, 10,  8, 10, 11,
-        14, 13, 12,  15, 14, 12,
-        16, 17, 18,  16, 18, 19,
-        22, 21, 20,  23, 22, 20
-    ];
-
-    // let identity: Mat3 = identity();
-    let mut look = vec3(0.0, 1.5, 6.0);
-    let mut rx = 0.0;
-    let mut ry = 0.0;
     unsafe {
         event_loop.run(move |event, _, control_flow| {
             *control_flow = ControlFlow::Wait;
@@ -453,37 +367,11 @@ fn main() {
                     windowed_context.window().request_redraw();
                 }
                 Event::RedrawRequested(_) => {
-                    rx += 0.1;
-                    ry += 0.2;
-                    // look.data[1] -= 0.01;
-                    let projection: Mat4 = glm::perspective(60.0, 4.0 / 3.0, 0.1, 10.0);
-                    let view = glm::look_at(&look, &vec3(0.0, 0.0, 0.0), &vec3(0.0, 1.0, 0.0));
-
-                    let model:Mat4 = identity();
-                    let mut mvp:Mat4 = identity();
-                    mvp = mvp * projection;
-                    mvp = mvp * view;
-                    let rxm = glm::rotation(rx, &vec3(1.0, 0.0, 0.0));
-                    let rym = glm::rotation(ry, &vec3(0.0, 1.0, 0.0));
-                    let model2 = rxm * rym;
-                    // mvp = mvp * model;
-                    mvp = mvp * model2;
-
                     gfx.begin();
                     gfx.viewport(0, 0, 1024, 768);
                     gfx.clear(Some([0.1, 0.2, 0.4, 1.0]));
-                    gfx.use_shader(&shader);
-                    gfx.bind_vertex_buffer(&buffer, &vertices);
-                    gfx.bind_index_buffer(&index_buffer, &indices);
-                    gfx.bind_uniform(0, &mvp);
-                    // gfx.bind_vertex_buffer(&buffer, &[
-                    //     -1.0, -1.0, 0.0,    1.0, 0.2, 0.3, 1.0,
-                    //     1.0, -1.0, 0.0,     0.1, 1.0, 0.3, 1.0,
-                    //     0.0, 1.0, 0.0,      0.1, 0.2, 1.0, 1.0,
-                    // ]);
-                    // gfx.draw(0, 3);
-                    // gfx.draw(0, indices.len() as i32);
-                    gfx.draw(0, 36);
+                    cube.draw(&mut gfx);
+                    triangle.draw(&mut gfx);
                     gfx.end();
 
                     windowed_context.swap_buffers().unwrap();
@@ -502,3 +390,164 @@ fn main() {
         });
     }
 }
+
+struct Triangle {
+    shader: Shader,
+    vertices: [f32; 21],
+    vertex_buffer: VertexBuffer,
+    index_buffer: IndexBuffer,
+    mvp: Mat4,
+}
+
+impl Triangle {
+    fn new(gfx: &mut Graphics) -> Self {
+        let shader = Shader::new(
+            gfx,
+            include_bytes!("../resources/shaders/color.vert.spv"),
+            include_bytes!("../resources/shaders/color.frag.spv"),
+        ).unwrap();
+
+        let vertex_buffer = VertexBuffer::new(
+            gfx,
+            &[
+                VertexAttr::new(0, VertexFormat::Float3),
+                VertexAttr::new(1, VertexFormat::Float4),
+            ],
+            Usage::Dynamic,
+        ).unwrap();
+
+        let index_buffer = IndexBuffer::new(gfx, Usage::Dynamic).unwrap();
+
+        let vertices = [
+            -0.1, -0.1, 0.0,    1.0, 0.2, 0.3, 1.0,
+            0.1, -0.1, 0.0,     0.1, 1.0, 0.3, 1.0,
+            0.0, 0.1, 0.0,      0.1, 0.2, 1.0, 1.0,
+        ];
+
+        let mvp = Mat4::identity();
+        
+        Self {
+            shader,
+            vertices,
+            vertex_buffer,
+            index_buffer,
+            mvp
+        }
+    }
+
+    fn draw(&mut self, gfx: &mut Graphics) {
+        gfx.use_shader(&self.shader);
+        gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
+        gfx.bind_index_buffer(&self.index_buffer, &[0, 1, 2]);
+        gfx.bind_uniform(0, &self.mvp);
+        gfx.draw(0, 3);
+    }
+}
+
+struct Cube {
+    shader: Shader,
+    vertices: [f32; 168],
+    indices: [u32; 36],
+    vertex_buffer: VertexBuffer,
+    index_buffer: IndexBuffer,
+    rotation: (f32, f32),
+    mvp: Mat4,
+}
+
+impl Cube {
+    fn new(gfx: &mut Graphics) -> Self {
+        let shader = Shader::new(
+            gfx,
+            include_bytes!("../resources/shaders/color.vert.spv"),
+            include_bytes!("../resources/shaders/color.frag.spv"),
+        ).unwrap();
+
+        let vertex_buffer = VertexBuffer::new(
+            gfx,
+            &[
+                VertexAttr::new(0, VertexFormat::Float3),
+                VertexAttr::new(1, VertexFormat::Float4),
+            ],
+            Usage::Dynamic,
+        ).unwrap();
+
+        let index_buffer = IndexBuffer::new(gfx, Usage::Dynamic).unwrap();
+
+        let vertices= [
+            -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+            1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+            1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+            -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+
+            -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+            1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+            1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+            -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+
+            -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+            -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+            -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+            -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+
+            1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+            1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+            1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+            1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+
+            -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+            -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+            1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+            1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+
+            -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
+            -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+            1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+            1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
+        ];
+
+        let indices = [
+            0, 1, 2,  0, 2, 3,
+            6, 5, 4,  7, 6, 4,
+            8, 9, 10,  8, 10, 11,
+            14, 13, 12,  15, 14, 12,
+            16, 17, 18,  16, 18, 19,
+            22, 21, 20,  23, 22, 20
+        ];
+
+        let projection: Mat4 = perspective(45.0, 4.0 / 3.0, 0.1, 100.0);
+        let view = Mat4::look_at(Vec3::new(4.0, 3.0, 3.0), Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 1.0, 0.0));
+
+        let mut mvp:Mat4 = Mat4::identity();
+        mvp = mvp * projection;
+        mvp = mvp * view;
+
+        Self {
+            shader,
+            vertices,
+            indices,
+            vertex_buffer,
+            index_buffer,
+            rotation: (0.0, 0.0),
+            mvp,
+        }
+    }
+
+    fn draw(&mut self, gfx: &mut Graphics) {
+        let (ref mut rx, ref mut ry) = self.rotation;
+
+        *rx += 0.01;
+        *ry += 0.01;
+
+        let rxm = Mat4::from_rotation_x(*rx);
+        let rym = Mat4::from_rotation_y(*ry);
+        let model = rxm * rym;
+        let mvp = self.mvp * model;
+
+        gfx.use_shader(&self.shader);
+        gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
+        gfx.bind_index_buffer(&self.index_buffer, &self.indices);
+        gfx.bind_uniform(0, &mvp);
+        gfx.draw(0, self.indices.len() as i32);
+    }
+}
+
