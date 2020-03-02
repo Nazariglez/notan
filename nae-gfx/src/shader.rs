@@ -56,6 +56,11 @@ impl Shader {
         let vert = compile_spirv_to_glsl(&vert_spv, graphics.driver)?;
         let frag = compile_spirv_to_glsl(&frag_spv, graphics.driver)?;
 
+        //FIXME layout(binding = 0) is not allowed for
+
+        println!("vert: {}", vert);
+        println!("frag: {}", frag);
+
         Self::from_source(graphics, &vert, &frag)
     }
 
@@ -79,6 +84,7 @@ impl Shader {
 fn compile_spirv_to_glsl(source: &[u32], driver: Driver) -> Result<String, String> {
     let module = spirv::Module::from_words(source);
     let mut ast = spirv::Ast::<glsl::Target>::parse(&module).map_err(error_code_to_string)?;
+    let res = ast.get_shader_resources().map_err(|e| format!("{:?}", e))?;
 
     ast.set_compiler_options(&glsl::CompilerOptions {
         version: driver.to_glsl_version().ok_or("Invalid driver version")?,
@@ -86,7 +92,21 @@ fn compile_spirv_to_glsl(source: &[u32], driver: Driver) -> Result<String, Strin
     })
     .map_err(error_code_to_string)?;
 
+    //TODO get spirv for vulkan as input and output glsl for opengl
+    //https://community.arm.com/developer/tools-software/graphics/b/blog/posts/spirv-cross-working-with-spir-v-in-your-app
+    //https://github.com/gfx-rs/gfx/blob/d6c68cb9a940a6639a42651304c6d49b5399aca7/src/backend/gl/src/device.rs#L238
+    fix_ast_for_gl(&mut ast, &res.sampled_images);
+    fix_ast_for_gl(&mut ast, &res.uniform_buffers);
+    fix_ast_for_gl(&mut ast, &res.storage_buffers);
+
     ast.compile().map_err(error_code_to_string)
+}
+
+fn fix_ast_for_gl(ast: &mut spirv::Ast<glsl::Target>, resources: &[spirv::Resource]) {
+    for r in resources {
+        ast.unset_decoration(r.id, spirv::Decoration::Binding)
+            .unwrap();
+    }
 }
 
 fn error_code_to_string(err: ErrorCode) -> String {

@@ -10,7 +10,7 @@ edition = "2018"
 glow = "0.4"
 nae-core = { path="../nae-core" }
 spirv_cross = { version = "0.17.1", features = ["glsl"] }
-image = "0.23"
+image = "0.23.0"
 hashbrown = "0.7"
 lyon = "0.15"
 ultraviolet = "0.4.5"

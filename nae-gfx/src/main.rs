@@ -5,9 +5,29 @@ use glutin::event_loop::ControlFlow;
 use nae_core::{BlendFactor, BlendMode, Color};
 use std::cell::Ref;
 use std::rc::Rc;
-use ultraviolet::projection::perspective_gl as perspective;
 use ultraviolet::mat::Mat4;
+use ultraviolet::projection::perspective_gl as perspective;
 use ultraviolet::vec::Vec3;
+
+#[derive(Debug)]
+struct TextureData {
+    width: i32,
+    height: i32,
+    data: Vec<u8>,
+}
+
+macro_rules! load_image {
+    ($path:expr) => {{
+        let bytes = include_bytes!($path);
+        let data = image::load_from_memory(bytes).unwrap().to_rgba();
+
+        TextureData {
+            width: data.width() as _,
+            height: data.height() as _,
+            data: data.to_vec(),
+        }
+    }};
+}
 
 //Sample texture array limit https://stackoverflow.com/questions/20836102/how-many-textures-can-i-use-in-a-webgl-fragment-shader
 
@@ -82,7 +102,8 @@ impl Graphics {
             if let Some([r, g, b, a]) = color {
                 self.gl.clear_color(r, g, b, a);
             }
-            self.gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
+            self.gl
+                .clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
         }
     }
 
@@ -96,26 +117,14 @@ impl Graphics {
     }
 
     pub fn draw(&mut self, offset: i32, count: i32) {
-        println!("{} {} {:?}", offset, count, self.use_indices);
         // TODO draw instanced?
         unsafe {
             if self.use_indices {
-                println!("draw_elements, {} {}", count, offset*4);
-                self.gl.draw_elements(
-                    glow::TRIANGLES,
-                    count,
-                    glow::UNSIGNED_INT,
-                    offset * 4,
-                );
+                self.gl
+                    .draw_elements(glow::TRIANGLES, count, glow::UNSIGNED_INT, offset * 4);
             } else {
-                println!("draw_array, {} {}", count, offset);
-                self.gl.draw_arrays(
-                    glow::TRIANGLES,
-                    offset,
-                    count,
-                );
+                self.gl.draw_arrays(glow::TRIANGLES, offset, count);
             }
-            println!("done");
         }
     }
 
@@ -316,13 +325,9 @@ impl UniformValue for ultraviolet::mat::Mat4 {
     }
 }
 
-pub struct Texture {
+pub struct Texture {}
 
-}
-
-pub struct RenderTarget {
-
-}
+pub struct RenderTarget {}
 
 // TODO uniform value for matrix values
 
@@ -355,10 +360,11 @@ fn main() {
     let mut gfx = Graphics::new(gl);
     let mut cube = Cube::new(&mut gfx);
     let mut triangle = Triangle::new(&mut gfx);
+    let mut textured_cube = TexturedCube::new(&mut gfx);
 
     unsafe {
         event_loop.run(move |event, _, control_flow| {
-            *control_flow = ControlFlow::Wait;
+            *control_flow = ControlFlow::Poll;
             match event {
                 Event::LoopDestroyed => {
                     return;
@@ -370,6 +376,7 @@ fn main() {
                     gfx.begin();
                     gfx.viewport(0, 0, 1024, 768);
                     gfx.clear(Some([0.1, 0.2, 0.4, 1.0]));
+                    textured_cube.draw(&mut gfx);
                     cube.draw(&mut gfx);
                     triangle.draw(&mut gfx);
                     gfx.end();
@@ -380,9 +387,7 @@ fn main() {
                     WindowEvent::Resized(physical_size) => {
                         windowed_context.resize(*physical_size);
                     }
-                    WindowEvent::CloseRequested => {
-                        *control_flow = ControlFlow::Exit
-                    }
+                    WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                     _ => (),
                 },
                 _ => (),
@@ -405,7 +410,8 @@ impl Triangle {
             gfx,
             include_bytes!("../resources/shaders/color.vert.spv"),
             include_bytes!("../resources/shaders/color.frag.spv"),
-        ).unwrap();
+        )
+        .unwrap();
 
         let vertex_buffer = VertexBuffer::new(
             gfx,
@@ -414,10 +420,12 @@ impl Triangle {
                 VertexAttr::new(1, VertexFormat::Float4),
             ],
             Usage::Dynamic,
-        ).unwrap();
+        )
+        .unwrap();
 
         let index_buffer = IndexBuffer::new(gfx, Usage::Dynamic).unwrap();
 
+        #[rustfmt::skip]
         let vertices = [
             -0.1, -0.1, 0.0,    1.0, 0.2, 0.3, 1.0,
             0.1, -0.1, 0.0,     0.1, 1.0, 0.3, 1.0,
@@ -425,13 +433,13 @@ impl Triangle {
         ];
 
         let mvp = Mat4::identity();
-        
+
         Self {
             shader,
             vertices,
             vertex_buffer,
             index_buffer,
-            mvp
+            mvp,
         }
     }
 
@@ -460,7 +468,8 @@ impl Cube {
             gfx,
             include_bytes!("../resources/shaders/color.vert.spv"),
             include_bytes!("../resources/shaders/color.frag.spv"),
-        ).unwrap();
+        )
+        .unwrap();
 
         let vertex_buffer = VertexBuffer::new(
             gfx,
@@ -469,10 +478,12 @@ impl Cube {
                 VertexAttr::new(1, VertexFormat::Float4),
             ],
             Usage::Dynamic,
-        ).unwrap();
+        )
+        .unwrap();
 
         let index_buffer = IndexBuffer::new(gfx, Usage::Dynamic).unwrap();
 
+        #[rustfmt::skip]
         let vertices= [
             -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
             1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
@@ -505,6 +516,7 @@ impl Cube {
             1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
         ];
 
+        #[rustfmt::skip]
         let indices = [
             0, 1, 2,  0, 2, 3,
             6, 5, 4,  7, 6, 4,
@@ -515,9 +527,13 @@ impl Cube {
         ];
 
         let projection: Mat4 = perspective(45.0, 4.0 / 3.0, 0.1, 100.0);
-        let view = Mat4::look_at(Vec3::new(4.0, 3.0, 3.0), Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 1.0, 0.0));
+        let view = Mat4::look_at(
+            Vec3::new(4.0, 3.0, 3.0),
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+        );
 
-        let mut mvp:Mat4 = Mat4::identity();
+        let mut mvp: Mat4 = Mat4::identity();
         mvp = mvp * projection;
         mvp = mvp * view;
 
@@ -544,10 +560,241 @@ impl Cube {
         let mvp = self.mvp * model;
 
         gfx.use_shader(&self.shader);
+        gfx.bind_uniform(0, &mvp);
         gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
         gfx.bind_index_buffer(&self.index_buffer, &self.indices);
-        gfx.bind_uniform(0, &mvp);
         gfx.draw(0, self.indices.len() as i32);
     }
 }
 
+struct TexturedCube {
+    shader: Shader,
+    vertices: [f32; 108],
+    uvs: [f32; 72],
+    vertex_buffer: VertexBuffer,
+    uvs_buffer: VertexBuffer,
+    rotation: (f32, f32),
+    mvp: Mat4,
+    tex: u32,
+}
+
+impl TexturedCube {
+    fn new(gfx: &mut Graphics) -> Self {
+        let shader = Shader::new(
+            gfx,
+            include_bytes!("../resources/shaders/textured.vert.spv"),
+            include_bytes!("../resources/shaders/textured.frag.spv"),
+        )
+        .unwrap();
+
+        let vertex_buffer = VertexBuffer::new(
+            gfx,
+            &[VertexAttr::new(0, VertexFormat::Float3)],
+            Usage::Dynamic,
+        )
+        .unwrap();
+
+        let uvs_buffer = VertexBuffer::new(
+            gfx,
+            &[VertexAttr::new(1, VertexFormat::Float2)],
+            Usage::Dynamic,
+        )
+        .unwrap();
+
+        #[rustfmt::skip]
+        let uvs = [
+            0.000059, 0.000004,
+            0.000103, 0.336048,
+            0.335973, 0.335903,
+            1.000023, 0.000013,
+            0.667979, 0.335851,
+            0.999958, 0.336064,
+            0.667979, 0.335851,
+            0.336024, 0.671877,
+            0.667969, 0.671889,
+            1.000023, 0.000013,
+            0.668104, 0.000013,
+            0.667979, 0.335851,
+            0.000059, 0.000004,
+            0.335973, 0.335903,
+            0.336098, 0.000071,
+            0.667979, 0.335851,
+            0.335973, 0.335903,
+            0.336024, 0.671877,
+            1.000004, 0.671847,
+            0.999958, 0.336064,
+            0.667979, 0.335851,
+            0.668104, 0.000013,
+            0.335973, 0.335903,
+            0.667979, 0.335851,
+            0.335973, 0.335903,
+            0.668104, 0.000013,
+            0.336098, 0.000071,
+            0.000103, 0.336048,
+            0.000004, 0.671870,
+            0.336024, 0.671877,
+            0.000103, 0.336048,
+            0.336024, 0.671877,
+            0.335973, 0.335903,
+            0.667969, 0.671889,
+            1.000004, 0.671847,
+            0.667979, 0.335851
+        ];
+
+        #[rustfmt::skip]
+        let vertices= [
+            -1.0,-1.0,-1.0,
+            -1.0,-1.0, 1.0,
+            -1.0, 1.0, 1.0,
+            1.0, 1.0,-1.0,
+            -1.0,-1.0,-1.0,
+            -1.0, 1.0,-1.0,
+            1.0,-1.0, 1.0,
+            -1.0,-1.0,-1.0,
+            1.0,-1.0,-1.0,
+            1.0, 1.0,-1.0,
+            1.0,-1.0,-1.0,
+            -1.0,-1.0,-1.0,
+            -1.0,-1.0,-1.0,
+            -1.0, 1.0, 1.0,
+            -1.0, 1.0,-1.0,
+            1.0,-1.0, 1.0,
+            -1.0,-1.0, 1.0,
+            -1.0,-1.0,-1.0,
+            -1.0, 1.0, 1.0,
+            -1.0,-1.0, 1.0,
+            1.0,-1.0, 1.0,
+            1.0, 1.0, 1.0,
+            1.0,-1.0,-1.0,
+            1.0, 1.0,-1.0,
+            1.0,-1.0,-1.0,
+            1.0, 1.0, 1.0,
+            1.0,-1.0, 1.0,
+            1.0, 1.0, 1.0,
+            1.0, 1.0,-1.0,
+            -1.0, 1.0,-1.0,
+            1.0, 1.0, 1.0,
+            -1.0, 1.0,-1.0,
+            -1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,
+            -1.0, 1.0, 1.0,
+            1.0,-1.0, 1.0
+        ];
+
+        let projection: Mat4 = perspective(45.0, 4.0 / 3.0, 0.1, 100.0);
+        let view = Mat4::look_at(
+            Vec3::new(4.0, 3.0, -3.0),
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+        );
+
+        let mut mvp: Mat4 = Mat4::identity();
+        mvp = mvp * projection;
+        mvp = mvp * view;
+
+        let image = load_image!("../resources/cube.png");
+        let tex = create_gl_tex_ext(
+            &gfx,
+            image,
+            glow::RGBA as _,
+            glow::RGBA as _,
+            glow::NEAREST as _,
+            glow::NEAREST as _,
+            4,
+        )
+        .unwrap();
+
+        Self {
+            shader,
+            vertices,
+            vertex_buffer,
+            uvs_buffer,
+            rotation: (0.0, 0.0),
+            mvp,
+            uvs,
+            tex,
+        }
+    }
+
+    fn draw(&mut self, gfx: &mut Graphics) {
+        let (ref mut rx, ref mut ry) = self.rotation;
+
+        *rx += 0.01;
+        *ry += 0.01;
+
+        let rxm = Mat4::from_rotation_x(-*rx);
+        let rym = Mat4::from_rotation_y(-*ry);
+        let model = rxm * rym;
+        let mvp:Mat4 = self.mvp * model;
+        let (mvp_loc, tex_loc) = unsafe {
+            (
+                gfx.gl
+                    .get_uniform_location(self.shader.program, "u_matrix")
+                    .unwrap(),
+                gfx.gl
+                    .get_uniform_location(self.shader.program, "u_texture")
+                    .unwrap(),
+            )
+        };
+
+        gfx.use_shader(&self.shader);
+        gfx.bind_uniform(mvp_loc, &mvp);
+        unsafe {
+            gfx.gl.active_texture(glow::TEXTURE0);
+            gfx.gl.bind_texture(glow::TEXTURE_2D, Some(self.tex));
+            gfx.gl.uniform_1_i32(Some(tex_loc), 0);
+        }
+        gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
+        gfx.bind_vertex_buffer(&self.uvs_buffer, &self.uvs);
+        gfx.draw(0, (self.vertices.len() / 3) as i32);
+    }
+}
+
+fn create_gl_tex_ext(
+    gfx: &Graphics,
+    image: TextureData,
+    internal: i32,
+    format: i32,
+    min_filter: i32,
+    mag_filter: i32,
+    bytes_per_pixel: usize,
+) -> Result<u32, String> {
+    unsafe {
+        let gl = &gfx.gl;
+        let tex = gl.create_texture()?;
+        if bytes_per_pixel == 1 {
+            gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
+        }
+
+        gl.bind_texture(glow::TEXTURE_2D, Some(tex));
+
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_S,
+            glow::CLAMP_TO_EDGE as i32,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_T,
+            glow::CLAMP_TO_EDGE as i32,
+        );
+        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, mag_filter);
+        gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, min_filter);
+
+        gl.tex_image_2d(
+            glow::TEXTURE_2D,
+            0,
+            internal,
+            image.width,
+            image.height,
+            0,
+            format as _,
+            glow::UNSIGNED_BYTE,
+            Some(&image.data),
+        );
+
+        //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
+        gl.bind_texture(glow::TEXTURE_2D, None);
+        Ok(tex)
+    }
+}
