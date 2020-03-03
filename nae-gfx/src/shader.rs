@@ -44,7 +44,6 @@ impl Driver {
 pub struct Shader {
     pub(crate) program: ProgramKey,
     pub(crate) gl: GlContext,
-    pub(crate) vao: <glow::Context as HasContext>::VertexArray,
     // inner: Rc<InnerShader>,
 }
 
@@ -77,7 +76,7 @@ impl Shader {
             vao
         };
 
-        Ok(Self { program, gl, vao })
+        Ok(Self { program, gl })
     }
 }
 
@@ -92,6 +91,10 @@ fn compile_spirv_to_glsl(source: &[u32], driver: Driver) -> Result<String, Strin
     })
     .map_err(error_code_to_string)?;
 
+    println!(
+        "{:?} {:?} {:?}",
+        res.sampled_images, res.uniform_buffers, res.storage_buffers
+    );
     //TODO get spirv for vulkan as input and output glsl for opengl
     //https://community.arm.com/developer/tools-software/graphics/b/blog/posts/spirv-cross-working-with-spir-v-in-your-app
     //https://github.com/gfx-rs/gfx/blob/d6c68cb9a940a6639a42651304c6d49b5399aca7/src/backend/gl/src/device.rs#L238
@@ -104,6 +107,7 @@ fn compile_spirv_to_glsl(source: &[u32], driver: Driver) -> Result<String, Strin
 
 fn fix_ast_for_gl(ast: &mut spirv::Ast<glsl::Target>, resources: &[spirv::Resource]) {
     for r in resources {
+        println!("{:?}", r);
         ast.unset_decoration(r.id, spirv::Decoration::Binding)
             .unwrap();
     }

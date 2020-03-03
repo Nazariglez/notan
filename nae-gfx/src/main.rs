@@ -74,10 +74,28 @@ impl Graphics {
 
     pub fn begin(&mut self) {
         unsafe {
-            self.gl.enable(glow::DEPTH_TEST);
-            self.gl.depth_func(glow::LESS);
             // self.gl.enable(glow::CULL_FACE);
             // self.gl.cull_face(glow::BACK);
+        }
+    }
+
+    pub fn bind_texture(&mut self, slot: u32, location: u32, tex: u32) {
+        unsafe {
+            let gl_slot = match slot {
+                0 => glow::TEXTURE0,
+                1 => glow::TEXTURE1,
+                2 => glow::TEXTURE2,
+                3 => glow::TEXTURE3,
+                4 => glow::TEXTURE4,
+                5 => glow::TEXTURE5,
+                6 => glow::TEXTURE6,
+                7 => glow::TEXTURE7,
+                _ => panic!("invalid texture slot"),
+            };
+
+            self.gl.active_texture(gl_slot);
+            self.gl.bind_texture(glow::TEXTURE_2D, Some(tex));
+            self.bind_uniform(location, &(slot as i32));
         }
     }
 
@@ -90,10 +108,17 @@ impl Graphics {
         }
     }
 
-    pub fn use_shader(&mut self, shader: &Shader) {
+    pub fn use_pipeline(&mut self, pipeline: &Pipeline) {
         unsafe {
-            self.gl.bind_vertex_array(Some(shader.vao));
-            self.gl.use_program(Some(shader.program));
+            if let Some(d) = pipeline.data.depth {
+                self.gl.enable(glow::DEPTH_TEST);
+                self.gl.depth_func(d);
+            } else {
+                self.gl.disable(glow::DEPTH_TEST);
+            }
+
+            self.gl.bind_vertex_array(Some(pipeline.vao));
+            self.gl.use_program(Some(pipeline.shader.program));
         }
     }
 
@@ -358,7 +383,7 @@ fn main() {
     let gl = Rc::new(gl);
 
     let mut gfx = Graphics::new(gl);
-    let mut cube = Cube::new(&mut gfx);
+    // let mut cube = Cube::new(&mut gfx);
     let mut triangle = Triangle::new(&mut gfx);
     let mut textured_cube = TexturedCube::new(&mut gfx);
 
@@ -377,7 +402,7 @@ fn main() {
                     gfx.viewport(0, 0, 1024, 768);
                     gfx.clear(Some([0.1, 0.2, 0.4, 1.0]));
                     textured_cube.draw(&mut gfx);
-                    cube.draw(&mut gfx);
+                    // cube.draw(&mut gfx);
                     triangle.draw(&mut gfx);
                     gfx.end();
 
@@ -397,11 +422,12 @@ fn main() {
 }
 
 struct Triangle {
-    shader: Shader,
+    pipeline: Pipeline,
     vertices: [f32; 21],
     vertex_buffer: VertexBuffer,
     index_buffer: IndexBuffer,
     mvp: Mat4,
+    mvp_loc: u32,
 }
 
 impl Triangle {
@@ -412,6 +438,15 @@ impl Triangle {
             include_bytes!("../resources/shaders/color.frag.spv"),
         )
         .unwrap();
+
+        let pipeline = Pipeline::new(
+            gfx,
+            shader,
+            PipelineData {
+                ..Default::default()
+            },
+        );
+        let mvp_loc = pipeline.uniform_location("u_matrix");
 
         let vertex_buffer = VertexBuffer::new(
             gfx,
@@ -435,19 +470,20 @@ impl Triangle {
         let mvp = Mat4::identity();
 
         Self {
-            shader,
+            pipeline,
             vertices,
             vertex_buffer,
             index_buffer,
             mvp,
+            mvp_loc,
         }
     }
 
     fn draw(&mut self, gfx: &mut Graphics) {
-        gfx.use_shader(&self.shader);
+        gfx.use_pipeline(&self.pipeline);
         gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
         gfx.bind_index_buffer(&self.index_buffer, &[0, 1, 2]);
-        gfx.bind_uniform(0, &self.mvp);
+        gfx.bind_uniform(self.mvp_loc, &self.mvp);
         gfx.draw(0, 3);
     }
 }
@@ -559,7 +595,7 @@ impl Cube {
         let model = rxm * rym;
         let mvp = self.mvp * model;
 
-        gfx.use_shader(&self.shader);
+        // gfx.use_shader(&self.shader);
         gfx.bind_uniform(0, &mvp);
         gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
         gfx.bind_index_buffer(&self.index_buffer, &self.indices);
@@ -568,7 +604,6 @@ impl Cube {
 }
 
 struct TexturedCube {
-    shader: Shader,
     vertices: [f32; 108],
     uvs: [f32; 72],
     vertex_buffer: VertexBuffer,
@@ -576,6 +611,7 @@ struct TexturedCube {
     rotation: (f32, f32),
     mvp: Mat4,
     tex: u32,
+    pipeline: Pipeline,
 }
 
 impl TexturedCube {
@@ -586,6 +622,8 @@ impl TexturedCube {
             include_bytes!("../resources/shaders/textured.frag.spv"),
         )
         .unwrap();
+
+        let pipeline = Pipeline::new(&gfx, shader, Default::default());
 
         let vertex_buffer = VertexBuffer::new(
             gfx,
@@ -705,7 +743,7 @@ impl TexturedCube {
         .unwrap();
 
         Self {
-            shader,
+            pipeline,
             vertices,
             vertex_buffer,
             uvs_buffer,
@@ -725,28 +763,69 @@ impl TexturedCube {
         let rxm = Mat4::from_rotation_x(-*rx);
         let rym = Mat4::from_rotation_y(-*ry);
         let model = rxm * rym;
-        let mvp:Mat4 = self.mvp * model;
+        let mvp: Mat4 = self.mvp * model;
         let (mvp_loc, tex_loc) = unsafe {
             (
                 gfx.gl
-                    .get_uniform_location(self.shader.program, "u_matrix")
+                    .get_uniform_location(self.pipeline.shader.program, "u_matrix")
                     .unwrap(),
                 gfx.gl
-                    .get_uniform_location(self.shader.program, "u_texture")
+                    .get_uniform_location(self.pipeline.shader.program, "u_texture")
                     .unwrap(),
             )
         };
 
-        gfx.use_shader(&self.shader);
+        gfx.use_pipeline(&self.pipeline);
         gfx.bind_uniform(mvp_loc, &mvp);
-        unsafe {
-            gfx.gl.active_texture(glow::TEXTURE0);
-            gfx.gl.bind_texture(glow::TEXTURE_2D, Some(self.tex));
-            gfx.gl.uniform_1_i32(Some(tex_loc), 0);
-        }
+        gfx.bind_texture(0, tex_loc, self.tex);
         gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
         gfx.bind_vertex_buffer(&self.uvs_buffer, &self.uvs);
         gfx.draw(0, (self.vertices.len() / 3) as i32);
+    }
+}
+
+pub struct PipelineData {
+    depth: Option<u32>, //glow::LESS -> gl.enable(DEPTH_TEST)
+                        //blend modes, etc...
+}
+
+impl Default for PipelineData {
+    fn default() -> Self {
+        Self {
+            depth: Some(glow::LESS),
+        }
+    }
+}
+
+pub struct Pipeline {
+    gl: GlContext,
+    vao: <glow::Context as HasContext>::VertexArray,
+    shader: Shader,
+    data: PipelineData,
+}
+
+impl Pipeline {
+    pub fn new(graphics: &Graphics, shader: Shader, data: PipelineData) -> Self {
+        let gl = graphics.gl.clone();
+        let vao = unsafe {
+            let vao = gl.create_vertex_array().unwrap();
+            gl.bind_vertex_array(Some(vao));
+            vao
+        };
+        Self {
+            gl,
+            vao,
+            shader,
+            data,
+        }
+    }
+
+    pub fn uniform_location(&self, id: &str) -> u32 {
+        unsafe {
+            self.gl
+                .get_uniform_location(self.shader.program, id)
+                .unwrap()
+        }
     }
 }
 
