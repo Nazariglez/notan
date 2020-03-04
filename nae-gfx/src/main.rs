@@ -2,7 +2,7 @@ use crate::shader::{BufferKey, Driver, GlowValue, Shader, VertexFormat};
 use glow::{Context, HasContext};
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::ControlFlow;
-use nae_core::{BlendFactor, BlendMode, Color};
+use nae_core::{BlendFactor, BlendMode, BlendOperation, Color};
 use std::cell::Ref;
 use std::rc::Rc;
 use ultraviolet::mat::Mat4;
@@ -34,6 +34,37 @@ macro_rules! load_image {
 //PORT OPENGL TUTORIALS TO NAE
 //http://www.opengl-tutorial.org/beginners-tutorials/tutorial-4-a-colored-cube/
 //https://github.com/bwasty/learn-opengl-rs
+
+impl GlowValue for BlendFactor {
+    fn glow_value(&self) -> u32 {
+        use BlendFactor::*;
+        match self {
+            Zero => glow::ZERO,
+            One => glow::ONE,
+            SourceAlpha => glow::SRC_ALPHA,
+            SourceColor => glow::SRC_COLOR,
+            InverseSourceAlpha => glow::ONE_MINUS_SRC_ALPHA,
+            InverseSourceColor => glow::ONE_MINUS_SRC_COLOR,
+            DestinationAlpha => glow::DST_ALPHA,
+            DestinationColor => glow::SRC_COLOR,
+            InverseDestinationAlpha => glow::ONE_MINUS_DST_ALPHA,
+            InverseDestinationColor => glow::ONE_MINUS_DST_COLOR,
+        }
+    }
+}
+
+impl GlowValue for BlendOperation {
+    fn glow_value(&self) -> u32 {
+        use BlendOperation::*;
+        match self {
+            Add => glow::FUNC_ADD,
+            Subtract => glow::FUNC_SUBTRACT,
+            ReverseSubtract => glow::FUNC_REVERSE_SUBTRACT,
+            Max => glow::MAX,
+            Min => glow::MIN,
+        }
+    }
+}
 
 mod shader;
 fn mat4_to_slice(m: &ultraviolet::mat::Mat4) -> *const [f32; 16] {
@@ -79,7 +110,11 @@ impl Graphics {
         }
     }
 
-    pub fn bind_texture(&mut self, slot: u32, location: u32, tex: u32) {
+    pub fn bind_texture(&mut self, location: u32, tex: u32) {
+        self.bind_texture_slot(0, location, tex);
+    }
+
+    pub fn bind_texture_slot(&mut self, slot: u32, location: u32, tex: u32) {
         unsafe {
             let gl_slot = match slot {
                 0 => glow::TEXTURE0,
@@ -115,6 +150,21 @@ impl Graphics {
                 self.gl.depth_func(d);
             } else {
                 self.gl.disable(glow::DEPTH_TEST);
+            }
+
+            if let Some(mode) = pipeline.data.cull {
+                self.gl.enable(glow::CULL_FACE);
+                self.gl.cull_face(mode);
+            } else {
+                self.gl.disable(glow::CULL_FACE);
+            }
+
+            if let Some(bm) = pipeline.data.blend {
+                self.gl.enable(glow::BLEND);
+                self.gl.blend_func(bm.src.glow_value(), bm.dst.glow_value());
+                self.gl.blend_equation(bm.op.glow_value());
+            } else {
+                self.gl.disable(glow::BLEND);
             }
 
             self.gl.bind_vertex_array(Some(pipeline.vao));
@@ -612,6 +662,8 @@ struct TexturedCube {
     mvp: Mat4,
     tex: u32,
     pipeline: Pipeline,
+    mvp_loc: u32,
+    tex_loc: u32,
 }
 
 impl TexturedCube {
@@ -623,7 +675,17 @@ impl TexturedCube {
         )
         .unwrap();
 
-        let pipeline = Pipeline::new(&gfx, shader, Default::default());
+        let pipeline = Pipeline::new(
+            &gfx,
+            shader,
+            PipelineData {
+                blend: Some(BlendMode::ERASE),
+                cull: Some(glow::BACK),
+                ..Default::default()
+            },
+        );
+        let mvp_loc = pipeline.uniform_location("u_matrix");
+        let tex_loc = pipeline.uniform_location("u_texture");
 
         let vertex_buffer = VertexBuffer::new(
             gfx,
@@ -751,6 +813,8 @@ impl TexturedCube {
             mvp,
             uvs,
             tex,
+            mvp_loc,
+            tex_loc,
         }
     }
 
@@ -764,20 +828,10 @@ impl TexturedCube {
         let rym = Mat4::from_rotation_y(-*ry);
         let model = rxm * rym;
         let mvp: Mat4 = self.mvp * model;
-        let (mvp_loc, tex_loc) = unsafe {
-            (
-                gfx.gl
-                    .get_uniform_location(self.pipeline.shader.program, "u_matrix")
-                    .unwrap(),
-                gfx.gl
-                    .get_uniform_location(self.pipeline.shader.program, "u_texture")
-                    .unwrap(),
-            )
-        };
 
         gfx.use_pipeline(&self.pipeline);
-        gfx.bind_uniform(mvp_loc, &mvp);
-        gfx.bind_texture(0, tex_loc, self.tex);
+        gfx.bind_uniform(self.mvp_loc, &mvp);
+        gfx.bind_texture(self.tex_loc, self.tex);
         gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
         gfx.bind_vertex_buffer(&self.uvs_buffer, &self.uvs);
         gfx.draw(0, (self.vertices.len() / 3) as i32);
@@ -785,6 +839,8 @@ impl TexturedCube {
 }
 
 pub struct PipelineData {
+    blend: Option<BlendMode>,
+    cull: Option<u32>,
     depth: Option<u32>, //glow::LESS -> gl.enable(DEPTH_TEST)
                         //blend modes, etc...
 }
@@ -793,6 +849,8 @@ impl Default for PipelineData {
     fn default() -> Self {
         Self {
             depth: Some(glow::LESS),
+            cull: None, //Some(glow::BACK) by default?
+            blend: Some(BlendMode::NONE),
         }
     }
 }

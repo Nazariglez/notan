@@ -70,12 +70,6 @@ impl Shader {
 
         let program = create_program(&gl, vertex, fragment)?;
 
-        let vao = unsafe {
-            let vao = gl.create_vertex_array().unwrap();
-            gl.bind_vertex_array(Some(vao));
-            vao
-        };
-
         Ok(Self { program, gl })
     }
 }
