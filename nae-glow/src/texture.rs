@@ -1,8 +1,8 @@
 use crate::context::Context2d;
 use crate::{GlContext, GlowValue, TextureKey};
 use glow::HasContext;
-use nae_core::resources::{BaseTexture, Resource, TextureFilter, TextureFormat};
 use nae_core::{BaseApp, BaseSystem};
+use nae_core::{BaseTexture, Resource, TextureFilter, TextureFormat};
 use std::cell::RefCell;
 use std::rc::Rc;
 

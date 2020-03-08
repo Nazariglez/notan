@@ -1,8 +1,7 @@
 use crate::input::{Keyboard, Mouse};
 use crate::res::{ResourceLoaderManager, ResourceParser};
 use backend::*;
-use nae_core::graphics::*;
-use nae_core::resources::*;
+use nae_core::*;
 use nae_core::{BaseSystem, BuilderOpts, Event};
 use std::collections::VecDeque;
 

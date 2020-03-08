@@ -1,8 +1,7 @@
-use crate::{BaseApp, BaseSystem, Color, BlendMode, Geometry, PipelineOptions, ClearOptions};
 use super::math::Mat3;
 use crate::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
+use crate::{BaseApp, BaseSystem, BlendMode, ClearOptions, Color, Geometry, PipelineOptions};
 pub trait BaseSurface
-
 where
     Self: Sized,
 {
@@ -241,8 +240,8 @@ pub trait BaseIndexBuffer {
 }
 
 pub trait BaseGfx
-    where
-        Self: Sized
+where
+    Self: Sized,
 {
     type Location;
     type Texture;

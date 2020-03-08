@@ -8,12 +8,12 @@ use nae_core::math::glm::*;
 
 use glyph_brush::BrushAction::Draw;
 use lyon::lyon_tessellation as tess;
-use nae_core::graphics::{
+use nae_core::math::*;
+use nae_core::{
     lyon_vbuff_to_vertex, BaseContext2d, BaseShader, BaseSurface, BlendFactor, BlendMode, Color,
     Geometry, LyonVertex, Vertex,
 };
-use nae_core::math::*;
-use nae_core::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
+use nae_core::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
 use std::rc::Rc;
 use tess::basic_shapes::stroke_triangle;
 use tess::basic_shapes::{
@@ -160,8 +160,8 @@ impl BaseContext2d for Context2d {
 
             unsafe {
                 self.gl.blend_func(
-                    self.blend_mode.source().glow_value(),
-                    self.blend_mode.destination().glow_value(),
+                    self.blend_mode.src.glow_value(),
+                    self.blend_mode.dst.glow_value(),
                 );
             }
         }
@@ -938,10 +938,7 @@ fn initialize_gl_2d(gl: &GlContext, blend_mode: BlendMode) {
     unsafe {
         gl.disable(glow::DEPTH_TEST);
         gl.enable(glow::BLEND);
-        gl.blend_func(
-            blend_mode.source().glow_value(),
-            blend_mode.destination().glow_value(),
-        );
+        gl.blend_func(blend_mode.src.glow_value(), blend_mode.dst.glow_value());
     }
 }
 

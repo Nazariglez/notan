@@ -7,9 +7,9 @@ use crate::shader::{
 use crate::texture::{texture_from_gl_context, Texture};
 use crate::{BufferKey, GlContext, TextureKey};
 use glow::HasContext;
-use nae_core::graphics::BaseShader;
 use nae_core::math::*;
-use nae_core::resources::{
+use nae_core::BaseShader;
+use nae_core::{
     BaseTexture, HorizontalAlign, Resource, TextureFilter, TextureFormat, VerticalAlign,
 };
 

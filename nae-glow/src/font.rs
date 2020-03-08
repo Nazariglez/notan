@@ -8,10 +8,10 @@ use glyph_brush::{
     BrushAction, BrushError, FontId, GlyphBrush, GlyphBrushBuilder, GlyphCruncher, GlyphVertex,
     Section,
 };
-use nae_core::resources::{
+use nae_core::{BaseApp, BaseSystem};
+use nae_core::{
     BaseFont, BaseTexture, HorizontalAlign, Resource, TextureFilter, TextureFormat, VerticalAlign,
 };
-use nae_core::{BaseApp, BaseSystem};
 use std::cell::RefCell;
 use std::rc::Rc;
 
