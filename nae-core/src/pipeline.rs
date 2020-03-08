@@ -22,7 +22,7 @@ pub enum BlendOperation {
     Subtract,
     ReverseSubtract,
     Min,
-    Max
+    Max,
 }
 
 /// Blending mode used to draw
@@ -71,7 +71,11 @@ impl BlendMode {
     }
 
     /// Creates a new blend mode
-    pub fn with_operation(source: BlendFactor, destination: BlendFactor, operation: BlendOperation) -> Self {
+    pub fn with_operation(
+        source: BlendFactor,
+        destination: BlendFactor,
+        operation: BlendOperation,
+    ) -> Self {
         Self {
             src: source,
             dst: destination,
@@ -90,7 +94,7 @@ pub enum DepthStencil {
     Greater,
     NotEqual,
     GEqual,
-    Always
+    Always,
 }
 
 /// Represents face culling modes
@@ -145,4 +149,3 @@ pub enum DrawUsage {
     Static,
     Dynamic,
 }
-

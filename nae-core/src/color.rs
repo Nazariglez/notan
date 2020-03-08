@@ -23,17 +23,17 @@ impl Color {
     pub const PINK: Color = Color([1.0, 0.753, 0.796, 1.0]);
 
     /// Create a new color from red, green, blue and alpha values
-    pub fn new(r:f32, g:f32, b:f32, a:f32) -> Self {
+    pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
         Self([r, g, b, a])
     }
 
     /// Create a new color from red, green, blue and alpha values
-    pub fn from_rgba(r:f32, g:f32, b:f32, a:f32) -> Self {
+    pub fn from_rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
         Self::new(r, g, b, a)
     }
 
     /// Create a new color from red, green and blue values
-    pub fn from_rgb(r:f32, g:f32, b:f32) -> Self {
+    pub fn from_rgb(r: f32, g: f32, b: f32) -> Self {
         Self::from_rgba(r, g, b, 1.0)
     }
 
@@ -138,7 +138,14 @@ impl From<[f32; 3]> for Color {
 
 impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Color {{ r: {}, g: {}, b: {}, a: {}}}", self.red(), self.green(), self.blue(), self.alpha())
+        write!(
+            f,
+            "Color {{ r: {}, g: {}, b: {}, a: {}}}",
+            self.red(),
+            self.green(),
+            self.blue(),
+            self.alpha()
+        )
     }
 }
 

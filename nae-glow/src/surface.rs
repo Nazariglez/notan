@@ -2,8 +2,8 @@ use crate::context::Context2d;
 use crate::texture::Texture;
 use crate::{GlContext, TextureKey};
 use glow::HasContext;
-use nae_core::graphics::BaseSurface;
-use nae_core::resources::BaseTexture;
+use nae_core::BaseSurface;
+use nae_core::BaseTexture;
 use nae_core::{BaseApp, BaseSystem};
 
 #[cfg(target_arch = "wasm32")]
