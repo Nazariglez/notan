@@ -1,16 +1,8 @@
-use crate::{BaseApp, BaseSystem};
-mod color;
-mod geometry;
-mod pipeline;
-
+use crate::{BaseApp, BaseSystem, Color, BlendMode, Geometry, PipelineOptions, ClearOptions};
 use super::math::Mat3;
 use crate::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
-pub use pipeline::*;
-pub use pipeline::*;
-pub use color::*;
-pub use geometry::*;
-
 pub trait BaseSurface
+
 where
     Self: Sized,
 {
