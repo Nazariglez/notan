@@ -224,3 +224,46 @@ pub enum GraphicsAPI {
     Dx12,
     Unknown(String),
 }
+
+pub trait BasePipeline {
+    type Graphics: BaseGfx;
+
+    fn bind(&mut self, gfx: &mut Self::Graphics);
+    fn options(&mut self) -> &mut PipelineOptions;
+    fn uniform_location(&self, id: &str) -> <Self::Graphics as BaseGfx>::Location;
+}
+
+pub trait UniformValue {
+    type Graphics: BaseGfx;
+    fn bind_uniform(&self, gfx: Self::Graphics, location: <Self::Graphics as BaseGfx>::Location);
+}
+
+pub trait BaseVertexBuffer {
+    type Graphics: BaseGfx;
+    fn bind(&mut self, gfx: &mut Self::Graphics);
+}
+
+pub trait BaseIndexBuffer {
+    type Graphics: BaseGfx;
+    fn bind(&mut self, gfx: &mut Self::Graphics);
+}
+
+pub trait BaseGfx
+    where
+        Self: Sized
+{
+    type Location;
+    type Texture;
+
+    fn api(&self) -> GraphicsAPI;
+    fn viewport(&mut self, x: f32, y: f32, width: f32, height: f32);
+    fn begin(&mut self, clear: &ClearOptions);
+    fn bind_texture(&mut self, location: u32, texture: Self::Texture);
+    fn bind_texture_slot(&mut self, slot: u32, location: Self::Location, texture: Self::Texture);
+    fn end(&mut self);
+    fn set_pipeline(&mut self, pipeline: &BasePipeline<Graphics = Self>);
+    fn bind_vertex_buffer(&mut self, buffer: &BaseVertexBuffer<Graphics = Self>, data: &[f32]);
+    fn bind_index_buffer(&mut self, buffer: &BaseIndexBuffer<Graphics = Self>, data: &[u8]);
+    fn draw(&mut self, offset: i32, count: i32);
+    fn bind_uniform(&mut self, location: Self::Location, value: &UniformValue<Graphics = Self>);
+}

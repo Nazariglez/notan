@@ -114,15 +114,6 @@ fn mat4_to_slice(m: &ultraviolet::mat::Mat4) -> *const [f32; 16] {
 
 pub(crate) type GlContext = Rc<Context>;
 
-pub trait BaseGraphics {
-    fn viewport(&mut self, x: f32, y: f32, width: f32, height: f32);
-    fn flush(&mut self);
-    fn begin(&mut self);
-    fn end(&mut self);
-    fn clear(color: Option<Color>, depth: Option<f32>, stencil: Option<i32>);
-    // etc...
-}
-
 pub struct Graphics {
     pub(crate) gl: GlContext,
     pub(crate) gfx_api: GraphicsAPI,
@@ -795,7 +786,7 @@ impl TexturedCube {
             &gfx,
             &shader,
             PipelineOptions {
-                color_blend: Some(BlendMode::ERASE),
+                // color_blend: Some(BlendMode::ERASE),
                 cull_mode: CullMode::Back,
                 ..Default::default()
             },
