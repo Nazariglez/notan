@@ -1,4 +1,4 @@
-use crate::graphics::BaseContext2d;
+use crate::gfx::BaseContext2d;
 use crate::{BaseApp, BaseSystem};
 
 /// Represent a resource

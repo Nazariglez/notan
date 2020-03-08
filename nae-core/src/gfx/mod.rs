@@ -1,11 +1,12 @@
 use crate::{BaseApp, BaseSystem};
-mod blend;
 mod color;
 mod geometry;
+mod pipeline;
 
 use super::math::Mat3;
 use crate::resources::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
-pub use blend::*;
+pub use pipeline::*;
+pub use pipeline::*;
 pub use color::*;
 pub use geometry::*;
 

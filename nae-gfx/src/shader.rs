@@ -3,9 +3,10 @@
 use crate::{GlContext, Graphics};
 use glow::HasContext;
 use hashbrown::HashMap;
-use nae_core::graphics::BaseShader;
+use nae_core::gfx::BaseContext2d;
+use nae_core::gfx::BaseShader;
 use nae_core::math::Mat3;
-use nae_core::{BaseApp, BaseContext2d, BaseSystem};
+use nae_core::{BaseApp, BaseSystem};
 use spirv_cross::{glsl, spirv, ErrorCode};
 use std::cell::RefCell;
 use std::io::Cursor;
@@ -332,10 +333,13 @@ impl VertexFormat {
 }
 
 pub trait GlowValue {
-    fn glow_value(&self) -> u32;
+    type VALUE;
+    fn glow_value(&self) -> Self::VALUE;
 }
 
 impl GlowValue for VertexFormat {
+    type VALUE = u32;
+
     fn glow_value(&self) -> u32 {
         glow::FLOAT
     }
