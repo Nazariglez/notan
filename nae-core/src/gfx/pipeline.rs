@@ -138,3 +138,11 @@ impl ClearOptions {
         }
     }
 }
+
+/// Represents the draw usage
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum DrawUsage {
+    Static,
+    Dynamic,
+}
+

@@ -209,3 +209,18 @@ where
         bottom: f32,
     );
 }
+
+/// Represents a graphics API
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum GraphicsAPI {
+    WebGl,
+    WebGl2,
+    WebGpu,
+    OpenGl3_3,
+    OpenGlEs2_0,
+    Vulkan,
+    Metal,
+    Dx11,
+    Dx12,
+    Unknown(String),
+}
