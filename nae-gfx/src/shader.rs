@@ -3,8 +3,8 @@
 use crate::{GlContext, Graphics};
 use glow::HasContext;
 use hashbrown::HashMap;
-use nae_core::gfx::BaseContext2d;
 use nae_core::gfx::BaseShader;
+use nae_core::gfx::{BaseContext2d, GraphicsAPI};
 use nae_core::math::Mat3;
 use nae_core::{BaseApp, BaseSystem};
 use spirv_cross::{glsl, spirv, ErrorCode};
@@ -18,27 +18,17 @@ type ProgramKey = <glow::Context as HasContext>::Program;
 type UniformLocationKey = <glow::Context as HasContext>::UniformLocation;
 pub type BufferKey = <glow::Context as HasContext>::Buffer;
 
-#[derive(Clone, Copy)]
-pub enum Driver {
-    WebGl,
-    WebGl2,
-    OpenGl3_3,
-    OpenGlEs2_0,
-}
+fn to_glsl_version(api: &GraphicsAPI) -> Option<glsl::Version> {
+    use glsl::Version::*;
+    use GraphicsAPI::*;
 
-impl Driver {
-    fn to_glsl_version(&self) -> Option<glsl::Version> {
-        use glsl::Version::*;
-        use Driver::*;
-
-        Some(match self {
-            WebGl => V1_00Es,
-            WebGl2 => V3_00Es,
-            OpenGl3_3 => V3_30,
-            OpenGlEs2_0 => V1_00Es,
-            _ => return None,
-        })
-    }
+    Some(match api {
+        WebGl => V1_00Es,
+        WebGl2 => V3_00Es,
+        OpenGl3_3 => V3_30,
+        OpenGlEs2_0 => V1_00Es,
+        _ => return None,
+    })
 }
 
 #[derive(Clone)]
@@ -53,8 +43,8 @@ impl Shader {
         let vert_spv = read_spirv(Cursor::new(&vertex[..])).map_err(|e| e.to_string())?;
         let frag_spv = read_spirv(Cursor::new(&fragment[..])).map_err(|e| e.to_string())?;
 
-        let vert = compile_spirv_to_glsl(&vert_spv, graphics.driver)?;
-        let frag = compile_spirv_to_glsl(&frag_spv, graphics.driver)?;
+        let vert = compile_spirv_to_glsl(&vert_spv, &graphics.gfx_api)?;
+        let frag = compile_spirv_to_glsl(&frag_spv, &graphics.gfx_api)?;
 
         //FIXME layout(binding = 0) is not allowed for
 
@@ -75,13 +65,13 @@ impl Shader {
     }
 }
 
-fn compile_spirv_to_glsl(source: &[u32], driver: Driver) -> Result<String, String> {
+fn compile_spirv_to_glsl(source: &[u32], api: &GraphicsAPI) -> Result<String, String> {
     let module = spirv::Module::from_words(source);
     let mut ast = spirv::Ast::<glsl::Target>::parse(&module).map_err(error_code_to_string)?;
     let res = ast.get_shader_resources().map_err(|e| format!("{:?}", e))?;
 
     ast.set_compiler_options(&glsl::CompilerOptions {
-        version: driver.to_glsl_version().ok_or("Invalid driver version")?,
+        version: to_glsl_version(&api).ok_or("Invalid driver version")?,
         vertex: glsl::CompilerVertexOptions::default(),
     })
     .map_err(error_code_to_string)?;

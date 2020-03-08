@@ -1,10 +1,10 @@
-use crate::shader::{BufferKey, Driver, GlowValue, Shader, VertexFormat};
+use crate::shader::{BufferKey, GlowValue, Shader, VertexFormat};
 use glow::{Context, HasContext, DEPTH_TEST};
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::ControlFlow;
 use nae_core::gfx::{
-    BlendFactor, BlendMode, BlendOperation, ClearOptions, Color, CullMode, DepthStencil,
-    PipelineOptions,
+    BlendFactor, BlendMode, BlendOperation, ClearOptions, Color, CullMode, DepthStencil, DrawUsage,
+    GraphicsAPI, PipelineOptions,
 };
 use std::cell::Ref;
 use std::rc::Rc;
@@ -123,28 +123,14 @@ pub trait BaseGraphics {
     // etc...
 }
 
-struct BlendingOptions {
-    color_src: u32,
-    color_dst: u32,
-    color_op: u32,
-    alpha_src: u32,
-    alpha_dst: u32,
-    alpha_op: u32,
-}
-
 pub struct Graphics {
     pub(crate) gl: GlContext,
-    pub(crate) driver: Driver,
-    use_indices: bool,
+    pub(crate) gfx_api: GraphicsAPI,
+    pipeline_in_use: bool,
+    indices_in_use: bool,
     width: f32,
     height: f32,
-
-    dirty: bool,
-    vao: Option<VertexArray>,
-    shader: Option<Program>,
-    depth_stencil: Option<u32>,
-    cull_mode: Option<u32>,
-    blend: Option<BlendingOptions>,
+    running: bool,
 }
 
 impl Graphics {
@@ -154,20 +140,16 @@ impl Graphics {
             width,
             height,
 
-            driver: Driver::OpenGl3_3,
-            use_indices: false,
+            running: false,
 
-            dirty: false,
-            depth_stencil: None,
-            shader: None,
-            cull_mode: None,
-            blend: None,
-            vao: None, //bind buffers?
+            gfx_api: GraphicsAPI::OpenGl3_3,
+            pipeline_in_use: false,
+            indices_in_use: false,
         }
     }
 
-    pub fn driver(&self) -> Driver {
-        self.driver
+    pub fn api(&self) -> GraphicsAPI {
+        self.gfx_api.clone()
     }
 
     pub fn viewport(&mut self, x: f32, y: f32, width: f32, height: f32) {
@@ -178,6 +160,9 @@ impl Graphics {
     }
 
     pub fn begin(&mut self, opts: &ClearOptions) {
+        debug_assert!(!self.running, "Graphics pass already running.");
+
+        self.running = true;
         self.viewport(0.0, 0.0, self.width, self.height);
 
         let mut mask = 0;
@@ -231,15 +216,19 @@ impl Graphics {
     }
 
     pub fn end(&mut self) {
+        debug_assert!(self.running, "Begin should be called first.");
+
         unsafe {
-            self.use_indices = false;
-            self.gl.bind_vertex_array(None);
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
+            self.gl.bind_vertex_array(None);
         }
+        self.indices_in_use = false;
+        self.pipeline_in_use = false;
+        self.running = false;
     }
 
-    pub fn use_pipeline(&mut self, pipeline: &Pipeline) {
+    pub fn set_pipeline(&mut self, pipeline: &Pipeline) {
         unsafe {
             self.gl.stencil_mask(0x00); //TODO
 
@@ -294,22 +283,33 @@ impl Graphics {
 
             self.gl.bind_vertex_array(Some(pipeline.vao));
             self.gl.use_program(Some(pipeline.shader));
+            self.pipeline_in_use = true;
+            self.indices_in_use = false;
         }
     }
 
     pub fn bind_vertex_buffer(&mut self, buffer: &VertexBuffer, data: &[f32]) {
+        debug_assert!(
+            self.pipeline_in_use,
+            "A pipeline should be set before bind the vertex buffer"
+        );
         buffer.bind(&self.gl, data);
     }
 
     pub fn bind_index_buffer(&mut self, buffer: &IndexBuffer, data: &[u32]) {
-        self.use_indices = true;
+        debug_assert!(
+            self.pipeline_in_use,
+            "A pipeline should be set before bind the vertex buffer"
+        );
         buffer.bind(&self.gl, data);
+        self.indices_in_use = true;
     }
 
     pub fn draw(&mut self, offset: i32, count: i32) {
+        debug_assert!(self.pipeline_in_use, "A pipeline should be set before draw");
         // TODO draw instanced?
         unsafe {
-            if self.use_indices {
+            if self.indices_in_use {
                 self.gl
                     .draw_elements(glow::TRIANGLES, count, glow::UNSIGNED_INT, offset * 4);
             } else {
@@ -319,22 +319,21 @@ impl Graphics {
     }
 
     pub fn bind_uniform(&mut self, location: u32, value: &UniformValue) {
+        debug_assert!(
+            self.pipeline_in_use,
+            "A pipeline should be set before bind uniforms"
+        );
         value.bind_uniform(&self, location);
     }
 }
 
-pub enum Usage {
-    Static,
-    Dynamic,
-}
-
-impl GlowValue for Usage {
+impl GlowValue for DrawUsage {
     type VALUE = u32;
 
     fn glow_value(&self) -> u32 {
         match self {
-            Usage::Static => glow::STATIC_DRAW,
-            Usage::Dynamic => glow::DYNAMIC_DRAW,
+            DrawUsage::Static => glow::STATIC_DRAW,
+            DrawUsage::Dynamic => glow::DYNAMIC_DRAW,
         }
     }
 }
@@ -363,11 +362,11 @@ fn vfi_to_u8(v: &[u32]) -> &[u8] {
 
 pub struct IndexBuffer {
     buffer: BufferKey,
-    usage: Usage,
+    usage: DrawUsage,
 }
 
 impl IndexBuffer {
-    fn new(graphics: &Graphics, usage: Usage) -> Result<Self, String> {
+    fn new(graphics: &Graphics, usage: DrawUsage) -> Result<Self, String> {
         unsafe {
             let gl = &graphics.gl;
             let buffer = gl.create_buffer()?;
@@ -390,14 +389,14 @@ impl IndexBuffer {
 
 pub struct VertexBuffer {
     buffer: BufferKey,
-    usage: Usage,
+    usage: DrawUsage,
 }
 
 impl VertexBuffer {
     pub fn new(
         graphics: &Graphics,
         attributes: &[VertexAttr],
-        usage: Usage,
+        usage: DrawUsage,
     ) -> Result<Self, String> {
         unsafe {
             let gl = &graphics.gl;
@@ -608,7 +607,7 @@ impl Triangle {
 
         let pipeline = Pipeline::new(
             gfx,
-            shader,
+            &shader,
             PipelineOptions {
                 ..Default::default()
             },
@@ -621,11 +620,11 @@ impl Triangle {
                 VertexAttr::new(0, VertexFormat::Float3),
                 VertexAttr::new(1, VertexFormat::Float4),
             ],
-            Usage::Dynamic,
+            DrawUsage::Dynamic,
         )
         .unwrap();
 
-        let index_buffer = IndexBuffer::new(gfx, Usage::Dynamic).unwrap();
+        let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic).unwrap();
 
         #[rustfmt::skip]
         let vertices = [
@@ -647,7 +646,7 @@ impl Triangle {
     }
 
     fn draw(&mut self, gfx: &mut Graphics) {
-        gfx.use_pipeline(&self.pipeline);
+        gfx.set_pipeline(&self.pipeline);
         gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
         gfx.bind_index_buffer(&self.index_buffer, &[0, 1, 2]);
         gfx.bind_uniform(self.mvp_loc, &self.mvp);
@@ -680,11 +679,11 @@ impl Cube {
                 VertexAttr::new(0, VertexFormat::Float3),
                 VertexAttr::new(1, VertexFormat::Float4),
             ],
-            Usage::Dynamic,
+            DrawUsage::Dynamic,
         )
         .unwrap();
 
-        let index_buffer = IndexBuffer::new(gfx, Usage::Dynamic).unwrap();
+        let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic).unwrap();
 
         #[rustfmt::skip]
         let vertices= [
@@ -794,7 +793,7 @@ impl TexturedCube {
 
         let pipeline = Pipeline::new(
             &gfx,
-            shader,
+            &shader,
             PipelineOptions {
                 color_blend: Some(BlendMode::ERASE),
                 cull_mode: CullMode::Back,
@@ -807,14 +806,14 @@ impl TexturedCube {
         let vertex_buffer = VertexBuffer::new(
             gfx,
             &[VertexAttr::new(0, VertexFormat::Float3)],
-            Usage::Dynamic,
+            DrawUsage::Dynamic,
         )
         .unwrap();
 
         let uvs_buffer = VertexBuffer::new(
             gfx,
             &[VertexAttr::new(1, VertexFormat::Float2)],
-            Usage::Dynamic,
+            DrawUsage::Dynamic,
         )
         .unwrap();
 
@@ -946,7 +945,7 @@ impl TexturedCube {
         let model = rxm * rym;
         let mvp: Mat4 = self.mvp * model;
 
-        gfx.use_pipeline(&self.pipeline);
+        gfx.set_pipeline(&self.pipeline);
         gfx.bind_uniform(self.mvp_loc, &mvp);
         gfx.bind_texture(self.tex_loc, self.tex);
         gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
@@ -964,7 +963,7 @@ pub struct Pipeline {
 }
 
 impl Pipeline {
-    pub fn new(graphics: &Graphics, shader: Shader, opts: PipelineOptions) -> Self {
+    pub fn new(graphics: &Graphics, shader: &Shader, opts: PipelineOptions) -> Self {
         let gl = graphics.gl.clone();
         let vao = unsafe {
             let vao = gl.create_vertex_array().unwrap();
