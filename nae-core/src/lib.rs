@@ -1,10 +1,18 @@
-pub mod gfx;
+mod gfx;
+mod resources;
+mod geometry;
+mod pipeline;
+mod color;
+
 pub mod log;
 pub mod math;
-pub mod resources;
 pub mod window;
 
 pub use resources::*;
+pub use gfx::*;
+pub use color::*;
+pub use geometry::*;
+pub use pipeline::*;
 
 pub use rand;
 pub use rand_pcg;

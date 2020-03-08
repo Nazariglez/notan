@@ -1,4 +1,4 @@
-use crate::gfx::Color;
+use crate::Color;
 
 /// BLending factor computed
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
