@@ -228,24 +228,24 @@ pub enum GraphicsAPI {
 pub trait BasePipeline {
     type Graphics: BaseGfx;
 
-    fn bind(&mut self, gfx: &mut Self::Graphics);
+    fn bind(&self, gfx: &mut Self::Graphics);
     fn options(&mut self) -> &mut PipelineOptions;
     fn uniform_location(&self, id: &str) -> <Self::Graphics as BaseGfx>::Location;
 }
 
-pub trait UniformValue {
-    type Graphics: BaseGfx;
-    fn bind_uniform(&self, gfx: Self::Graphics, location: <Self::Graphics as BaseGfx>::Location);
-}
+// pub trait UniformValue {
+//     type Graphics: BaseGfx;
+//     fn bind_uniform(&self, gfx: &mut Self::Graphics, location: <Self::Graphics as BaseGfx>::Location);
+// }
 
 pub trait BaseVertexBuffer {
     type Graphics: BaseGfx;
-    fn bind(&mut self, gfx: &mut Self::Graphics);
+    fn bind(&self, gfx: &mut Self::Graphics, data: &[f32]);
 }
 
 pub trait BaseIndexBuffer {
     type Graphics: BaseGfx;
-    fn bind(&mut self, gfx: &mut Self::Graphics);
+    fn bind(&self, gfx: &mut Self::Graphics, data: &[u32]);
 }
 
 pub trait BaseGfx
@@ -263,7 +263,7 @@ pub trait BaseGfx
     fn end(&mut self);
     fn set_pipeline(&mut self, pipeline: &BasePipeline<Graphics = Self>);
     fn bind_vertex_buffer(&mut self, buffer: &BaseVertexBuffer<Graphics = Self>, data: &[f32]);
-    fn bind_index_buffer(&mut self, buffer: &BaseIndexBuffer<Graphics = Self>, data: &[u8]);
+    fn bind_index_buffer(&mut self, buffer: &BaseIndexBuffer<Graphics = Self>, data: &[u32]);
     fn draw(&mut self, offset: i32, count: i32);
-    fn bind_uniform(&mut self, location: Self::Location, value: &UniformValue<Graphics = Self>);
+    // fn bind_uniform(&mut self, location: Self::Location, value: &UniformValue<Graphics = Self>);
 }

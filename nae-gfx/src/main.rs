@@ -3,8 +3,9 @@ use glow::{Context, HasContext, DEPTH_TEST};
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::ControlFlow;
 use nae_core::gfx::{
-    BlendFactor, BlendMode, BlendOperation, ClearOptions, Color, CullMode, DepthStencil, DrawUsage,
-    GraphicsAPI, PipelineOptions,
+    BaseGfx, BaseIndexBuffer, BasePipeline, BaseVertexBuffer, BlendFactor, BlendMode,
+    BlendOperation, ClearOptions, Color, CullMode, DepthStencil, DrawUsage, GraphicsAPI,
+    PipelineOptions,
 };
 use std::cell::Ref;
 use std::rc::Rc;
@@ -14,6 +15,9 @@ use ultraviolet::vec::Vec3;
 
 type VertexArray = <glow::Context as HasContext>::VertexArray;
 type Program = <glow::Context as HasContext>::Program;
+
+// TODO delete on drop opengl allocations
+// Shader should got app or gfx as first parameter?
 
 #[derive(Debug)]
 struct TextureData {
@@ -139,18 +143,31 @@ impl Graphics {
         }
     }
 
-    pub fn api(&self) -> GraphicsAPI {
+    fn bind_uniform(&mut self, location: u32, value: &UniformValue<Graphics = Self>) {
+        debug_assert!(
+            self.pipeline_in_use,
+            "A pipeline should be set before bind uniforms"
+        );
+        value.bind_uniform(self, location);
+    }
+}
+
+impl BaseGfx for Graphics {
+    type Location = u32;
+    type Texture = u32;
+
+    fn api(&self) -> GraphicsAPI {
         self.gfx_api.clone()
     }
 
-    pub fn viewport(&mut self, x: f32, y: f32, width: f32, height: f32) {
+    fn viewport(&mut self, x: f32, y: f32, width: f32, height: f32) {
         unsafe {
             self.gl
                 .viewport(x as i32, y as i32, width as i32, height as i32);
         }
     }
 
-    pub fn begin(&mut self, opts: &ClearOptions) {
+    fn begin(&mut self, opts: &ClearOptions) {
         debug_assert!(!self.running, "Graphics pass already running.");
 
         self.running = true;
@@ -182,11 +199,11 @@ impl Graphics {
         }
     }
 
-    pub fn bind_texture(&mut self, location: u32, tex: u32) {
+    fn bind_texture(&mut self, location: u32, tex: u32) {
         self.bind_texture_slot(0, location, tex);
     }
 
-    pub fn bind_texture_slot(&mut self, slot: u32, location: u32, tex: u32) {
+    fn bind_texture_slot(&mut self, slot: u32, location: u32, tex: u32) {
         unsafe {
             let gl_slot = match slot {
                 0 => glow::TEXTURE0,
@@ -206,7 +223,7 @@ impl Graphics {
         }
     }
 
-    pub fn end(&mut self) {
+    fn end(&mut self) {
         debug_assert!(self.running, "Begin should be called first.");
 
         unsafe {
@@ -219,84 +236,30 @@ impl Graphics {
         self.running = false;
     }
 
-    pub fn set_pipeline(&mut self, pipeline: &Pipeline) {
-        unsafe {
-            self.gl.stencil_mask(0x00); //TODO
-
-            if let Some(d) = pipeline.options.depth_stencil.glow_value() {
-                self.gl.enable(glow::DEPTH_TEST);
-                self.gl.depth_func(d);
-            } else {
-                self.gl.disable(glow::DEPTH_TEST);
-            }
-
-            if let Some(mode) = pipeline.options.cull_mode.glow_value() {
-                self.gl.enable(glow::CULL_FACE);
-                self.gl.cull_face(mode);
-            } else {
-                self.gl.disable(glow::CULL_FACE);
-            }
-
-            match (pipeline.options.color_blend, pipeline.options.alpha_blend) {
-                (Some(cbm), None) => {
-                    self.gl.enable(glow::BLEND);
-                    self.gl
-                        .blend_func(cbm.src.glow_value(), cbm.dst.glow_value());
-                    self.gl.blend_equation(cbm.op.glow_value());
-                }
-                (Some(cbm), Some(abm)) => {
-                    self.gl.enable(glow::BLEND);
-                    self.gl.blend_func_separate(
-                        cbm.src.glow_value(),
-                        cbm.dst.glow_value(),
-                        abm.src.glow_value(),
-                        abm.dst.glow_value(),
-                    );
-                    self.gl
-                        .blend_equation_separate(cbm.op.glow_value(), abm.op.glow_value());
-                }
-                (None, Some(abm)) => {
-                    let cbm = BlendMode::NORMAL;
-                    self.gl.enable(glow::BLEND);
-                    self.gl.blend_func_separate(
-                        cbm.src.glow_value(),
-                        cbm.dst.glow_value(),
-                        abm.src.glow_value(),
-                        abm.dst.glow_value(),
-                    );
-                    self.gl
-                        .blend_equation_separate(cbm.op.glow_value(), abm.op.glow_value());
-                }
-                (None, None) => {
-                    self.gl.disable(glow::BLEND);
-                }
-            }
-
-            self.gl.bind_vertex_array(Some(pipeline.vao));
-            self.gl.use_program(Some(pipeline.shader));
-            self.pipeline_in_use = true;
-            self.indices_in_use = false;
-        }
+    fn set_pipeline(&mut self, pipeline: &BasePipeline<Graphics = Self>) {
+        pipeline.bind(self);
+        self.pipeline_in_use = true;
+        self.indices_in_use = false;
     }
 
-    pub fn bind_vertex_buffer(&mut self, buffer: &VertexBuffer, data: &[f32]) {
+    fn bind_vertex_buffer(&mut self, buffer: &BaseVertexBuffer<Graphics = Self>, data: &[f32]) {
         debug_assert!(
             self.pipeline_in_use,
             "A pipeline should be set before bind the vertex buffer"
         );
-        buffer.bind(&self.gl, data);
+        buffer.bind(self, data);
     }
 
-    pub fn bind_index_buffer(&mut self, buffer: &IndexBuffer, data: &[u32]) {
+    fn bind_index_buffer(&mut self, buffer: &BaseIndexBuffer<Graphics = Self>, data: &[u32]) {
         debug_assert!(
             self.pipeline_in_use,
             "A pipeline should be set before bind the vertex buffer"
         );
-        buffer.bind(&self.gl, data);
+        buffer.bind(self, data);
         self.indices_in_use = true;
     }
 
-    pub fn draw(&mut self, offset: i32, count: i32) {
+    fn draw(&mut self, offset: i32, count: i32) {
         debug_assert!(self.pipeline_in_use, "A pipeline should be set before draw");
         // TODO draw instanced?
         unsafe {
@@ -307,14 +270,6 @@ impl Graphics {
                 self.gl.draw_arrays(glow::TRIANGLES, offset, count);
             }
         }
-    }
-
-    pub fn bind_uniform(&mut self, location: u32, value: &UniformValue) {
-        debug_assert!(
-            self.pipeline_in_use,
-            "A pipeline should be set before bind uniforms"
-        );
-        value.bind_uniform(&self, location);
     }
 }
 
@@ -365,8 +320,14 @@ impl IndexBuffer {
             Ok(Self { buffer, usage })
         }
     }
+}
 
-    fn bind(&self, gl: &GlContext, indices: &[u32]) {
+impl BaseIndexBuffer for IndexBuffer {
+    type Graphics = Graphics;
+
+    fn bind(&self, gfx: &mut Graphics, indices: &[u32]) {
+        let gl = &gfx.gl;
+
         unsafe {
             gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.buffer));
             gl.buffer_data_u8_slice(
@@ -414,8 +375,13 @@ impl VertexBuffer {
             Ok(VertexBuffer { buffer, usage })
         }
     }
+}
 
-    fn bind(&self, gl: &GlContext, data: &[f32]) {
+impl BaseVertexBuffer for VertexBuffer {
+    type Graphics = Graphics;
+
+    fn bind(&self, gfx: &mut Graphics, data: &[f32]) {
+        let gl = &gfx.gl;
         unsafe {
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.buffer));
             gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vf_to_u8(data), self.usage.glow_value());
@@ -449,10 +415,13 @@ impl AttrLocationId for String {
 }
 
 pub trait UniformValue {
-    fn bind_uniform(&self, graphics: &Graphics, location: u32);
+    type Graphics: BaseGfx;
+    fn bind_uniform(&self, gfx: &Self::Graphics, location: <Self::Graphics as BaseGfx>::Location);
 }
 
 impl UniformValue for i32 {
+    type Graphics = Graphics;
+
     fn bind_uniform(&self, graphics: &Graphics, location: u32) {
         unsafe {
             graphics.gl.uniform_1_i32(Some(location), *self);
@@ -461,6 +430,8 @@ impl UniformValue for i32 {
 }
 
 impl UniformValue for f32 {
+    type Graphics = Graphics;
+
     fn bind_uniform(&self, graphics: &Graphics, location: u32) {
         unsafe {
             graphics.gl.uniform_1_f32(Some(location), *self);
@@ -469,6 +440,8 @@ impl UniformValue for f32 {
 }
 
 impl UniformValue for [f32; 2] {
+    type Graphics = Graphics;
+
     fn bind_uniform(&self, graphics: &Graphics, location: u32) {
         unsafe {
             graphics.gl.uniform_2_f32(Some(location), self[0], self[1]);
@@ -477,6 +450,8 @@ impl UniformValue for [f32; 2] {
 }
 
 impl UniformValue for [f32; 3] {
+    type Graphics = Graphics;
+
     fn bind_uniform(&self, graphics: &Graphics, location: u32) {
         unsafe {
             graphics
@@ -487,6 +462,8 @@ impl UniformValue for [f32; 3] {
 }
 
 impl UniformValue for [f32; 4] {
+    type Graphics = Graphics;
+
     fn bind_uniform(&self, graphics: &Graphics, location: u32) {
         unsafe {
             graphics
@@ -497,6 +474,8 @@ impl UniformValue for [f32; 4] {
 }
 
 impl UniformValue for ultraviolet::mat::Mat4 {
+    type Graphics = Graphics;
+
     fn bind_uniform(&self, graphics: &Graphics, location: u32) {
         let matrix = self.as_slice().as_ptr() as *const [f32; 16];
         unsafe {
@@ -968,8 +947,74 @@ impl Pipeline {
             shader: shader.program,
         }
     }
+}
 
-    pub fn uniform_location(&self, id: &str) -> u32 {
+impl BasePipeline for Pipeline {
+    type Graphics = Graphics;
+
+    fn bind(&self, gfx: &mut Self::Graphics) {
+        unsafe {
+            gfx.gl.stencil_mask(0x00); //TODO
+
+            if let Some(d) = self.options.depth_stencil.glow_value() {
+                gfx.gl.enable(glow::DEPTH_TEST);
+                gfx.gl.depth_func(d);
+            } else {
+                gfx.gl.disable(glow::DEPTH_TEST);
+            }
+
+            if let Some(mode) = self.options.cull_mode.glow_value() {
+                gfx.gl.enable(glow::CULL_FACE);
+                gfx.gl.cull_face(mode);
+            } else {
+                gfx.gl.disable(glow::CULL_FACE);
+            }
+
+            match (self.options.color_blend, self.options.alpha_blend) {
+                (Some(cbm), None) => {
+                    gfx.gl.enable(glow::BLEND);
+                    gfx.gl
+                        .blend_func(cbm.src.glow_value(), cbm.dst.glow_value());
+                    gfx.gl.blend_equation(cbm.op.glow_value());
+                }
+                (Some(cbm), Some(abm)) => {
+                    gfx.gl.enable(glow::BLEND);
+                    gfx.gl.blend_func_separate(
+                        cbm.src.glow_value(),
+                        cbm.dst.glow_value(),
+                        abm.src.glow_value(),
+                        abm.dst.glow_value(),
+                    );
+                    gfx.gl
+                        .blend_equation_separate(cbm.op.glow_value(), abm.op.glow_value());
+                }
+                (None, Some(abm)) => {
+                    let cbm = BlendMode::NORMAL;
+                    gfx.gl.enable(glow::BLEND);
+                    gfx.gl.blend_func_separate(
+                        cbm.src.glow_value(),
+                        cbm.dst.glow_value(),
+                        abm.src.glow_value(),
+                        abm.dst.glow_value(),
+                    );
+                    gfx.gl
+                        .blend_equation_separate(cbm.op.glow_value(), abm.op.glow_value());
+                }
+                (None, None) => {
+                    gfx.gl.disable(glow::BLEND);
+                }
+            }
+
+            gfx.gl.bind_vertex_array(Some(self.vao));
+            gfx.gl.use_program(Some(self.shader));
+        }
+    }
+
+    fn options(&mut self) -> &mut PipelineOptions {
+        &mut self.options
+    }
+
+    fn uniform_location(&self, id: &str) -> u32 {
         unsafe { self.gl.get_uniform_location(self.shader, id).unwrap() }
     }
 }
