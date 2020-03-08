@@ -1,13 +1,19 @@
 use crate::shader::{BufferKey, Driver, GlowValue, Shader, VertexFormat};
-use glow::{Context, HasContext};
+use glow::{Context, HasContext, DEPTH_TEST};
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::ControlFlow;
-use nae_core::{BlendFactor, BlendMode, BlendOperation, Color};
+use nae_core::gfx::{
+    BlendFactor, BlendMode, BlendOperation, ClearOptions, Color, CullMode, DepthStencil,
+    PipelineOptions,
+};
 use std::cell::Ref;
 use std::rc::Rc;
 use ultraviolet::mat::Mat4;
 use ultraviolet::projection::perspective_gl as perspective;
 use ultraviolet::vec::Vec3;
+
+type VertexArray = <glow::Context as HasContext>::VertexArray;
+type Program = <glow::Context as HasContext>::Program;
 
 #[derive(Debug)]
 struct TextureData {
@@ -35,7 +41,40 @@ macro_rules! load_image {
 //http://www.opengl-tutorial.org/beginners-tutorials/tutorial-4-a-colored-cube/
 //https://github.com/bwasty/learn-opengl-rs
 
+impl GlowValue for CullMode {
+    type VALUE = Option<u32>;
+
+    fn glow_value(&self) -> Self::VALUE {
+        use CullMode::*;
+        Some(match self {
+            None => return Option::None,
+            Front => glow::FRONT,
+            Back => glow::BACK,
+        })
+    }
+}
+
+impl GlowValue for DepthStencil {
+    type VALUE = Option<u32>;
+
+    fn glow_value(&self) -> Option<u32> {
+        use DepthStencil::*;
+        Some(match self {
+            None => return Option::None,
+            Less => glow::LESS,
+            Equal => glow::EQUAL,
+            LEqual => glow::LEQUAL,
+            Greater => glow::GREATER,
+            NotEqual => glow::NOTEQUAL,
+            GEqual => glow::GEQUAL,
+            Always => glow::ALWAYS,
+        })
+    }
+}
+
 impl GlowValue for BlendFactor {
+    type VALUE = u32;
+
     fn glow_value(&self) -> u32 {
         use BlendFactor::*;
         match self {
@@ -54,6 +93,8 @@ impl GlowValue for BlendFactor {
 }
 
 impl GlowValue for BlendOperation {
+    type VALUE = u32;
+
     fn glow_value(&self) -> u32 {
         use BlendOperation::*;
         match self {
@@ -82,31 +123,86 @@ pub trait BaseGraphics {
     // etc...
 }
 
+struct BlendingOptions {
+    color_src: u32,
+    color_dst: u32,
+    color_op: u32,
+    alpha_src: u32,
+    alpha_dst: u32,
+    alpha_op: u32,
+}
+
 pub struct Graphics {
     pub(crate) gl: GlContext,
     pub(crate) driver: Driver,
     use_indices: bool,
+    width: f32,
+    height: f32,
+
+    dirty: bool,
+    vao: Option<VertexArray>,
+    shader: Option<Program>,
+    depth_stencil: Option<u32>,
+    cull_mode: Option<u32>,
+    blend: Option<BlendingOptions>,
 }
 
 impl Graphics {
-    pub fn new(gl: GlContext) -> Self {
+    pub fn new(gl: GlContext, width: f32, height: f32) -> Self {
         Self {
             gl,
+            width,
+            height,
+
             driver: Driver::OpenGl3_3,
             use_indices: false,
+
+            dirty: false,
+            depth_stencil: None,
+            shader: None,
+            cull_mode: None,
+            blend: None,
+            vao: None, //bind buffers?
         }
     }
 
-    pub fn viewport(&mut self, x: i32, y: i32, width: i32, height: i32) {
+    pub fn driver(&self) -> Driver {
+        self.driver
+    }
+
+    pub fn viewport(&mut self, x: f32, y: f32, width: f32, height: f32) {
         unsafe {
-            self.gl.viewport(x, y, width, height);
+            self.gl
+                .viewport(x as i32, y as i32, width as i32, height as i32);
         }
     }
 
-    pub fn begin(&mut self) {
+    pub fn begin(&mut self, opts: &ClearOptions) {
+        self.viewport(0.0, 0.0, self.width, self.height);
+
+        let mut mask = 0;
         unsafe {
-            // self.gl.enable(glow::CULL_FACE);
-            // self.gl.cull_face(glow::BACK);
+            if let Some(color) = &opts.color {
+                mask |= glow::COLOR_BUFFER_BIT;
+                self.gl
+                    .clear_color(color.red(), color.green(), color.blue(), color.alpha());
+            }
+
+            if let Some(depth) = opts.depth {
+                mask |= glow::DEPTH_BUFFER_BIT;
+                self.gl.enable(glow::DEPTH_TEST);
+                self.gl.depth_mask(true);
+                self.gl.clear_depth_f32(depth);
+            }
+
+            if let Some(stencil) = opts.stencil {
+                mask |= glow::STENCIL_BUFFER_BIT;
+                self.gl.enable(glow::STENCIL_TEST);
+                self.gl.stencil_mask(0xff);
+                self.gl.clear_stencil(stencil);
+            }
+
+            self.gl.clear(mask);
         }
     }
 
@@ -145,40 +241,59 @@ impl Graphics {
 
     pub fn use_pipeline(&mut self, pipeline: &Pipeline) {
         unsafe {
-            if let Some(d) = pipeline.data.depth {
+            self.gl.stencil_mask(0x00); //TODO
+
+            if let Some(d) = pipeline.options.depth_stencil.glow_value() {
                 self.gl.enable(glow::DEPTH_TEST);
                 self.gl.depth_func(d);
             } else {
                 self.gl.disable(glow::DEPTH_TEST);
             }
 
-            if let Some(mode) = pipeline.data.cull {
+            if let Some(mode) = pipeline.options.cull_mode.glow_value() {
                 self.gl.enable(glow::CULL_FACE);
                 self.gl.cull_face(mode);
             } else {
                 self.gl.disable(glow::CULL_FACE);
             }
 
-            if let Some(bm) = pipeline.data.blend {
-                self.gl.enable(glow::BLEND);
-                self.gl.blend_func(bm.src.glow_value(), bm.dst.glow_value());
-                self.gl.blend_equation(bm.op.glow_value());
-            } else {
-                self.gl.disable(glow::BLEND);
+            match (pipeline.options.color_blend, pipeline.options.alpha_blend) {
+                (Some(cbm), None) => {
+                    self.gl.enable(glow::BLEND);
+                    self.gl
+                        .blend_func(cbm.src.glow_value(), cbm.dst.glow_value());
+                    self.gl.blend_equation(cbm.op.glow_value());
+                }
+                (Some(cbm), Some(abm)) => {
+                    self.gl.enable(glow::BLEND);
+                    self.gl.blend_func_separate(
+                        cbm.src.glow_value(),
+                        cbm.dst.glow_value(),
+                        abm.src.glow_value(),
+                        abm.dst.glow_value(),
+                    );
+                    self.gl
+                        .blend_equation_separate(cbm.op.glow_value(), abm.op.glow_value());
+                }
+                (None, Some(abm)) => {
+                    let cbm = BlendMode::NORMAL;
+                    self.gl.enable(glow::BLEND);
+                    self.gl.blend_func_separate(
+                        cbm.src.glow_value(),
+                        cbm.dst.glow_value(),
+                        abm.src.glow_value(),
+                        abm.dst.glow_value(),
+                    );
+                    self.gl
+                        .blend_equation_separate(cbm.op.glow_value(), abm.op.glow_value());
+                }
+                (None, None) => {
+                    self.gl.disable(glow::BLEND);
+                }
             }
 
             self.gl.bind_vertex_array(Some(pipeline.vao));
-            self.gl.use_program(Some(pipeline.shader.program));
-        }
-    }
-
-    pub fn clear(&mut self, color: Option<[f32; 4]>) {
-        unsafe {
-            if let Some([r, g, b, a]) = color {
-                self.gl.clear_color(r, g, b, a);
-            }
-            self.gl
-                .clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
+            self.gl.use_program(Some(pipeline.shader));
         }
     }
 
@@ -214,6 +329,8 @@ pub enum Usage {
 }
 
 impl GlowValue for Usage {
+    type VALUE = u32;
+
     fn glow_value(&self) -> u32 {
         match self {
             Usage::Static => glow::STATIC_DRAW,
@@ -432,10 +549,12 @@ fn main() {
 
     let gl = Rc::new(gl);
 
-    let mut gfx = Graphics::new(gl);
+    let mut gfx = Graphics::new(gl, 1024.0, 768.0);
     // let mut cube = Cube::new(&mut gfx);
     let mut triangle = Triangle::new(&mut gfx);
     let mut textured_cube = TexturedCube::new(&mut gfx);
+
+    let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
 
     unsafe {
         event_loop.run(move |event, _, control_flow| {
@@ -448,9 +567,7 @@ fn main() {
                     windowed_context.window().request_redraw();
                 }
                 Event::RedrawRequested(_) => {
-                    gfx.begin();
-                    gfx.viewport(0, 0, 1024, 768);
-                    gfx.clear(Some([0.1, 0.2, 0.4, 1.0]));
+                    gfx.begin(&clear_options);
                     textured_cube.draw(&mut gfx);
                     // cube.draw(&mut gfx);
                     triangle.draw(&mut gfx);
@@ -492,7 +609,7 @@ impl Triangle {
         let pipeline = Pipeline::new(
             gfx,
             shader,
-            PipelineData {
+            PipelineOptions {
                 ..Default::default()
             },
         );
@@ -678,9 +795,9 @@ impl TexturedCube {
         let pipeline = Pipeline::new(
             &gfx,
             shader,
-            PipelineData {
-                blend: Some(BlendMode::ERASE),
-                cull: Some(glow::BACK),
+            PipelineOptions {
+                color_blend: Some(BlendMode::ERASE),
+                cull_mode: CullMode::Back,
                 ..Default::default()
             },
         );
@@ -838,32 +955,16 @@ impl TexturedCube {
     }
 }
 
-pub struct PipelineData {
-    blend: Option<BlendMode>,
-    cull: Option<u32>,
-    depth: Option<u32>, //glow::LESS -> gl.enable(DEPTH_TEST)
-                        //blend modes, etc...
-}
-
-impl Default for PipelineData {
-    fn default() -> Self {
-        Self {
-            depth: Some(glow::LESS),
-            cull: None, //Some(glow::BACK) by default?
-            blend: Some(BlendMode::NONE),
-        }
-    }
-}
-
+#[derive(Clone)]
 pub struct Pipeline {
     gl: GlContext,
     vao: <glow::Context as HasContext>::VertexArray,
-    shader: Shader,
-    data: PipelineData,
+    shader: <glow::Context as HasContext>::Program,
+    pub options: PipelineOptions,
 }
 
 impl Pipeline {
-    pub fn new(graphics: &Graphics, shader: Shader, data: PipelineData) -> Self {
+    pub fn new(graphics: &Graphics, shader: Shader, opts: PipelineOptions) -> Self {
         let gl = graphics.gl.clone();
         let vao = unsafe {
             let vao = gl.create_vertex_array().unwrap();
@@ -873,17 +974,13 @@ impl Pipeline {
         Self {
             gl,
             vao,
-            shader,
-            data,
+            options: opts,
+            shader: shader.program,
         }
     }
 
     pub fn uniform_location(&self, id: &str) -> u32 {
-        unsafe {
-            self.gl
-                .get_uniform_location(self.shader.program, id)
-                .unwrap()
-        }
+        unsafe { self.gl.get_uniform_location(self.shader, id).unwrap() }
     }
 }
 

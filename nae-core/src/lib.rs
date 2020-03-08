@@ -1,10 +1,9 @@
-pub mod graphics;
+pub mod gfx;
 pub mod log;
 pub mod math;
 pub mod resources;
 pub mod window;
 
-pub use graphics::*;
 pub use resources::*;
 
 pub use rand;
@@ -47,7 +46,7 @@ pub trait BaseApp {
 
 pub trait BaseSystem {
     type Kind: BaseSystem;
-    type Context2d: BaseContext2d;
+    type Context2d: gfx::BaseContext2d;
 
     fn new(opts: BuilderOpts) -> Result<Self::Kind, String>;
     fn ctx2(&mut self) -> &mut Self::Context2d;
