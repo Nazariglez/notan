@@ -10,7 +10,7 @@ fn main() {
 }
 
 fn init(app: &mut App) -> (String, Color) {
-    (String::from(""), rgba(0.1, 0.2, 0.3, 1.0))
+    (String::from(""), Color::new(0.1, 0.2, 0.3, 1.0))
 }
 
 fn event(app: &mut App, state: &mut (String, Color), evt: Event) {
@@ -26,7 +26,7 @@ fn event(app: &mut App, state: &mut (String, Color), evt: Event) {
         }
         Event::MouseEnter { .. } => {
             state.0 = "Entered...".to_string();
-            state.1 = rgba(0.1, 0.2, 0.3, 1.0);
+            state.1 = Color::new(0.1, 0.2, 0.3, 1.0);
         }
         Event::MouseLeft { .. } => {
             state.0 = "Outside...".to_string();

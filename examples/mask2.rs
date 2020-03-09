@@ -15,7 +15,7 @@ fn init(app: &mut App) -> State {
 fn draw(app: &mut App, state: &mut State) {
     let draw = app.draw();
     draw.begin();
-    draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
+    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
 
     //Mask
     draw.begin_mask();

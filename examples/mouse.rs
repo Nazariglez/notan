@@ -10,7 +10,7 @@ fn draw(app: &mut App, _: &mut ()) {
 
     let draw = app.draw();
     draw.begin();
-    draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
+    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
 
     //Draw circle on the mouse position
     draw.set_color(Color::RED);
