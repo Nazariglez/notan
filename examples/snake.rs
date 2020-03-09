@@ -4,9 +4,9 @@ use nae::prelude::*;
 const TILE_SIZE: usize = 40;
 const COLS: usize = 800 / TILE_SIZE;
 const ROWS: usize = 600 / TILE_SIZE;
-const BACKGROUND_COLOR: Color = Color::Rgba(0.698, 0.792, 0.376, 1.0);
-const SNAKE_COLOR: Color = Color::Rgba(0.211, 0.298, 0.074, 1.0);
-const LINE_COLOR: Color = Color::Rgba(1.0, 1.0, 1.0, 0.1);
+const BACKGROUND_COLOR: Color = Color::Color::new(0.698, 0.792, 0.376, 1.0);
+const SNAKE_COLOR: Color = Color::Color::new(0.211, 0.298, 0.074, 1.0);
+const LINE_COLOR: Color = Color::Color::new(1.0, 1.0, 1.0, 0.1);
 const MOVEMENT_MS: f32 = 0.2;
 const MIN_MOVEMENT_MS: f32 = 0.02;
 

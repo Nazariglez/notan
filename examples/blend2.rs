@@ -25,7 +25,7 @@ fn draw(app: &mut App, state: &mut State) {
 
     draw.begin();
     //    draw.clear(Color::RED);
-    draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
+    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
 
     draw.set_color(Color::YELLOW);
     draw.circle(

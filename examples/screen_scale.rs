@@ -50,13 +50,13 @@ fn draw(app: &mut App, scaler: &mut Scaler) {
 
     let draw = app.draw();
     draw.begin();
-    draw.clear(rgba(0.1, 0.2, 0.3, 1.0));
+    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
 
     // First thing is push the matrix calculated by the scaler
     draw.push_matrix(scaler.matrix());
 
     // Draw a background that covers all the working size
-    draw.set_color(rgba(0.5, 0.4, 0.3, 1.0));
+    draw.set_color(Color::new(0.5, 0.4, 0.3, 1.0));
     draw.rect(0.0, 0.0, width, height);
 
     // Draw some random shapes to see how the container change with the mode

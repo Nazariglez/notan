@@ -60,7 +60,7 @@ fn draw(app: &mut App, state: &mut State) {
 
     let draw = app.draw();
     draw.begin();
-    draw.clear(rgba(0.176, 0.176, 0.176, 1.0));
+    draw.clear(Color::new(0.176, 0.176, 0.176, 1.0));
 
     // draw grid
     for i in 0..COLS * ROWS {
