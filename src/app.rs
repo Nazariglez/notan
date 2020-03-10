@@ -3,7 +3,9 @@ use crate::res::{ResourceLoaderManager, ResourceParser};
 use backend::*;
 use nae_core::*;
 use nae_core::{BaseSystem, BuilderOpts, Event};
+use std::cell::RefCell;
 use std::collections::VecDeque;
+use std::rc::Rc;
 
 // TODO app.gpu() -> 3d API app.draw() -> 2d API with gpu() inside and accesible via draw.gpu() this should use draw.present_to(app|surface)
 
@@ -43,6 +45,10 @@ impl BaseApp for App {
 }
 
 impl App {
+    pub fn gfx(&mut self) -> Rc<RefCell<nae_gfx::Graphics>> {
+        self.sys.gfx()
+    }
+
     pub fn draw(&mut self) -> &mut Context2d {
         self.sys.ctx2()
     }

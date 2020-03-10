@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 nae-core = { path = "../nae-core" }
 nae-glow = { path = "../nae-glow" }
+nae-gfx = { path = "../nae-gfx" }
 futures = "0.1.29"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

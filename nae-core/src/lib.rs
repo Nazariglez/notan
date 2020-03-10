@@ -16,7 +16,9 @@ pub use resources::*;
 
 pub use rand;
 pub use rand_pcg;
+use std::cell::RefCell;
 use std::collections::VecDeque;
+use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub struct BuilderOpts {
@@ -55,8 +57,10 @@ pub trait BaseApp {
 pub trait BaseSystem {
     type Kind: BaseSystem;
     type Context2d: gfx::BaseContext2d;
+    type Graphics: BaseGfx;
 
     fn new(opts: BuilderOpts) -> Result<Self::Kind, String>;
+    fn gfx(&mut self) -> Rc<RefCell<Self::Graphics>>;
     fn ctx2(&mut self) -> &mut Self::Context2d;
     fn events(&mut self) -> &mut EventIterator;
     fn width(&self) -> f32;

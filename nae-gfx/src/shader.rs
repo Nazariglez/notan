@@ -3,10 +3,10 @@
 use crate::{GlContext, Graphics};
 use glow::HasContext;
 use hashbrown::HashMap;
-use nae_core::gfx::BaseShader;
-use nae_core::gfx::{BaseContext2d, GraphicsAPI};
 use nae_core::math::Mat3;
+use nae_core::BaseShader;
 use nae_core::{BaseApp, BaseSystem};
+use nae_core::{BaseContext2d, GraphicsAPI};
 use spirv_cross::{glsl, spirv, ErrorCode};
 use std::cell::RefCell;
 use std::io::Cursor;

@@ -2,7 +2,7 @@ use crate::shader::{BufferKey, GlowValue, Shader, VertexFormat};
 use glow::{Context, HasContext, DEPTH_TEST};
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::ControlFlow;
-use nae_core::gfx::{
+use nae_core::{
     BaseGfx, BaseIndexBuffer, BasePipeline, BaseVertexBuffer, BlendFactor, BlendMode,
     BlendOperation, ClearOptions, Color, CullMode, DepthStencil, DrawUsage, GraphicsAPI,
     PipelineOptions,
@@ -116,6 +116,18 @@ fn mat4_to_slice(m: &ultraviolet::mat::Mat4) -> *const [f32; 16] {
     m.as_slice().as_ptr() as *const [f32; 16]
 }
 
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
+use glutin::{PossiblyCurrent, WindowedContext};
+
+#[cfg(target_arch = "wasm32")]
+type Device = web_sys::HtmlCanvasElement;
+
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
+type Device = WindowedContext<PossiblyCurrent>;
+
+#[cfg(all(not(target_arch = "wasm32"), feature = "sdl"))]
+type Device = sdl2::video::Window;
+
 pub(crate) type GlContext = Rc<Context>;
 
 pub struct Graphics {
@@ -126,21 +138,77 @@ pub struct Graphics {
     width: f32,
     height: f32,
     running: bool,
+
+    #[cfg(feature = "sdl")]
+    _sdl_gl: Option<sdl2::video::GLContext>,
+}
+
+struct DeviceInfo {
+    width: i32,
+    height: i32,
+    ctx: glow::Context,
+
+    #[cfg(feature = "sdl")]
+    _sdl_gl: Option<sdl2::video::GLContext>,
+}
+
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
+fn get_device_info(device: &WindowedContext<PossiblyCurrent>) -> DeviceInfo {
+    let win: &glutin::window::Window = device.window();
+    let size = win.inner_size();
+    let width = size.width as _;
+    let height = size.height as _;
+    let ctx = glow::Context::from_loader_function(|s| device.get_proc_address(s) as *const _);
+    DeviceInfo { width, height, ctx }
+}
+
+#[cfg(all(not(target_arch = "wasm32"), feature = "sdl"))]
+fn get_device_info(device: &sdl2::video::Window) -> DeviceInfo {
+    let size = device.size();
+    let width = size.0 as _;
+    let height = size.1 as _;
+
+    let gl_attr = device.subsystem().gl_attr();
+    gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
+
+    if cfg!(target_os = "ios") || cfg!(target_os = "android") {
+        gl_attr.set_context_version(2, 0);
+    } else {
+        gl_attr.set_context_version(3, 3);
+    }
+
+    gl_attr.set_multisample_buffers(1);
+    gl_attr.set_multisample_samples(8);
+
+    let sdl_gl = device.gl_create_context()?;
+    let ctx = glow::Context::from_loader_function(|s| {
+        device.subsystem().gl_get_proc_address(s) as *const _
+    });
+
+    DeviceInfo {
+        width,
+        height,
+        ctx,
+        _sdl_gl: Some(sdl_gl),
+    }
 }
 
 impl Graphics {
-    pub fn new(gl: GlContext, width: f32, height: f32) -> Self {
-        Self {
+    pub fn new(device: &Device) -> Result<Self, String> {
+        let info = get_device_info(device);
+        let gl = Rc::new(info.ctx);
+        Ok(Self {
             gl,
-            width,
-            height,
-
+            width: info.width as _,
+            height: info.height as _,
             running: false,
-
             gfx_api: GraphicsAPI::OpenGl3_3,
             pipeline_in_use: false,
             indices_in_use: false,
-        }
+
+            #[cfg(feature = "sdl")]
+            _sdl_gl: Some(info._sdl_gl),
+        })
     }
 
     fn bind_uniform(&mut self, location: u32, value: &UniformValue<Graphics = Self>) {
@@ -492,70 +560,70 @@ pub struct RenderTarget {}
 
 // TODO uniform value for matrix values
 
-fn main() {
-    let (gl, event_loop, windowed_context, shader_version) = unsafe {
-        let el = glutin::event_loop::EventLoop::new();
-        let wb = glutin::window::WindowBuilder::new()
-            .with_title("Hello triangle!")
-            .with_inner_size(glutin::dpi::LogicalSize::new(1024.0, 768.0));
-        let windowed_context = glutin::ContextBuilder::new()
-            .with_vsync(true)
-            .with_gl(glutin::GlRequest::GlThenGles {
-                opengl_version: (3, 3),
-                opengles_version: (2, 0),
-            })
-            .with_depth_buffer(24)
-            .with_stencil_buffer(8)
-            .with_gl_profile(glutin::GlProfile::Core)
-            .build_windowed(wb, &el)
-            .unwrap();
-        let windowed_context = windowed_context.make_current().unwrap();
-        let context = glow::Context::from_loader_function(|s| {
-            windowed_context.get_proc_address(s) as *const _
-        });
-        (context, el, windowed_context, "#version 410")
-    };
-
-    let gl = Rc::new(gl);
-
-    let mut gfx = Graphics::new(gl, 1024.0, 768.0);
-    // let mut cube = Cube::new(&mut gfx);
-    let mut triangle = Triangle::new(&mut gfx);
-    let mut textured_cube = TexturedCube::new(&mut gfx);
-
-    let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
-
-    unsafe {
-        event_loop.run(move |event, _, control_flow| {
-            *control_flow = ControlFlow::Poll;
-            match event {
-                Event::LoopDestroyed => {
-                    return;
-                }
-                Event::MainEventsCleared => {
-                    windowed_context.window().request_redraw();
-                }
-                Event::RedrawRequested(_) => {
-                    gfx.begin(&clear_options);
-                    textured_cube.draw(&mut gfx);
-                    // cube.draw(&mut gfx);
-                    triangle.draw(&mut gfx);
-                    gfx.end();
-
-                    windowed_context.swap_buffers().unwrap();
-                }
-                Event::WindowEvent { ref event, .. } => match event {
-                    WindowEvent::Resized(physical_size) => {
-                        windowed_context.resize(*physical_size);
-                    }
-                    WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                    _ => (),
-                },
-                _ => (),
-            }
-        });
-    }
-}
+// fn main2() {
+//     let (gl, event_loop, windowed_context, shader_version) = unsafe {
+//         let el = glutin::event_loop::EventLoop::new();
+//         let wb = glutin::window::WindowBuilder::new()
+//             .with_title("Hello triangle!")
+//             .with_inner_size(glutin::dpi::LogicalSize::new(1024.0, 768.0));
+//         let windowed_context = glutin::ContextBuilder::new()
+//             .with_vsync(true)
+//             .with_gl(glutin::GlRequest::GlThenGles {
+//                 opengl_version: (3, 3),
+//                 opengles_version: (2, 0),
+//             })
+//             .with_depth_buffer(24)
+//             .with_stencil_buffer(8)
+//             .with_gl_profile(glutin::GlProfile::Core)
+//             .build_windowed(wb, &el)
+//             .unwrap();
+//         let windowed_context = windowed_context.make_current().unwrap();
+//         let context = glow::Context::from_loader_function(|s| {
+//             windowed_context.get_proc_address(s) as *const _
+//         });
+//         (context, el, windowed_context, "#version 410")
+//     };
+//
+//     let gl = Rc::new(gl);
+//
+//     let mut gfx = Graphics::new(gl, 1024.0, 768.0);
+//     // let mut cube = Cube::new(&mut gfx);
+//     let mut triangle = Triangle::new(&mut gfx);
+//     let mut textured_cube = TexturedCube::new(&mut gfx);
+//
+//     let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
+//
+//     unsafe {
+//         event_loop.run(move |event, _, control_flow| {
+//             *control_flow = ControlFlow::Poll;
+//             match event {
+//                 Event::LoopDestroyed => {
+//                     return;
+//                 }
+//                 Event::MainEventsCleared => {
+//                     windowed_context.window().request_redraw();
+//                 }
+//                 Event::RedrawRequested(_) => {
+//                     gfx.begin(&clear_options);
+//                     textured_cube.draw(&mut gfx);
+//                     // cube.draw(&mut gfx);
+//                     triangle.draw(&mut gfx);
+//                     gfx.end();
+//
+//                     windowed_context.swap_buffers().unwrap();
+//                 }
+//                 Event::WindowEvent { ref event, .. } => match event {
+//                     WindowEvent::Resized(physical_size) => {
+//                         windowed_context.resize(*physical_size);
+//                     }
+//                     WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+//                     _ => (),
+//                 },
+//                 _ => (),
+//             }
+//         });
+//     }
+// }
 
 struct Triangle {
     pipeline: Pipeline,
