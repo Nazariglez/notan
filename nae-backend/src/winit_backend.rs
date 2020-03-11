@@ -5,7 +5,7 @@ use nae_core::{
     BaseApp, BaseContext2d, BaseSystem, BuilderOpts, Event, EventIterator, KeyCode, MouseButton,
 };
 use nae_glow::Context2d;
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell, RefMut};
 use std::collections::VecDeque;
 use std::rc::Rc;
 use std::sync::atomic::AtomicBool;
@@ -44,8 +44,8 @@ impl BaseSystem for System {
         })
     }
 
-    fn gfx(&mut self) -> Rc<RefCell<Self::Graphics>> {
-        self.graphics.clone()
+    fn gfx<'gfx>(&'gfx mut self) -> RefMut<'gfx, Self::Graphics> {
+        RefMut::map(self.graphics.borrow_mut(), |gfx| gfx)
     }
 
     fn ctx2(&mut self) -> &mut Self::Context2d {

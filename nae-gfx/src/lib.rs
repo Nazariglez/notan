@@ -1,4 +1,5 @@
-use crate::shader::{BufferKey, GlowValue, Shader, VertexFormat};
+use crate::shader::{BufferKey, GlowValue};
+pub use crate::shader::{Shader, VertexFormat};
 use glow::{Context, HasContext, DEPTH_TEST};
 use glutin::event::{Event, WindowEvent};
 use glutin::event_loop::ControlFlow;
@@ -358,7 +359,7 @@ pub struct VertexAttr {
 }
 
 impl VertexAttr {
-    fn new(location: u32, vertex_data: VertexFormat) -> Self {
+    pub fn new(location: u32, vertex_data: VertexFormat) -> Self {
         Self {
             location: location,
             format: vertex_data,
@@ -380,7 +381,7 @@ pub struct IndexBuffer {
 }
 
 impl IndexBuffer {
-    fn new(graphics: &Graphics, usage: DrawUsage) -> Result<Self, String> {
+    pub fn new(graphics: &Graphics, usage: DrawUsage) -> Result<Self, String> {
         unsafe {
             let gl = &graphics.gl;
             let buffer = gl.create_buffer()?;

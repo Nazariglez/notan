@@ -4,6 +4,7 @@ use backend::*;
 use nae_core::*;
 use nae_core::{BaseSystem, BuilderOpts, Event};
 use std::cell::RefCell;
+use std::cell::RefMut;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
@@ -45,7 +46,7 @@ impl BaseApp for App {
 }
 
 impl App {
-    pub fn gfx(&mut self) -> Rc<RefCell<nae_gfx::Graphics>> {
+    pub fn gfx(&mut self) -> RefMut<'_, nae_gfx::Graphics> {
         self.sys.gfx()
     }
 
