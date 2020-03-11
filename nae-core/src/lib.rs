@@ -16,7 +16,7 @@ pub use resources::*;
 
 pub use rand;
 pub use rand_pcg;
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell, RefMut};
 use std::collections::VecDeque;
 use std::rc::Rc;
 
@@ -60,7 +60,7 @@ pub trait BaseSystem {
     type Graphics: BaseGfx;
 
     fn new(opts: BuilderOpts) -> Result<Self::Kind, String>;
-    fn gfx(&mut self) -> Rc<RefCell<Self::Graphics>>;
+    fn gfx<'gfx>(&'gfx mut self) -> RefMut<'gfx, Self::Graphics>;
     fn ctx2(&mut self) -> &mut Self::Context2d;
     fn events(&mut self) -> &mut EventIterator;
     fn width(&self) -> f32;
