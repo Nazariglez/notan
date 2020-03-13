@@ -1,6 +1,4 @@
-// use crate::context::Context2d;
-// use crate::{BufferKey, GlContext, GlowValue};
-use crate::{GlContext, Graphics};
+use crate::{GlContext, Graphics, GlowValue};
 use glow::HasContext;
 use hashbrown::HashMap;
 use nae_core::math::Mat3;
@@ -31,11 +29,26 @@ fn to_glsl_version(api: &GraphicsAPI) -> Option<glsl::Version> {
     })
 }
 
+pub(crate) struct InnerShader {
+    pub gl: GlContext,
+    pub raw: ProgramKey,
+    vertex: ShaderKey,
+    fragment: ShaderKey,
+}
+
+impl Drop for InnerShader {
+    fn drop(&mut self) {
+        unsafe {
+            self.gl.delete_shader(self.vertex);
+            self.gl.delete_shader(self.fragment);
+            self.gl.delete_program(self.raw);
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Shader {
-    pub(crate) program: ProgramKey,
-    pub(crate) gl: GlContext,
-    // inner: Rc<InnerShader>,
+    pub(crate) inner: Rc<InnerShader>,
 }
 
 impl Shader {
@@ -60,8 +73,16 @@ impl Shader {
         let fragment = create_shader(&gl, glow::FRAGMENT_SHADER, fragment)?;
 
         let program = create_program(&gl, vertex, fragment)?;
+        let inner = InnerShader {
+            gl,
+            raw: program,
+            vertex,
+            fragment,
+        };
 
-        Ok(Self { program, gl })
+        Ok(Self {
+            inner: Rc::new(inner),
+        })
     }
 }
 
@@ -144,111 +165,6 @@ pub fn read_spirv<R: io::Read + io::Seek>(mut x: R) -> io::Result<Vec<u32>> {
     Ok(result)
 }
 
-/*
-impl BaseShader for Shader {
-    type Graphics = Context2d;
-    type Buffer = BufferKey;
-    type Attr = Attr;
-    type Kind = Self;
-
-    fn new<T: BaseSystem<Context2d = Self::Graphics>>(
-        app: &mut T,
-        vertex: &str,
-        fragment: &str,
-        attributes: Vec<Self::Attr>,
-    ) -> Result<Self, String> {
-        shader_from_gl_context(&app.ctx2().gl, vertex, fragment, attributes)
-    }
-
-    fn buffer(&self, name: &str) -> Option<Self::Buffer> {
-        if let Some(attr) = self.inner.attributes.get(name) {
-            return Some(attr.buffer);
-        }
-
-        None
-    }
-
-    fn from_image_fragment<T, S>(app: &mut T, fragment: &str) -> Result<Self, String>
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Context2d = Self::Graphics>,
-    {
-        sprite_shader_from_gl_context(&app.system().ctx2().gl, Some(fragment))
-    }
-
-    fn from_text_fragment<T, S>(app: &mut T, fragment: &str) -> Result<Self, String>
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Context2d = Self::Graphics>,
-    {
-        text_shader_from_gl_context(&app.system().ctx2().gl, Some(fragment))
-    }
-
-    fn from_color_fragment<T, S>(app: &mut T, fragment: &str) -> Result<Self, String>
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Context2d = Self::Graphics>,
-    {
-        color_shader_from_gl_context(&app.system().ctx2().gl, Some(fragment))
-    }
-
-    fn is_equal(&self, shader: &Shader) -> bool {
-        self.inner.program == shader.inner.program
-    }
-}
-
-
-fn shader_from_gl_context(
-    gl: &GlContext,
-    vertex: &str,
-    fragment: &str,
-    mut attributes: Vec<Attr>,
-) -> Result<Shader, String> {
-    let vertex = create_shader(gl, glow::VERTEX_SHADER, vertex)?;
-    let fragment = create_shader(gl, glow::FRAGMENT_SHADER, fragment)?;
-
-    let program = create_program(gl, vertex, fragment)?;
-
-    let mut attrs = HashMap::new();
-    unsafe {
-        while let Some(attr) = attributes.pop() {
-            let location = gl
-                .get_attrib_location(program, &attr.name)
-                .ok_or("Invalid location")? as u32;
-            let buffer = gl.create_buffer()?;
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(buffer));
-            gl.enable_vertex_attrib_array(location);
-
-            let stride = 0;
-            let offset = 0;
-            let size = attr.vertex_data.size();
-            let data_type = attr.vertex_data.glow_value();
-            let normalized = attr.vertex_data.normalized();
-            gl.vertex_attrib_pointer_f32(location, size, data_type, normalized, stride, offset);
-
-            attrs.insert(
-                attr.name.clone(),
-                AttributeData {
-                    attr,
-                    location,
-                    buffer,
-                },
-            );
-        }
-    }
-
-    Ok(Shader {
-        inner: Rc::new(InnerShader {
-            vertex,
-            fragment,
-            program,
-            gl: gl.clone(),
-            attributes: attrs,
-            uniforms: RefCell::new(HashMap::new()),
-        }),
-    })
-}
-*/
 fn create_shader(gl: &GlContext, typ: u32, source: &str) -> Result<ShaderKey, String> {
     unsafe {
         let shader = gl.create_shader(typ)?;
@@ -322,11 +238,6 @@ impl VertexFormat {
     }
 }
 
-pub trait GlowValue {
-    type VALUE;
-    fn glow_value(&self) -> Self::VALUE;
-}
-
 impl GlowValue for VertexFormat {
     type VALUE = u32;
 
@@ -349,127 +260,3 @@ impl Attr {
         }
     }
 }
-
-#[derive(Clone)]
-struct AttributeData {
-    attr: Attr,
-    location: u32,
-    buffer: BufferKey,
-}
-
-/*
-/// Represent a shader uniform
-pub trait UniformType {
-    fn set_uniform_value(&self, gl: &GlContext, location: UniformLocationKey);
-}
-
-impl UniformType for i32 {
-    fn set_uniform_value(&self, gl: &GlContext, location: UniformLocationKey) {
-        unsafe {
-            gl.uniform_1_i32(Some(location), *self);
-        }
-    }
-}
-
-impl UniformType for &[f32; 2] {
-    fn set_uniform_value(&self, gl: &GlContext, location: UniformLocationKey) {
-        unsafe {
-            gl.uniform_2_f32(Some(location), self[0], self[1]);
-        }
-    }
-}
-
-impl UniformType for &[f32; 4] {
-    fn set_uniform_value(&self, gl: &GlContext, location: UniformLocationKey) {
-        unsafe {
-            gl.uniform_4_f32(Some(location), self[0], self[1], self[2], self[3]);
-        }
-    }
-}
-
-impl UniformType for Mat3 {
-    fn set_uniform_value(&self, gl: &GlContext, location: UniformLocationKey) {
-        unsafe {
-            gl.uniform_matrix_3_f32_slice(Some(location), false, &*m3_to_slice(self));
-        }
-    }
-}
-
-struct InnerShader {
-    gl: GlContext,
-    vertex: ShaderKey,
-    fragment: ShaderKey,
-    program: ProgramKey,
-    attributes: HashMap<String, AttributeData>,
-    uniforms: RefCell<HashMap<String, UniformLocationKey>>,
-}
-
-impl Drop for InnerShader {
-    fn drop(&mut self) {
-        unsafe {
-            self.gl.delete_shader(self.vertex);
-            self.gl.delete_shader(self.fragment);
-            self.gl.delete_program(self.program);
-            self.attributes.iter().for_each(|(_, attr)| {
-                self.gl.delete_buffer(attr.buffer);
-            });
-        }
-    }
-}
-
-fn m3_to_slice(m: &Mat3) -> *const [f32; 9] {
-    m.as_slice().as_ptr() as *const [f32; 9]
-}
-
-pub(crate) fn sprite_shader_from_gl_context(
-    gl: &GlContext,
-    frag: Option<&str>,
-) -> Result<Shader, String> {
-    let attrs = vec![
-        Attr::new("a_position", VertexData::Float2),
-        Attr::new("a_color", VertexData::Float4),
-        Attr::new("a_texcoord", VertexData::Float2),
-    ];
-
-    Ok(shader_from_gl_context(
-        gl,
-        Shader::IMAGE_VERTEX,
-        frag.unwrap_or(Shader::IMAGE_FRAG),
-        attrs,
-    )?)
-}
-
-pub(crate) fn text_shader_from_gl_context(
-    gl: &GlContext,
-    frag: Option<&str>,
-) -> Result<Shader, String> {
-    let attrs = vec![
-        Attr::new("a_position", VertexData::Float2),
-        Attr::new("a_color", VertexData::Float4),
-        Attr::new("a_texcoord", VertexData::Float2),
-    ];
-    Ok(shader_from_gl_context(
-        gl,
-        Shader::TEXT_VERTEX,
-        frag.unwrap_or(Shader::TEXT_FRAG),
-        attrs,
-    )?)
-}
-
-pub(crate) fn color_shader_from_gl_context(
-    gl: &GlContext,
-    frag: Option<&str>,
-) -> Result<Shader, String> {
-    let attrs = vec![
-        Attr::new("a_position", VertexData::Float2),
-        Attr::new("a_color", VertexData::Float4),
-    ];
-
-    Ok(shader_from_gl_context(
-        gl,
-        Shader::COLOR_VERTEX,
-        frag.unwrap_or(Shader::COLOR_FRAG),
-        attrs,
-    )?)
-}
-*/

@@ -1,4 +1,4 @@
-use crate::shader::{BufferKey, GlowValue};
+use crate::shader::{BufferKey, InnerShader};
 pub use crate::shader::{Shader, VertexFormat};
 use glow::{Context, HasContext, DEPTH_TEST};
 use glutin::event::{Event, WindowEvent};
@@ -476,8 +476,9 @@ impl AttrLocationId for String {
     fn location(&self, shader: &Shader) -> u32 {
         unsafe {
             shader
+                .inner
                 .gl
-                .get_attrib_location(shader.program, &self)
+                .get_attrib_location(shader.inner.raw, &self)
                 .expect("Invalid location") as u32
         }
     }
@@ -997,7 +998,7 @@ impl TexturedCube {
 pub struct Pipeline {
     gl: GlContext,
     vao: <glow::Context as HasContext>::VertexArray,
-    shader: <glow::Context as HasContext>::Program,
+    shader: Shader,
     pub options: PipelineOptions,
 }
 
@@ -1013,7 +1014,7 @@ impl Pipeline {
             gl,
             vao,
             options: opts,
-            shader: shader.program,
+            shader: shader.clone(),
         }
     }
 }
@@ -1075,7 +1076,7 @@ impl BasePipeline for Pipeline {
             }
 
             gfx.gl.bind_vertex_array(Some(self.vao));
-            gfx.gl.use_program(Some(self.shader));
+            gfx.gl.use_program(Some(self.shader.inner.raw));
         }
     }
 
@@ -1084,7 +1085,11 @@ impl BasePipeline for Pipeline {
     }
 
     fn uniform_location(&self, id: &str) -> u32 {
-        unsafe { self.gl.get_uniform_location(self.shader, id).unwrap() }
+        unsafe {
+            self.gl
+                .get_uniform_location(self.shader.inner.raw, id)
+                .unwrap()
+        }
     }
 }
 
@@ -1136,3 +1141,9 @@ fn create_gl_tex_ext(
         Ok(tex)
     }
 }
+
+pub trait GlowValue {
+    type VALUE;
+    fn glow_value(&self) -> Self::VALUE;
+}
+
