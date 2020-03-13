@@ -1,4 +1,4 @@
-use crate::{GlContext, Graphics, GlowValue};
+use crate::{GlContext, GlowValue, Graphics};
 use glow::HasContext;
 use hashbrown::HashMap;
 use nae_core::math::Mat3;
