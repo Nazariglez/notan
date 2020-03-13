@@ -408,12 +408,12 @@ impl BaseIndexBuffer for IndexBuffer {
     }
 }
 
-struct InnerVertexBuffer {
+struct InnerBuffer {
     gl: GlContext,
     buffer: BufferKey,
 }
 
-impl Drop for InnerVertexBuffer {
+impl Drop for InnerBuffer {
     fn drop(&mut self) {
         unsafe {
             self.gl.delete_buffer(self.buffer);
@@ -422,7 +422,7 @@ impl Drop for InnerVertexBuffer {
 }
 
 pub struct VertexBuffer {
-    inner: Rc<InnerVertexBuffer>,
+    inner: Rc<InnerBuffer>,
     usage: DrawUsage,
 }
 
@@ -454,7 +454,7 @@ impl VertexBuffer {
                 offset += attr.format.bytes();
             }
 
-            let inner = Rc::new(InnerVertexBuffer { buffer, gl });
+            let inner = Rc::new(InnerBuffer { buffer, gl });
 
             Ok(VertexBuffer { inner, usage })
         }
