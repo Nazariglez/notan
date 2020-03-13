@@ -408,8 +408,21 @@ impl BaseIndexBuffer for IndexBuffer {
     }
 }
 
-pub struct VertexBuffer {
+struct InnerVertexBuffer {
+    gl: GlContext,
     buffer: BufferKey,
+}
+
+impl Drop for InnerVertexBuffer {
+    fn drop(&mut self) {
+        unsafe {
+            self.gl.delete_buffer(self.buffer);
+        }
+    }
+}
+
+pub struct VertexBuffer {
+    inner: Rc<InnerVertexBuffer>,
     usage: DrawUsage,
 }
 
@@ -420,7 +433,7 @@ impl VertexBuffer {
         usage: DrawUsage,
     ) -> Result<Self, String> {
         unsafe {
-            let gl = &graphics.gl;
+            let gl = graphics.gl.clone();
             let buffer = gl.create_buffer()?;
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(buffer));
 
@@ -441,7 +454,9 @@ impl VertexBuffer {
                 offset += attr.format.bytes();
             }
 
-            Ok(VertexBuffer { buffer, usage })
+            let inner = Rc::new(InnerVertexBuffer { buffer, gl });
+
+            Ok(VertexBuffer { inner, usage })
         }
     }
 }
@@ -452,14 +467,10 @@ impl BaseVertexBuffer for VertexBuffer {
     fn bind(&self, gfx: &mut Graphics, data: &[f32]) {
         let gl = &gfx.gl;
         unsafe {
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.buffer));
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.inner.buffer));
             gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vf_to_u8(data), self.usage.glow_value());
         }
     }
-}
-
-pub struct Draw2d<'gfx> {
-    gfx: Ref<'gfx, Graphics>,
 }
 
 pub trait AttrLocationId {
@@ -1002,6 +1013,14 @@ pub struct Pipeline {
     pub options: PipelineOptions,
 }
 
+impl Drop for Pipeline {
+    fn drop(&mut self) {
+        unsafe {
+            self.gl.delete_vertex_array(self.vao);
+        }
+    }
+}
+
 impl Pipeline {
     pub fn new(graphics: &Graphics, shader: &Shader, opts: PipelineOptions) -> Self {
         let gl = graphics.gl.clone();
@@ -1146,4 +1165,3 @@ pub trait GlowValue {
     type VALUE;
     fn glow_value(&self) -> Self::VALUE;
 }
-
