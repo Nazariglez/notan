@@ -46,4 +46,4 @@ sdl2 = { version="0.33", optional=true }
 
 [features]
 winit_win = ["winit", "glutin"]
-sdl = ["sdl2", "nae-glow/sdl"]
+sdl = ["sdl2", "nae-glow/sdl", "nae-gfx/sdl"]

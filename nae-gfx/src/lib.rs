@@ -154,17 +154,17 @@ struct DeviceInfo {
 }
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
-fn get_device_info(device: &WindowedContext<PossiblyCurrent>) -> DeviceInfo {
+fn get_device_info(device: &WindowedContext<PossiblyCurrent>) -> Result<DeviceInfo, String> {
     let win: &glutin::window::Window = device.window();
     let size = win.inner_size();
     let width = size.width as _;
     let height = size.height as _;
     let ctx = glow::Context::from_loader_function(|s| device.get_proc_address(s) as *const _);
-    DeviceInfo { width, height, ctx }
+    Ok(DeviceInfo { width, height, ctx })
 }
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "sdl"))]
-fn get_device_info(device: &sdl2::video::Window) -> DeviceInfo {
+fn get_device_info(device: &sdl2::video::Window) -> Result<DeviceInfo, String> {
     let size = device.size();
     let width = size.0 as _;
     let height = size.1 as _;
@@ -186,17 +186,17 @@ fn get_device_info(device: &sdl2::video::Window) -> DeviceInfo {
         device.subsystem().gl_get_proc_address(s) as *const _
     });
 
-    DeviceInfo {
+    Ok(DeviceInfo {
         width,
         height,
         ctx,
         _sdl_gl: Some(sdl_gl),
-    }
+    })
 }
 
 impl Graphics {
     pub fn new(device: &Device) -> Result<Self, String> {
-        let info = get_device_info(device);
+        let info = get_device_info(device)?;
         let gl = Rc::new(info.ctx);
         Ok(Self {
             gl,
@@ -208,7 +208,7 @@ impl Graphics {
             indices_in_use: false,
 
             #[cfg(feature = "sdl")]
-            _sdl_gl: Some(info._sdl_gl),
+            _sdl_gl: info._sdl_gl,
         })
     }
 

@@ -8,28 +8,38 @@ use sdl2::keyboard::{Keycode as SdlKeycode, Scancode};
 use sdl2::mouse::MouseButton as SdlMouseButton;
 use sdl2::video::{FullscreenType, Window as SdlWindow};
 use sdl2::{Sdl, VideoSubsystem};
+use std::cell::{RefCell, RefMut};
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::rc::Rc;
 
 pub struct System {
     window: Window,
     context2d: Context2d,
     events: EventIterator,
+    graphics: Rc<RefCell<nae_gfx::Graphics>>,
 }
 
 impl BaseSystem for System {
     type Kind = Self;
     type Context2d = Context2d;
+    type Graphics = nae_gfx::Graphics;
 
     fn new(mut opts: BuilderOpts) -> Result<Self, String> {
         let win = Window::new(&opts)?;
         let ctx2 = Context2d::new(&win.win)?;
+        let gfx = Rc::new(RefCell::new(nae_gfx::Graphics::new(&win.win)?));
         Ok(Self {
             window: win,
             context2d: ctx2,
             events: EventIterator::new(),
+            graphics: gfx,
         })
+    }
+
+    fn gfx<'gfx>(&'gfx mut self) -> RefMut<'gfx, Self::Graphics> {
+        RefMut::map(self.graphics.borrow_mut(), |gfx| gfx)
     }
 
     fn ctx2(&mut self) -> &mut Self::Context2d {
