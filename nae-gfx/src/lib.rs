@@ -376,17 +376,20 @@ fn vfi_to_u8(v: &[u32]) -> &[u8] {
 }
 
 pub struct IndexBuffer {
-    buffer: BufferKey,
+    inner: Rc<InnerBuffer>,
     usage: DrawUsage,
 }
 
 impl IndexBuffer {
     pub fn new(graphics: &Graphics, usage: DrawUsage) -> Result<Self, String> {
         unsafe {
-            let gl = &graphics.gl;
+            let gl = graphics.gl.clone();
             let buffer = gl.create_buffer()?;
             gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(buffer));
-            Ok(Self { buffer, usage })
+
+            let inner = Rc::new(InnerBuffer { buffer, gl });
+
+            Ok(Self { inner, usage })
         }
     }
 }
@@ -398,7 +401,7 @@ impl BaseIndexBuffer for IndexBuffer {
         let gl = &gfx.gl;
 
         unsafe {
-            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.buffer));
+            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.inner.buffer));
             gl.buffer_data_u8_slice(
                 glow::ELEMENT_ARRAY_BUFFER,
                 vfi_to_u8(&indices),
