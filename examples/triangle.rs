@@ -1,4 +1,5 @@
 use nae::prelude::*;
+use nae::Draw;
 
 #[nae::main]
 fn main() {
@@ -6,10 +7,10 @@ fn main() {
 }
 
 fn draw(app: &mut App, _: &mut ()) {
-    let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
-    draw.set_color(Color::GREEN);
-    draw.triangle(400.0, 100.0, 100.0, 500.0, 700.0, 500.0);
-    draw.end();
+    let mut gfx = app.gfx();
+    let mut d2 = Draw::new(gfx);
+    d2.begin(Color::new(0.1, 0.2, 0.3, 1.0));
+    d2.set_color(Color::GREEN);
+    d2.triangle(400.0, 100.0, 100.0, 500.0, 700.0, 500.0);
+    d2.end();
 }
