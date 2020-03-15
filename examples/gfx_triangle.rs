@@ -14,42 +14,12 @@ fn main() {
         log::init();
         let mut gfx = app.gfx();
 
-        #[cfg(not(target_arch = "wasm32"))]
         let shader = nae_gfx::Shader::new(
             &gfx,
             include_bytes!("./assets/color.vert.spv"),
             include_bytes!("./assets/color.frag.spv"),
         )
         .unwrap();
-
-        #[cfg(target_arch = "wasm32")]
-        let shader = nae_gfx::Shader::from_source(
-            &gfx,
-            r#"#version 300 es
-
-out vec4 v_color;
-layout(location = 1) in vec4 a_color;
-layout(location = 0) in vec4 a_position;
-
-void main()
-{
-    v_color = a_color;
-    gl_Position = a_position;
-}
-            "#,
-            r#"#version 300 es
-precision mediump float;
-precision highp int;
-
-layout(location = 0) out highp vec4 color;
-in highp vec4 v_color;
-
-void main()
-{
-    color = v_color;
-}
-            "#,
-        ).unwrap();
 
         let pipeline = Pipeline::new(&gfx, &shader, PipelineOptions::default());
 
