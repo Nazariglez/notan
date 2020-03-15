@@ -87,42 +87,33 @@ impl Shader {
 }
 
 fn compile_spirv_to_glsl(source: &[u32], api: &GraphicsAPI) -> Result<String, String> {
-    nae_core::log::info!("here1");
     let module = spirv::Module::from_words(source);
-    nae_core::log::info!("here1");
     let mut ast = spirv::Ast::<glsl::Target>::parse(&module).map_err(error_code_to_string)?;
-    nae_core::log::info!("here1");
     let res = ast.get_shader_resources().map_err(|e| format!("{:?}", e))?;
-    nae_core::log::info!("here1");
 
     ast.set_compiler_options(&glsl::CompilerOptions {
         version: to_glsl_version(&api).ok_or("Invalid driver version")?,
         vertex: glsl::CompilerVertexOptions::default(),
     })
     .map_err(error_code_to_string)?;
-    nae_core::log::info!("here1");
 
     // println!(
     //     "{:?} {:?} {:?}",
     //     res.sampled_images, res.uniform_buffers, res.storage_buffers
     // );
-    nae_core::log::info!("here1");
     //TODO get spirv for vulkan as input and output glsl for opengl
     //https://community.arm.com/developer/tools-software/graphics/b/blog/posts/spirv-cross-working-with-spir-v-in-your-app
     //https://github.com/gfx-rs/gfx/blob/d6c68cb9a940a6639a42651304c6d49b5399aca7/src/backend/gl/src/device.rs#L238
     fix_ast_for_gl(&mut ast, &res.sampled_images);
-    nae_core::log::info!("here1");
     fix_ast_for_gl(&mut ast, &res.uniform_buffers);
-    nae_core::log::info!("here1");
     fix_ast_for_gl(&mut ast, &res.storage_buffers);
-    nae_core::log::info!("here1");
 
     ast.compile().map_err(error_code_to_string)
 }
 
 fn fix_ast_for_gl(ast: &mut spirv::Ast<glsl::Target>, resources: &[spirv::Resource]) {
     for r in resources {
-        println!("{:?}", r);
+        // println!("{:?}", r);
         ast.unset_decoration(r.id, spirv::Decoration::Binding)
             .unwrap();
     }
@@ -132,7 +123,7 @@ fn error_code_to_string(err: ErrorCode) -> String {
     match err {
         ErrorCode::Unhandled => String::from("Unhandled"),
         ErrorCode::CompilationError(e) => {
-            nae_core::log::info!("e-> {}", e);
+            nae_core::log::error!("e-> {}", e);
             e
         }
     }
