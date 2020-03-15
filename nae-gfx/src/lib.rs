@@ -260,7 +260,7 @@ fn get_device_info(device: &WindowedContext<PossiblyCurrent>) -> Result<DeviceIn
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "sdl"))]
 fn get_device_info(device: &sdl2::video::Window) -> Result<DeviceInfo, String> {
-    let size = device.size();
+    let size = device.drawable_size();
     let width = size.0 as _;
     let height = size.1 as _;
 
@@ -349,6 +349,7 @@ impl BaseGfx for Graphics {
         debug_assert!(!self.running, "Graphics pass already running.");
 
         self.running = true;
+        nae_core::log::info!("{} {}", self.width, self.height);
         self.viewport(0.0, 0.0, self.width, self.height);
 
         let mut mask = 0;

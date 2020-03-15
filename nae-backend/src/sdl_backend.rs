@@ -75,6 +75,7 @@ pub struct Window {
     sdl: sdl2::Sdl,
     video: VideoSubsystem,
     win: SdlWindow,
+    dpi: f32,
 }
 
 impl Window {
@@ -84,6 +85,7 @@ impl Window {
         let mut win_builder = video.window(&opts.title, opts.width as _, opts.height as _);
 
         win_builder.opengl();
+        win_builder.allow_highdpi();
 
         if opts.resizable {
             win_builder.resizable();
@@ -97,8 +99,6 @@ impl Window {
             win_builder.fullscreen();
         }
 
-        // TODO add all funcionality like min_size or max_size
-
         let mut win = win_builder.build().map_err(|e| e.to_string())?;
 
         if let Some((width, height)) = opts.min_size {
@@ -109,7 +109,18 @@ impl Window {
             win.set_maximum_size(width as _, height as _);
         }
 
-        Ok(Self { sdl, video, win })
+        let dpi = {
+            let (w, _) = win.size();
+            let (dw, _) = win.drawable_size();
+            dw as f32 / w as f32
+        };
+
+        Ok(Self {
+            sdl,
+            video,
+            win,
+            dpi,
+        })
     }
 
     fn set_fullscreen(&mut self, full: bool) {
@@ -145,8 +156,7 @@ impl BaseWindow for Window {
     }
 
     fn dpi(&self) -> f32 {
-        //TODO set the real value
-        1.0
+        self.dpi
     }
 }
 
