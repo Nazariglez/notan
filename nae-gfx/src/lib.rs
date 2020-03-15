@@ -164,19 +164,20 @@ struct DeviceInfo {
     width: i32,
     height: i32,
     ctx: GlContext,
+    api: GraphicsAPI,
 
     #[cfg(feature = "sdl")]
     _sdl_gl: Option<sdl2::video::GLContext>,
 }
 
 #[cfg(target_arch = "wasm32")]
-fn create_gl_context(win: &web_sys::HtmlCanvasElement) -> Result<(GlContext, String), String> {
+fn create_gl_context(win: &web_sys::HtmlCanvasElement) -> Result<(GlContext, GraphicsAPI), String> {
     if let Ok(ctx) = create_webgl2_context(win) {
-        return Ok((ctx, String::from("webgl2")));
+        return Ok((ctx, GraphicsAPI::WebGl2));
     }
 
     let ctx = create_webgl_context(win)?;
-    Ok((ctx, String::from("webgl")))
+    Ok((ctx, GraphicsAPI::WebGl))
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -221,12 +222,22 @@ fn create_webgl2_context(win: &web_sys::HtmlCanvasElement) -> Result<GlContext, 
 fn get_device_info(win: &web_sys::HtmlCanvasElement) -> Result<DeviceInfo, String> {
     let width = win.width() as _;
     let height = win.height() as _;
-    let (gl, driver) = create_gl_context(win)?;
+    let (gl, api) = create_gl_context(win)?;
     Ok(DeviceInfo {
         width,
         height,
         ctx: gl,
+        api,
     })
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn default_api() -> GraphicsAPI {
+    if cfg!(target_os = "android") || cfg!(target_os = "ios") {
+        return GraphicsAPI::OpenGlEs2_0;
+    }
+
+    GraphicsAPI::OpenGl3_3
 }
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
@@ -238,7 +249,13 @@ fn get_device_info(device: &WindowedContext<PossiblyCurrent>) -> Result<DeviceIn
     let ctx = Rc::new(glow::Context::from_loader_function(|s| {
         device.get_proc_address(s) as *const _
     }));
-    Ok(DeviceInfo { width, height, ctx })
+    let api = default_api();
+    Ok(DeviceInfo {
+        width,
+        height,
+        ctx,
+        api,
+    })
 }
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "sdl"))]
@@ -264,10 +281,12 @@ fn get_device_info(device: &sdl2::video::Window) -> Result<DeviceInfo, String> {
         device.subsystem().gl_get_proc_address(s) as *const _
     }));
 
+    let api = default_api();
     Ok(DeviceInfo {
         width,
         height,
         ctx,
+        api,
         _sdl_gl: Some(sdl_gl),
     })
 }
@@ -281,7 +300,7 @@ impl Graphics {
             width: info.width as _,
             height: info.height as _,
             running: false,
-            gfx_api: GraphicsAPI::OpenGl3_3,
+            gfx_api: info.api,
             pipeline_in_use: false,
             indices_in_use: false,
 
