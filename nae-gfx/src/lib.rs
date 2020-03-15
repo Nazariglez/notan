@@ -1,21 +1,37 @@
 use crate::shader::{BufferKey, InnerShader};
 pub use crate::shader::{Shader, VertexFormat};
 use glow::{Context, HasContext, DEPTH_TEST};
+
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
 use glutin::event::{Event, WindowEvent};
+
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
 use glutin::event_loop::ControlFlow;
+
 use nae_core::{
     BaseGfx, BaseIndexBuffer, BasePipeline, BaseVertexBuffer, BlendFactor, BlendMode,
     BlendOperation, ClearOptions, Color, CullMode, DepthStencil, DrawUsage, GraphicsAPI,
     PipelineOptions,
 };
+
 use std::cell::Ref;
 use std::rc::Rc;
 use ultraviolet::mat::Mat4;
 use ultraviolet::projection::perspective_gl as perspective;
 use ultraviolet::vec::Vec3;
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsCast;
+
 type VertexArray = <glow::Context as HasContext>::VertexArray;
 type Program = <glow::Context as HasContext>::Program;
+type TextureKey = <glow::Context as HasContext>::Texture;
+
+#[cfg(target_arch = "wasm32")]
+type Uniform = web_sys::WebGlUniformLocation;
+
+#[cfg(not(target_arch = "wasm32"))]
+type Uniform = <glow::Context as HasContext>::UniformLocation;
 
 // TODO delete on drop opengl allocations
 // Shader should got app or gfx as first parameter?
@@ -147,10 +163,70 @@ pub struct Graphics {
 struct DeviceInfo {
     width: i32,
     height: i32,
-    ctx: glow::Context,
+    ctx: GlContext,
 
     #[cfg(feature = "sdl")]
     _sdl_gl: Option<sdl2::video::GLContext>,
+}
+
+#[cfg(target_arch = "wasm32")]
+fn create_gl_context(win: &web_sys::HtmlCanvasElement) -> Result<(GlContext, String), String> {
+    if let Ok(ctx) = create_webgl2_context(win) {
+        return Ok((ctx, String::from("webgl2")));
+    }
+
+    let ctx = create_webgl_context(win)?;
+    Ok((ctx, String::from("webgl")))
+}
+
+#[cfg(target_arch = "wasm32")]
+fn webgl_options() -> web_sys::WebGlContextAttributes {
+    let mut opts = web_sys::WebGlContextAttributes::new();
+    opts.stencil(true);
+    opts.premultiplied_alpha(false);
+    opts.alpha(false);
+    opts.antialias(true);
+    opts
+}
+
+#[cfg(target_arch = "wasm32")]
+fn create_webgl_context(win: &web_sys::HtmlCanvasElement) -> Result<GlContext, String> {
+    //TODO manage errors
+    let gl = win
+        .get_context_with_context_options("webgl", webgl_options().as_ref())
+        .unwrap()
+        .unwrap()
+        .dyn_into::<web_sys::WebGlRenderingContext>()
+        .unwrap();
+
+    let ctx = Rc::new(glow::Context::from_webgl1_context(gl));
+    Ok(ctx)
+}
+
+#[cfg(target_arch = "wasm32")]
+fn create_webgl2_context(win: &web_sys::HtmlCanvasElement) -> Result<GlContext, String> {
+    //TODO manage errors
+    let gl = win
+        .get_context_with_context_options("webgl2", webgl_options().as_ref())
+        .unwrap()
+        .unwrap()
+        .dyn_into::<web_sys::WebGl2RenderingContext>()
+        .unwrap();
+
+    let ctx = Rc::new(glow::Context::from_webgl2_context(gl));
+    Ok(ctx)
+}
+
+#[cfg(target_arch = "wasm32")]
+fn get_device_info(win: &web_sys::HtmlCanvasElement) -> Result<DeviceInfo, String> {
+    let width = win.width() as _;
+    let height = win.height() as _;
+    let (gl, driver) = create_gl_context(win)?;
+    Ok(DeviceInfo {
+        width,
+        height,
+        ctx: gl,
+    })
 }
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
@@ -159,7 +235,9 @@ fn get_device_info(device: &WindowedContext<PossiblyCurrent>) -> Result<DeviceIn
     let size = win.inner_size();
     let width = size.width as _;
     let height = size.height as _;
-    let ctx = glow::Context::from_loader_function(|s| device.get_proc_address(s) as *const _);
+    let ctx = Rc::new(glow::Context::from_loader_function(|s| {
+        device.get_proc_address(s) as *const _
+    }));
     Ok(DeviceInfo { width, height, ctx })
 }
 
@@ -182,9 +260,9 @@ fn get_device_info(device: &sdl2::video::Window) -> Result<DeviceInfo, String> {
     gl_attr.set_multisample_samples(8);
 
     let sdl_gl = device.gl_create_context()?;
-    let ctx = glow::Context::from_loader_function(|s| {
+    let ctx = Rc::new(glow::Context::from_loader_function(|s| {
         device.subsystem().gl_get_proc_address(s) as *const _
-    });
+    }));
 
     Ok(DeviceInfo {
         width,
@@ -196,8 +274,8 @@ fn get_device_info(device: &sdl2::video::Window) -> Result<DeviceInfo, String> {
 
 impl Graphics {
     pub fn new(device: &Device) -> Result<Self, String> {
-        let info = get_device_info(device)?;
-        let gl = Rc::new(info.ctx);
+        let info = get_device_info(device)?; //TODO return webgl driver
+        let gl = info.ctx.clone();
         Ok(Self {
             gl,
             width: info.width as _,
@@ -212,18 +290,30 @@ impl Graphics {
         })
     }
 
-    fn bind_uniform(&mut self, location: u32, value: &UniformValue<Graphics = Self>) {
+    fn bind_uniform(
+        &mut self,
+        location: <Graphics as BaseGfx>::Location,
+        value: &UniformValue<Graphics = Self>,
+    ) {
         debug_assert!(
             self.pipeline_in_use,
             "A pipeline should be set before bind uniforms"
         );
-        value.bind_uniform(self, location);
+        value.bind_uniform(self, to_uniform_location(location));
     }
 }
 
+fn to_uniform_location(loc: Uniform) -> Uniform {
+    /*#[cfg(target_arch = "wasm32")]
+    return web_sys::WebGlUniformLocation::new(loc);
+
+    #[cfg(not(target_arch = "wasm32"))]*/
+    return loc;
+}
+
 impl BaseGfx for Graphics {
-    type Location = u32;
-    type Texture = u32;
+    type Location = Uniform;
+    type Texture = TextureKey;
 
     fn api(&self) -> GraphicsAPI {
         self.gfx_api.clone()
@@ -268,11 +358,11 @@ impl BaseGfx for Graphics {
         }
     }
 
-    fn bind_texture(&mut self, location: u32, tex: u32) {
+    fn bind_texture(&mut self, location: Self::Location, tex: TextureKey) {
         self.bind_texture_slot(0, location, tex);
     }
 
-    fn bind_texture_slot(&mut self, slot: u32, location: u32, tex: u32) {
+    fn bind_texture_slot(&mut self, slot: u32, location: Self::Location, tex: TextureKey) {
         unsafe {
             let gl_slot = match slot {
                 0 => glow::TEXTURE0,
@@ -500,13 +590,13 @@ impl AttrLocationId for String {
 
 pub trait UniformValue {
     type Graphics: BaseGfx;
-    fn bind_uniform(&self, gfx: &Self::Graphics, location: <Self::Graphics as BaseGfx>::Location);
+    fn bind_uniform(&self, gfx: &Self::Graphics, location: Uniform);
 }
 
 impl UniformValue for i32 {
     type Graphics = Graphics;
 
-    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
         unsafe {
             graphics.gl.uniform_1_i32(Some(location), *self);
         }
@@ -516,7 +606,7 @@ impl UniformValue for i32 {
 impl UniformValue for f32 {
     type Graphics = Graphics;
 
-    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
         unsafe {
             graphics.gl.uniform_1_f32(Some(location), *self);
         }
@@ -526,7 +616,7 @@ impl UniformValue for f32 {
 impl UniformValue for [f32; 2] {
     type Graphics = Graphics;
 
-    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
         unsafe {
             graphics.gl.uniform_2_f32(Some(location), self[0], self[1]);
         }
@@ -536,7 +626,7 @@ impl UniformValue for [f32; 2] {
 impl UniformValue for [f32; 3] {
     type Graphics = Graphics;
 
-    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
         unsafe {
             graphics
                 .gl
@@ -548,7 +638,7 @@ impl UniformValue for [f32; 3] {
 impl UniformValue for [f32; 4] {
     type Graphics = Graphics;
 
-    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
         unsafe {
             graphics
                 .gl
@@ -560,7 +650,7 @@ impl UniformValue for [f32; 4] {
 impl UniformValue for ultraviolet::mat::Mat4 {
     type Graphics = Graphics;
 
-    fn bind_uniform(&self, graphics: &Graphics, location: u32) {
+    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
         let matrix = self.as_slice().as_ptr() as *const [f32; 16];
         unsafe {
             graphics
@@ -641,372 +731,372 @@ pub struct RenderTarget {}
 //     }
 // }
 
-struct Triangle {
-    pipeline: Pipeline,
-    vertices: [f32; 21],
-    vertex_buffer: VertexBuffer,
-    index_buffer: IndexBuffer,
-    mvp: Mat4,
-    mvp_loc: u32,
-}
-
-impl Triangle {
-    fn new(gfx: &mut Graphics) -> Self {
-        let shader = Shader::new(
-            gfx,
-            include_bytes!("../resources/shaders/color.vert.spv"),
-            include_bytes!("../resources/shaders/color.frag.spv"),
-        )
-        .unwrap();
-
-        let pipeline = Pipeline::new(
-            gfx,
-            &shader,
-            PipelineOptions {
-                ..Default::default()
-            },
-        );
-        let mvp_loc = pipeline.uniform_location("u_matrix");
-
-        let vertex_buffer = VertexBuffer::new(
-            gfx,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float4),
-            ],
-            DrawUsage::Dynamic,
-        )
-        .unwrap();
-
-        let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic).unwrap();
-
-        #[rustfmt::skip]
-        let vertices = [
-            -0.1, -0.1, 0.0,    1.0, 0.2, 0.3, 1.0,
-            0.1, -0.1, 0.0,     0.1, 1.0, 0.3, 1.0,
-            0.0, 0.1, 0.0,      0.1, 0.2, 1.0, 1.0,
-        ];
-
-        let mvp = Mat4::identity();
-
-        Self {
-            pipeline,
-            vertices,
-            vertex_buffer,
-            index_buffer,
-            mvp,
-            mvp_loc,
-        }
-    }
-
-    fn draw(&mut self, gfx: &mut Graphics) {
-        gfx.set_pipeline(&self.pipeline);
-        gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
-        gfx.bind_index_buffer(&self.index_buffer, &[0, 1, 2]);
-        gfx.bind_uniform(self.mvp_loc, &self.mvp);
-        gfx.draw(0, 3);
-    }
-}
-
-struct Cube {
-    shader: Shader,
-    vertices: [f32; 168],
-    indices: [u32; 36],
-    vertex_buffer: VertexBuffer,
-    index_buffer: IndexBuffer,
-    rotation: (f32, f32),
-    mvp: Mat4,
-}
-
-impl Cube {
-    fn new(gfx: &mut Graphics) -> Self {
-        let shader = Shader::new(
-            gfx,
-            include_bytes!("../resources/shaders/color.vert.spv"),
-            include_bytes!("../resources/shaders/color.frag.spv"),
-        )
-        .unwrap();
-
-        let vertex_buffer = VertexBuffer::new(
-            gfx,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float4),
-            ],
-            DrawUsage::Dynamic,
-        )
-        .unwrap();
-
-        let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic).unwrap();
-
-        #[rustfmt::skip]
-        let vertices= [
-            -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-            1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-            1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-            -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-
-            -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-            1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-            1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-            -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-
-            -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
-            -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
-            -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
-            -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
-
-            1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
-            1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
-            1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
-            1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
-
-            -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
-            -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
-            1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
-            1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
-
-            -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
-            -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
-            1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
-            1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
-        ];
-
-        #[rustfmt::skip]
-        let indices = [
-            0, 1, 2,  0, 2, 3,
-            6, 5, 4,  7, 6, 4,
-            8, 9, 10,  8, 10, 11,
-            14, 13, 12,  15, 14, 12,
-            16, 17, 18,  16, 18, 19,
-            22, 21, 20,  23, 22, 20
-        ];
-
-        let projection: Mat4 = perspective(45.0, 4.0 / 3.0, 0.1, 100.0);
-        let view = Mat4::look_at(
-            Vec3::new(4.0, 3.0, 3.0),
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(0.0, 1.0, 0.0),
-        );
-
-        let mut mvp: Mat4 = Mat4::identity();
-        mvp = mvp * projection;
-        mvp = mvp * view;
-
-        Self {
-            shader,
-            vertices,
-            indices,
-            vertex_buffer,
-            index_buffer,
-            rotation: (0.0, 0.0),
-            mvp,
-        }
-    }
-
-    fn draw(&mut self, gfx: &mut Graphics) {
-        let (ref mut rx, ref mut ry) = self.rotation;
-
-        *rx += 0.01;
-        *ry += 0.01;
-
-        let rxm = Mat4::from_rotation_x(*rx);
-        let rym = Mat4::from_rotation_y(*ry);
-        let model = rxm * rym;
-        let mvp = self.mvp * model;
-
-        // gfx.use_shader(&self.shader);
-        gfx.bind_uniform(0, &mvp);
-        gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
-        gfx.bind_index_buffer(&self.index_buffer, &self.indices);
-        gfx.draw(0, self.indices.len() as i32);
-    }
-}
-
-struct TexturedCube {
-    vertices: [f32; 108],
-    uvs: [f32; 72],
-    vertex_buffer: VertexBuffer,
-    uvs_buffer: VertexBuffer,
-    rotation: (f32, f32),
-    mvp: Mat4,
-    tex: u32,
-    pipeline: Pipeline,
-    mvp_loc: u32,
-    tex_loc: u32,
-}
-
-impl TexturedCube {
-    fn new(gfx: &mut Graphics) -> Self {
-        let shader = Shader::new(
-            gfx,
-            include_bytes!("../resources/shaders/textured.vert.spv"),
-            include_bytes!("../resources/shaders/textured.frag.spv"),
-        )
-        .unwrap();
-
-        let pipeline = Pipeline::new(
-            &gfx,
-            &shader,
-            PipelineOptions {
-                // color_blend: Some(BlendMode::ERASE),
-                cull_mode: CullMode::Back,
-                ..Default::default()
-            },
-        );
-        let mvp_loc = pipeline.uniform_location("u_matrix");
-        let tex_loc = pipeline.uniform_location("u_texture");
-
-        let vertex_buffer = VertexBuffer::new(
-            gfx,
-            &[VertexAttr::new(0, VertexFormat::Float3)],
-            DrawUsage::Dynamic,
-        )
-        .unwrap();
-
-        let uvs_buffer = VertexBuffer::new(
-            gfx,
-            &[VertexAttr::new(1, VertexFormat::Float2)],
-            DrawUsage::Dynamic,
-        )
-        .unwrap();
-
-        #[rustfmt::skip]
-        let uvs = [
-            0.000059, 0.000004,
-            0.000103, 0.336048,
-            0.335973, 0.335903,
-            1.000023, 0.000013,
-            0.667979, 0.335851,
-            0.999958, 0.336064,
-            0.667979, 0.335851,
-            0.336024, 0.671877,
-            0.667969, 0.671889,
-            1.000023, 0.000013,
-            0.668104, 0.000013,
-            0.667979, 0.335851,
-            0.000059, 0.000004,
-            0.335973, 0.335903,
-            0.336098, 0.000071,
-            0.667979, 0.335851,
-            0.335973, 0.335903,
-            0.336024, 0.671877,
-            1.000004, 0.671847,
-            0.999958, 0.336064,
-            0.667979, 0.335851,
-            0.668104, 0.000013,
-            0.335973, 0.335903,
-            0.667979, 0.335851,
-            0.335973, 0.335903,
-            0.668104, 0.000013,
-            0.336098, 0.000071,
-            0.000103, 0.336048,
-            0.000004, 0.671870,
-            0.336024, 0.671877,
-            0.000103, 0.336048,
-            0.336024, 0.671877,
-            0.335973, 0.335903,
-            0.667969, 0.671889,
-            1.000004, 0.671847,
-            0.667979, 0.335851
-        ];
-
-        #[rustfmt::skip]
-        let vertices= [
-            -1.0,-1.0,-1.0,
-            -1.0,-1.0, 1.0,
-            -1.0, 1.0, 1.0,
-            1.0, 1.0,-1.0,
-            -1.0,-1.0,-1.0,
-            -1.0, 1.0,-1.0,
-            1.0,-1.0, 1.0,
-            -1.0,-1.0,-1.0,
-            1.0,-1.0,-1.0,
-            1.0, 1.0,-1.0,
-            1.0,-1.0,-1.0,
-            -1.0,-1.0,-1.0,
-            -1.0,-1.0,-1.0,
-            -1.0, 1.0, 1.0,
-            -1.0, 1.0,-1.0,
-            1.0,-1.0, 1.0,
-            -1.0,-1.0, 1.0,
-            -1.0,-1.0,-1.0,
-            -1.0, 1.0, 1.0,
-            -1.0,-1.0, 1.0,
-            1.0,-1.0, 1.0,
-            1.0, 1.0, 1.0,
-            1.0,-1.0,-1.0,
-            1.0, 1.0,-1.0,
-            1.0,-1.0,-1.0,
-            1.0, 1.0, 1.0,
-            1.0,-1.0, 1.0,
-            1.0, 1.0, 1.0,
-            1.0, 1.0,-1.0,
-            -1.0, 1.0,-1.0,
-            1.0, 1.0, 1.0,
-            -1.0, 1.0,-1.0,
-            -1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,
-            -1.0, 1.0, 1.0,
-            1.0,-1.0, 1.0
-        ];
-
-        let projection: Mat4 = perspective(45.0, 4.0 / 3.0, 0.1, 100.0);
-        let view = Mat4::look_at(
-            Vec3::new(4.0, 3.0, -3.0),
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(0.0, 1.0, 0.0),
-        );
-
-        let mut mvp: Mat4 = Mat4::identity();
-        mvp = mvp * projection;
-        mvp = mvp * view;
-
-        let image = load_image!("../resources/cube.png");
-        let tex = create_gl_tex_ext(
-            &gfx,
-            image,
-            glow::RGBA as _,
-            glow::RGBA as _,
-            glow::NEAREST as _,
-            glow::NEAREST as _,
-            4,
-        )
-        .unwrap();
-
-        Self {
-            pipeline,
-            vertices,
-            vertex_buffer,
-            uvs_buffer,
-            rotation: (0.0, 0.0),
-            mvp,
-            uvs,
-            tex,
-            mvp_loc,
-            tex_loc,
-        }
-    }
-
-    fn draw(&mut self, gfx: &mut Graphics) {
-        let (ref mut rx, ref mut ry) = self.rotation;
-
-        *rx += 0.01;
-        *ry += 0.01;
-
-        let rxm = Mat4::from_rotation_x(-*rx);
-        let rym = Mat4::from_rotation_y(-*ry);
-        let model = rxm * rym;
-        let mvp: Mat4 = self.mvp * model;
-
-        gfx.set_pipeline(&self.pipeline);
-        gfx.bind_uniform(self.mvp_loc, &mvp);
-        gfx.bind_texture(self.tex_loc, self.tex);
-        gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
-        gfx.bind_vertex_buffer(&self.uvs_buffer, &self.uvs);
-        gfx.draw(0, (self.vertices.len() / 3) as i32);
-    }
-}
+// struct Triangle {
+//     pipeline: Pipeline,
+//     vertices: [f32; 21],
+//     vertex_buffer: VertexBuffer,
+//     index_buffer: IndexBuffer,
+//     mvp: Mat4,
+//     mvp_loc: Uniform,
+// }
+//
+// impl Triangle {
+//     fn new(gfx: &mut Graphics) -> Self {
+//         let shader = Shader::new(
+//             gfx,
+//             include_bytes!("../resources/shaders/color.vert.spv"),
+//             include_bytes!("../resources/shaders/color.frag.spv"),
+//         )
+//         .unwrap();
+//
+//         let pipeline = Pipeline::new(
+//             gfx,
+//             &shader,
+//             PipelineOptions {
+//                 ..Default::default()
+//             },
+//         );
+//         let mvp_loc = pipeline.uniform_location("u_matrix");
+//
+//         let vertex_buffer = VertexBuffer::new(
+//             gfx,
+//             &[
+//                 VertexAttr::new(0, VertexFormat::Float3),
+//                 VertexAttr::new(1, VertexFormat::Float4),
+//             ],
+//             DrawUsage::Dynamic,
+//         )
+//         .unwrap();
+//
+//         let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic).unwrap();
+//
+//         #[rustfmt::skip]
+//         let vertices = [
+//             -0.1, -0.1, 0.0,    1.0, 0.2, 0.3, 1.0,
+//             0.1, -0.1, 0.0,     0.1, 1.0, 0.3, 1.0,
+//             0.0, 0.1, 0.0,      0.1, 0.2, 1.0, 1.0,
+//         ];
+//
+//         let mvp = Mat4::identity();
+//
+//         Self {
+//             pipeline,
+//             vertices,
+//             vertex_buffer,
+//             index_buffer,
+//             mvp,
+//             mvp_loc,
+//         }
+//     }
+//
+//     fn draw(&mut self, gfx: &mut Graphics) {
+//         gfx.set_pipeline(&self.pipeline);
+//         gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
+//         gfx.bind_index_buffer(&self.index_buffer, &[0, 1, 2]);
+//         gfx.bind_uniform(self.mvp_loc, &self.mvp);
+//         gfx.draw(0, 3);
+//     }
+// }
+//
+// struct Cube {
+//     shader: Shader,
+//     vertices: [f32; 168],
+//     indices: [u32; 36],
+//     vertex_buffer: VertexBuffer,
+//     index_buffer: IndexBuffer,
+//     rotation: (f32, f32),
+//     mvp: Mat4,
+// }
+//
+// impl Cube {
+//     fn new(gfx: &mut Graphics) -> Self {
+//         let shader = Shader::new(
+//             gfx,
+//             include_bytes!("../resources/shaders/color.vert.spv"),
+//             include_bytes!("../resources/shaders/color.frag.spv"),
+//         )
+//         .unwrap();
+//
+//         let vertex_buffer = VertexBuffer::new(
+//             gfx,
+//             &[
+//                 VertexAttr::new(0, VertexFormat::Float3),
+//                 VertexAttr::new(1, VertexFormat::Float4),
+//             ],
+//             DrawUsage::Dynamic,
+//         )
+//         .unwrap();
+//
+//         let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic).unwrap();
+//
+//         #[rustfmt::skip]
+//         let vertices= [
+//             -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+//             1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+//             1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+//             -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+//
+//             -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+//             1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+//             1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+//             -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+//
+//             -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+//             -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+//             -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+//             -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+//
+//             1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+//             1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+//             1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+//             1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+//
+//             -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+//             -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+//             1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+//             1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+//
+//             -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
+//             -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+//             1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+//             1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
+//         ];
+//
+//         #[rustfmt::skip]
+//         let indices = [
+//             0, 1, 2,  0, 2, 3,
+//             6, 5, 4,  7, 6, 4,
+//             8, 9, 10,  8, 10, 11,
+//             14, 13, 12,  15, 14, 12,
+//             16, 17, 18,  16, 18, 19,
+//             22, 21, 20,  23, 22, 20
+//         ];
+//
+//         let projection: Mat4 = perspective(45.0, 4.0 / 3.0, 0.1, 100.0);
+//         let view = Mat4::look_at(
+//             Vec3::new(4.0, 3.0, 3.0),
+//             Vec3::new(0.0, 0.0, 0.0),
+//             Vec3::new(0.0, 1.0, 0.0),
+//         );
+//
+//         let mut mvp: Mat4 = Mat4::identity();
+//         mvp = mvp * projection;
+//         mvp = mvp * view;
+//
+//         Self {
+//             shader,
+//             vertices,
+//             indices,
+//             vertex_buffer,
+//             index_buffer,
+//             rotation: (0.0, 0.0),
+//             mvp,
+//         }
+//     }
+//
+//     fn draw(&mut self, gfx: &mut Graphics) {
+//         let (ref mut rx, ref mut ry) = self.rotation;
+//
+//         *rx += 0.01;
+//         *ry += 0.01;
+//
+//         let rxm = Mat4::from_rotation_x(*rx);
+//         let rym = Mat4::from_rotation_y(*ry);
+//         let model = rxm * rym;
+//         let mvp = self.mvp * model;
+//
+//         // gfx.use_shader(&self.shader);
+//         gfx.bind_uniform(0, &mvp);
+//         gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
+//         gfx.bind_index_buffer(&self.index_buffer, &self.indices);
+//         gfx.draw(0, self.indices.len() as i32);
+//     }
+// }
+//
+// struct TexturedCube {
+//     vertices: [f32; 108],
+//     uvs: [f32; 72],
+//     vertex_buffer: VertexBuffer,
+//     uvs_buffer: VertexBuffer,
+//     rotation: (f32, f32),
+//     mvp: Mat4,
+//     tex: u32,
+//     pipeline: Pipeline,
+//     mvp_loc: Uniform,
+//     tex_loc: Uniform,
+// }
+//
+// impl TexturedCube {
+//     fn new(gfx: &mut Graphics) -> Self {
+//         let shader = Shader::new(
+//             gfx,
+//             include_bytes!("../resources/shaders/textured.vert.spv"),
+//             include_bytes!("../resources/shaders/textured.frag.spv"),
+//         )
+//         .unwrap();
+//
+//         let pipeline = Pipeline::new(
+//             &gfx,
+//             &shader,
+//             PipelineOptions {
+//                 // color_blend: Some(BlendMode::ERASE),
+//                 cull_mode: CullMode::Back,
+//                 ..Default::default()
+//             },
+//         );
+//         let mvp_loc = pipeline.uniform_location("u_matrix");
+//         let tex_loc = pipeline.uniform_location("u_texture");
+//
+//         let vertex_buffer = VertexBuffer::new(
+//             gfx,
+//             &[VertexAttr::new(0, VertexFormat::Float3)],
+//             DrawUsage::Dynamic,
+//         )
+//         .unwrap();
+//
+//         let uvs_buffer = VertexBuffer::new(
+//             gfx,
+//             &[VertexAttr::new(1, VertexFormat::Float2)],
+//             DrawUsage::Dynamic,
+//         )
+//         .unwrap();
+//
+//         #[rustfmt::skip]
+//         let uvs = [
+//             0.000059, 0.000004,
+//             0.000103, 0.336048,
+//             0.335973, 0.335903,
+//             1.000023, 0.000013,
+//             0.667979, 0.335851,
+//             0.999958, 0.336064,
+//             0.667979, 0.335851,
+//             0.336024, 0.671877,
+//             0.667969, 0.671889,
+//             1.000023, 0.000013,
+//             0.668104, 0.000013,
+//             0.667979, 0.335851,
+//             0.000059, 0.000004,
+//             0.335973, 0.335903,
+//             0.336098, 0.000071,
+//             0.667979, 0.335851,
+//             0.335973, 0.335903,
+//             0.336024, 0.671877,
+//             1.000004, 0.671847,
+//             0.999958, 0.336064,
+//             0.667979, 0.335851,
+//             0.668104, 0.000013,
+//             0.335973, 0.335903,
+//             0.667979, 0.335851,
+//             0.335973, 0.335903,
+//             0.668104, 0.000013,
+//             0.336098, 0.000071,
+//             0.000103, 0.336048,
+//             0.000004, 0.671870,
+//             0.336024, 0.671877,
+//             0.000103, 0.336048,
+//             0.336024, 0.671877,
+//             0.335973, 0.335903,
+//             0.667969, 0.671889,
+//             1.000004, 0.671847,
+//             0.667979, 0.335851
+//         ];
+//
+//         #[rustfmt::skip]
+//         let vertices= [
+//             -1.0,-1.0,-1.0,
+//             -1.0,-1.0, 1.0,
+//             -1.0, 1.0, 1.0,
+//             1.0, 1.0,-1.0,
+//             -1.0,-1.0,-1.0,
+//             -1.0, 1.0,-1.0,
+//             1.0,-1.0, 1.0,
+//             -1.0,-1.0,-1.0,
+//             1.0,-1.0,-1.0,
+//             1.0, 1.0,-1.0,
+//             1.0,-1.0,-1.0,
+//             -1.0,-1.0,-1.0,
+//             -1.0,-1.0,-1.0,
+//             -1.0, 1.0, 1.0,
+//             -1.0, 1.0,-1.0,
+//             1.0,-1.0, 1.0,
+//             -1.0,-1.0, 1.0,
+//             -1.0,-1.0,-1.0,
+//             -1.0, 1.0, 1.0,
+//             -1.0,-1.0, 1.0,
+//             1.0,-1.0, 1.0,
+//             1.0, 1.0, 1.0,
+//             1.0,-1.0,-1.0,
+//             1.0, 1.0,-1.0,
+//             1.0,-1.0,-1.0,
+//             1.0, 1.0, 1.0,
+//             1.0,-1.0, 1.0,
+//             1.0, 1.0, 1.0,
+//             1.0, 1.0,-1.0,
+//             -1.0, 1.0,-1.0,
+//             1.0, 1.0, 1.0,
+//             -1.0, 1.0,-1.0,
+//             -1.0, 1.0, 1.0,
+//             1.0, 1.0, 1.0,
+//             -1.0, 1.0, 1.0,
+//             1.0,-1.0, 1.0
+//         ];
+//
+//         let projection: Mat4 = perspective(45.0, 4.0 / 3.0, 0.1, 100.0);
+//         let view = Mat4::look_at(
+//             Vec3::new(4.0, 3.0, -3.0),
+//             Vec3::new(0.0, 0.0, 0.0),
+//             Vec3::new(0.0, 1.0, 0.0),
+//         );
+//
+//         let mut mvp: Mat4 = Mat4::identity();
+//         mvp = mvp * projection;
+//         mvp = mvp * view;
+//
+//         let image = load_image!("../resources/cube.png");
+//         let tex = create_gl_tex_ext(
+//             &gfx,
+//             image,
+//             glow::RGBA as _,
+//             glow::RGBA as _,
+//             glow::NEAREST as _,
+//             glow::NEAREST as _,
+//             4,
+//         )
+//         .unwrap();
+//
+//         Self {
+//             pipeline,
+//             vertices,
+//             vertex_buffer,
+//             uvs_buffer,
+//             rotation: (0.0, 0.0),
+//             mvp,
+//             uvs,
+//             tex,
+//             mvp_loc,
+//             tex_loc,
+//         }
+//     }
+//
+//     fn draw(&mut self, gfx: &mut Graphics) {
+//         let (ref mut rx, ref mut ry) = self.rotation;
+//
+//         *rx += 0.01;
+//         *ry += 0.01;
+//
+//         let rxm = Mat4::from_rotation_x(-*rx);
+//         let rym = Mat4::from_rotation_y(-*ry);
+//         let model = rxm * rym;
+//         let mvp: Mat4 = self.mvp * model;
+//
+//         gfx.set_pipeline(&self.pipeline);
+//         gfx.bind_uniform(self.mvp_loc, &mvp);
+//         gfx.bind_texture(self.tex_loc, self.tex);
+//         gfx.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
+//         gfx.bind_vertex_buffer(&self.uvs_buffer, &self.uvs);
+//         gfx.draw(0, (self.vertices.len() / 3) as i32);
+//     }
+// }
 
 #[derive(Clone)]
 pub struct Pipeline {
@@ -1106,7 +1196,7 @@ impl BasePipeline for Pipeline {
         &mut self.options
     }
 
-    fn uniform_location(&self, id: &str) -> u32 {
+    fn uniform_location(&self, id: &str) -> <Self::Graphics as BaseGfx>::Location {
         unsafe {
             self.gl
                 .get_uniform_location(self.shader.inner.raw, id)
@@ -1123,7 +1213,7 @@ fn create_gl_tex_ext(
     min_filter: i32,
     mag_filter: i32,
     bytes_per_pixel: usize,
-) -> Result<u32, String> {
+) -> Result<TextureKey, String> {
     unsafe {
         let gl = &gfx.gl;
         let tex = gl.create_texture()?;

@@ -4,7 +4,7 @@ use nae_core::{
     BaseApp, BaseContext2d, BaseSystem, BuilderOpts, Event, EventIterator, KeyCode, MouseButton,
 };
 use nae_glow::Context2d;
-use std::cell::RefCell;
+use std::cell::{RefCell, RefMut};
 use std::collections::VecDeque;
 use std::panic;
 use std::rc::Rc;
@@ -18,23 +18,31 @@ pub struct System {
     events: EventIterator,
     mouse_ctx: Option<MouseContext>,
     keyboard_ctx: Option<KeyboardContext>,
+    graphics: Rc<RefCell<nae_gfx::Graphics>>,
 }
 
 impl BaseSystem for System {
     type Kind = Self;
     type Context2d = Context2d;
+    type Graphics = nae_gfx::Graphics;
 
     fn new(mut opts: BuilderOpts) -> Result<Self, String> {
         panic::set_hook(Box::new(console_error_panic_hook::hook));
         let win = Window::new(&opts)?;
         let ctx2 = Context2d::new(&win.canvas)?;
+        let gfx = Rc::new(RefCell::new(nae_gfx::Graphics::new(&win.canvas)?));
         Ok(Self {
             window: win,
             context2d: ctx2,
             events: EventIterator::new(),
             mouse_ctx: None,
             keyboard_ctx: None,
+            graphics: gfx,
         })
+    }
+
+    fn gfx<'gfx>(&'gfx mut self) -> RefMut<'gfx, Self::Graphics> {
+        RefMut::map(self.graphics.borrow_mut(), |gfx| gfx)
     }
 
     fn ctx2(&mut self) -> &mut Self::Context2d {
