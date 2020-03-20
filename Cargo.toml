@@ -34,7 +34,8 @@ members = [
     "nae-core",
     "nae-glow",
     "nae-backend",
-    "nae-gfx"
+    "nae-gfx",
+    "nae-shader"
 ]
 
 [profile.release]

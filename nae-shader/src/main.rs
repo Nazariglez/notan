@@ -1,27 +1,26 @@
 use shaderc::{GlslProfile, OptimizationLevel, TargetEnv};
+use std::env;
 use std::error::Error;
 use std::io::Read;
 
-fn is_release() -> bool {
-    if let Ok(profile) = std::env::var("PROFILE") {
-        return profile == "release";
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    match args.get(1) {
+        Some(directory) => {
+            if let Err(e) = compile_shaders(directory) {
+                println!("Error: {}", e);
+            }
+        }
+        _ => println!("Should pass a directory as first argument"),
     }
-
-    false
 }
 
-const SHADER_DIRECTORY: &'static str = "resources/shaders";
-
-fn main() -> Result<(), Box<Error>> {
-    println!("cargo:rerun-if-changed={}", SHADER_DIRECTORY);
-
+fn compile_shaders(directory: &str) -> Result<(), Box<Error>> {
     let mut compiler = shaderc::Compiler::new().unwrap();
     let mut options = shaderc::CompileOptions::new().unwrap();
     options.set_target_env(TargetEnv::OpenGL, 0);
-    if is_release() {
-        // options.set_optimization_level(OptimizationLevel::Performance);
-    }
-    for entry in std::fs::read_dir(SHADER_DIRECTORY)? {
+
+    for entry in std::fs::read_dir(directory)? {
         let entry = entry?;
 
         if entry.file_type()?.is_file() {
@@ -47,9 +46,9 @@ fn main() -> Result<(), Box<Error>> {
                 let bytes = binary.as_binary_u8();
 
                 // Determine the output path based on the input name
-                let out_path = format!("{}/{}.spv", SHADER_DIRECTORY, name,);
-
+                let out_path = format!("{}/{}.spv", directory, name);
                 std::fs::write(&out_path, &bytes)?;
+                println!("Compiled {}", out_path);
             }
         }
     }
