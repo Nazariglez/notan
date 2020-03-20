@@ -535,6 +535,7 @@ impl Drop for InnerBuffer {
 }
 
 pub struct VertexBuffer {
+    stride: usize,
     inner: Rc<InnerBuffer>,
     usage: DrawUsage,
 }
@@ -569,8 +570,16 @@ impl VertexBuffer {
 
             let inner = Rc::new(InnerBuffer { buffer, gl });
 
-            Ok(VertexBuffer { inner, usage })
+            Ok(VertexBuffer {
+                inner,
+                usage,
+                stride: stride as usize,
+            })
         }
+    }
+
+    pub fn stride(&self) -> usize {
+        self.stride
     }
 }
 

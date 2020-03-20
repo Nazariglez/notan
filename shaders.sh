@@ -1,0 +1,1 @@
+cd nae-shader && cargo run ../src/shaders
