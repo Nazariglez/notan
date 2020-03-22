@@ -1,6 +1,7 @@
 use crate::shader::{BufferKey, InnerShader};
 pub use crate::shader::{Shader, VertexFormat};
 use glow::{Context, HasContext, DEPTH_TEST};
+pub use ultraviolet;
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
 use glutin::event::{Event, WindowEvent};
@@ -28,10 +29,10 @@ type Program = <glow::Context as HasContext>::Program;
 type TextureKey = <glow::Context as HasContext>::Texture;
 
 #[cfg(target_arch = "wasm32")]
-type Uniform = web_sys::WebGlUniformLocation;
+pub type Uniform = web_sys::WebGlUniformLocation;
 
 #[cfg(not(target_arch = "wasm32"))]
-type Uniform = <glow::Context as HasContext>::UniformLocation;
+pub type Uniform = <glow::Context as HasContext>::UniformLocation;
 
 // TODO delete on drop opengl allocations
 // Shader should got app or gfx as first parameter?
@@ -313,7 +314,7 @@ impl Graphics {
         })
     }
 
-    fn bind_uniform(
+    pub fn bind_uniform(
         &mut self,
         location: <Graphics as BaseGfx>::Location,
         value: &UniformValue<Graphics = Self>,
@@ -341,6 +342,15 @@ fn to_uniform_location(loc: Uniform) -> Uniform {
 impl BaseGfx for Graphics {
     type Location = Uniform;
     type Texture = TextureKey;
+
+    fn size(&self) -> (f32, f32) {
+        (self.width, self.height)
+    }
+
+    fn set_size(&mut self, width: f32, height: f32) {
+        self.width = width;
+        self.height = height;
+    }
 
     fn api(&self) -> GraphicsAPI {
         self.gfx_api.clone()
