@@ -1,7 +1,7 @@
 use nae_core::{
     BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, DrawUsage, GraphicsAPI, PipelineOptions,
 };
-use nae_gfx::ultraviolet::{projection::lh_yup::orthographic_gl as ortho, Mat4};
+use nae_gfx::ultraviolet::{projection::lh_yup::orthographic_gl as ortho, vec::Vec4, Mat4};
 use nae_gfx::{
     Graphics, IndexBuffer, Pipeline, Shader, Uniform, VertexAttr, VertexBuffer, VertexFormat,
 };
@@ -18,6 +18,7 @@ pub struct Draw<'gfx> {
     pub alpha: f32,
     pub blend_mode: Option<BlendMode>,
     pub projection: Option<Mat4>,
+    pub matrix: Option<Mat4>,
 
     render_projection: Mat4,
     matrix_stack: Vec<Mat4>,
@@ -35,7 +36,8 @@ impl<'gfx> Draw<'gfx> {
             _ => std::u32::MAX as usize,
         };
 
-        let (width, height) = gfx.size();
+        let (width, height) = gfx.size(); //TODO multiply for dpi
+
         let render_projection = ortho(0.0, width, height, 0.0, -1.0, 1.0);
 
         Ok(Self {
@@ -49,6 +51,7 @@ impl<'gfx> Draw<'gfx> {
             matrix_stack: vec![Mat4::identity()],
             color_batcher,
             max_vertices,
+            matrix: None,
             projection: None,
             render_projection,
         })
@@ -65,7 +68,7 @@ impl<'gfx> Draw<'gfx> {
 
     pub fn push(&mut self, matrix: &Mat4) {
         //TODO PR to ultraviolet to avoid clone variables to do ops
-        let new_matrix = self.matrix().clone() * matrix.clone();
+        let new_matrix = self.transform().clone() * matrix.clone();
         self.matrix_stack.push(new_matrix);
     }
 
@@ -77,9 +80,8 @@ impl<'gfx> Draw<'gfx> {
         self.matrix_stack.pop();
     }
 
-    pub fn matrix(&mut self) -> &mut Mat4 {
-        let len = self.matrix_stack.len();
-        &mut self.matrix_stack[len - 1]
+    pub fn transform(&mut self) -> &Mat4 {
+        self.matrix_stack.last().as_ref().unwrap()
     }
 
     pub fn begin(&mut self, color: Color) {
@@ -90,6 +92,48 @@ impl<'gfx> Draw<'gfx> {
     pub fn end(&mut self) {
         paint_mode(self, PaintMode::None);
         self.gfx.end();
+    }
+
+    pub fn line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, width: f32) {
+        paint_mode(self, PaintMode::Color);
+
+        let (mut xx, mut yy) = if y1 == y2 {
+            (0.0, -1.0)
+        } else {
+            (1.0, -(x2 - x1) / (y2 - y1))
+        };
+
+        let len = (xx * xx + yy * yy).sqrt();
+        if len != 0.0 {
+            let mul = width / len;
+            xx *= mul;
+            yy *= mul;
+        }
+
+        let px1 = x1 + 0.5 * xx;
+        let py1 = y1 + 0.5 * yy;
+        let px2 = x2 + 0.5 * xx;
+        let py2 = y2 + 0.5 * yy;
+        let px3 = px1 - xx;
+        let py3 = py1 - yy;
+        let px4 = px2 - xx;
+        let py4 = py2 - yy;
+
+        #[rustfmt::skip]
+        draw_color(
+            self,
+            &[
+                px1, py1, self.depth,
+                px2, py2, self.depth,
+                px3, py3, self.depth,
+                px3, py3, self.depth,
+                px2, py2, self.depth,
+                px4, py4, self.depth
+            ],
+            &[
+                0, 1, 2, 3, 4, 5
+            ]
+        );
     }
 
     pub fn triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
@@ -159,6 +203,10 @@ fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32]) {
                 Some(p) => p,
                 _ => &draw.render_projection,
             },
+            matrix: match &draw.matrix {
+                Some(p) => p,
+                _ => &draw.matrix_stack.last().as_ref().unwrap(),
+            },
             blend: draw.blend_mode,
             color: draw.color,
             alpha: draw.alpha,
@@ -181,6 +229,7 @@ struct DrawData<'data> {
     blend: Option<BlendMode>,
     max_vertices: usize,
     projection: &'data Mat4,
+    matrix: &'data Mat4,
 }
 
 //TODO https://www.gamedev.net/forums/topic/613184-what-is-the-vertex-limit-number-of-gldrawarrays/
@@ -284,9 +333,16 @@ impl ColorBatcher {
         let [r, g, b, a] = data.color.to_rgba();
         let mut index_offset = self.index * offset;
         for (i, _) in data.vertices.iter().enumerate().step_by(3) {
-            self.vertices[index_offset + 0] = data.vertices[i + 0];
-            self.vertices[index_offset + 1] = data.vertices[i + 1];
-            self.vertices[index_offset + 2] = data.vertices[i + 2];
+            let pos = data.matrix.clone()
+                * Vec4::new(
+                    data.vertices[i + 0],
+                    data.vertices[i + 1],
+                    data.vertices[i + 2],
+                    1.0,
+                );
+            self.vertices[index_offset + 0] = pos.x;
+            self.vertices[index_offset + 1] = pos.y;
+            self.vertices[index_offset + 2] = pos.z;
             self.vertices[index_offset + 3] = r;
             self.vertices[index_offset + 4] = g;
             self.vertices[index_offset + 5] = b;
@@ -305,7 +361,7 @@ impl ColorBatcher {
         gfx.set_pipeline(&self.pipeline);
         gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
         gfx.bind_index_buffer(&self.ibo, &self.indices);
-        gfx.bind_uniform(self.matrix_loc, projection);
+        gfx.bind_uniform(self.matrix_loc.clone(), projection);
         gfx.draw(0, self.index as i32);
         self.index = 0;
     }
