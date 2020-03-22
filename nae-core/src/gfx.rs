@@ -247,6 +247,8 @@ where
     type Texture;
 
     fn api(&self) -> GraphicsAPI;
+    fn size(&self) -> (f32, f32);
+    fn set_size(&mut self, width: f32, height: f32);
     fn viewport(&mut self, x: f32, y: f32, width: f32, height: f32);
     fn begin(&mut self, clear: &ClearOptions);
     fn bind_texture(&mut self, location: Self::Location, texture: Self::Texture);
