@@ -36,7 +36,7 @@
         const module = window.sc_internal_wrapper()
             .then(async (module) => {
                 window.sc_internal = module;
-                await wasm_bindgen("./{{ EXAMPLE }}/{{ EXAMPLE }}_bg.wasm");
+                let wasm = await wasm_bindgen("./{{ EXAMPLE }}/{{ EXAMPLE }}_bg.wasm");
             });
       });
 </script>

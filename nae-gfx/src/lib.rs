@@ -155,6 +155,8 @@ pub struct Graphics {
     width: f32,
     height: f32,
     running: bool,
+    draw_calls: u32,
+    last_pass_draw_calls: u32,
 
     #[cfg(feature = "sdl")]
     _sdl_gl: Option<sdl2::video::GLContext>,
@@ -303,6 +305,8 @@ impl Graphics {
             gfx_api: info.api,
             pipeline_in_use: false,
             indices_in_use: false,
+            draw_calls: 0,
+            last_pass_draw_calls: 0,
 
             #[cfg(feature = "sdl")]
             _sdl_gl: info._sdl_gl,
@@ -319,6 +323,10 @@ impl Graphics {
             "A pipeline should be set before bind uniforms"
         );
         value.bind_uniform(self, to_uniform_location(location));
+    }
+
+    pub fn draw_calls(&self) -> u32 {
+        self.last_pass_draw_calls
     }
 }
 
@@ -413,6 +421,9 @@ impl BaseGfx for Graphics {
         self.indices_in_use = false;
         self.pipeline_in_use = false;
         self.running = false;
+
+        self.last_pass_draw_calls = self.draw_calls;
+        self.draw_calls = 0;
     }
 
     fn set_pipeline(&mut self, pipeline: &BasePipeline<Graphics = Self>) {
@@ -441,6 +452,7 @@ impl BaseGfx for Graphics {
     fn draw(&mut self, offset: i32, count: i32) {
         debug_assert!(self.pipeline_in_use, "A pipeline should be set before draw");
         // TODO draw instanced?
+
         unsafe {
             if self.indices_in_use {
                 self.gl
@@ -449,6 +461,8 @@ impl BaseGfx for Graphics {
                 self.gl.draw_arrays(glow::TRIANGLES, offset, count);
             }
         }
+
+        self.draw_calls += 1;
     }
 }
 
@@ -580,6 +594,10 @@ impl VertexBuffer {
 
     pub fn stride(&self) -> usize {
         self.stride
+    }
+
+    pub fn offset(&self) -> usize {
+        self.stride / 4
     }
 }
 
