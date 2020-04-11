@@ -8,6 +8,8 @@ use nae_gfx::{
 use std::cell::RefMut;
 use std::convert::TryInto;
 
+type Matrix4 = [f32; 16];
+
 pub const SHADER_COLOR_VERTEX: &'static [u8] = include_bytes!("./shaders/color.vert.spv");
 pub const SHADER_COLOR_FRAG: &'static [u8] = include_bytes!("./shaders/color.frag.spv");
 
@@ -358,10 +360,12 @@ impl ColorBatcher {
         if self.index == 0 {
             return;
         }
+
+        let proj: &[f32; 16] = projection.as_slice().try_into().unwrap();
         gfx.set_pipeline(&self.pipeline);
         gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
         gfx.bind_index_buffer(&self.ibo, &self.indices);
-        gfx.bind_uniform(self.matrix_loc.clone(), projection);
+        gfx.bind_uniform(self.matrix_loc.clone(), proj);
         gfx.draw(0, self.index as i32);
         self.index = 0;
     }
