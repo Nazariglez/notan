@@ -2,6 +2,8 @@ use crate::shader::{BufferKey, InnerShader};
 pub use crate::shader::{Shader, VertexFormat};
 use glow::{Context, HasContext, DEPTH_TEST};
 pub use ultraviolet;
+mod uniform;
+pub use uniform::*;
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
 use glutin::event::{Event, WindowEvent};
@@ -27,12 +29,6 @@ use wasm_bindgen::JsCast;
 type VertexArray = <glow::Context as HasContext>::VertexArray;
 type Program = <glow::Context as HasContext>::Program;
 type TextureKey = <glow::Context as HasContext>::Texture;
-
-#[cfg(target_arch = "wasm32")]
-pub type Uniform = web_sys::WebGlUniformLocation;
-
-#[cfg(not(target_arch = "wasm32"))]
-pub type Uniform = <glow::Context as HasContext>::UniformLocation;
 
 // TODO delete on drop opengl allocations
 // Shader should got app or gfx as first parameter?
@@ -641,78 +637,6 @@ impl AttrLocationId for String {
                 .gl
                 .get_attrib_location(shader.inner.raw, &self)
                 .expect("Invalid location") as u32
-        }
-    }
-}
-
-pub trait UniformValue {
-    type Graphics: BaseGfx;
-    fn bind_uniform(&self, gfx: &Self::Graphics, location: Uniform);
-}
-
-impl UniformValue for i32 {
-    type Graphics = Graphics;
-
-    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
-        unsafe {
-            graphics.gl.uniform_1_i32(Some(location), *self);
-        }
-    }
-}
-
-impl UniformValue for f32 {
-    type Graphics = Graphics;
-
-    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
-        unsafe {
-            graphics.gl.uniform_1_f32(Some(location), *self);
-        }
-    }
-}
-
-impl UniformValue for [f32; 2] {
-    type Graphics = Graphics;
-
-    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
-        unsafe {
-            graphics.gl.uniform_2_f32(Some(location), self[0], self[1]);
-        }
-    }
-}
-
-impl UniformValue for [f32; 3] {
-    type Graphics = Graphics;
-
-    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
-        unsafe {
-            graphics
-                .gl
-                .uniform_3_f32(Some(location), self[0], self[1], self[2]);
-        }
-    }
-}
-
-impl UniformValue for [f32; 4] {
-    type Graphics = Graphics;
-
-    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
-        unsafe {
-            graphics
-                .gl
-                .uniform_4_f32(Some(location), self[0], self[1], self[2], self[3]);
-        }
-    }
-}
-
-impl UniformValue for ultraviolet::mat::Mat4 {
-    type Graphics = Graphics;
-
-    fn bind_uniform(&self, graphics: &Graphics, location: Uniform) {
-        let matrix = self.as_slice().as_ptr() as *const [f32; 16];
-        unsafe {
-            graphics
-                .gl
-                .uniform_matrix_4_f32_slice(Some(location), false, &*matrix);
         }
     }
 }
