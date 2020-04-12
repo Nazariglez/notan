@@ -1,8 +1,10 @@
+mod matrix;
+mod uniform;
+
 use crate::shader::{BufferKey, InnerShader};
 pub use crate::shader::{Shader, VertexFormat};
 use glow::{Context, HasContext, DEPTH_TEST};
-pub use ultraviolet;
-mod uniform;
+pub use matrix::*;
 pub use uniform::*;
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
@@ -19,9 +21,6 @@ use nae_core::{
 
 use std::cell::Ref;
 use std::rc::Rc;
-use ultraviolet::mat::Mat4;
-use ultraviolet::projection::perspective_gl as perspective;
-use ultraviolet::vec::Vec3;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
@@ -126,9 +125,6 @@ impl GlowValue for BlendOperation {
 }
 
 mod shader;
-fn mat4_to_slice(m: &ultraviolet::mat::Mat4) -> *const [f32; 16] {
-    m.as_slice().as_ptr() as *const [f32; 16]
-}
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
 use glutin::{PossiblyCurrent, WindowedContext};

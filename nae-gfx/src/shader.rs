@@ -61,8 +61,8 @@ impl Shader {
 
         //FIXME layout(binding = 0) is not allowed for
 
-        nae_core::log::info!("vert: {}", vert);
-        nae_core::log::info!("frag: {}", frag);
+        // nae_core::log::info!("vert: {}", vert);
+        // nae_core::log::info!("frag: {}", frag);
 
         Self::from_source(graphics, &vert, &frag)
     }
