@@ -19,7 +19,7 @@ use winit::window::WindowBuilder;
 
 pub struct System {
     window: Window,
-    graphics: Rc<RefCell<nae_gfx::Graphics>>,
+    draw: nae_gfx::Draw,
     context2d: Context2d,
     events: EventIterator,
     event_loop: Option<EventLoop<()>>,
@@ -29,23 +29,28 @@ impl BaseSystem for System {
     type Kind = Self;
     type Context2d = Context2d;
     type Graphics = nae_gfx::Graphics;
+    type Draw = nae_gfx::Draw;
 
     fn new(mut opts: BuilderOpts) -> Result<Self, String> {
         let event_loop = EventLoop::new();
         let win = Window::new(&opts, &event_loop)?;
         let ctx2 = Context2d::new(&win.win)?;
-        let gfx = Rc::new(RefCell::new(nae_gfx::Graphics::new(&win.win)?));
+        let draw = nae_gfx::Draw::new(&win.win)?;
         Ok(Self {
             window: win,
             context2d: ctx2,
             event_loop: Some(event_loop),
             events: EventIterator::new(),
-            graphics: gfx,
+            draw,
         })
     }
 
-    fn gfx<'gfx>(&'gfx mut self) -> RefMut<'gfx, Self::Graphics> {
-        RefMut::map(self.graphics.borrow_mut(), |gfx| gfx)
+    fn gfx(&mut self) -> &mut Self::Graphics {
+        &mut self.draw.gfx
+    }
+
+    fn draw(&mut self) -> &mut Self::Draw {
+        &mut self.draw
     }
 
     fn ctx2(&mut self) -> &mut Self::Context2d {

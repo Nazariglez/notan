@@ -18,31 +18,36 @@ pub struct System {
     events: EventIterator,
     mouse_ctx: Option<MouseContext>,
     keyboard_ctx: Option<KeyboardContext>,
-    graphics: Rc<RefCell<nae_gfx::Graphics>>,
+    draw: nae_gfx::Draw,
 }
 
 impl BaseSystem for System {
     type Kind = Self;
     type Context2d = Context2d;
     type Graphics = nae_gfx::Graphics;
+    type Draw = nae_gfx::Draw;
 
     fn new(mut opts: BuilderOpts) -> Result<Self, String> {
         panic::set_hook(Box::new(console_error_panic_hook::hook));
         let win = Window::new(&opts)?;
         let ctx2 = Context2d::new(&win.canvas)?;
-        let gfx = Rc::new(RefCell::new(nae_gfx::Graphics::new(&win.canvas)?));
+        let draw = nae_gfx::Draw::new(&win.canvas)?;
         Ok(Self {
             window: win,
             context2d: ctx2,
             events: EventIterator::new(),
             mouse_ctx: None,
             keyboard_ctx: None,
-            graphics: gfx,
+            draw,
         })
     }
 
-    fn gfx<'gfx>(&'gfx mut self) -> RefMut<'gfx, Self::Graphics> {
-        RefMut::map(self.graphics.borrow_mut(), |gfx| gfx)
+    fn gfx(&mut self) -> &mut Self::Graphics {
+        &mut self.draw.gfx
+    }
+
+    fn draw(&mut self) -> &mut Self::Draw {
+        &mut self.draw
     }
 
     fn ctx2(&mut self) -> &mut Self::Context2d {

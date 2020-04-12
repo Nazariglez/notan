@@ -46,8 +46,12 @@ impl BaseApp for App {
 }
 
 impl App {
-    pub fn gfx(&mut self) -> RefMut<'_, nae_gfx::Graphics> {
-        self.sys.gfx()
+    pub fn gfx(&mut self) -> &mut nae_gfx::Graphics {
+        &mut self.sys.draw().gfx
+    }
+
+    pub fn draw2(&mut self) -> &mut nae_gfx::Draw {
+        self.sys.draw()
     }
 
     pub fn draw(&mut self) -> &mut Context2d {
