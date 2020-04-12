@@ -1,6 +1,7 @@
 mod common;
 pub use common::*;
 pub use nae_core::*;
+pub use nae_gfx::*;
 pub use nae_glow::*;
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "winit"))]

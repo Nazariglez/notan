@@ -1,8 +1,10 @@
+mod draw;
 mod matrix;
 mod uniform;
 
 use crate::shader::{BufferKey, InnerShader};
 pub use crate::shader::{Shader, VertexFormat};
+pub use draw::*;
 use glow::{Context, HasContext, DEPTH_TEST};
 pub use matrix::*;
 pub use uniform::*;
@@ -359,7 +361,7 @@ impl BaseGfx for Graphics {
         debug_assert!(!self.running, "Graphics pass already running.");
 
         self.running = true;
-        nae_core::log::info!("{} {}", self.width, self.height);
+        // nae_core::log::info!("{} {}", self.width, self.height);
         self.viewport(0.0, 0.0, self.width, self.height);
 
         let mut mask = 0;
@@ -636,8 +638,6 @@ impl AttrLocationId for String {
         }
     }
 }
-
-pub struct Texture {}
 
 pub struct RenderTarget {}
 

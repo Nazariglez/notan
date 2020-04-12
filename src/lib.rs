@@ -1,9 +1,6 @@
 mod app;
-mod draw;
 mod input;
 mod res;
-
-pub use draw::*;
 
 #[cfg(feature = "extras")]
 pub mod extras;

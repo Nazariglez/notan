@@ -1,9 +1,11 @@
 use nae_core::{
     BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, DrawUsage, GraphicsAPI, PipelineOptions,
 };
-use nae_gfx::{
-    matrix4_identity, matrix4_mul_matrix4, matrix4_mul_vector4, matrix4_orthogonal, Graphics,
-    IndexBuffer, Matrix4, Pipeline, Shader, Uniform, VertexAttr, VertexBuffer, VertexFormat,
+
+use crate::{
+    matrix4_identity, matrix4_mul_matrix4, matrix4_mul_vector4, matrix4_orthogonal, Device,
+    Graphics, IndexBuffer, Matrix4, Pipeline, Shader, Uniform, VertexAttr, VertexBuffer,
+    VertexFormat,
 };
 use std::cell::RefMut;
 use std::convert::TryInto;
@@ -11,8 +13,8 @@ use std::convert::TryInto;
 pub const SHADER_COLOR_VERTEX: &'static [u8] = include_bytes!("./shaders/color.vert.spv");
 pub const SHADER_COLOR_FRAG: &'static [u8] = include_bytes!("./shaders/color.frag.spv");
 
-pub struct Draw<'gfx> {
-    pub gfx: RefMut<'gfx, Graphics>,
+pub struct Draw {
+    pub gfx: Graphics,
     pub depth: f32,
     pub color: Color,
     pub alpha: f32,
@@ -28,8 +30,9 @@ pub struct Draw<'gfx> {
     current_mode: PaintMode,
 }
 
-impl<'gfx> Draw<'gfx> {
-    pub fn new(mut gfx: RefMut<'gfx, Graphics>) -> Result<Self, String> {
+impl Draw {
+    pub fn new(device: &Device) -> Result<Self, String> {
+        let mut gfx = Graphics::new(device)?;
         let color_batcher = ColorBatcher::new(&mut gfx)?;
         let max_vertices = match gfx.api() {
             GraphicsAPI::WebGl => std::u16::MAX as usize,
@@ -118,7 +121,7 @@ impl<'gfx> Draw<'gfx> {
         let py4 = py2 - yy;
 
         #[rustfmt::skip]
-        draw_color(
+            draw_color(
             self,
             &[
                 px1, py1, self.depth,
@@ -138,7 +141,7 @@ impl<'gfx> Draw<'gfx> {
         paint_mode(self, PaintMode::Color);
 
         #[rustfmt::skip]
-        draw_color(
+            draw_color(
             self,
             &[
                 x1, y1, self.depth,
@@ -156,7 +159,7 @@ impl<'gfx> Draw<'gfx> {
         let y2 = y + height;
 
         #[rustfmt::skip]
-        draw_color(
+            draw_color(
             self,
             &[
                 x, y, self.depth,
@@ -330,7 +333,6 @@ impl ColorBatcher {
         let offset = self.vbo.offset();
         let [r, g, b, a] = data.color.to_rgba();
         let mut index_offset = self.index * offset;
-        println!("{:?}", data.matrix);
         for (i, _) in data.vertices.iter().enumerate().step_by(3) {
             let pos = matrix4_mul_vector4(
                 data.matrix,
@@ -341,8 +343,6 @@ impl ColorBatcher {
                     1.0,
                 ],
             );
-
-            println!("vert:{:?} \npos:{:?}", &data.vertices[i..i + 3], pos);
 
             self.vertices[index_offset + 0] = pos[0];
             self.vertices[index_offset + 1] = pos[1];
