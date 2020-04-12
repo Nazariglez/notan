@@ -3,7 +3,6 @@ use nae::Draw;
 
 #[nae::main]
 fn main() {
-    log::init();
     nae::init().draw(draw).build().unwrap();
 }
 
@@ -15,6 +14,4 @@ fn draw(app: &mut App, _: &mut ()) {
     d2.color = Color::GREEN;
     d2.triangle(400.0, 100.0, 100.0, 500.0, 700.0, 500.0);
     d2.end();
-
-    println!("Draw calls: {}", d2.gfx.draw_calls());
 }
