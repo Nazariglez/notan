@@ -137,6 +137,20 @@ impl Draw {
         );
     }
 
+    pub fn stroke_triangle(
+        &mut self,
+        x1: f32,
+        y1: f32,
+        x2: f32,
+        y2: f32,
+        x3: f32,
+        y3: f32,
+        line_width: f32,
+    ) {
+        paint_mode(self, PaintMode::Color);
+        // TODO
+    }
+
     pub fn triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
         paint_mode(self, PaintMode::Color);
 
@@ -150,6 +164,12 @@ impl Draw {
             ],
             &[0, 1, 2]
         );
+    }
+
+    pub fn stroke_rect(&mut self, x: f32, y: f32, width: f32, height: f32, line_width: f32) {
+        paint_mode(self, PaintMode::Color);
+
+        // TODO
     }
 
     pub fn rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
@@ -195,7 +215,7 @@ fn paint_mode(draw: &mut Draw, mode: PaintMode) {
 }
 
 fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32]) {
-    draw.color_batcher.push_vertices(
+    draw.color_batcher.push_data(
         &mut draw.gfx,
         DrawData {
             vertices,
@@ -311,37 +331,67 @@ impl ColorBatcher {
         })
     }
 
-    fn push_vertices(&mut self, gfx: &mut Graphics, data: DrawData) {
-        //TODO check if the call needs split
+    fn push_data(&mut self, gfx: &mut Graphics, data: DrawData) {
+        // Check if the batch is bigger than the max_vertices allowed and split it
+        if data.indices.len() > data.max_vertices {
+            let iterations = data.indices.len() / data.max_vertices;
+            for i in 0..iterations + 1 {
+                let start = i * data.max_vertices;
+                let end = (start + data.max_vertices).min(data.indices.len() - 1);
+                self.push_vertices(
+                    &data.indices[start..end],
+                    &data.vertices[start..end],
+                    &data.color,
+                    data.matrix,
+                    data.alpha,
+                );
+                self.flush(gfx, data.projection);
+            }
 
-        let vertices_len = data.indices.len();
-        let next_index = self.index + vertices_len;
+            return;
+        }
+
+        // Flush if we reach the end of this batch
+        let next_index = self.index + data.indices.len();
         if next_index >= data.max_vertices {
             self.flush(gfx, data.projection);
         }
 
+        // Flush if we change the blend mode
         if self.pipeline.options.color_blend != data.blend {
             self.flush(gfx, data.projection);
             self.pipeline.options.color_blend = data.blend;
         }
 
-        // Prepare the vertices and indices for the next draw
-        for (i, index) in data.indices.iter().enumerate() {
+        // Push the vertices on the current batch
+        self.push_vertices(
+            data.indices,
+            data.vertices,
+            &data.color,
+            data.matrix,
+            data.alpha,
+        );
+    }
+
+    fn push_vertices(
+        &mut self,
+        indices: &[u32],
+        vertices: &[f32],
+        color: &Color,
+        matrix: &Matrix4,
+        alpha: f32,
+    ) {
+        for (i, index) in indices.iter().enumerate() {
             self.indices[self.index + i] = self.index as u32 + *index;
         }
 
         let offset = self.vbo.offset();
-        let [r, g, b, a] = data.color.to_rgba();
+        let [r, g, b, a] = color.to_rgba();
         let mut index_offset = self.index * offset;
-        for (i, _) in data.vertices.iter().enumerate().step_by(3) {
+        for (i, _) in vertices.iter().enumerate().step_by(3) {
             let pos = matrix4_mul_vector4(
-                data.matrix,
-                &[
-                    data.vertices[i + 0],
-                    data.vertices[i + 1],
-                    data.vertices[i + 2],
-                    1.0,
-                ],
+                matrix,
+                &[vertices[i + 0], vertices[i + 1], vertices[i + 2], 1.0],
             );
 
             self.vertices[index_offset + 0] = pos[0];
@@ -350,12 +400,12 @@ impl ColorBatcher {
             self.vertices[index_offset + 3] = r;
             self.vertices[index_offset + 4] = g;
             self.vertices[index_offset + 5] = b;
-            self.vertices[index_offset + 6] = a * data.alpha;
+            self.vertices[index_offset + 6] = a * alpha;
 
             index_offset += offset;
         }
 
-        self.index += vertices_len;
+        self.index += indices.len();
     }
 
     fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4) {
