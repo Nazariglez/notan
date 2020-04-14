@@ -1,5 +1,4 @@
 use nae::prelude::*;
-use nae_gfx::{Graphics, IndexBuffer, Pipeline, VertexAttr, VertexBuffer, VertexFormat};
 
 struct State {
     pipeline: Pipeline,
@@ -10,53 +9,47 @@ struct State {
 
 #[nae::main]
 fn main() {
-    if let Err(e) = nae::init_with(|app| {
-        log::init();
-        let mut gfx = app.gfx();
+    nae::init_with(init).draw(draw).build().unwrap();
+}
 
-        let shader = nae_gfx::Shader::new(
-            &gfx,
-            include_bytes!("./assets/color.vert.spv"),
-            include_bytes!("./assets/color.frag.spv"),
-        )
-        .unwrap();
+fn init(app: &mut App) -> State {
+    let mut gfx = app.gfx();
+    let shader = nae_gfx::Shader::new(
+        &gfx,
+        include_bytes!("./assets/color.vert.spv"),
+        include_bytes!("./assets/color.frag.spv"),
+    )
+    .unwrap();
 
-        let pipeline = Pipeline::new(&gfx, &shader, PipelineOptions::default());
+    let pipeline = Pipeline::new(&gfx, &shader, PipelineOptions::default());
+    let vertex_buffer = VertexBuffer::new(
+        &gfx,
+        &[
+            VertexAttr::new(0, VertexFormat::Float3),
+            VertexAttr::new(1, VertexFormat::Float4),
+        ],
+        DrawUsage::Dynamic,
+    )
+    .unwrap();
 
-        let vertex_buffer = VertexBuffer::new(
-            &gfx,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float4),
-            ],
-            DrawUsage::Dynamic,
-        )
-        .unwrap();
+    let clear = ClearOptions {
+        color: Some(Color::new(0.1, 0.2, 0.3, 1.0)),
+        depth: None,
+        stencil: None,
+    };
 
-        let clear = ClearOptions {
-            color: Some(Color::new(0.1, 0.2, 0.3, 1.0)),
-            depth: None,
-            stencil: None,
-        };
-
-        #[rustfmt::skip]
+    #[rustfmt::skip]
         let vertices = [
-            -0.5, -0.5, 0.0,    1.0, 0.2, 0.3, 1.0,
-            0.5, -0.5, 0.0,     0.1, 1.0, 0.3, 1.0,
-            0.0, 0.5, 0.0,      0.1, 0.2, 1.0, 1.0,
-        ];
+        -0.5, -0.5, 0.0,    1.0, 0.2, 0.3, 1.0,
+        0.5, -0.5, 0.0,     0.1, 1.0, 0.3, 1.0,
+        0.0, 0.5, 0.0,      0.1, 0.2, 1.0, 1.0,
+    ];
 
-        State {
-            pipeline,
-            vertex_buffer,
-            vertices,
-            clear,
-        }
-    })
-    .draw(draw)
-    .build()
-    {
-        log::info!("{}", e);
+    State {
+        pipeline,
+        vertex_buffer,
+        vertices,
+        clear,
     }
 }
 
