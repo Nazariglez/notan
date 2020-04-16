@@ -1,5 +1,6 @@
 use nae_core::{
-    BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, DrawUsage, GraphicsAPI, PipelineOptions,
+    BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, DrawUsage, Geometry, GraphicsAPI,
+    PipelineOptions,
 };
 
 use crate::{
@@ -95,6 +96,13 @@ impl Draw {
         self.gfx.end();
     }
 
+    pub fn geometry(&mut self, geometry: &Geometry) {
+        paint_mode(self, PaintMode::Color);
+        geometry.data().iter().for_each(|data| {
+            draw_color(self, &data.vertices, &data.indices, Some(data.color));
+        });
+    }
+
     pub fn line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, width: f32) {
         paint_mode(self, PaintMode::Color);
 
@@ -133,7 +141,8 @@ impl Draw {
             ],
             &[
                 0, 1, 2, 3, 4, 5
-            ]
+            ],
+            None,
         );
     }
 
@@ -162,7 +171,8 @@ impl Draw {
                 x2, y2, self.depth,
                 x3, y3, self.depth
             ],
-            &[0, 1, 2]
+            &[0, 1, 2],
+            None,
         );
     }
 
@@ -187,7 +197,8 @@ impl Draw {
                 x, y2, self.depth,
                 x2, y2, self.depth,
             ],
-            &[0, 1, 2, 2, 1, 3]
+            &[0, 1, 2, 2, 1, 3],
+            None
         );
     }
 }
@@ -214,7 +225,7 @@ fn paint_mode(draw: &mut Draw, mode: PaintMode) {
     draw.current_mode = mode;
 }
 
-fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32]) {
+fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32], color: Option<Color>) {
     draw.color_batcher.push_data(
         &mut draw.gfx,
         DrawData {
@@ -229,7 +240,7 @@ fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32]) {
                 _ => &draw.matrix_stack.last().as_ref().unwrap(),
             },
             blend: draw.blend_mode,
-            color: draw.color,
+            color: color.unwrap_or(draw.color),
             alpha: draw.alpha,
             max_vertices: draw.max_vertices,
         },
@@ -333,11 +344,18 @@ impl ColorBatcher {
 
     fn push_data(&mut self, gfx: &mut Graphics, data: DrawData) {
         // Check if the batch is bigger than the max_vertices allowed and split it
-        if data.indices.len() > data.max_vertices {
+        println!("# {} {}", data.indices.len(), data.max_vertices);
+        if data.indices.len() > self.indices.len() {
             let iterations = data.indices.len() / data.max_vertices;
             for i in 0..iterations + 1 {
-                let start = i * data.max_vertices;
-                let end = (start + data.max_vertices).min(data.indices.len() - 1);
+                let start = i * self.indices.len();
+                let end = (start + (self.indices.len() - 1)).min(data.indices.len() - 1);
+                println!(
+                    "start: {} - end: {}, len: {}",
+                    start,
+                    end,
+                    data.indices.len()
+                );
                 self.push_vertices(
                     &data.indices[start..end],
                     &data.vertices[start..end],
@@ -353,7 +371,8 @@ impl ColorBatcher {
 
         // Flush if we reach the end of this batch
         let next_index = self.index + data.indices.len();
-        if next_index >= data.max_vertices {
+        println!("$$ {} {}", next_index, self.indices.len());
+        if next_index >= self.indices.len() {
             self.flush(gfx, data.projection);
         }
 
@@ -381,7 +400,9 @@ impl ColorBatcher {
         matrix: &Matrix4,
         alpha: f32,
     ) {
+        println!(" - - {} - - {} - - ", indices.len(), self.indices.len());
         for (i, index) in indices.iter().enumerate() {
+            // println!("{} {} wtf... {}", index, i, self.indices.len());
             self.indices[self.index + i] = self.index as u32 + *index;
         }
 
