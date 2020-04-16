@@ -7,20 +7,12 @@ use glow::HasContext;
 use nae_core::math::glm::*;
 
 use glyph_brush::BrushAction::Draw;
-use lyon::lyon_tessellation as tess;
 use nae_core::math::*;
 use nae_core::{
-    lyon_vbuff_to_vertex, BaseContext2d, BaseShader, BaseSurface, BlendFactor, BlendMode, Color,
-    Geometry, LyonVertex, Vertex,
+    BaseContext2d, BaseShader, BaseSurface, BlendFactor, BlendMode, Color, Geometry, Vertex,
 };
 use nae_core::{BaseFont, BaseTexture, HorizontalAlign, VerticalAlign};
 use std::rc::Rc;
-use tess::basic_shapes::stroke_triangle;
-use tess::basic_shapes::{
-    fill_circle, fill_rounded_rectangle, stroke_circle, stroke_rectangle, stroke_rounded_rectangle,
-    BorderRadii,
-};
-use tess::{BuffersBuilder, VertexBuffers};
 
 #[cfg(not(target_arch = "wasm32"))]
 use glutin::{PossiblyCurrent, WindowedContext};
@@ -336,19 +328,19 @@ impl BaseContext2d for Context2d {
         y3: f32,
         line_width: f32,
     ) {
-        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-        let mut opts = tess::StrokeOptions::default();
-        opts = opts.with_line_width(line_width);
-        stroke_triangle(
-            tess::math::point(x1, y1),
-            tess::math::point(x2, y2),
-            tess::math::point(x3, y3),
-            &mut opts,
-            &mut BuffersBuilder::new(&mut output, LyonVertex),
-        )
-        .unwrap();
-
-        self.draw_color(&lyon_vbuff_to_vertex(output), None)
+        // let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        // let mut opts = tess::StrokeOptions::default();
+        // opts = opts.with_line_width(line_width);
+        // stroke_triangle(
+        //     tess::math::point(x1, y1),
+        //     tess::math::point(x2, y2),
+        //     tess::math::point(x3, y3),
+        //     &mut opts,
+        //     &mut BuffersBuilder::new(&mut output, LyonVertex),
+        // )
+        // .unwrap();
+        //
+        // self.draw_color(&vertex_buffer_as_vec(output), None)
     }
 
     fn rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
@@ -360,17 +352,17 @@ impl BaseContext2d for Context2d {
     }
 
     fn stroke_rect(&mut self, x: f32, y: f32, width: f32, height: f32, line_width: f32) {
-        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-        let mut opts = tess::StrokeOptions::default();
-        opts = opts.with_line_width(line_width);
-        stroke_rectangle(
-            &tess::math::rect(x, y, width, height),
-            &mut opts,
-            &mut BuffersBuilder::new(&mut output, LyonVertex),
-        )
-        .unwrap();
-
-        self.draw_color(&lyon_vbuff_to_vertex(output), None);
+        // let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        // let mut opts = tess::StrokeOptions::default();
+        // opts = opts.with_line_width(line_width);
+        // stroke_rectangle(
+        //     &tess::math::rect(x, y, width, height),
+        //     &mut opts,
+        //     &mut BuffersBuilder::new(&mut output, LyonVertex),
+        // )
+        // .unwrap();
+        //
+        // self.draw_color(&vertex_buffer_as_vec(output), None);
     }
 
     fn line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, strength: f32) {
@@ -404,30 +396,30 @@ impl BaseContext2d for Context2d {
     }
 
     fn circle(&mut self, x: f32, y: f32, radius: f32) {
-        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-        let mut opts = tess::FillOptions::default();
-        fill_circle(
-            tess::math::point(x, y),
-            radius,
-            &mut opts,
-            &mut BuffersBuilder::new(&mut output, LyonVertex),
-        )
-        .unwrap();
-        self.draw_color(&lyon_vbuff_to_vertex(output), None);
+        // let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        // let mut opts = tess::FillOptions::default();
+        // fill_circle(
+        //     tess::math::point(x, y),
+        //     radius,
+        //     &mut opts,
+        //     &mut BuffersBuilder::new(&mut output, LyonVertex),
+        // )
+        // .unwrap();
+        // self.draw_color(&vertex_buffer_as_vec(output), None);
     }
 
     fn rounded_rect(&mut self, x: f32, y: f32, width: f32, height: f32, radius: f32) {
-        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-        let opts = tess::FillOptions::default();
-        fill_rounded_rectangle(
-            &tess::math::rect(x, y, width, height),
-            &BorderRadii::new(radius, radius, radius, radius),
-            &opts,
-            &mut BuffersBuilder::new(&mut output, LyonVertex),
-        )
-        .unwrap();
-
-        self.draw_color(&lyon_vbuff_to_vertex(output), None);
+        // let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        // let opts = tess::FillOptions::default();
+        // fill_rounded_rectangle(
+        //     &tess::math::rect(x, y, width, height),
+        //     &BorderRadii::new(radius, radius, radius, radius),
+        //     &opts,
+        //     &mut BuffersBuilder::new(&mut output, LyonVertex),
+        // )
+        // .unwrap();
+        //
+        // self.draw_color(&vertex_buffer_as_vec(output), None);
     }
 
     fn stroke_rounded_rect(
@@ -439,37 +431,37 @@ impl BaseContext2d for Context2d {
         radius: f32,
         line_width: f32,
     ) {
-        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-        let mut opts = tess::StrokeOptions::default();
-        opts = opts.with_line_width(line_width);
-        stroke_rounded_rectangle(
-            &tess::math::rect(x, y, width, height),
-            &BorderRadii::new(radius, radius, radius, radius),
-            &opts,
-            &mut BuffersBuilder::new(&mut output, LyonVertex),
-        )
-        .unwrap();
-
-        self.draw_color(&lyon_vbuff_to_vertex(output), None);
+        // let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        // let mut opts = tess::StrokeOptions::default();
+        // opts = opts.with_line_width(line_width);
+        // stroke_rounded_rectangle(
+        //     &tess::math::rect(x, y, width, height),
+        //     &BorderRadii::new(radius, radius, radius, radius),
+        //     &opts,
+        //     &mut BuffersBuilder::new(&mut output, LyonVertex),
+        // )
+        // .unwrap();
+        //
+        // self.draw_color(&vertex_buffer_as_vec(output), None);
     }
 
     fn stroke_circle(&mut self, x: f32, y: f32, radius: f32, line_width: f32) {
-        let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-        let mut opts = tess::StrokeOptions::default();
-        opts = opts.with_line_width(line_width);
-        stroke_circle(
-            tess::math::point(x, y),
-            radius,
-            &mut opts,
-            &mut BuffersBuilder::new(&mut output, LyonVertex),
-        )
-        .unwrap();
-        self.draw_color(&lyon_vbuff_to_vertex(output), None);
+        // let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
+        // let mut opts = tess::StrokeOptions::default();
+        // opts = opts.with_line_width(line_width);
+        // stroke_circle(
+        //     tess::math::point(x, y),
+        //     radius,
+        //     &mut opts,
+        //     &mut BuffersBuilder::new(&mut output, LyonVertex),
+        // )
+        // .unwrap();
+        // self.draw_color(&vertex_buffer_as_vec(output), None);
     }
 
     fn geometry(&mut self, geometry: &Geometry) {
-        let (vertex, colors) = geometry.vertices();
-        self.draw_color(vertex, Some(colors));
+        // let (vertex, colors) = geometry.vertices();
+        // self.draw_color(vertex, Some(colors));
     }
 
     fn image(&mut self, img: &Self::Texture, x: f32, y: f32) {

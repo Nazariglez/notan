@@ -3,13 +3,15 @@ use lyon::lyon_algorithms::path::{Builder, Path};
 use lyon::lyon_tessellation as tess;
 use lyon::math::{point, rect, Point};
 use tess::basic_shapes::{
-    fill_circle, fill_rectangle, fill_rounded_rectangle, fill_triangle, stroke_circle,
-    stroke_rectangle, stroke_rounded_rectangle, stroke_triangle, BorderRadii,
+    fill_circle, fill_rectangle, fill_rounded_rectangle, stroke_circle, stroke_rectangle,
+    stroke_rounded_rectangle, stroke_triangle, BorderRadii,
 };
 use tess::{
     BuffersBuilder, FillOptions, FillTessellator, StrokeOptions, StrokeTessellator, VertexBuffers,
 };
 
+use lyon::lyon_tessellation::geometry_builder::simple_builder;
+use lyon::lyon_tessellation::{FillAttributes, StrokeAttributes};
 pub use tess::{LineCap, LineJoin};
 
 /// Options to fill a path
@@ -24,6 +26,13 @@ impl Default for FillConfig {
             tolerance: FillOptions::DEFAULT_TOLERANCE,
         }
     }
+}
+
+/// Represent the data that needs to be rendered
+pub struct GeometryData {
+    pub vertices: Vec<f32>,
+    pub indices: Vec<u32>,
+    pub color: Color,
 }
 
 /// Options to stroke a path
@@ -80,26 +89,28 @@ enum GeomTypes {
 /// Useful to cache all the vertices and colors instead of tesselate them every draw frame
 /// using the Context2d API.
 pub struct Geometry {
+    /// Z depth value
+    pub depth: f32,
+
     current_path: Option<Builder>,
     stack: Vec<GeomTypes>,
-    vertices: Vec<f32>,
-    color_vertices: Vec<Color>,
+    data: Vec<GeometryData>,
 }
 
 impl Geometry {
     /// Create a new Geometry
     pub fn new() -> Self {
         Self {
+            depth: 0.0,
             current_path: None,
             stack: vec![],
-            vertices: vec![],
-            color_vertices: vec![],
+            data: vec![],
         }
     }
 
     /// Returns the cached vertices and color vertices.
-    pub fn vertices(&self) -> (&Vec<f32>, &Vec<Color>) {
-        (&self.vertices, &self.color_vertices)
+    pub fn data(&self) -> &[GeometryData] {
+        &self.data
     }
 
     /// Sets the initial point of a path
@@ -120,7 +131,9 @@ impl Geometry {
     /// Creates a straight line to this point from the last one
     pub fn line_to(&mut self, x: f32, y: f32) -> &mut Self {
         match &mut self.current_path {
-            Some(b) => b.line_to(point(x, y)),
+            Some(b) => {
+                b.line_to(point(x, y));
+            }
             _ => {
                 self.move_to(x, y);
             }
@@ -263,11 +276,14 @@ impl Geometry {
             .with_line_join(config.line_join);
 
         let geometries = std::mem::replace(&mut self.stack, vec![]);
-        let mut vertices = geometry_stroke(&geometries, opts);
+        let vertices = geometry_stroke(&geometries, self.depth, opts);
+        let indices = (0..vertices.len() / 3).map(|v| v as u32).collect();
 
-        self.color_vertices
-            .append(&mut vec![color; vertices.len() / 2]);
-        self.vertices.append(&mut vertices);
+        self.data.push(GeometryData {
+            vertices,
+            indices,
+            color,
+        });
 
         self
     }
@@ -283,10 +299,14 @@ impl Geometry {
 
         let opts = FillOptions::tolerance(config.tolerance);
         let geometries = std::mem::replace(&mut self.stack, vec![]);
-        let mut vertices = geometry_fill(&geometries, opts);
-        self.color_vertices
-            .append(&mut vec![color; vertices.len() / 2]);
-        self.vertices.append(&mut vertices);
+        let vertices = geometry_fill(&geometries, self.depth, opts);
+        let indices = (0..vertices.len() / 3).map(|v| v as u32).collect();
+
+        self.data.push(GeometryData {
+            vertices,
+            indices,
+            color,
+        });
 
         self
     }
@@ -294,8 +314,7 @@ impl Geometry {
     /// Clear all the strokes and fill on this geometry setting it like a empty one
     pub fn clear(&mut self) -> &mut Self {
         self.stack = vec![];
-        self.vertices = vec![];
-        self.color_vertices = vec![];
+        self.data = vec![];
         self.current_path = None;
         self
     }
@@ -307,16 +326,16 @@ impl Geometry {
     }
 }
 
-fn geometry_stroke(geometries: &Vec<GeomTypes>, opts: StrokeOptions) -> Vec<f32> {
+fn geometry_stroke(geometries: &Vec<GeomTypes>, depth: f32, opts: StrokeOptions) -> Vec<f32> {
     let mut tessellator = StrokeTessellator::new();
-    let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-    let mut vertex_builder = BuffersBuilder::new(&mut output, LyonVertex);
+    let mut output_buffer: VertexBuffers<Point, u16> = VertexBuffers::new();
+    let mut vertex_builder = simple_builder(&mut output_buffer);
 
     for g in geometries {
         match g {
             GeomTypes::Path(p) => {
                 let _result = tessellator
-                    .tessellate_path(p.iter(), &opts, &mut vertex_builder)
+                    .tessellate_path(p, &opts, &mut vertex_builder)
                     .unwrap();
             }
             GeomTypes::Circle { x, y, radius } => {
@@ -357,19 +376,19 @@ fn geometry_stroke(geometries: &Vec<GeomTypes>, opts: StrokeOptions) -> Vec<f32>
         }
     }
 
-    lyon_vbuff_to_vertex(output)
+    vertex_buffer_as_vec(output_buffer, depth)
 }
 
-fn geometry_fill(geometries: &Vec<GeomTypes>, opts: FillOptions) -> Vec<f32> {
+fn geometry_fill(geometries: &Vec<GeomTypes>, depth: f32, opts: FillOptions) -> Vec<f32> {
     let mut tessellator = FillTessellator::new();
-    let mut output: VertexBuffers<(f32, f32), u16> = VertexBuffers::new();
-    let mut vertex_builder = BuffersBuilder::new(&mut output, LyonVertex);
+    let mut output_buffer: VertexBuffers<Point, u16> = VertexBuffers::new();
+    let mut vertex_builder = simple_builder(&mut output_buffer);
 
     for g in geometries {
         match g {
             GeomTypes::Path(p) => {
                 let _result = tessellator
-                    .tessellate_path(p.iter(), &opts, &mut vertex_builder)
+                    .tessellate_path(p, &opts, &mut vertex_builder)
                     .unwrap();
             }
             GeomTypes::Circle { x, y, radius } => {
@@ -384,7 +403,8 @@ fn geometry_fill(geometries: &Vec<GeomTypes>, opts: FillOptions) -> Vec<f32> {
                 fill_rectangle(&rect(*x, *y, *width, *height), &opts, &mut vertex_builder).unwrap();
             }
             GeomTypes::Triangle { p1, p2, p3 } => {
-                fill_triangle(*p1, *p2, *p3, &opts, &mut vertex_builder).unwrap();
+                unimplemented!()
+                // fill_triangle(*p1, *p2, *p3, &opts, &mut vertex_builder).unwrap();
             }
             GeomTypes::RoundedRect {
                 x,
@@ -409,29 +429,15 @@ fn geometry_fill(geometries: &Vec<GeomTypes>, opts: FillOptions) -> Vec<f32> {
         }
     }
 
-    lyon_vbuff_to_vertex(output)
+    vertex_buffer_as_vec(output_buffer, depth)
 }
 
-// The vertex constructor. This is the object that will be used to create the custom
-// vertices from the information provided by the tessellators.
-pub struct LyonVertex;
-impl tess::VertexConstructor<tess::StrokeVertex, (f32, f32)> for LyonVertex {
-    fn new_vertex(&mut self, vertex: tess::StrokeVertex) -> (f32, f32) {
-        (vertex.position.x, vertex.position.y)
-    }
-}
-
-impl tess::VertexConstructor<tess::FillVertex, (f32, f32)> for LyonVertex {
-    fn new_vertex(&mut self, vertex: tess::FillVertex) -> (f32, f32) {
-        (vertex.position.x, vertex.position.y)
-    }
-}
-
-pub fn lyon_vbuff_to_vertex(buff: VertexBuffers<(f32, f32), u16>) -> Vec<f32> {
+pub fn vertex_buffer_as_vec(buff: VertexBuffers<Point, u16>, depth: f32) -> Vec<f32> {
     buff.indices.iter().fold(vec![], |mut acc, v| {
         let v = *v as usize;
-        acc.push(buff.vertices[v].0);
-        acc.push(buff.vertices[v].1);
+        acc.push(buff.vertices[v].x);
+        acc.push(buff.vertices[v].y);
+        acc.push(depth);
         acc
     })
 }
