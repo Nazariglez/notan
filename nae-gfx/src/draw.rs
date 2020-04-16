@@ -265,18 +265,18 @@ struct DrawData<'data> {
 }
 
 //TODO https://www.gamedev.net/forums/topic/613184-what-is-the-vertex-limit-number-of-gldrawarrays/
-const MAX_ARRAY_LEN: usize = 65535; //std::u16::MAX as usize;
+const MAX_VERTICES: usize = 9360; //This number should be multiple of 3 -> : 9360 * 7 = 65520
 
 // https://github.com/rustwasm/wasm-bindgen/issues/1389
 // WASM32 uses vec because the initial memory is too low for a big array
 #[cfg(not(target_arch = "wasm32"))]
-type VERTICES = [f32; MAX_ARRAY_LEN];
+type VERTICES = [f32; MAX_VERTICES * 7];
 
 #[cfg(target_arch = "wasm32")]
 type VERTICES = Vec<f32>;
 
 #[cfg(not(target_arch = "wasm32"))]
-type INDICES = [u32; MAX_ARRAY_LEN / 7];
+type INDICES = [u32; MAX_VERTICES];
 
 #[cfg(target_arch = "wasm32")]
 type INDICES = Vec<u32>;
@@ -320,16 +320,16 @@ impl ColorBatcher {
         let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic)?;
 
         #[cfg(not(target_arch = "wasm32"))]
-        let vertices = [0.0; MAX_ARRAY_LEN];
+        let vertices = [0.0; MAX_VERTICES * 7];
 
         #[cfg(target_arch = "wasm32")]
-        let vertices = vec![0.0; MAX_ARRAY_LEN];
+        let vertices = vec![0.0; MAX_VERTICES * 7];
 
         #[cfg(not(target_arch = "wasm32"))]
-        let indices = [0; MAX_ARRAY_LEN / 7];
+        let indices = [0; MAX_VERTICES];
 
         #[cfg(target_arch = "wasm32")]
-        let indices = vec![0; MAX_ARRAY_LEN / 7];
+        let indices = vec![0; MAX_VERTICES];
 
         Ok(Self {
             pipeline,
@@ -344,34 +344,31 @@ impl ColorBatcher {
 
     fn push_data(&mut self, gfx: &mut Graphics, data: DrawData) {
         // Check if the batch is bigger than the max_vertices allowed and split it
-        println!("# {} {}", data.indices.len(), data.max_vertices);
         if data.indices.len() > self.indices.len() {
-            let iterations = data.indices.len() / data.max_vertices;
-            for i in 0..iterations + 1 {
+            let mut indices = [0; MAX_VERTICES];
+            let iterations = (data.indices.len() / self.indices.len()) + 1;
+
+            for i in 0..iterations {
                 let start = i * self.indices.len();
-                let end = (start + (self.indices.len() - 1)).min(data.indices.len() - 1);
-                println!(
-                    "start: {} - end: {}, len: {}",
-                    start,
-                    end,
-                    data.indices.len()
-                );
+                let end = (start + self.indices.len()).min(data.indices.len());
+                for (i, v) in (start..end).enumerate() {
+                    indices[i] = (v - start) as u32;
+                }
+
                 self.push_vertices(
-                    &data.indices[start..end],
-                    &data.vertices[start..end],
+                    &indices[0..end - start],
+                    &data.vertices[start * 3..end * 3],
                     &data.color,
                     data.matrix,
                     data.alpha,
                 );
                 self.flush(gfx, data.projection);
             }
-
             return;
         }
 
         // Flush if we reach the end of this batch
         let next_index = self.index + data.indices.len();
-        println!("$$ {} {}", next_index, self.indices.len());
         if next_index >= self.indices.len() {
             self.flush(gfx, data.projection);
         }
@@ -400,24 +397,23 @@ impl ColorBatcher {
         matrix: &Matrix4,
         alpha: f32,
     ) {
-        println!(" - - {} - - {} - - ", indices.len(), self.indices.len());
         for (i, index) in indices.iter().enumerate() {
-            // println!("{} {} wtf... {}", index, i, self.indices.len());
             self.indices[self.index + i] = self.index as u32 + *index;
         }
 
         let offset = self.vbo.offset();
         let [r, g, b, a] = color.to_rgba();
         let mut index_offset = self.index * offset;
+
         for (i, _) in vertices.iter().enumerate().step_by(3) {
-            let pos = matrix4_mul_vector4(
+            let [x, y, z, _] = matrix4_mul_vector4(
                 matrix,
                 &[vertices[i + 0], vertices[i + 1], vertices[i + 2], 1.0],
             );
 
-            self.vertices[index_offset + 0] = pos[0];
-            self.vertices[index_offset + 1] = pos[1];
-            self.vertices[index_offset + 2] = pos[2];
+            self.vertices[index_offset + 0] = x;
+            self.vertices[index_offset + 1] = y;
+            self.vertices[index_offset + 2] = z;
             self.vertices[index_offset + 3] = r;
             self.vertices[index_offset + 4] = g;
             self.vertices[index_offset + 5] = b;
