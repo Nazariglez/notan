@@ -1,3 +1,4 @@
+mod batchers;
 mod draw;
 mod matrix;
 mod uniform;

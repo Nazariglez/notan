@@ -11,7 +11,9 @@ use tess::{
 };
 
 use lyon::lyon_tessellation::geometry_builder::simple_builder;
-use lyon::lyon_tessellation::{FillAttributes, StrokeAttributes, GeometryBuilder, BasicGeometryBuilder};
+use lyon::lyon_tessellation::{
+    BasicGeometryBuilder, FillAttributes, GeometryBuilder, StrokeAttributes,
+};
 pub use tess::{LineCap, LineJoin};
 
 /// Options to fill a path
