@@ -345,26 +345,7 @@ impl ColorBatcher {
     fn push_data(&mut self, gfx: &mut Graphics, data: DrawData) {
         // Check if the batch is bigger than the max_vertices allowed and split it
         if data.indices.len() > self.indices.len() {
-            let mut indices = [0; MAX_VERTICES];
-            let iterations = (data.indices.len() / self.indices.len()) + 1;
-
-            for i in 0..iterations {
-                let start = i * self.indices.len();
-                let end = (start + self.indices.len()).min(data.indices.len());
-                for (i, v) in (start..end).enumerate() {
-                    indices[i] = (v - start) as u32;
-                }
-
-                self.push_vertices(
-                    &indices[0..end - start],
-                    &data.vertices[start * 3..end * 3],
-                    &data.color,
-                    data.matrix,
-                    data.alpha,
-                );
-                self.flush(gfx, data.projection);
-            }
-            return;
+            return self.split_batch(gfx, data);
         }
 
         // Flush if we reach the end of this batch
@@ -387,6 +368,31 @@ impl ColorBatcher {
             data.matrix,
             data.alpha,
         );
+    }
+
+    fn split_batch(&mut self, gfx: &mut Graphics, data: DrawData) {
+        // TODO this doesn't care about indices...
+
+        let mut indices = [0; MAX_VERTICES];
+        let iterations = (data.indices.len() / self.indices.len()) + 1;
+
+        for i in 0..iterations {
+            let start = i * self.indices.len();
+            let end = (start + self.indices.len()).min(data.indices.len());
+            for (i, v) in (start..end).enumerate() {
+                indices[i] = (v - start) as u32;
+            }
+
+            self.push_vertices(
+                &indices[0..end - start],
+                &data.vertices[start*3..end*3],
+                &data.color,
+                data.matrix,
+                data.alpha,
+            );
+
+            self.flush(gfx, data.projection);
+        }
     }
 
     fn push_vertices(

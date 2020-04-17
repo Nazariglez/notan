@@ -11,7 +11,7 @@ use tess::{
 };
 
 use lyon::lyon_tessellation::geometry_builder::simple_builder;
-use lyon::lyon_tessellation::{FillAttributes, StrokeAttributes};
+use lyon::lyon_tessellation::{FillAttributes, StrokeAttributes, GeometryBuilder, BasicGeometryBuilder};
 pub use tess::{LineCap, LineJoin};
 
 /// Options to fill a path
@@ -403,8 +403,12 @@ fn geometry_fill(geometries: &Vec<GeomTypes>, depth: f32, opts: FillOptions) -> 
                 fill_rectangle(&rect(*x, *y, *width, *height), &opts, &mut vertex_builder).unwrap();
             }
             GeomTypes::Triangle { p1, p2, p3 } => {
-                unimplemented!()
-                // fill_triangle(*p1, *p2, *p3, &opts, &mut vertex_builder).unwrap();
+                vertex_builder.begin_geometry();
+                let a = vertex_builder.add_vertex(*p1).unwrap();
+                let b = vertex_builder.add_vertex(*p2).unwrap();
+                let c = vertex_builder.add_vertex(*p3).unwrap();
+                vertex_builder.add_triangle(a, b, c);
+                vertex_builder.end_geometry();
             }
             GeomTypes::RoundedRect {
                 x,
@@ -432,6 +436,7 @@ fn geometry_fill(geometries: &Vec<GeomTypes>, depth: f32, opts: FillOptions) -> 
     vertex_buffer_as_vec(output_buffer, depth)
 }
 
+// TODO Geometry should return the indices and the vertices not this vertex array (Bathcer should work better splitting batch with indices)
 pub fn vertex_buffer_as_vec(buff: VertexBuffers<Point, u16>, depth: f32) -> Vec<f32> {
     buff.indices.iter().fold(vec![], |mut acc, v| {
         let v = *v as usize;
