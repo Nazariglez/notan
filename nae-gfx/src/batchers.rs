@@ -17,7 +17,7 @@ type INDICES = Vec<u32>;
 
 use crate::{
     matrix4_mul_vector4, DrawData, Graphics, IndexBuffer, Matrix4, Pipeline, Shader, Uniform,
-    VertexAttr, VertexBuffer, VertexFormat, SHADER_COLOR_FRAG, SHADER_COLOR_VERTEX,
+    VertexAttr, VertexBuffer, VertexFormat,
 };
 use nae_core::{log, BaseGfx, BasePipeline, BlendMode, Color, DrawUsage, PipelineOptions};
 
@@ -34,7 +34,7 @@ pub(crate) struct ColorBatcher {
 
 impl ColorBatcher {
     pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
-        let shader = Shader::new(gfx, SHADER_COLOR_VERTEX, SHADER_COLOR_FRAG)?;
+        let shader = Shader::new(gfx, Shader::COLOR_VERTEX, Shader::COLOR_FRAG)?;
         let pipeline = Pipeline::new(
             gfx,
             &shader,
