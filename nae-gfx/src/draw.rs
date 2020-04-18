@@ -13,9 +13,6 @@ use crate::{
 use std::cell::RefMut;
 use std::convert::TryInto;
 
-pub const SHADER_COLOR_VERTEX: &'static [u8] = include_bytes!("./shaders/color.vert.spv");
-pub const SHADER_COLOR_FRAG: &'static [u8] = include_bytes!("./shaders/color.frag.spv");
-
 pub struct Draw {
     pub gfx: Graphics,
     pub depth: f32,
