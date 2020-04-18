@@ -21,6 +21,17 @@ use crate::{
 };
 use nae_core::{log, BaseGfx, BasePipeline, BlendMode, Color, DrawUsage, PipelineOptions};
 
+/// Image batcher
+pub(crate) struct ImageBatcher {
+    pipeline: Pipeline,
+    vbo: VertexBuffer,
+    ibo: IndexBuffer,
+    vertices: VERTICES,
+    indices: INDICES,
+    matrix_loc: Uniform,
+    index: usize,
+}
+
 /// Color batcher
 pub(crate) struct ColorBatcher {
     pipeline: Pipeline,
