@@ -16,8 +16,8 @@ fn init(app: &mut App) -> State {
     let mut gfx = app.gfx();
     let shader = nae_gfx::Shader::new(
         &gfx,
-        include_bytes!("./assets/color.vert.spv"),
-        include_bytes!("./assets/color.frag.spv"),
+        include_bytes!("assets/shaders/color.vert.spv"),
+        include_bytes!("assets/shaders/color.frag.spv"),
     )
     .unwrap();
 

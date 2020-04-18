@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 pub type Matrix4 = [f32; 16];
 
 #[inline]
@@ -22,6 +24,24 @@ pub fn matrix4_orthogonal(
         0.0, 2.0 / tmb, 0.0, 0.0,
         0.0, 0.0, 2.0 / fmn, 0.0,
         -(rpl / rml), -(tpb / tmb), -(fpn / fmn), 1.0,
+    ];
+
+    matrix
+}
+
+#[inline]
+pub fn matrix4_perspective(fovy: f32, aspect: f32, z_near: f32, z_far: f32) -> Matrix4 {
+    let uh = 1.0 / (fovy / 2.0).tan();
+    let uw = uh / aspect;
+    let nmf = z_near - z_far;
+    let fpn = z_far + z_near;
+
+    #[rustfmt::skip]
+    let matrix = [
+        uw, 0.0, 0.0, 0.0,
+        0.0, uh, 0.0, 0.0,
+        0.0, 0.0, fpn / nmf, 2.0 * z_far * z_near / nmf,
+        0.0, 0.0, -1.0, 0.0
     ];
 
     matrix
@@ -157,4 +177,9 @@ pub fn matrix4_rotation_z(angle: f32) -> Matrix4 {
     ];
 
     matrix
+}
+
+#[inline]
+pub fn slice_to_matrix4(slice: &[f32]) -> &Matrix4 {
+    slice.try_into().unwrap()
 }
