@@ -1,1 +1,2 @@
-cd nae-shader && cargo run ../src/shaders
+cd nae-shader
+cargo run ../nae-gfx/src/shaders ../examples/assets/shaders
