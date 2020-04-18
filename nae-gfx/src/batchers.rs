@@ -177,7 +177,7 @@ impl ColorBatcher {
         gfx.set_pipeline(&self.pipeline);
         gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
         gfx.bind_index_buffer(&self.ibo, &self.indices);
-        gfx.bind_uniform(self.matrix_loc.clone(), projection);
+        gfx.bind_uniform(&self.matrix_loc, projection);
         gfx.draw(0, self.index as i32);
         self.index = 0;
     }

@@ -129,7 +129,7 @@ fn error_code_to_string(err: ErrorCode) -> String {
     }
 }
 
-// FUNCTION TAKED FROM GFX
+// FUNCTION TOOK FROM gfx.rs
 pub fn read_spirv<R: io::Read + io::Seek>(mut x: R) -> io::Result<Vec<u32>> {
     let size = x.seek(io::SeekFrom::End(0))?;
     if size % 4 != 0 {

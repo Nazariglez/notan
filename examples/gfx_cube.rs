@@ -10,6 +10,7 @@ struct State {
     indices: [u32; 36],
     rx: f32,
     ry: f32,
+    mvp_location: Uniform,
     mvp: glm::Mat4,
 }
 
@@ -35,6 +36,9 @@ fn init(app: &mut App) -> State {
             ..Default::default()
         },
     );
+
+    let mvp_location = pipeline.uniform_location("u_matrix");
+
     let vertex_buffer = VertexBuffer::new(
         &gfx,
         &[
@@ -111,6 +115,7 @@ fn init(app: &mut App) -> State {
         pipeline,
         vertex_buffer,
         index_buffer,
+        mvp_location,
         vertices,
         clear,
         indices,
@@ -126,7 +131,7 @@ fn draw(app: &mut App, state: &mut State) {
     let mut gfx = app.gfx();
     gfx.begin(&state.clear);
     gfx.set_pipeline(&state.pipeline);
-    gfx.bind_uniform(0, slice_to_matrix4(mvp.as_slice()));
+    gfx.bind_uniform(&state.mvp_location, slice_to_matrix4(mvp.as_slice()));
     gfx.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
     gfx.bind_index_buffer(&state.index_buffer, &state.indices);
     gfx.draw(0, state.indices.len() as i32);
