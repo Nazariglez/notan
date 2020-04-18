@@ -312,27 +312,19 @@ impl Graphics {
 
     pub fn bind_uniform(
         &mut self,
-        location: <Graphics as BaseGfx>::Location,
+        location: &<Graphics as BaseGfx>::Location,
         value: &UniformValue<Graphics = Self>,
     ) {
         debug_assert!(
             self.pipeline_in_use,
             "A pipeline should be set before bind uniforms"
         );
-        value.bind_uniform(self, to_uniform_location(location));
+        value.bind_uniform(self, location.clone());
     }
 
     pub fn draw_calls(&self) -> u32 {
         self.last_pass_draw_calls
     }
-}
-
-fn to_uniform_location(loc: Uniform) -> Uniform {
-    /*#[cfg(target_arch = "wasm32")]
-    return web_sys::WebGlUniformLocation::new(loc);
-
-    #[cfg(not(target_arch = "wasm32"))]*/
-    return loc;
 }
 
 impl BaseGfx for Graphics {
@@ -392,11 +384,11 @@ impl BaseGfx for Graphics {
         }
     }
 
-    fn bind_texture(&mut self, location: Self::Location, tex: TextureKey) {
+    fn bind_texture(&mut self, location: &Self::Location, tex: TextureKey) {
         self.bind_texture_slot(0, location, tex);
     }
 
-    fn bind_texture_slot(&mut self, slot: u32, location: Self::Location, tex: TextureKey) {
+    fn bind_texture_slot(&mut self, slot: u32, location: &Self::Location, tex: TextureKey) {
         unsafe {
             let gl_slot = match slot {
                 0 => glow::TEXTURE0,

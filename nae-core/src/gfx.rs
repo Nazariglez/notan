@@ -251,8 +251,8 @@ where
     fn set_size(&mut self, width: f32, height: f32);
     fn viewport(&mut self, x: f32, y: f32, width: f32, height: f32);
     fn begin(&mut self, clear: &ClearOptions);
-    fn bind_texture(&mut self, location: Self::Location, texture: Self::Texture);
-    fn bind_texture_slot(&mut self, slot: u32, location: Self::Location, texture: Self::Texture);
+    fn bind_texture(&mut self, location: &Self::Location, texture: Self::Texture);
+    fn bind_texture_slot(&mut self, slot: u32, location: &Self::Location, texture: Self::Texture);
     fn end(&mut self);
     fn set_pipeline(&mut self, pipeline: &BasePipeline<Graphics = Self>);
     fn bind_vertex_buffer(&mut self, buffer: &BaseVertexBuffer<Graphics = Self>, data: &[f32]);
