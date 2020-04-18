@@ -38,6 +38,9 @@ members = [
     "nae-shader"
 ]
 
+[dev-dependencies]
+nalgebra-glm = "0.4.2"
+
 [profile.release]
 lto = true
 
