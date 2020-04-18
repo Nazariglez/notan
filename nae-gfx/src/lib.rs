@@ -1,6 +1,7 @@
 mod batchers;
 mod draw;
 mod matrix;
+mod shapes;
 mod uniform;
 
 use crate::shader::{BufferKey, InnerShader};

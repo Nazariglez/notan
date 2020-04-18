@@ -4,6 +4,7 @@ use nae_core::{
 };
 
 use crate::batchers::ColorBatcher;
+use crate::shapes::ShapeTessellator;
 use crate::{
     matrix4_identity, matrix4_mul_matrix4, matrix4_mul_vector4, matrix4_orthogonal, Device,
     Graphics, IndexBuffer, Matrix4, Pipeline, Shader, Uniform, VertexAttr, VertexBuffer,
@@ -30,6 +31,7 @@ pub struct Draw {
     color_batcher: ColorBatcher,
     max_vertices: usize,
     current_mode: PaintMode,
+    shapes: ShapeTessellator,
 }
 
 impl Draw {
@@ -58,6 +60,7 @@ impl Draw {
             matrix: None,
             projection: None,
             render_projection,
+            shapes: ShapeTessellator::new(),
         })
     }
 
@@ -158,7 +161,11 @@ impl Draw {
         line_width: f32,
     ) {
         paint_mode(self, PaintMode::Color);
-        // TODO
+        let (vertices, indices) = self
+            .shapes
+            .stroke_triangle(x1, y1, x2, y2, x3, y3, line_width, self.depth);
+
+        draw_color(self, &vertices, &indices, None);
     }
 
     pub fn triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
