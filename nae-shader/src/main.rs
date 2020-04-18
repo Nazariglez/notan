@@ -1,21 +1,22 @@
-use shaderc::{GlslProfile, OptimizationLevel, TargetEnv};
+use shaderc::TargetEnv;
 use std::env;
 use std::error::Error;
-use std::io::Read;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    match args.get(1) {
-        Some(directory) => {
-            if let Err(e) = compile_shaders(directory) {
-                println!("Error: {}", e);
-            }
+    if args.len() == 1 {
+        println!("Should pass a directory as first argument");
+        return;
+    }
+
+    for directory in args.iter().skip(1) {
+        if let Err(e) = compile_shaders(directory) {
+            println!("Error: {}", e);
         }
-        _ => println!("Should pass a directory as first argument"),
     }
 }
 
-fn compile_shaders(directory: &str) -> Result<(), Box<Error>> {
+fn compile_shaders(directory: &str) -> Result<(), Box<dyn Error>> {
     let mut compiler = shaderc::Compiler::new().unwrap();
     let mut options = shaderc::CompileOptions::new().unwrap();
     options.set_target_env(TargetEnv::OpenGL, 0);
