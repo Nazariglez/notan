@@ -8,7 +8,8 @@ struct State {
     clear: ClearOptions,
     vertices: [f32; 168],
     indices: [u32; 36],
-    rotation: (f32, f32),
+    rx: f32,
+    ry: f32,
     mvp: glm::Mat4,
 }
 
@@ -113,7 +114,8 @@ fn init(app: &mut App) -> State {
         vertices,
         clear,
         indices,
-        rotation: (0.0, 0.0),
+        rx: 0.0,
+        ry: 0.0,
         mvp,
     }
 }
@@ -132,10 +134,10 @@ fn draw(app: &mut App, state: &mut State) {
 }
 
 fn rotate_matrix(state: &mut State) -> glm::Mat4 {
-    let (ref mut rx, ref mut ry) = state.rotation;
-    *rx += 0.01;
-    *ry += 0.01;
-    let rmx = glm::rotate_x(&state.mvp, *rx);
-    let mvp = glm::rotate_y(&rmx, *ry);
+    state.rx += 0.01;
+    state.ry += 0.01;
+    let rmx = glm::rotate_x(&state.mvp, state.rx);
+    let mvp = glm::rotate_y(&rmx, state.ry);
+
     mvp
 }
