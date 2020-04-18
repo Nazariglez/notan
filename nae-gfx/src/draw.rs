@@ -186,8 +186,11 @@ impl Draw {
 
     pub fn stroke_rect(&mut self, x: f32, y: f32, width: f32, height: f32, line_width: f32) {
         paint_mode(self, PaintMode::Color);
+        let (vertices, indices) = self
+            .shapes
+            .stroke_rect(x, y, width, height, line_width, self.depth);
 
-        // TODO
+        draw_color(self, &vertices, &indices, None);
     }
 
     pub fn rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
@@ -208,6 +211,54 @@ impl Draw {
             &[0, 1, 2, 2, 1, 3],
             None
         );
+    }
+
+    pub fn stroke_circle(&mut self, x: f32, y: f32, radius: f32, line_width: f32) {
+        paint_mode(self, PaintMode::Color);
+        let (vertices, indices) = self
+            .shapes
+            .stroke_circle(x, y, radius, line_width, self.depth);
+
+        draw_color(self, &vertices, &indices, None);
+    }
+
+    pub fn circle(&mut self, x: f32, y: f32, radius: f32) {
+        paint_mode(self, PaintMode::Color);
+        let (vertices, indices) = self.shapes.circle(x, y, radius, self.depth);
+
+        draw_color(self, &vertices, &indices, None);
+    }
+
+    pub fn rounded_rect(&mut self, x: f32, y: f32, width: f32, height: f32, corner_radius: f32) {
+        paint_mode(self, PaintMode::Color);
+        let (vertices, indices) =
+            self.shapes
+                .rounded_rect(x, y, width, height, corner_radius, self.depth);
+
+        draw_color(self, &vertices, &indices, None);
+    }
+
+    pub fn stroke_rounded_rect(
+        &mut self,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        corner_radius: f32,
+        line_width: f32,
+    ) {
+        paint_mode(self, PaintMode::Color);
+        let (vertices, indices) = self.shapes.stroke_rounded_rect(
+            x,
+            y,
+            width,
+            height,
+            line_width,
+            corner_radius,
+            self.depth,
+        );
+
+        draw_color(self, &vertices, &indices, None);
     }
 }
 
