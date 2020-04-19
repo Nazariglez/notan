@@ -27,3 +27,11 @@ pub fn projection_2d(width: i32, height: i32, flipped: bool, dpi: f32) -> Mat3 {
 
     glm::translate2d(&ortho, &translate)
 }
+
+#[derive(Default, Clone)]
+pub struct Rect {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+}
