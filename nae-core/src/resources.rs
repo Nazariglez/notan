@@ -1,5 +1,7 @@
 use crate::gfx::BaseContext2d;
 use crate::{BaseApp, BaseSystem};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 /// Represent a resource
 pub trait Resource {
