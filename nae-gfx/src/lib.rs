@@ -2,7 +2,7 @@ mod batchers;
 mod draw;
 mod matrix;
 mod shapes;
-mod texture;
+pub mod texture;
 mod uniform;
 
 use crate::shader::{BufferKey, InnerShader};
@@ -11,6 +11,7 @@ pub use draw::*;
 use glow::{Context, HasContext, DEPTH_TEST};
 pub use matrix::*;
 pub use uniform::*;
+// pub use texture::*;
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
 use glutin::event::{Event, WindowEvent};
@@ -330,7 +331,7 @@ impl Graphics {
 
 impl BaseGfx for Graphics {
     type Location = Uniform;
-    type Texture = TextureKey;
+    type Texture = texture::Texture;
 
     fn size(&self) -> (f32, f32) {
         (self.width, self.height)
@@ -385,11 +386,11 @@ impl BaseGfx for Graphics {
         }
     }
 
-    fn bind_texture(&mut self, location: &Self::Location, tex: TextureKey) {
+    fn bind_texture(&mut self, location: &Self::Location, tex: &texture::Texture) {
         self.bind_texture_slot(0, location, tex);
     }
 
-    fn bind_texture_slot(&mut self, slot: u32, location: &Self::Location, tex: TextureKey) {
+    fn bind_texture_slot(&mut self, slot: u32, location: &Self::Location, tex: &texture::Texture) {
         unsafe {
             let gl_slot = match slot {
                 0 => glow::TEXTURE0,
@@ -404,7 +405,7 @@ impl BaseGfx for Graphics {
             };
 
             self.gl.active_texture(gl_slot);
-            self.gl.bind_texture(glow::TEXTURE_2D, Some(tex));
+            self.gl.bind_texture(glow::TEXTURE_2D, tex.raw());
             self.bind_uniform(location, &(slot as i32));
         }
     }
