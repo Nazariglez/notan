@@ -1,166 +1,14 @@
-use futures::{Async, Future};
 use nae::prelude::*;
-use std::cell::RefCell;
-use std::rc::Rc;
-use futures::future::err;
 
 struct State {
-    loader: AppLoader,
-    ta: Option<TA>,
-    tt: Option<TT>,
-}
-
-struct ResSignal {
-    inner: Rc<RefCell<ResParser>>,
-    fut: Box<dyn Future<Item = Vec<u8>, Error = String>>,
-    file: String,
-}
-
-impl ResSignal {
-    fn new(
-        file: &str,
-        inner: Rc<RefCell<ResParser>>,
-    ) -> ResSignal {
-        ResSignal {
-            inner,
-            fut: Box::new(load_file(file)),
-            file: file.to_string()
-        }
-    }
-}
-
-trait Res {
-    fn from_file(app: &mut AppLoader, file: &str) -> Self;
-}
-
-trait ResInner: ResParser
-where
-    Self: Sized + 'static,
-{
-    fn new(file: &str) -> Self;
-    fn from_file(app: &mut AppLoader, file: &str) -> Rc<RefCell<Self>> {
-        app.load_inner_resource(file)
-    }
-}
-
-trait ResParser {
-    fn parse(&mut self, data: Vec<u8>) -> Result<(), String>;
-}
-
-struct AppLoader {
-    queue: Vec<ResSignal>,
-}
-
-impl AppLoader {
-    fn new() -> Self {
-        Self { queue: vec![] }
-    }
-
-    fn load_inner_resource<T: ResInner + 'static>(&mut self, file: &str) -> Rc<RefCell<T>>{
-        let inner = Rc::new(RefCell::new(T::new(file)));
-        let signal = ResSignal::new(file, inner.clone());
-        self.queue.push(signal);
-        inner
-    }
-
-    fn try_load(&mut self) -> Result<(), Vec<String>> {
-        if self.queue.len() == 0 {
-            return Ok(());
-        }
-
-        let mut queue = vec![];
-        let mut errors = vec![];
-
-        while let Some(mut res) = self.queue.pop() {
-            match res.fut.poll() {
-                Ok(state) => match state {
-                    Async::Ready(buff) => {
-                        println!("Loaded file: {}", res.file);
-                        res.inner.borrow_mut().parse(buff);
-                    }
-                    _ => {
-                        queue.push(res);
-                    }
-                }
-                Err(e) => {
-                    println!("Error loading file: {} -> {}", res.file, e);
-                    errors.push(e);
-                }
-            }
-        }
-
-        self.queue = queue;
-
-        if errors.len() != 0 {
-            return Err(errors);
-        }
-
-        Ok(())
-    }
-}
-
-struct InnerTT;
-impl ResParser for InnerTT {
-    fn parse(&mut self, data: Vec<u8>) -> Result<(), String> {
-        println!("here... {:?}", data.len());
-        Ok(())
-    }
-}
-
-impl ResInner for InnerTT {
-    fn new(file: &str) -> Self {
-        InnerTT
-    }
-}
-
-impl Drop for InnerTT {
-    fn drop(&mut self) {
-        println!("ok tt dropped...");
-    }
-}
-
-impl Drop for InnerTA {
-    fn drop(&mut self) {
-        println!("ok ta dropped...");
-    }
-}
-
-struct TT {
-    inner: Rc<RefCell<InnerTT>>
-}
-
-impl Res for TT {
-    fn from_file(app: &mut AppLoader, file: &str) -> Self {
-        Self {
-            inner: InnerTT::from_file(app, file)
-        }
-    }
-}
-
-struct InnerTA;
-impl ResParser for InnerTA {
-    fn parse(&mut self, data: Vec<u8>) -> Result<(), String> {
-        println!("here... {:?}", data.len());
-        Ok(())
-    }
-}
-
-impl ResInner for InnerTA {
-    fn new(file: &str) -> Self {
-        InnerTA
-    }
-}
-
-struct TA {
-    inner: Rc<RefCell<InnerTA>>
-}
-
-impl Res for TA {
-    fn from_file(app: &mut AppLoader, file: &str) -> Self {
-        Self {
-            inner: InnerTA::from_file(app, file)
-        }
-    }
+    texture: nae_gfx::texture::Texture,
+    pipeline: Pipeline,
+    vertex_buffer: VertexBuffer,
+    index_buffer: IndexBuffer,
+    vertices: [f32; 20],
+    indices: [u32; 6],
+    tex_location: Uniform,
+    clear: ClearOptions,
 }
 
 #[nae::main]
@@ -169,27 +17,79 @@ fn main() {
 }
 
 fn init(app: &mut App) -> State {
-    let mut loader = AppLoader::new();
-    let tt = TT::from_file(&mut loader, "./examples/assets/rust.png");
-    let ta = TA::from_file(&mut loader, "./examples/assets/rust.png");
+    let texture =
+        nae_gfx::texture::Texture::from_bytes(app, include_bytes!("./assets/ferris.png")).unwrap();
+
+    let mut gfx = app.gfx();
+    let shader = nae_gfx::Shader::new(
+        &gfx,
+        include_bytes!("./assets/shaders/image.vert.spv"),
+        include_bytes!("./assets/shaders/image.frag.spv"),
+    )
+    .unwrap();
+
+    let pipeline = Pipeline::new(
+        &gfx,
+        &shader,
+        PipelineOptions {
+            color_blend: Some(BlendMode::NORMAL),
+            ..Default::default()
+        },
+    );
+
+    let tex_location = pipeline.uniform_location("u_texture");
+
+    let vertex_buffer = VertexBuffer::new(
+        &gfx,
+        &[
+            VertexAttr::new(0, VertexFormat::Float3),
+            VertexAttr::new(1, VertexFormat::Float2),
+        ],
+        DrawUsage::Dynamic,
+    )
+    .unwrap();
+
+    let index_buffer = IndexBuffer::new(&gfx, DrawUsage::Dynamic).unwrap();
+
+    let clear = ClearOptions {
+        color: Some(Color::new(0.1, 0.2, 0.3, 1.0)),
+        ..Default::default()
+    };
+
+    #[rustfmt::skip]
+    let vertices = [
+        //pos               //coords
+        0.5,  0.5, 0.0,     1.0, 1.0,
+        0.5, -0.5, 0.0,     1.0, 0.0,
+        -0.5, -0.5, 0.0,    0.0, 0.0,
+        -0.5,  0.5, 0.0,    0.0, 1.0
+    ];
+
+    #[rustfmt::skip]
+    let indices = [
+        0, 1, 3,
+        1, 2, 3,
+    ];
 
     State {
-        ta: Some(ta),
-        tt: None,
-        // ta, tt,
-        loader
+        texture,
+        vertex_buffer,
+        index_buffer,
+        vertices,
+        indices,
+        pipeline,
+        clear,
+        tex_location,
     }
 }
 
 fn draw(app: &mut App, state: &mut State) {
-    state.loader.try_load();
-
-    // let _ = state.ta.take();
-    // if let Some(ta) = &state.ta {
-    //
-    // }
-
-    let draw = app.draw2();
-    draw.begin(Color::BLUE);
-    draw.end();
+    let mut gfx = app.gfx();
+    gfx.begin(&state.clear);
+    gfx.set_pipeline(&state.pipeline);
+    gfx.bind_texture(&state.tex_location, &state.texture);
+    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
+    gfx.bind_index_buffer(&state.index_buffer, &state.indices);
+    gfx.draw(0, state.indices.len() as _);
+    gfx.end();
 }
