@@ -466,14 +466,14 @@ fn create_texture(app: &mut App) -> Texture {
     draw.rect(0.0, 0.0, tile_size, tile_size);
     draw.set_color(Color::BLACK);
     draw.stroke_rect(2.0, 2.0, tile_size - 4.0, tile_size - 4.0, 4.0);
-    draw.set_color(hex(0xc0c0c0ff));
+    draw.set_color(Color::from_hex(0xc0c0c0ff));
     draw.rect(
         tile_size * 0.3,
         tile_size * 0.3,
         tile_size * 0.4,
         tile_size * 0.4,
     );
-    draw.set_color(hex(0x5a5a5ff));
+    draw.set_color(Color::from_hex(0x5a5a5ff));
     draw.stroke_rect(
         tile_size * 0.3 + 1.0,
         tile_size * 0.3 + 1.0,

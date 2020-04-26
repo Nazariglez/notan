@@ -149,6 +149,7 @@ pub(crate) type GlContext = Rc<Context>;
 pub struct Graphics {
     pub(crate) gl: GlContext,
     pub(crate) gfx_api: GraphicsAPI,
+    index_type: u32,
     pipeline_in_use: bool,
     indices_in_use: bool,
     width: f32,
@@ -200,6 +201,8 @@ fn create_webgl_context(win: &web_sys::HtmlCanvasElement) -> Result<GlContext, S
         .unwrap()
         .dyn_into::<web_sys::WebGlRenderingContext>()
         .unwrap();
+
+    //TODO call extensions here?
 
     let ctx = Rc::new(glow::Context::from_webgl1_context(gl));
     Ok(ctx)
@@ -296,6 +299,12 @@ impl Graphics {
     pub fn new(device: &Device) -> Result<Self, String> {
         let info = get_device_info(device)?; //TODO return webgl driver
         let gl = info.ctx.clone();
+
+        let index_type = match info.api {
+            GraphicsAPI::WebGl => glow::UNSIGNED_SHORT,
+            _ => glow::UNSIGNED_INT,
+        };
+
         Ok(Self {
             gl,
             width: info.width as _,
@@ -306,6 +315,7 @@ impl Graphics {
             indices_in_use: false,
             draw_calls: 0,
             last_pass_draw_calls: 0,
+            index_type,
 
             #[cfg(feature = "sdl")]
             _sdl_gl: info._sdl_gl,
@@ -456,7 +466,7 @@ impl BaseGfx for Graphics {
         unsafe {
             if self.indices_in_use {
                 self.gl
-                    .draw_elements(glow::TRIANGLES, count, glow::UNSIGNED_INT, offset * 4);
+                    .draw_elements(glow::TRIANGLES, count, self.index_type, offset * 4);
             } else {
                 self.gl.draw_arrays(glow::TRIANGLES, offset, count);
             }

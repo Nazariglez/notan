@@ -3,8 +3,9 @@ use nae_core::{
     PipelineOptions,
 };
 
-use crate::batchers::ColorBatcher;
+use crate::batchers::{ColorBatcher, ImageBatcher};
 use crate::shapes::ShapeTessellator;
+use crate::texture::Texture;
 use crate::{
     matrix4_identity, matrix4_mul_matrix4, matrix4_mul_vector4, matrix4_orthogonal, Device,
     Graphics, IndexBuffer, Matrix4, Pipeline, Shader, Uniform, VertexAttr, VertexBuffer,
@@ -26,7 +27,7 @@ pub struct Draw {
     matrix_stack: Vec<Matrix4>,
     clear_options: ClearOptions,
     color_batcher: ColorBatcher,
-    max_vertices: usize,
+    image_batcher: ImageBatcher,
     current_mode: PaintMode,
     shapes: ShapeTessellator,
 }
@@ -35,10 +36,7 @@ impl Draw {
     pub fn new(device: &Device) -> Result<Self, String> {
         let mut gfx = Graphics::new(device)?;
         let color_batcher = ColorBatcher::new(&mut gfx)?;
-        let max_vertices = match gfx.api() {
-            GraphicsAPI::WebGl => std::u16::MAX as usize,
-            _ => std::u32::MAX as usize,
-        };
+        let image_batcher = ImageBatcher::new(&mut gfx)?;
 
         let (width, height) = gfx.size(); //TODO multiply for dpi
         let render_projection = matrix4_orthogonal(0.0, width, height, 0.0, -1.0, 1.0);
@@ -53,7 +51,7 @@ impl Draw {
             current_mode: PaintMode::None,
             matrix_stack: vec![matrix4_identity()],
             color_batcher,
-            max_vertices,
+            image_batcher,
             matrix: None,
             projection: None,
             render_projection,
@@ -257,6 +255,50 @@ impl Draw {
 
         draw_color(self, &vertices, &indices, None);
     }
+
+    pub fn image_ext(
+        &mut self,
+        img: &Texture,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        source_x: f32,
+        source_y: f32,
+        source_width: f32,
+        source_height: f32,
+    ) {
+        if !img.is_loaded() {
+            return;
+        }
+        
+        let x2 = x + width;
+        let y2 = y + height;
+
+        let frame = img.frame();
+        let base_width = img.base_width();
+        let base_height = img.base_height();
+
+
+
+        //http://webglstats.com/webgl/parameter/MAX_TEXTURE_IMAGE_UNITS
+        paint_mode(self, PaintMode::Image);
+
+        #[rustfmt::skip]
+        draw_image(
+            self,
+            img,
+            &[
+                x, y, self.depth,
+                x2, y, self.depth,
+                x, y2, self.depth,
+                x2, y2, self.depth,
+            ],
+            &[
+                0, 1, 2, 2, 1, 3
+            ]
+        );
+    }
 }
 
 fn flush(draw: &mut Draw) {
@@ -298,15 +340,17 @@ fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32], color: Option<
             blend: draw.blend_mode,
             color: color.unwrap_or(draw.color),
             alpha: draw.alpha,
-            max_vertices: draw.max_vertices,
         },
     );
 }
+
+fn draw_image(draw: &mut Draw, texture: &Texture, vertices: &[f32], indices: &[u32]) {}
 
 #[derive(Debug, PartialEq)]
 enum PaintMode {
     None,
     Color,
+    Image,
 }
 
 pub(crate) struct DrawData<'data> {
@@ -315,7 +359,6 @@ pub(crate) struct DrawData<'data> {
     pub color: Color,
     pub alpha: f32,
     pub blend: Option<BlendMode>,
-    pub max_vertices: usize,
     pub projection: &'data Matrix4,
     pub matrix: &'data Matrix4,
 }

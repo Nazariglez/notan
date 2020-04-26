@@ -9,5 +9,5 @@ layout(location = 0) out vec4 outColor;
 layout(location = 0) uniform sampler2D u_texture;
 
 void main() {
-    outColor = texture(u_texture, fract(v_texcoord)) * v_color;
+    outColor = texture(u_texture, v_texcoord) * v_color;
 }

@@ -46,6 +46,11 @@ pub struct Texture {
 }
 
 impl Texture {
+    /// Returns if the texture is ready to render
+    pub fn is_loaded(&self) -> bool {
+        self.inner.borrow().texture.is_some()
+    }
+
     /// Returns the current frame
     pub fn frame(&self) -> Rect {
         self.frame.clone().unwrap_or(self.inner.borrow().frame())
