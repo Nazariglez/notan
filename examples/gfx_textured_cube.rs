@@ -126,6 +126,7 @@ fn init(app: &mut App) -> State {
 
 fn draw(app: &mut App, state: &mut State) {
     let mvp = rotate_matrix(state);
+    let count = state.vertices.len() / state.vertex_buffer.offset();
 
     let mut gfx = app.gfx();
     gfx.begin(&state.clear);
@@ -133,7 +134,7 @@ fn draw(app: &mut App, state: &mut State) {
     gfx.bind_uniform(&state.mvp_location, slice_to_matrix4(mvp.as_slice()));
     gfx.bind_texture(&state.tex_location, &state.texture);
     gfx.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
-    gfx.draw(0, (state.vertices.len() / 3) as _);
+    gfx.draw(0, count as _);
     gfx.end();
 }
 
