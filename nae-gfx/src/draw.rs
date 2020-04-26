@@ -256,6 +256,10 @@ impl Draw {
         draw_color(self, &vertices, &indices, None);
     }
 
+    pub fn image(&mut self, img: &Texture, x: f32, y: f32) {
+        self.image_ext(img, x, y, img.width(), img.height(), 0.0, 0.0, 0.0, 0.0);
+    }
+
     pub fn image_ext(
         &mut self,
         img: &Texture,
@@ -271,15 +275,13 @@ impl Draw {
         if !img.is_loaded() {
             return;
         }
-        
+
         let x2 = x + width;
         let y2 = y + height;
 
         let frame = img.frame();
         let base_width = img.base_width();
         let base_height = img.base_height();
-
-
 
         //http://webglstats.com/webgl/parameter/MAX_TEXTURE_IMAGE_UNITS
         paint_mode(self, PaintMode::Image);
@@ -295,6 +297,12 @@ impl Draw {
                 x2, y2, self.depth,
             ],
             &[
+                0.0, 0.0,
+                1.0, 0.0,
+                0.0, 1.0,
+                1.0, 1.0
+            ],
+            &[
                 0, 1, 2, 2, 1, 3
             ]
         );
@@ -304,6 +312,13 @@ impl Draw {
 fn flush(draw: &mut Draw) {
     match draw.current_mode {
         PaintMode::Color => draw.color_batcher.flush(
+            &mut draw.gfx,
+            match &draw.projection {
+                Some(p) => p,
+                _ => &draw.render_projection,
+            },
+        ),
+        PaintMode::Image => draw.image_batcher.flush(
             &mut draw.gfx,
             match &draw.projection {
                 Some(p) => p,
@@ -344,7 +359,28 @@ fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32], color: Option<
     );
 }
 
-fn draw_image(draw: &mut Draw, texture: &Texture, vertices: &[f32], indices: &[u32]) {}
+fn draw_image(draw: &mut Draw, texture: &Texture, vertices: &[f32], uvs: &[f32], indices: &[u32]) {
+    draw.image_batcher.push_data(
+        &mut draw.gfx,
+        texture,
+        uvs,
+        DrawData {
+            vertices,
+            indices,
+            projection: match &draw.projection {
+                Some(p) => p,
+                _ => &draw.render_projection,
+            },
+            matrix: match &draw.matrix {
+                Some(p) => p,
+                _ => &draw.matrix_stack.last().as_ref().unwrap(),
+            },
+            blend: draw.blend_mode,
+            color: draw.color,
+            alpha: draw.alpha,
+        },
+    )
+}
 
 #[derive(Debug, PartialEq)]
 enum PaintMode {
