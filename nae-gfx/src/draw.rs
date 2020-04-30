@@ -260,6 +260,29 @@ impl Draw {
         self.image_ext(img, x, y, img.width(), img.height(), 0.0, 0.0, 0.0, 0.0);
     }
 
+    pub fn image_crop(
+        &mut self,
+        img: &Texture,
+        x: f32,
+        y: f32,
+        source_x: f32,
+        source_y: f32,
+        source_width: f32,
+        source_height: f32,
+    ) {
+        self.image_ext(
+            img,
+            x,
+            y,
+            source_width,
+            source_height,
+            source_x,
+            source_y,
+            source_width,
+            source_height,
+        );
+    }
+
     pub fn image_ext(
         &mut self,
         img: &Texture,
@@ -276,12 +299,37 @@ impl Draw {
             return;
         }
 
-        let x2 = x + width;
-        let y2 = y + height;
-
         let frame = img.frame();
         let base_width = img.base_width();
         let base_height = img.base_height();
+
+        let ww = if width == 0.0 {
+            frame.width //frame or base_width?
+        } else {
+            width
+        };
+        let hh = if height == 0.0 { frame.height } else { height };
+
+        let x2 = x + ww;
+        let y2 = y + hh;
+
+        let sx = frame.x + source_x;
+        let sy = frame.y + source_y;
+        let sw = if source_width == 0.0 {
+            frame.width
+        } else {
+            source_width
+        };
+        let sh = if source_height == 0.0 {
+            frame.height
+        } else {
+            source_height
+        };
+
+        let sx1 = sx / base_width;
+        let sy1 = sy / base_height;
+        let sx2 = (sx + sw) / base_width;
+        let sy2 = (sy + sh) / base_height;
 
         //http://webglstats.com/webgl/parameter/MAX_TEXTURE_IMAGE_UNITS
         paint_mode(self, PaintMode::Image);
@@ -297,14 +345,104 @@ impl Draw {
                 x2, y2, self.depth,
             ],
             &[
-                0.0, 0.0,
-                1.0, 0.0,
-                0.0, 1.0,
-                1.0, 1.0
+                sx1, sy1,
+                sx2, sy1,
+                sx1, sy2,
+                sx2, sy2
             ],
             &[
                 0, 1, 2, 2, 1, 3
             ]
+        );
+    }
+
+    pub fn image_9slice(&mut self, img: &Texture, x: f32, y: f32, width: f32, height: f32) {
+        let ww = img.width() / 3.0;
+        let hh = img.height() / 3.0;
+        self.image_9slice_ext(img, x, y, width, height, ww, ww, hh, hh);
+    }
+
+    pub fn image_9slice_ext(
+        &mut self,
+        img: &Texture,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        left: f32,
+        right: f32,
+        top: f32,
+        bottom: f32,
+    ) {
+        let center_sw = img.width() - (left + right);
+        let center_sh = img.height() - (top + bottom);
+        let center_w = width - (left + right);
+        let center_h = height - (top + bottom);
+
+        self.image_crop(img, x, y, 0.0, 0.0, left, top);
+        self.image_ext(img, x + left, y, center_w, top, left, 0.0, center_sw, top);
+        self.image_crop(
+            img,
+            x + left + center_w,
+            y,
+            left + center_sw,
+            0.0,
+            right,
+            top,
+        );
+
+        self.image_ext(img, x, y + top, left, center_h, 0.0, top, left, center_sh);
+        self.image_ext(
+            img,
+            x + left,
+            y + top,
+            center_w,
+            center_h,
+            left,
+            top,
+            center_sw,
+            center_sh,
+        );
+        self.image_ext(
+            img,
+            x + left + center_w,
+            y + top,
+            right,
+            center_h,
+            left + center_sw,
+            top,
+            right,
+            center_sh,
+        );
+
+        self.image_crop(
+            img,
+            x,
+            y + top + center_h,
+            0.0,
+            top + center_sh,
+            left,
+            bottom,
+        );
+        self.image_ext(
+            img,
+            x + left,
+            y + top + center_h,
+            center_w,
+            bottom,
+            left,
+            top + center_sh,
+            center_sw,
+            bottom,
+        );
+        self.image_crop(
+            img,
+            x + left + center_w,
+            y + top + center_h,
+            left + center_sw,
+            top + center_sh,
+            right,
+            bottom,
         );
     }
 }
