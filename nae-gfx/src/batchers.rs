@@ -109,13 +109,13 @@ impl ImageBatcher {
         match &self.texture {
             Some(tex) => {
                 if tex.raw() != texture.raw() {
-                    self.texture = Some(texture.clone());
                     self.flush(gfx, projection);
+                    self.texture = Some(texture.clone());
                 }
             }
             None => {
-                self.texture = Some(texture.clone());
                 self.flush(gfx, projection);
+                self.texture = Some(texture.clone());
             }
         }
     }
@@ -129,15 +129,6 @@ impl ImageBatcher {
     ) {
         // self.check_batch_size(gfx, &data); //perfromance is worst with this...
         self.set_texture(gfx, texture, data.projection);
-
-        if let Some(t) = &self.texture {
-            if t.raw() != texture.raw() {
-                self.texture = Some(texture.clone());
-                self.flush(gfx, data.projection);
-            }
-        } else {
-            self.texture = Some(texture.clone());
-        }
 
         let next_index = self.index + data.indices.len();
         if next_index >= self.indices.len() {
