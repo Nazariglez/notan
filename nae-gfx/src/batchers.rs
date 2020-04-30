@@ -199,12 +199,14 @@ impl ImageBatcher {
             return;
         }
 
-        gfx.set_pipeline(&self.pipeline);
-        gfx.bind_texture(&self.texture_loc, self.texture.as_ref().unwrap());
-        gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
-        gfx.bind_index_buffer(&self.ibo, &self.indices);
-        gfx.bind_uniform(&self.matrix_loc, projection);
-        gfx.draw(0, self.index as _);
+        if let Some(tex) = &self.texture {
+            gfx.set_pipeline(&self.pipeline);
+            gfx.bind_texture(&self.texture_loc, tex);
+            gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
+            gfx.bind_index_buffer(&self.ibo, &self.indices);
+            gfx.bind_uniform(&self.matrix_loc, projection);
+            gfx.draw(0, self.index as _);
+        }
 
         self.index = 0;
     }
