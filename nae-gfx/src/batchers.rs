@@ -105,6 +105,21 @@ impl ImageBatcher {
         })
     }
 
+    fn set_texture(&mut self, gfx: &mut Graphics, texture: &Texture, projection: &Matrix4) {
+        match &self.texture {
+            Some(tex) => {
+                if tex.raw() != texture.raw() {
+                    self.texture = Some(texture.clone());
+                    self.flush(gfx, projection);
+                }
+            }
+            None => {
+                self.texture = Some(texture.clone());
+                self.flush(gfx, projection);
+            }
+        }
+    }
+
     pub fn push_data(
         &mut self,
         gfx: &mut Graphics,
@@ -113,6 +128,16 @@ impl ImageBatcher {
         data: DrawData,
     ) {
         // self.check_batch_size(gfx, &data); //perfromance is worst with this...
+        self.set_texture(gfx, texture, data.projection);
+
+        if let Some(t) = &self.texture {
+            if t.raw() != texture.raw() {
+                self.texture = Some(texture.clone());
+                self.flush(gfx, data.projection);
+            }
+        } else {
+            self.texture = Some(texture.clone());
+        }
 
         let next_index = self.index + data.indices.len();
         if next_index >= self.indices.len() {
@@ -153,7 +178,6 @@ impl ImageBatcher {
             index_offset += offset;
         }
 
-        self.texture = Some(texture.clone());
         self.index += data.indices.len();
     }
 
