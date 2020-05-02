@@ -3,7 +3,7 @@ use nae_core::{
     PipelineOptions,
 };
 
-use crate::batchers::{ColorBatcher, ImageBatcher};
+use crate::batchers::{ColorBatcher, ImageBatcher, PatternBatcher};
 use crate::shapes::ShapeTessellator;
 use crate::texture::Texture;
 use crate::{
@@ -28,6 +28,7 @@ pub struct Draw {
     clear_options: ClearOptions,
     color_batcher: ColorBatcher,
     image_batcher: ImageBatcher,
+    pattern_batcher: PatternBatcher,
     current_mode: PaintMode,
     shapes: ShapeTessellator,
 }
@@ -37,6 +38,7 @@ impl Draw {
         let mut gfx = Graphics::new(device)?;
         let color_batcher = ColorBatcher::new(&mut gfx)?;
         let image_batcher = ImageBatcher::new(&mut gfx)?;
+        let pattern_batcher = PatternBatcher::new(&mut gfx)?;
 
         let (width, height) = gfx.size(); //TODO multiply for dpi
         let render_projection = matrix4_orthogonal(0.0, width, height, 0.0, -1.0, 1.0);
@@ -52,6 +54,7 @@ impl Draw {
             matrix_stack: vec![matrix4_identity()],
             color_batcher,
             image_batcher,
+            pattern_batcher,
             matrix: None,
             projection: None,
             render_projection,
@@ -445,6 +448,80 @@ impl Draw {
             bottom,
         );
     }
+
+    pub fn pattern(
+        &mut self,
+        img: &Texture,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        offset_x: f32,
+        offset_y: f32,
+    ) {
+        self.pattern_ext(img, x, y, width, height, offset_x, offset_y, 1.0, 1.0);
+    }
+
+    pub fn pattern_ext(
+        &mut self,
+        img: &Texture,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        offset_x: f32,
+        offset_y: f32,
+        scale_x: f32,
+        scale_y: f32,
+    ) {
+        paint_mode(self, PaintMode::Pattern);
+        if !img.is_loaded() {
+            return;
+        }
+
+        let frame = img.frame();
+        let base_width = img.base_width();
+        let base_height = img.base_height();
+
+        let x2 = x + width;
+        let y2 = y + height;
+
+        let tex_width = width / frame.width;
+        let tex_height = height / frame.height;
+
+        let fract_x = tex_width.fract();
+        let fract_y = tex_height.fract();
+        let offset_x = (offset_x / frame.width).fract();
+        let offset_y = (offset_y / frame.height).fract();
+        let sx1 = tex_width.floor() + offset_x;
+        let sy1 = tex_height.floor() + offset_y;
+        let sx2 = /*(width / tex_width) -*/ offset_x;
+        let sy2 = /*(height / tex_height) -*/ offset_y;
+
+        //http://webglstats.com/webgl/parameter/MAX_TEXTURE_IMAGE_UNITS
+        paint_mode(self, PaintMode::Pattern);
+
+        #[rustfmt::skip]
+            draw_pattern(
+            self,
+            img,
+            &[
+                x, y, self.depth,
+                x2, y, self.depth,
+                x, y2, self.depth,
+                x2, y2, self.depth,
+            ],
+            &[
+                sx1, sy1,
+                sx2, sy1,
+                sx1, sy2,
+                sx2, sy2
+            ],
+            &[
+                0, 1, 2, 2, 1, 3
+            ]
+        );
+    }
 }
 
 fn flush(draw: &mut Draw) {
@@ -457,6 +534,13 @@ fn flush(draw: &mut Draw) {
             },
         ),
         PaintMode::Image => draw.image_batcher.flush(
+            &mut draw.gfx,
+            match &draw.projection {
+                Some(p) => p,
+                _ => &draw.render_projection,
+            },
+        ),
+        PaintMode::Pattern => draw.pattern_batcher.flush(
             &mut draw.gfx,
             match &draw.projection {
                 Some(p) => p,
@@ -520,11 +604,43 @@ fn draw_image(draw: &mut Draw, texture: &Texture, vertices: &[f32], uvs: &[f32],
     )
 }
 
+fn draw_pattern(
+    draw: &mut Draw,
+    texture: &Texture,
+    vertices: &[f32],
+    uvs: &[f32],
+    indices: &[u32],
+) {
+    draw.pattern_batcher.push_data(
+        &mut draw.gfx,
+        texture,
+        uvs,
+        DrawData {
+            vertices,
+            indices,
+            projection: match &draw.projection {
+                Some(p) => p,
+                _ => &draw.render_projection,
+            },
+            matrix: match &draw.matrix {
+                Some(p) => p,
+                _ => &draw.matrix_stack.last().as_ref().unwrap(),
+            },
+            blend: draw.blend_mode,
+            color: draw.color,
+            alpha: draw.alpha,
+        },
+    )
+}
+
 #[derive(Debug, PartialEq)]
 enum PaintMode {
     None,
     Color,
     Image,
+    Pattern,
+    Text,
+    //Particles?
 }
 
 pub(crate) struct DrawData<'data> {
