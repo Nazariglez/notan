@@ -480,25 +480,20 @@ impl Draw {
         }
 
         let frame = img.frame();
-        let base_width = img.base_width();
-        let base_height = img.base_height();
 
         let x2 = x + width;
         let y2 = y + height;
 
-        let tex_width = width / frame.width;
-        let tex_height = height / frame.height;
+        let tex_uv_width = width / frame.width;
+        let tex_uv_height = height / frame.height;
 
-        let fract_x = tex_width.fract();
-        let fract_y = tex_height.fract();
         let offset_x = (offset_x / frame.width).fract();
         let offset_y = (offset_y / frame.height).fract();
-        let sx1 = tex_width.floor() + offset_x;
-        let sy1 = tex_height.floor() + offset_y;
-        let sx2 = /*(width / tex_width) -*/ offset_x;
-        let sy2 = /*(height / tex_height) -*/ offset_y;
+        let sx1 = tex_uv_width + offset_x;
+        let sy1 = tex_uv_height + offset_y;
+        let sx2 = offset_x;
+        let sy2 = offset_y;
 
-        //http://webglstats.com/webgl/parameter/MAX_TEXTURE_IMAGE_UNITS
         paint_mode(self, PaintMode::Pattern);
 
         #[rustfmt::skip]
