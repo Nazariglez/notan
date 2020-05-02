@@ -9,13 +9,7 @@ layout(location = 0) out vec4 outColor;
 layout(location = 0) uniform sampler2D u_texture;
 layout(location = 1) uniform vec4 u_frame;
 
-
-//https://github.com/pixijs/pixi.js/blob/dev/packages/sprite-tiling/src/tilingSprite.frag
-//https://community.khronos.org/t/repeat-tile-from-texture-atlas/104500/2
-//http://www.java-gaming.org/index.php/topic,28147
 void main() {
-    vec2 pos = u_frame.xy;
-    vec2 size = u_frame.zw;
-    vec2 coords = pos + fract(v_texcoord) * size;
+    vec2 coords = u_frame.xy + fract(v_texcoord) * u_frame.zw;
     outColor = texture(u_texture, coords) * v_color;
 }
