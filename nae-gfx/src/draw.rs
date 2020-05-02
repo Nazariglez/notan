@@ -474,21 +474,24 @@ impl Draw {
         scale_x: f32,
         scale_y: f32,
     ) {
-        paint_mode(self, PaintMode::Pattern);
         if !img.is_loaded() {
             return;
         }
 
-        let frame = img.frame();
-
         let x2 = x + width;
         let y2 = y + height;
 
-        let tex_uv_width = width / frame.width;
-        let tex_uv_height = height / frame.height;
+        let frame = img.frame();
+        let offset_x = offset_x * scale_x;
+        let offset_y = offset_y * scale_y;
+        let ww = frame.width * scale_x;
+        let hh = frame.height * scale_y;
 
-        let offset_x = (offset_x / frame.width).fract();
-        let offset_y = (offset_y / frame.height).fract();
+        let tex_uv_width = width / ww;
+        let tex_uv_height = height / hh;
+
+        let offset_x = (offset_x / ww).fract();
+        let offset_y = (offset_y / hh).fract();
         let sx1 = tex_uv_width + offset_x;
         let sy1 = tex_uv_height + offset_y;
         let sx2 = offset_x;
@@ -497,7 +500,7 @@ impl Draw {
         paint_mode(self, PaintMode::Pattern);
 
         #[rustfmt::skip]
-            draw_pattern(
+        draw_pattern(
             self,
             img,
             &[
@@ -507,10 +510,10 @@ impl Draw {
                 x2, y2, self.depth,
             ],
             &[
-                sx1, sy1,
-                sx2, sy1,
+                sx2, sy2,
                 sx1, sy2,
-                sx2, sy2
+                sx2, sy1,
+                sx1, sy1,
             ],
             &[
                 0, 1, 2, 2, 1, 3

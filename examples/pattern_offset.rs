@@ -1,29 +1,28 @@
 use nae::prelude::*;
 
 struct State {
-    image: Texture,
+    image: nae_gfx::texture::Texture,
     offset: f32,
 }
 
 fn init(app: &mut App) -> State {
     State {
-        image: app.load_file("./examples/assets/t.png").unwrap(),
+        image: nae_gfx::texture::Texture::from_bytes(app, include_bytes!("assets/t.png")).unwrap(),
         offset: 0.0,
     }
 }
 
 fn draw(app: &mut App, state: &mut State) {
-    let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
+    let draw = app.draw2();
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
     draw.pattern(
         &mut state.image,
         10.0,
         10.0,
         780.0,
         580.0,
-        state.offset,
         -state.offset,
+        state.offset,
     );
     draw.end();
 
