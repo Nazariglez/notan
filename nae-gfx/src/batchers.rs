@@ -14,32 +14,189 @@ use nae_core::{
     log, BaseGfx, BasePipeline, BlendMode, Color, DrawUsage, GraphicsAPI, PipelineOptions,
 };
 
-//https://webglfundamentals.org/webgl/lessons/webgl-indexed-vertices.html
-#[inline]
-fn max_vertices(gfx: &Graphics) -> usize {
-    match gfx.api() {
-        GraphicsAPI::WebGl => std::u16::MAX as usize,
-        _ => std::u32::MAX as usize,
-    }
+/// Pattern batcher
+pub(crate) struct PatternBatcher {
+    pipeline: Pipeline,
+    vbo: VertexBuffer,
+    ibo: IndexBuffer,
+    vertices: VERTICES,
+    indices: INDICES,
+    matrix_loc: Uniform,
+    texture_loc: Uniform,
+    frame_loc: Uniform,
+    texture: Option<Texture>,
+    frame_coords: [f32; 4],
+    index: usize,
+    max_vertices: usize,
+    batch_size: usize,
 }
 
-#[inline]
-fn batch_vertices(offset: usize) -> usize {
-    let offset = offset as f32;
-    let max = std::u16::MAX as usize;
-    let size = {
-        let mut n = max;
-        while n > 0 {
-            let nf = n as f32;
-            if nf % offset == 0.0 && nf % 3.0 == 0.0 {
-                break;
-            }
-            n -= 1;
-        }
-        n
-    };
+impl PatternBatcher {
+    pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
+        let shader = Shader::new(gfx, Shader::PATTERN_VERTEX, Shader::PATTERN_FRAG)?;
+        let pipeline = Pipeline::new(
+            gfx,
+            &shader,
+            PipelineOptions {
+                color_blend: Some(BlendMode::NORMAL),
+                ..Default::default()
+            },
+        );
 
-    size
+        let matrix_loc = pipeline.uniform_location("u_matrix");
+        let texture_loc = pipeline.uniform_location("u_texture");
+        let frame_loc = pipeline.uniform_location("u_frame");
+
+        let vertex_buffer = VertexBuffer::new(
+            gfx,
+            &[
+                VertexAttr::new(0, VertexFormat::Float3),
+                VertexAttr::new(1, VertexFormat::Float4),
+                VertexAttr::new(2, VertexFormat::Float2),
+            ],
+            DrawUsage::Dynamic,
+        )?;
+
+        let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic)?;
+
+        let max_vertices = max_vertices(gfx);
+        let batch_size = batch_vertices(vertex_buffer.offset());
+
+        let vertices = vec![0.0; batch_size];
+        let indices = vec![0; batch_size / vertex_buffer.offset()];
+
+        Ok(Self {
+            pipeline,
+            vbo: vertex_buffer,
+            ibo: index_buffer,
+            matrix_loc,
+            texture_loc,
+            frame_loc,
+            vertices,
+            indices,
+            index: 0,
+            max_vertices,
+            batch_size,
+            texture: None,
+            frame_coords: [0.0; 4],
+        })
+    }
+
+    fn set_texture(&mut self, gfx: &mut Graphics, texture: &Texture, projection: &Matrix4) {
+        let needs_update = match &self.texture {
+            Some(t) => t.raw() != texture.raw(),
+            None => true,
+        };
+
+        if needs_update {
+            self.flush(gfx, projection);
+
+            let frame = texture.frame();
+            let base_width = texture.base_width();
+            let base_height = texture.base_height();
+
+            self.frame_coords = [
+                frame.x / base_width,
+                frame.y / base_height,
+                frame.width / base_width,
+                frame.height / base_height,
+            ];
+
+            self.texture = Some(texture.clone());
+        }
+    }
+
+    pub fn push_data(
+        &mut self,
+        gfx: &mut Graphics,
+        texture: &Texture,
+        uvs: &[f32],
+        data: DrawData,
+    ) {
+        // self.check_batch_size(gfx, &data); //performance is worst with this...
+        self.set_texture(gfx, texture, data.projection);
+
+        let next_index = self.index + data.indices.len();
+        if next_index >= self.indices.len() {
+            self.flush(gfx, data.projection);
+        }
+
+        for (i, index) in data.indices.iter().enumerate() {
+            self.indices[self.index + i] = self.index as u32 + *index;
+        }
+
+        let offset = self.vbo.offset();
+        let [r, g, b, a] = data.color.to_rgba();
+        let mut index_offset = self.index * offset;
+
+        let mut uv_index = 0;
+        for (i, _) in data.vertices.iter().enumerate().step_by(3) {
+            let [x, y, z, _] = matrix4_mul_vector4(
+                data.matrix,
+                &[
+                    data.vertices[i + 0],
+                    data.vertices[i + 1],
+                    data.vertices[i + 2],
+                    1.0,
+                ],
+            );
+
+            self.vertices[0 + index_offset] = x;
+            self.vertices[1 + index_offset] = y;
+            self.vertices[2 + index_offset] = z;
+            self.vertices[3 + index_offset] = r;
+            self.vertices[4 + index_offset] = g;
+            self.vertices[5 + index_offset] = b;
+            self.vertices[6 + index_offset] = a * data.alpha;
+            self.vertices[7 + index_offset] = uvs[0 + uv_index];
+            self.vertices[8 + index_offset] = uvs[1 + uv_index];
+
+            uv_index += 2;
+            index_offset += offset;
+        }
+
+        self.index += data.indices.len();
+    }
+
+    fn check_batch_size(&mut self, gfx: &mut Graphics, data: &DrawData) {
+        let next_size = self.vertices.len() + self.batch_size;
+        let can_be_bigger = next_size < self.max_vertices;
+        if can_be_bigger {
+            let is_bigger = data.indices.len() > self.indices.len();
+            let is_more = self.index + data.indices.len() >= self.indices.len();
+            if is_bigger || is_more {
+                self.flush(gfx, data.projection);
+
+                let index_next_size = next_size / self.vbo.offset();
+                log::debug!(
+                    "ColorBatcher -> Increasing vertex_buffer to {} and index_buffer to {}",
+                    next_size,
+                    index_next_size
+                );
+
+                self.vertices.resize(next_size, 0.0);
+                self.indices.resize(index_next_size, 0);
+            }
+        }
+    }
+
+    pub fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4) {
+        if self.index == 0 {
+            return;
+        }
+
+        if let Some(tex) = &self.texture {
+            gfx.set_pipeline(&self.pipeline);
+            gfx.bind_texture(&self.texture_loc, tex);
+            gfx.bind_uniform(&self.matrix_loc, projection);
+            gfx.bind_uniform(&self.frame_loc, &self.frame_coords);
+            gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
+            gfx.bind_index_buffer(&self.ibo, &self.indices);
+            gfx.draw(0, self.index as _);
+        }
+
+        self.index = 0;
+    }
 }
 
 /// Image batcher
@@ -394,4 +551,32 @@ impl ColorBatcher {
         gfx.draw(0, self.index as i32);
         self.index = 0;
     }
+}
+
+//https://webglfundamentals.org/webgl/lessons/webgl-indexed-vertices.html
+#[inline]
+fn max_vertices(gfx: &Graphics) -> usize {
+    match gfx.api() {
+        GraphicsAPI::WebGl => std::u16::MAX as usize,
+        _ => std::u32::MAX as usize,
+    }
+}
+
+#[inline]
+fn batch_vertices(offset: usize) -> usize {
+    let offset = offset as f32;
+    let max = std::u16::MAX as usize;
+    let size = {
+        let mut n = max;
+        while n > 0 {
+            let nf = n as f32;
+            if nf % offset == 0.0 && nf % 3.0 == 0.0 {
+                break;
+            }
+            n -= 1;
+        }
+        n
+    };
+
+    size
 }
