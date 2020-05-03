@@ -1,6 +1,7 @@
 mod batchers;
 mod draw;
 mod matrix;
+mod render_target;
 mod shapes;
 pub mod texture;
 mod uniform;
@@ -10,6 +11,7 @@ pub use crate::shader::{Shader, VertexFormat};
 pub use draw::*;
 use glow::{Context, HasContext, DEPTH_TEST};
 pub use matrix::*;
+pub use render_target::*;
 pub use uniform::*;
 // pub use texture::*;
 
@@ -157,6 +159,7 @@ pub struct Graphics {
     running: bool,
     draw_calls: u32,
     last_pass_draw_calls: u32,
+    render_target: Option<RenderTarget>,
 
     #[cfg(feature = "sdl")]
     _sdl_gl: Option<sdl2::video::GLContext>,
@@ -316,6 +319,7 @@ impl Graphics {
             draw_calls: 0,
             last_pass_draw_calls: 0,
             index_type,
+            render_target: None,
 
             #[cfg(feature = "sdl")]
             _sdl_gl: info._sdl_gl,
@@ -336,6 +340,60 @@ impl Graphics {
 
     pub fn draw_calls(&self) -> u32 {
         self.last_pass_draw_calls
+    }
+
+    pub fn begin_to(&mut self, target: Option<&RenderTarget>, opts: &ClearOptions) {
+        debug_assert!(!self.running, "Graphics pass already running.");
+
+        self.running = true;
+        let mut mask = 0;
+
+        unsafe {
+            let (width, height) = match target {
+                Some(rt) => {
+                    let needs_update = match &self.render_target {
+                        Some(current_rt) => current_rt.raw != rt.raw,
+                        None => true,
+                    };
+
+                    if needs_update {
+                        self.render_target = Some(rt.clone());
+                    }
+
+                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, Some(rt.raw));
+                    self.gl.draw_buffer(glow::COLOR_ATTACHMENT0);
+                    (rt.width(), rt.height())
+                }
+                None => {
+                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+                    (self.width, self.height)
+                }
+            };
+
+            self.viewport(0.0, 0.0, width, height);
+
+            if let Some(color) = &opts.color {
+                mask |= glow::COLOR_BUFFER_BIT;
+                self.gl
+                    .clear_color(color.red(), color.green(), color.blue(), color.alpha());
+            }
+
+            if let Some(depth) = opts.depth {
+                mask |= glow::DEPTH_BUFFER_BIT;
+                self.gl.enable(glow::DEPTH_TEST);
+                self.gl.depth_mask(true);
+                self.gl.clear_depth_f32(depth);
+            }
+
+            if let Some(stencil) = opts.stencil {
+                mask |= glow::STENCIL_BUFFER_BIT;
+                self.gl.enable(glow::STENCIL_TEST);
+                self.gl.stencil_mask(0xff);
+                self.gl.clear_stencil(stencil);
+            }
+
+            self.gl.clear(mask);
+        }
     }
 }
 
@@ -364,36 +422,7 @@ impl BaseGfx for Graphics {
     }
 
     fn begin(&mut self, opts: &ClearOptions) {
-        debug_assert!(!self.running, "Graphics pass already running.");
-
-        self.running = true;
-        // nae_core::log::info!("{} {}", self.width, self.height);
-        self.viewport(0.0, 0.0, self.width, self.height);
-
-        let mut mask = 0;
-        unsafe {
-            if let Some(color) = &opts.color {
-                mask |= glow::COLOR_BUFFER_BIT;
-                self.gl
-                    .clear_color(color.red(), color.green(), color.blue(), color.alpha());
-            }
-
-            if let Some(depth) = opts.depth {
-                mask |= glow::DEPTH_BUFFER_BIT;
-                self.gl.enable(glow::DEPTH_TEST);
-                self.gl.depth_mask(true);
-                self.gl.clear_depth_f32(depth);
-            }
-
-            if let Some(stencil) = opts.stencil {
-                mask |= glow::STENCIL_BUFFER_BIT;
-                self.gl.enable(glow::STENCIL_TEST);
-                self.gl.stencil_mask(0xff);
-                self.gl.clear_stencil(stencil);
-            }
-
-            self.gl.clear(mask);
-        }
+        self.begin_to(None, opts);
     }
 
     fn bind_texture(&mut self, location: &Self::Location, tex: &texture::Texture) {
@@ -427,6 +456,7 @@ impl BaseGfx for Graphics {
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
             self.gl.bind_vertex_array(None);
+            self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }
         self.indices_in_use = false;
         self.pipeline_in_use = false;
@@ -644,8 +674,6 @@ impl AttrLocationId for String {
         }
     }
 }
-
-pub struct RenderTarget {}
 
 #[derive(Clone)]
 pub struct Pipeline {
