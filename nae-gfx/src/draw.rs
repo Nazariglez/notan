@@ -8,8 +8,8 @@ use crate::shapes::ShapeTessellator;
 use crate::texture::Texture;
 use crate::{
     matrix4_identity, matrix4_mul_matrix4, matrix4_mul_vector4, matrix4_orthogonal, Device,
-    Graphics, IndexBuffer, Matrix4, Pipeline, Shader, Uniform, VertexAttr, VertexBuffer,
-    VertexFormat,
+    Graphics, IndexBuffer, Matrix4, Pipeline, RenderTarget, Shader, Uniform, VertexAttr,
+    VertexBuffer, VertexFormat,
 };
 use std::cell::RefMut;
 use std::convert::TryInto;
@@ -64,7 +64,7 @@ impl Draw {
 
     pub fn set_size(&mut self, width: f32, height: f32) {
         self.gfx.set_size(width, height);
-        self.render_projection = matrix4_orthogonal(0.0, width, height, 0.0, -1.0, 1.0);
+        self.render_projection = projection(width, height, self.gfx.render_target.is_some());
     }
 
     pub fn size(&self) -> (f32, f32) {
@@ -89,8 +89,19 @@ impl Draw {
     }
 
     pub fn begin(&mut self, color: Color) {
+        if self.gfx.render_target.is_some() {
+            self.render_projection = projection(self.gfx.width, self.gfx.height, false);
+        }
+
         self.clear_options.color = Some(color);
         self.gfx.begin(&self.clear_options);
+    }
+
+    pub fn begin_to(&mut self, target: &RenderTarget, color: Color) {
+        self.render_projection = projection(target.width(), target.height(), true);
+
+        self.clear_options.color = Some(color);
+        self.gfx.begin_to(Some(target), &self.clear_options);
     }
 
     pub fn end(&mut self) {
@@ -261,6 +272,10 @@ impl Draw {
 
     pub fn image(&mut self, img: &Texture, x: f32, y: f32) {
         self.image_ext(img, x, y, img.width(), img.height(), 0.0, 0.0, 0.0, 0.0);
+    }
+
+    pub fn image_resized(&mut self, img: &Texture, x: f32, y: f32, width: f32, height: f32) {
+        self.image_ext(img, x, y, width, height, 0.0, 0.0, 0.0, 0.0);
     }
 
     pub fn image_crop(
@@ -519,6 +534,13 @@ impl Draw {
                 0, 1, 2, 2, 1, 3
             ]
         );
+    }
+}
+
+fn projection(width: f32, height: f32, is_flipped: bool) -> Matrix4 {
+    match is_flipped {
+        true => matrix4_orthogonal(0.0, width, 0.0, height, -1.0, 1.0),
+        false => matrix4_orthogonal(0.0, width, height, 0.0, -1.0, 1.0),
     }
 }
 
