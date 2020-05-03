@@ -14,6 +14,10 @@ use nae_core::{
     log, BaseGfx, BasePipeline, BlendMode, Color, DrawUsage, GraphicsAPI, PipelineOptions,
 };
 
+pub(crate) trait BaseBatcher {
+    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4);
+}
+
 /// Pattern batcher
 pub(crate) struct PatternBatcher {
     pipeline: Pipeline,
@@ -179,8 +183,10 @@ impl PatternBatcher {
             }
         }
     }
+}
 
-    pub fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4) {
+impl BaseBatcher for PatternBatcher {
+    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4) {
         if self.index == 0 {
             return;
         }
@@ -350,8 +356,10 @@ impl ImageBatcher {
             }
         }
     }
+}
 
-    pub fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4) {
+impl BaseBatcher for ImageBatcher {
+    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4) {
         if self.index == 0 {
             return;
         }
@@ -538,8 +546,10 @@ impl ColorBatcher {
 
         self.index += indices.len();
     }
+}
 
-    pub fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4) {
+impl BaseBatcher for ColorBatcher {
+    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4) {
         if self.index == 0 {
             return;
         }
