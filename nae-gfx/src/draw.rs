@@ -3,7 +3,7 @@ use nae_core::{
     PipelineOptions,
 };
 
-use crate::batchers::{ColorBatcher, ImageBatcher, PatternBatcher};
+use crate::batchers::{BaseBatcher, ColorBatcher, ImageBatcher, PatternBatcher};
 use crate::shapes::ShapeTessellator;
 use crate::texture::Texture;
 use crate::{
@@ -523,30 +523,20 @@ impl Draw {
 }
 
 fn flush(draw: &mut Draw) {
-    match draw.current_mode {
-        PaintMode::Color => draw.color_batcher.flush(
-            &mut draw.gfx,
-            match &draw.projection {
-                Some(p) => p,
-                _ => &draw.render_projection,
-            },
-        ),
-        PaintMode::Image => draw.image_batcher.flush(
-            &mut draw.gfx,
-            match &draw.projection {
-                Some(p) => p,
-                _ => &draw.render_projection,
-            },
-        ),
-        PaintMode::Pattern => draw.pattern_batcher.flush(
-            &mut draw.gfx,
-            match &draw.projection {
-                Some(p) => p,
-                _ => &draw.render_projection,
-            },
-        ),
-        _ => {}
-    }
+    let mut batcher: &mut BaseBatcher = match draw.current_mode {
+        PaintMode::Color => &mut draw.color_batcher,
+        PaintMode::Image => &mut draw.image_batcher,
+        PaintMode::Pattern => &mut draw.pattern_batcher,
+        _ => return,
+    };
+
+    batcher.flush(
+        &mut draw.gfx,
+        match &draw.projection {
+            Some(p) => p,
+            _ => &draw.render_projection,
+        },
+    );
 }
 
 fn paint_mode(draw: &mut Draw, mode: PaintMode) {
