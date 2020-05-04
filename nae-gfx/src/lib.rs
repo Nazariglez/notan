@@ -23,8 +23,8 @@ use glutin::event_loop::ControlFlow;
 
 use nae_core::{
     BaseGfx, BaseIndexBuffer, BasePipeline, BaseVertexBuffer, BlendFactor, BlendMode,
-    BlendOperation, ClearOptions, Color, CullMode, DepthStencil, DrawUsage, GraphicsAPI,
-    PipelineOptions,
+    BlendOperation, ClearOptions, Color, CompareMode, CullMode, DrawUsage, GraphicsAPI,
+    PipelineOptions, StencilAction, StencilOptions,
 };
 
 use std::cell::Ref;
@@ -79,11 +79,11 @@ impl GlowValue for CullMode {
     }
 }
 
-impl GlowValue for DepthStencil {
+impl GlowValue for CompareMode {
     type VALUE = Option<u32>;
 
     fn glow_value(&self) -> Option<u32> {
-        use DepthStencil::*;
+        use CompareMode::*;
         Some(match self {
             None => return Option::None,
             Less => glow::LESS,
@@ -128,6 +128,24 @@ impl GlowValue for BlendOperation {
             ReverseSubtract => glow::FUNC_REVERSE_SUBTRACT,
             Max => glow::MAX,
             Min => glow::MIN,
+        }
+    }
+}
+
+impl GlowValue for StencilAction {
+    type VALUE = u32;
+
+    fn glow_value(&self) -> u32 {
+        use StencilAction::*;
+        match self {
+            Keep => glow::KEEP,
+            Zero => glow::ZERO,
+            Replace => glow::REPLACE,
+            Increment => glow::INCR,
+            IncrementWrap => glow::INCR_WRAP,
+            Decrement => glow::DECR,
+            DecrementWrap => glow::DECR_WRAP,
+            Invert => glow::INVERT,
         }
     }
 }
@@ -326,6 +344,30 @@ impl Graphics {
         })
     }
 
+    pub fn set_stencil(&mut self, opts: Option<StencilOptions>) {
+        unsafe {
+            if is_default_stencil(&opts) {
+                self.gl.disable(glow::STENCIL_TEST);
+                return;
+            }
+
+            if let Some(opts) = opts {
+                self.gl.enable(glow::STENCIL_TEST);
+                self.gl.stencil_mask(opts.write_mask);
+                self.gl.stencil_op(
+                    opts.stencil_fail.glow_value(),
+                    opts.depth_fail.glow_value(),
+                    opts.pass.glow_value(),
+                );
+                self.gl.stencil_func(
+                    opts.compare.glow_value().unwrap_or(glow::ALWAYS),
+                    opts.reference as _,
+                    opts.read_mask,
+                );
+            }
+        }
+    }
+
     pub fn bind_uniform(
         &mut self,
         location: &<Graphics as BaseGfx>::Location,
@@ -346,7 +388,6 @@ impl Graphics {
         debug_assert!(!self.running, "Graphics pass already running.");
 
         self.running = true;
-        let mut mask = 0;
 
         unsafe {
             let (width, height) = match target {
@@ -371,7 +412,13 @@ impl Graphics {
             };
 
             self.viewport(0.0, 0.0, width, height);
+            self.clear(opts);
+        }
+    }
 
+    pub fn clear(&mut self, opts: &ClearOptions) {
+        let mut mask = 0;
+        unsafe {
             if let Some(color) = &opts.color {
                 mask |= glow::COLOR_BUFFER_BIT;
                 self.gl
@@ -394,6 +441,18 @@ impl Graphics {
 
             self.gl.clear(mask);
         }
+    }
+}
+
+fn is_default_stencil(stencil: &Option<StencilOptions>) -> bool {
+    match stencil {
+        Some(stencil) => {
+            stencil.compare == CompareMode::Always
+                && stencil.stencil_fail == StencilAction::Keep
+                && stencil.depth_fail == StencilAction::Keep
+                && stencil.pass == StencilAction::Keep
+        }
+        None => true,
     }
 }
 
@@ -453,11 +512,13 @@ impl BaseGfx for Graphics {
         debug_assert!(self.running, "Begin should be called first.");
 
         unsafe {
+            self.gl.disable(glow::STENCIL_TEST);
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
             self.gl.bind_vertex_array(None);
             self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }
+
         self.indices_in_use = false;
         self.pipeline_in_use = false;
         self.running = false;
@@ -713,7 +774,7 @@ impl BasePipeline for Pipeline {
 
     fn bind(&self, gfx: &mut Self::Graphics) {
         unsafe {
-            gfx.gl.stencil_mask(0x00); //TODO
+            // gfx.gl.stencil_mask(0x00); //TODO
 
             if let Some(d) = self.options.depth_stencil.glow_value() {
                 gfx.gl.enable(glow::DEPTH_TEST);

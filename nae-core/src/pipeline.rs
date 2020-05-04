@@ -84,9 +84,9 @@ impl BlendMode {
     }
 }
 
-/// Represents depth comparison
+/// Represents stencil and depth comparison
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum DepthStencil {
+pub enum CompareMode {
     None,
     Less,
     Equal,
@@ -111,13 +111,13 @@ pub struct PipelineOptions {
     pub color_blend: Option<BlendMode>,
     pub alpha_blend: Option<BlendMode>,
     pub cull_mode: CullMode,
-    pub depth_stencil: DepthStencil,
+    pub depth_stencil: CompareMode,
 }
 
 impl Default for PipelineOptions {
     fn default() -> Self {
         Self {
-            depth_stencil: DepthStencil::None,
+            depth_stencil: CompareMode::None,
             cull_mode: CullMode::None,
             color_blend: None,
             alpha_blend: None,
@@ -148,4 +148,43 @@ impl ClearOptions {
 pub enum DrawUsage {
     Static,
     Dynamic,
+}
+
+/// Represent's the stencil action
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum StencilAction {
+    Keep,
+    Zero,
+    Replace,
+    Increment,
+    IncrementWrap,
+    Decrement,
+    DecrementWrap,
+    Invert,
+}
+
+/// Represents the stencil's option
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct StencilOptions {
+    pub stencil_fail: StencilAction,
+    pub depth_fail: StencilAction,
+    pub pass: StencilAction,
+    pub compare: CompareMode,
+    pub read_mask: u32,
+    pub write_mask: u32,
+    pub reference: u32,
+}
+
+impl Default for StencilOptions {
+    fn default() -> Self {
+        Self {
+            stencil_fail: StencilAction::Keep,
+            depth_fail: StencilAction::Keep,
+            pass: StencilAction::Keep,
+            compare: CompareMode::Always,
+            read_mask: 0xff,
+            write_mask: 0,
+            reference: 0,
+        }
+    }
 }

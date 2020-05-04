@@ -2,3 +2,4 @@
 primitives
 audio
 file_sandbox
+minesweeper

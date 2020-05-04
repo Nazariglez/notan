@@ -1,6 +1,6 @@
 use nae_core::{
-    BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, DrawUsage, Geometry, GraphicsAPI,
-    PipelineOptions,
+    BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, CompareMode, DrawUsage, Geometry,
+    GraphicsAPI, PipelineOptions, StencilAction, StencilOptions,
 };
 
 use crate::batchers::{BaseBatcher, ColorBatcher, ImageBatcher, PatternBatcher};
@@ -11,6 +11,7 @@ use crate::{
     Graphics, IndexBuffer, Matrix4, Pipeline, RenderTarget, Shader, Uniform, VertexAttr,
     VertexBuffer, VertexFormat,
 };
+use glow::HasContext;
 use std::cell::RefMut;
 use std::convert::TryInto;
 
@@ -62,6 +63,58 @@ impl Draw {
         })
     }
 
+    pub fn mask<T: FnMut(&mut Self)>(&mut self, mut mask: T) {
+        dbg!("start ->");
+        flush(self);
+
+        // self.clear_options.stencil = Some(0xff);
+        let mut opts = StencilOptions {
+            stencil_fail: StencilAction::Keep,
+            depth_fail: StencilAction::Keep,
+            pass: StencilAction::Replace,
+            compare: CompareMode::Always,
+            read_mask: 0xff,
+            write_mask: 0xff,
+            reference: 1,
+        };
+
+        self.gfx.set_stencil(Some(opts));
+
+        unsafe {
+            // self.gfx.gl.enable(glow::STENCIL_TEST);
+            // self.gfx
+            //     .gl
+            //     .stencil_op(glow::KEEP, glow::KEEP, glow::REPLACE);
+            // self.gfx.gl.stencil_func(glow::ALWAYS, 1, 0xff);
+            // self.gfx.gl.stencil_mask(0xff);
+            self.gfx.gl.depth_mask(false);
+            self.gfx.gl.color_mask(false, false, false, false);
+        }
+
+        mask(self);
+
+        flush(self);
+
+        opts.pass = StencilAction::Replace;
+        opts.compare = CompareMode::Equal;
+        opts.write_mask = 0x00;
+
+        self.gfx.set_stencil(Some(opts));
+
+        unsafe {
+            // self.gfx.gl.stencil_func(glow::EQUAL, 1, 0xff);
+            // self.gfx.gl.stencil_mask(0x00);
+            self.gfx.gl.depth_mask(true);
+            self.gfx.gl.color_mask(true, true, true, true);
+        }
+        dbg!("<- end");
+    }
+
+    pub fn clear_mask(&mut self) {
+        flush(self);
+        self.gfx.set_stencil(None);
+    }
+
     pub fn set_size(&mut self, width: f32, height: f32) {
         self.gfx.set_size(width, height);
         self.render_projection = projection(width, height, self.gfx.render_target.is_some());
@@ -107,6 +160,7 @@ impl Draw {
     pub fn end(&mut self) {
         paint_mode(self, PaintMode::None);
         self.gfx.end();
+        dbg!("end pass");
     }
 
     pub fn geometry(&mut self, geometry: &Geometry) {
@@ -545,6 +599,7 @@ fn projection(width: f32, height: f32, is_flipped: bool) -> Matrix4 {
 }
 
 fn flush(draw: &mut Draw) {
+    dbg!("flush");
     let mut batcher: &mut BaseBatcher = match draw.current_mode {
         PaintMode::Color => &mut draw.color_batcher,
         PaintMode::Image => &mut draw.image_batcher,
