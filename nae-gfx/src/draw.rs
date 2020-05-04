@@ -63,7 +63,7 @@ impl Draw {
         })
     }
 
-    pub fn mask<T: FnMut(&mut Self)>(&mut self, mut mask: T) {
+    pub fn start_mask<T: FnMut(&mut Self)>(&mut self, mut mask: T) {
         dbg!("start ->");
         flush(self);
 
@@ -114,7 +114,7 @@ impl Draw {
         dbg!("<- end");
     }
 
-    pub fn clear_mask(&mut self) {
+    pub fn end_mask(&mut self) {
         flush(self);
         self.clear_options.stencil = None;
         self.gfx.set_stencil(None);
