@@ -17,7 +17,7 @@ fn draw(app: &mut App, state: &mut State) {
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
     //Mask
-    draw.mask(|draw| {
+    draw.start_mask(|draw| {
         draw.stroke_triangle(400.0, 100.0, 100.0, 500.0, 700.0, 500.0, 20.0);
         draw.circle(400.0, 350.0, 30.0);
         draw.stroke_circle(400.0, 350.0, 50.0, 10.0);
@@ -34,6 +34,8 @@ fn draw(app: &mut App, state: &mut State) {
         state.offset,
         -state.offset,
     );
+
+    draw.end_mask();
 
     draw.end();
 

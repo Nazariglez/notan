@@ -35,7 +35,7 @@ fn draw(app: &mut App, state: &mut State) {
 
     draw.stroke_rect(0.0, 0.0, 200.0, 200.0, 5.0);
 
-    draw.mask(|draw| {
+    draw.start_mask(|draw| {
         draw.geometry(&state.geom);
     });
 
@@ -45,7 +45,7 @@ fn draw(app: &mut App, state: &mut State) {
     draw.color = Color::GREEN;
     draw.triangle(400.0, 120.0, 200.0, 400.0, 600.0, 400.0);
 
-    draw.clear_mask();
+    draw.end_mask();
 
     draw.color = Color::WHITE;
     draw.stroke_triangle(400.0, 120.0, 200.0, 400.0, 600.0, 400.0, 5.0);
