@@ -67,7 +67,7 @@ impl Draw {
         dbg!("start ->");
         flush(self);
 
-        // self.clear_options.stencil = Some(0xff);
+        self.clear_options.stencil = Some(0xff);
         let mut opts = StencilOptions {
             stencil_fail: StencilAction::Keep,
             depth_fail: StencilAction::Keep,
@@ -78,7 +78,7 @@ impl Draw {
             reference: 1,
         };
 
-        self.gfx.set_stencil(Some(opts));
+        self.gfx.set_stencil(Some(&opts));
 
         unsafe {
             // self.gfx.gl.enable(glow::STENCIL_TEST);
@@ -99,7 +99,7 @@ impl Draw {
         opts.compare = CompareMode::Equal;
         opts.write_mask = 0x00;
 
-        self.gfx.set_stencil(Some(opts));
+        self.gfx.set_stencil(Some(&opts));
 
         unsafe {
             // self.gfx.gl.stencil_func(glow::EQUAL, 1, 0xff);
@@ -112,6 +112,7 @@ impl Draw {
 
     pub fn clear_mask(&mut self) {
         flush(self);
+        self.clear_options.stencil = None;
         self.gfx.set_stencil(None);
     }
 

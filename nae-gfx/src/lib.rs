@@ -344,9 +344,9 @@ impl Graphics {
         })
     }
 
-    pub fn set_stencil(&mut self, opts: Option<StencilOptions>) {
+    pub fn set_stencil(&mut self, opts: Option<&StencilOptions>) {
         unsafe {
-            if is_default_stencil(&opts) {
+            if should_disable_stencil(&opts) {
                 self.gl.disable(glow::STENCIL_TEST);
                 return;
             }
@@ -444,7 +444,7 @@ impl Graphics {
     }
 }
 
-fn is_default_stencil(stencil: &Option<StencilOptions>) -> bool {
+fn should_disable_stencil(stencil: &Option<&StencilOptions>) -> bool {
     match stencil {
         Some(stencil) => {
             stencil.compare == CompareMode::Always
@@ -512,7 +512,6 @@ impl BaseGfx for Graphics {
         debug_assert!(self.running, "Begin should be called first.");
 
         unsafe {
-            self.gl.disable(glow::STENCIL_TEST);
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
             self.gl.bind_vertex_array(None);
