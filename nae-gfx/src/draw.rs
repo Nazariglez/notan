@@ -7,9 +7,9 @@ use crate::batchers::{BaseBatcher, ColorBatcher, ImageBatcher, PatternBatcher};
 use crate::shapes::ShapeTessellator;
 use crate::texture::Texture;
 use crate::{
-    matrix4_identity, matrix4_mul_matrix4, matrix4_mul_vector4, matrix4_orthogonal, Device,
-    Graphics, IndexBuffer, Matrix4, Pipeline, RenderTarget, Shader, Uniform, VertexAttr,
-    VertexBuffer, VertexFormat,
+    matrix4_identity, matrix4_mul_matrix4, matrix4_mul_vector4, matrix4_orthogonal,
+    matrix4_rotation_z, matrix4_scale, matrix4_translate, Device, Graphics, IndexBuffer, Matrix4,
+    Pipeline, RenderTarget, Shader, Uniform, VertexAttr, VertexBuffer, VertexFormat,
 };
 use glow::HasContext;
 use std::cell::RefMut;
@@ -91,9 +91,13 @@ impl Draw {
             self.gfx.gl.color_mask(false, false, false, false);
         }
 
+        let last_clear_color =
+            std::mem::replace(&mut self.clear_options.color, Some(Color::TRANSPARENT));
+        self.gfx.clear(&self.clear_options);
         mask(self);
 
         flush(self);
+        self.clear_options.color = last_clear_color;
 
         opts.pass = StencilAction::Replace;
         opts.compare = CompareMode::Equal;
@@ -136,6 +140,18 @@ impl Draw {
         }
 
         self.matrix_stack.pop();
+    }
+
+    pub fn push_scale(&mut self, x: f32, y: f32) {
+        self.push(&matrix4_scale(x, y, 1.0));
+    }
+
+    pub fn push_translation(&mut self, x: f32, y: f32) {
+        self.push(&matrix4_translate(x, y, 0.0));
+    }
+
+    pub fn push_rotation(&mut self, angle: f32) {
+        self.push(&matrix4_rotation_z(angle));
     }
 
     pub fn transform(&mut self) -> &Matrix4 {
