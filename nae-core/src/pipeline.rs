@@ -105,22 +105,78 @@ pub enum CullMode {
     Back,
 }
 
+/// Represents the color mask
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct ColorMask {
+    pub r: bool,
+    pub g: bool,
+    pub b: bool,
+    pub a: bool,
+}
+
+impl Default for ColorMask {
+    fn default() -> Self {
+        Self {
+            r: true,
+            g: true,
+            b: true,
+            a: true
+        }
+    }
+}
+
+impl ColorMask {
+    pub fn enable_rgba(&mut self) {
+        self.r = true;
+        self.g = true;
+        self.b = true;
+        self.a = true;
+    }
+
+    pub fn disable_rgba(&mut self) {
+        self.r = false;
+        self.g = false;
+        self.b = false;
+        self.a = false;
+    }
+}
+
+/// Represents the color mask
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct DepthStencil {
+    pub write: bool,
+    pub compare: CompareMode,
+}
+
+impl Default for DepthStencil {
+    fn default() -> Self {
+        Self {
+            write: true,
+            compare: CompareMode::None, //Less?
+        }
+    }
+}
+
 /// Options to use with the render pipeline
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct PipelineOptions {
     pub color_blend: Option<BlendMode>,
     pub alpha_blend: Option<BlendMode>,
     pub cull_mode: CullMode,
-    pub depth_stencil: CompareMode,
+    pub depth_stencil: DepthStencil,
+    pub color_mask: ColorMask,
+    pub stencil: Option<StencilOptions>,
 }
 
 impl Default for PipelineOptions {
     fn default() -> Self {
         Self {
-            depth_stencil: CompareMode::None,
+            depth_stencil: Default::default(),
             cull_mode: CullMode::None,
             color_blend: None,
             alpha_blend: None,
+            color_mask: Default::default(),
+            stencil: None,
         }
     }
 }

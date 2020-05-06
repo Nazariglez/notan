@@ -346,25 +346,7 @@ impl Graphics {
 
     pub fn set_stencil(&mut self, opts: Option<&StencilOptions>) {
         unsafe {
-            if should_disable_stencil(&opts) {
-                self.gl.disable(glow::STENCIL_TEST);
-                return;
-            }
 
-            if let Some(opts) = opts {
-                self.gl.enable(glow::STENCIL_TEST);
-                self.gl.stencil_mask(opts.write_mask);
-                self.gl.stencil_op(
-                    opts.stencil_fail.glow_value(),
-                    opts.depth_fail.glow_value(),
-                    opts.pass.glow_value(),
-                );
-                self.gl.stencil_func(
-                    opts.compare.glow_value().unwrap_or(glow::ALWAYS),
-                    opts.reference as _,
-                    opts.read_mask,
-                );
-            }
         }
     }
 
@@ -444,7 +426,7 @@ impl Graphics {
     }
 }
 
-fn should_disable_stencil(stencil: &Option<&StencilOptions>) -> bool {
+fn should_disable_stencil(stencil: &Option<StencilOptions>) -> bool {
     match stencil {
         Some(stencil) => {
             stencil.compare == CompareMode::Always
@@ -773,15 +755,45 @@ impl BasePipeline for Pipeline {
 
     fn bind(&self, gfx: &mut Self::Graphics) {
         unsafe {
-            // gfx.gl.stencil_mask(0x00); //TODO
+            //Stencil
+            if should_disable_stencil(&self.options.stencil) {
+                self.gl.disable(glow::STENCIL_TEST);
+            } else {
+                if let Some(opts) = &self.options.stencil {
+                    self.gl.enable(glow::STENCIL_TEST);
+                    self.gl.stencil_mask(opts.write_mask);
+                    self.gl.stencil_op(
+                        opts.stencil_fail.glow_value(),
+                        opts.depth_fail.glow_value(),
+                        opts.pass.glow_value(),
+                    );
+                    self.gl.stencil_func(
+                        opts.compare.glow_value().unwrap_or(glow::ALWAYS),
+                        opts.reference as _,
+                        opts.read_mask,
+                    );
+                }
+            }
 
-            if let Some(d) = self.options.depth_stencil.glow_value() {
+            //Depth stencil
+            if let Some(d) = self.options.depth_stencil.compare.glow_value() {
                 gfx.gl.enable(glow::DEPTH_TEST);
                 gfx.gl.depth_func(d);
             } else {
                 gfx.gl.disable(glow::DEPTH_TEST);
             }
 
+            gfx.gl.depth_mask(self.options.depth_stencil.write);
+
+            //Color mask
+            self.gl.color_mask(
+                self.options.color_mask.r,
+                self.options.color_mask.g,
+                self.options.color_mask.b,
+                self.options.color_mask.a,
+            );
+
+            //Culling
             if let Some(mode) = self.options.cull_mode.glow_value() {
                 gfx.gl.enable(glow::CULL_FACE);
                 gfx.gl.cull_face(mode);
@@ -789,6 +801,7 @@ impl BasePipeline for Pipeline {
                 gfx.gl.disable(glow::CULL_FACE);
             }
 
+            //Blend modes
             match (self.options.color_blend, self.options.alpha_blend) {
                 (Some(cbm), None) => {
                     gfx.gl.enable(glow::BLEND);

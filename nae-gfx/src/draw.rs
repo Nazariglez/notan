@@ -32,6 +32,7 @@ pub struct Draw {
     pattern_batcher: PatternBatcher,
     current_mode: PaintMode,
     shapes: ShapeTessellator,
+    mask: MaskMode,
 }
 
 impl Draw {
@@ -60,15 +61,20 @@ impl Draw {
             projection: None,
             render_projection,
             shapes: ShapeTessellator::new(),
+            mask: MaskMode::None,
         })
     }
 
     pub fn start_mask<T: FnMut(&mut Self)>(&mut self, mut mask: T) {
-        dbg!("start ->");
+        debug_assert!(self.gfx.running, "Graphics pass should be already running.");
+        debug_assert!(self.mask == MaskMode::None, "Already writing to a mask.");
+
         flush(self);
 
-        self.clear_options.stencil = Some(0xff);
-        let mut opts = StencilOptions {
+
+        self.mask = MaskMode::Drawing;
+        // self.clear_options.stencil = Some(0xff);
+        /*let mut opts = StencilOptions {
             stencil_fail: StencilAction::Keep,
             depth_fail: StencilAction::Keep,
             pass: StencilAction::Replace,
@@ -78,7 +84,7 @@ impl Draw {
             reference: 1,
         };
 
-        self.gfx.set_stencil(Some(&opts));
+        self.gfx.set_stencil(Some(&opts));*/
 
         unsafe {
             // self.gfx.gl.enable(glow::STENCIL_TEST);
@@ -87,37 +93,38 @@ impl Draw {
             //     .stencil_op(glow::KEEP, glow::KEEP, glow::REPLACE);
             // self.gfx.gl.stencil_func(glow::ALWAYS, 1, 0xff);
             // self.gfx.gl.stencil_mask(0xff);
-            self.gfx.gl.depth_mask(false);
-            self.gfx.gl.color_mask(false, false, false, false);
+            // self.gfx.gl.depth_mask(false);
+            // self.gfx.gl.color_mask(false, false, false, false);
         }
 
-        let last_clear_color =
-            std::mem::replace(&mut self.clear_options.color, Some(Color::TRANSPARENT));
-        self.gfx.clear(&self.clear_options);
+        // let last_clear_color =
+        //     std::mem::replace(&mut self.clear_options.color, Some(Color::TRANSPARENT));
+        // self.gfx.clear(&self.clear_options);
         mask(self);
 
         flush(self);
-        self.clear_options.color = last_clear_color;
+        // self.clear_options.color = last_clear_color;
 
-        opts.pass = StencilAction::Replace;
+        /*opts.pass = StencilAction::Replace;
         opts.compare = CompareMode::Equal;
         opts.write_mask = 0x00;
 
-        self.gfx.set_stencil(Some(&opts));
+        self.gfx.set_stencil(Some(&opts));*/
+        self.mask = MaskMode::Masking;
 
         unsafe {
             // self.gfx.gl.stencil_func(glow::EQUAL, 1, 0xff);
             // self.gfx.gl.stencil_mask(0x00);
-            self.gfx.gl.depth_mask(true);
-            self.gfx.gl.color_mask(true, true, true, true);
+            // self.gfx.gl.depth_mask(true);
+            // self.gfx.gl.color_mask(true, true, true, true);
         }
-        dbg!("<- end");
     }
 
     pub fn end_mask(&mut self) {
         flush(self);
         self.clear_options.stencil = None;
-        self.gfx.set_stencil(None);
+        // self.gfx.set_stencil(None);
+        self.mask = MaskMode::None;
     }
 
     pub fn set_size(&mut self, width: f32, height: f32) {
@@ -630,7 +637,14 @@ fn flush(draw: &mut Draw) {
             Some(p) => p,
             _ => &draw.render_projection,
         },
+        &draw.mask
     );
+}
+
+pub(crate) struct DrawParams<'a> {
+    gfx: &'a mut Graphics,
+    projection: &'a Matrix4,
+    mask: &'a MaskMode,
 }
 
 fn paint_mode(draw: &mut Draw, mode: PaintMode) {
@@ -659,6 +673,7 @@ fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32], color: Option<
             blend: draw.blend_mode,
             color: color.unwrap_or(draw.color),
             alpha: draw.alpha,
+            mask: &draw.mask,
         },
     );
 }
@@ -682,6 +697,7 @@ fn draw_image(draw: &mut Draw, texture: &Texture, vertices: &[f32], uvs: &[f32],
             blend: draw.blend_mode,
             color: draw.color,
             alpha: draw.alpha,
+            mask: &draw.mask,
         },
     )
 }
@@ -711,8 +727,17 @@ fn draw_pattern(
             blend: draw.blend_mode,
             color: draw.color,
             alpha: draw.alpha,
+            mask: &draw.mask,
         },
     )
+}
+
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub(crate) enum MaskMode {
+    None,
+    Drawing,
+    Masking
 }
 
 #[derive(Debug, PartialEq)]
@@ -733,4 +758,5 @@ pub(crate) struct DrawData<'data> {
     pub blend: Option<BlendMode>,
     pub projection: &'data Matrix4,
     pub matrix: &'data Matrix4,
+    pub mask: &'data MaskMode,
 }

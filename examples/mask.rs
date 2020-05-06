@@ -17,6 +17,5 @@ fn draw(app: &mut App, _: &mut ()) {
     draw.triangle(400.0, 100.0, 100.0, 500.0, 700.0, 500.0);
 
     draw.end_mask();
-
     draw.end();
 }

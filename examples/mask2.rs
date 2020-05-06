@@ -36,7 +36,6 @@ fn draw(app: &mut App, state: &mut State) {
     );
 
     draw.end_mask();
-
     draw.end();
 
     state.offset += 50.0 * app.delta;
