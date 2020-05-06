@@ -6,16 +6,12 @@ type VERTICES = Vec<f32>;
 type INDICES = Vec<u32>;
 
 use crate::texture::Texture;
-use crate::{
-    matrix4_identity, matrix4_mul_vector4, DrawData, Graphics, IndexBuffer, Matrix4, Pipeline,
-    Shader, Uniform, VertexAttr, VertexBuffer, VertexFormat,
-};
-use nae_core::{
-    log, BaseGfx, BasePipeline, BlendMode, Color, DrawUsage, GraphicsAPI, PipelineOptions,
-};
+use crate::{matrix4_identity, matrix4_mul_vector4, DrawData, Graphics, IndexBuffer, Matrix4, Pipeline, Shader, Uniform, VertexAttr, VertexBuffer, VertexFormat, MaskMode};
+use nae_core::{log, BaseGfx, BasePipeline, BlendMode, Color, DrawUsage, GraphicsAPI, PipelineOptions, StencilOptions, StencilAction, CompareMode};
 
 pub(crate) trait BaseBatcher {
-    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4);
+    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4, mask: &MaskMode);
+    fn set_mask(&mut self, mask: &MaskMode);
 }
 
 /// Pattern batcher
@@ -33,6 +29,7 @@ pub(crate) struct PatternBatcher {
     index: usize,
     max_vertices: usize,
     batch_size: usize,
+    mask: MaskMode,
 }
 
 impl PatternBatcher {
@@ -83,17 +80,18 @@ impl PatternBatcher {
             batch_size,
             texture: None,
             frame_coords: [0.0; 4],
+            mask: MaskMode::None,
         })
     }
 
-    fn set_texture(&mut self, gfx: &mut Graphics, texture: &Texture, projection: &Matrix4) {
+    fn set_texture(&mut self, gfx: &mut Graphics, texture: &Texture, projection: &Matrix4, mask: &MaskMode) {
         let needs_update = match &self.texture {
             Some(t) => t.raw() != texture.raw(),
             None => true,
         };
 
         if needs_update {
-            self.flush(gfx, projection);
+            self.flush(gfx, projection, mask);
 
             let frame = texture.frame();
             let base_width = texture.base_width();
@@ -118,11 +116,11 @@ impl PatternBatcher {
         data: DrawData,
     ) {
         // self.check_batch_size(gfx, &data); //performance is worst with this...
-        self.set_texture(gfx, texture, data.projection);
+        self.set_texture(gfx, texture, data.projection, data.mask);
 
         let next_index = self.index + data.indices.len();
         if next_index >= self.indices.len() {
-            self.flush(gfx, data.projection);
+            self.flush(gfx, data.projection, data.mask);
         }
 
         for (i, index) in data.indices.iter().enumerate() {
@@ -169,7 +167,7 @@ impl PatternBatcher {
             let is_bigger = data.indices.len() > self.indices.len();
             let is_more = self.index + data.indices.len() >= self.indices.len();
             if is_bigger || is_more {
-                self.flush(gfx, data.projection);
+                self.flush(gfx, data.projection, data.mask);
 
                 let index_next_size = next_size / self.vbo.offset();
                 log::debug!(
@@ -186,11 +184,12 @@ impl PatternBatcher {
 }
 
 impl BaseBatcher for PatternBatcher {
-    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4) {
+    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4, mask: &MaskMode) {
         if self.index == 0 {
             return;
         }
 
+        self.set_mask(mask);
         if let Some(tex) = &self.texture {
             gfx.set_pipeline(&self.pipeline);
             gfx.bind_texture(&self.texture_loc, tex);
@@ -202,6 +201,13 @@ impl BaseBatcher for PatternBatcher {
         }
 
         self.index = 0;
+    }
+
+    fn set_mask(&mut self, mask: &MaskMode) {
+        if *mask != self.mask {
+            apply_mask_to_pipeline(&mut self.pipeline, mask);
+            self.mask = *mask;
+        }
     }
 }
 
@@ -218,6 +224,7 @@ pub(crate) struct ImageBatcher {
     index: usize,
     max_vertices: usize,
     batch_size: usize,
+    mask: MaskMode,
 }
 
 impl ImageBatcher {
@@ -265,19 +272,20 @@ impl ImageBatcher {
             max_vertices,
             batch_size,
             texture: None,
+            mask: MaskMode::None,
         })
     }
 
-    fn set_texture(&mut self, gfx: &mut Graphics, texture: &Texture, projection: &Matrix4) {
+    fn set_texture(&mut self, gfx: &mut Graphics, texture: &Texture, projection: &Matrix4, mask: &MaskMode) {
         match &self.texture {
             Some(tex) => {
                 if tex.raw() != texture.raw() {
-                    self.flush(gfx, projection);
+                    self.flush(gfx, projection, mask);
                     self.texture = Some(texture.clone());
                 }
             }
             None => {
-                self.flush(gfx, projection);
+                self.flush(gfx, projection, mask);
                 self.texture = Some(texture.clone());
             }
         }
@@ -291,11 +299,11 @@ impl ImageBatcher {
         data: DrawData,
     ) {
         // self.check_batch_size(gfx, &data); //perfromance is worst with this...
-        self.set_texture(gfx, texture, data.projection);
+        self.set_texture(gfx, texture, data.projection, data.mask);
 
         let next_index = self.index + data.indices.len();
         if next_index >= self.indices.len() {
-            self.flush(gfx, data.projection);
+            self.flush(gfx, data.projection, data.mask);
         }
 
         for (i, index) in data.indices.iter().enumerate() {
@@ -342,7 +350,7 @@ impl ImageBatcher {
             let is_bigger = data.indices.len() > self.indices.len();
             let is_more = self.index + data.indices.len() >= self.indices.len();
             if is_bigger || is_more {
-                self.flush(gfx, data.projection);
+                self.flush(gfx, data.projection, data.mask);
 
                 let index_next_size = next_size / self.vbo.offset();
                 log::debug!(
@@ -359,11 +367,12 @@ impl ImageBatcher {
 }
 
 impl BaseBatcher for ImageBatcher {
-    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4) {
+    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4, mask: &MaskMode) {
         if self.index == 0 {
             return;
         }
 
+        self.set_mask(mask);
         if let Some(tex) = &self.texture {
             gfx.set_pipeline(&self.pipeline);
             gfx.bind_texture(&self.texture_loc, tex);
@@ -374,6 +383,46 @@ impl BaseBatcher for ImageBatcher {
         }
 
         self.index = 0;
+    }
+
+    fn set_mask(&mut self, mask: &MaskMode) {
+        if *mask != self.mask {
+            apply_mask_to_pipeline(&mut self.pipeline, mask);
+            self.mask = *mask;
+        }
+    }
+}
+
+fn apply_mask_to_pipeline(pipeline: &mut Pipeline, mask: &MaskMode) {
+    match &mask {
+        MaskMode::None => {
+            pipeline.options.stencil = None;
+            pipeline.options.depth_stencil.write = true;
+            pipeline.options.color_mask.enable_rgba();
+        }
+        MaskMode::Drawing => {
+            pipeline.options.stencil = Some(StencilOptions {
+                stencil_fail: StencilAction::Keep,
+                depth_fail: StencilAction::Keep,
+                pass: StencilAction::Replace,
+                compare: CompareMode::Always,
+                read_mask: 0xff,
+                write_mask: 0xff,
+                reference: 1,
+            });
+            pipeline.options.depth_stencil.write = false;
+            pipeline.options.color_mask.disable_rgba();
+        }
+        MaskMode::Masking => {
+            if let Some(opts) = &mut pipeline.options.stencil {
+                opts.pass = StencilAction::Replace;
+                opts.compare = CompareMode::Equal;
+                opts.write_mask = 0x00;
+            }
+
+            pipeline.options.depth_stencil.write = true;
+            pipeline.options.color_mask.enable_rgba();
+        }
     }
 }
 
@@ -388,6 +437,7 @@ pub(crate) struct ColorBatcher {
     index: usize,
     max_vertices: usize,
     batch_size: usize,
+    mask: MaskMode,
 }
 
 impl ColorBatcher {
@@ -431,6 +481,7 @@ impl ColorBatcher {
             index: 0,
             max_vertices,
             batch_size,
+            mask: MaskMode::None,
         })
     }
 
@@ -441,7 +492,7 @@ impl ColorBatcher {
             let is_bigger = data.indices.len() > self.indices.len();
             let is_more = self.index + data.indices.len() >= self.indices.len();
             if is_bigger || is_more {
-                self.flush(gfx, data.projection);
+                self.flush(gfx, data.projection, data.mask);
 
                 let index_next_size = next_size / self.vbo.offset();
                 log::debug!(
@@ -467,12 +518,12 @@ impl ColorBatcher {
         // Flush if we reach the end of this batch
         let next_index = self.index + data.indices.len();
         if next_index >= self.indices.len() {
-            self.flush(gfx, data.projection);
+            self.flush(gfx, data.projection, data.mask);
         }
 
         // Flush if we change the blend mode
         if self.pipeline.options.color_blend != data.blend {
-            self.flush(gfx, data.projection);
+            self.flush(gfx, data.projection, data.mask);
             self.pipeline.options.color_blend = data.blend;
         }
 
@@ -507,7 +558,7 @@ impl ColorBatcher {
                 data.alpha,
             );
 
-            self.flush(gfx, data.projection);
+            self.flush(gfx, data.projection, data.mask);
         }
     }
 
@@ -549,17 +600,25 @@ impl ColorBatcher {
 }
 
 impl BaseBatcher for ColorBatcher {
-    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4) {
+    fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4, mask: &MaskMode) {
         if self.index == 0 {
             return;
         }
 
+        self.set_mask(mask);
         gfx.set_pipeline(&self.pipeline);
         gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
         gfx.bind_index_buffer(&self.ibo, &self.indices);
         gfx.bind_uniform(&self.matrix_loc, projection);
         gfx.draw(0, self.index as i32);
         self.index = 0;
+    }
+
+    fn set_mask(&mut self, mask: &MaskMode) {
+        if *mask != self.mask {
+            apply_mask_to_pipeline(&mut self.pipeline, mask);
+            self.mask = *mask;
+        }
     }
 }
 
