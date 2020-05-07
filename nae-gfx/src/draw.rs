@@ -123,7 +123,6 @@ impl Draw {
     pub fn end_mask(&mut self) {
         flush(self);
         self.clear_options.stencil = None;
-        // self.gfx.set_stencil(None);
         self.mask = MaskMode::None;
     }
 
@@ -184,7 +183,6 @@ impl Draw {
     pub fn end(&mut self) {
         paint_mode(self, PaintMode::None);
         self.gfx.end();
-        dbg!("end pass");
     }
 
     pub fn geometry(&mut self, geometry: &Geometry) {
@@ -623,7 +621,6 @@ fn projection(width: f32, height: f32, is_flipped: bool) -> Matrix4 {
 }
 
 fn flush(draw: &mut Draw) {
-    dbg!("flush");
     let mut batcher: &mut BaseBatcher = match draw.current_mode {
         PaintMode::Color => &mut draw.color_batcher,
         PaintMode::Image => &mut draw.image_batcher,
