@@ -414,12 +414,15 @@ fn apply_mask_to_pipeline(pipeline: &mut Pipeline, mask: &MaskMode) {
             pipeline.options.color_mask.disable_rgba();
         }
         MaskMode::Masking => {
-            if let Some(opts) = &mut pipeline.options.stencil {
-                opts.pass = StencilAction::Replace;
-                opts.compare = CompareMode::Equal;
-                opts.write_mask = 0x00;
-            }
-
+            pipeline.options.stencil = Some(StencilOptions {
+                stencil_fail: StencilAction::Keep,
+                depth_fail: StencilAction::Keep,
+                pass: StencilAction::Replace,
+                compare: CompareMode::Equal,
+                read_mask: 0xff,
+                write_mask: 0x00,
+                reference: 1,
+            });
             pipeline.options.depth_stencil.write = true;
             pipeline.options.color_mask.enable_rgba();
         }
