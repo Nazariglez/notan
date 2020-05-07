@@ -344,12 +344,6 @@ impl Graphics {
         })
     }
 
-    pub fn set_stencil(&mut self, opts: Option<&StencilOptions>) {
-        unsafe {
-
-        }
-    }
-
     pub fn bind_uniform(
         &mut self,
         location: &<Graphics as BaseGfx>::Location,

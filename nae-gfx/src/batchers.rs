@@ -6,12 +6,19 @@ type VERTICES = Vec<f32>;
 type INDICES = Vec<u32>;
 
 use crate::texture::Texture;
-use crate::{matrix4_identity, matrix4_mul_vector4, DrawData, Graphics, IndexBuffer, Matrix4, Pipeline, Shader, Uniform, VertexAttr, VertexBuffer, VertexFormat, MaskMode};
-use nae_core::{log, BaseGfx, BasePipeline, BlendMode, Color, DrawUsage, GraphicsAPI, PipelineOptions, StencilOptions, StencilAction, CompareMode};
+use crate::{
+    matrix4_identity, matrix4_mul_vector4, DrawData, Graphics, IndexBuffer, MaskMode, Matrix4,
+    Pipeline, Shader, Uniform, VertexAttr, VertexBuffer, VertexFormat,
+};
+use nae_core::{
+    log, BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, CompareMode, DrawUsage,
+    GraphicsAPI, PipelineOptions, StencilAction, StencilOptions,
+};
 
 pub(crate) trait BaseBatcher {
     fn flush(&mut self, gfx: &mut Graphics, projection: &Matrix4, mask: &MaskMode);
     fn set_mask(&mut self, mask: &MaskMode);
+    fn clear_mask(&mut self, gfx: &mut Graphics, mask: &MaskMode, color: Color);
 }
 
 /// Pattern batcher
@@ -84,7 +91,13 @@ impl PatternBatcher {
         })
     }
 
-    fn set_texture(&mut self, gfx: &mut Graphics, texture: &Texture, projection: &Matrix4, mask: &MaskMode) {
+    fn set_texture(
+        &mut self,
+        gfx: &mut Graphics,
+        texture: &Texture,
+        projection: &Matrix4,
+        mask: &MaskMode,
+    ) {
         let needs_update = match &self.texture {
             Some(t) => t.raw() != texture.raw(),
             None => true,
@@ -209,6 +222,16 @@ impl BaseBatcher for PatternBatcher {
             self.mask = *mask;
         }
     }
+
+    fn clear_mask(&mut self, gfx: &mut Graphics, mask: &MaskMode, color: Color) {
+        self.set_mask(mask);
+        gfx.set_pipeline(&self.pipeline);
+        gfx.clear(&ClearOptions {
+            stencil: Some(0xff),
+            color: Some(color),
+            ..Default::default()
+        });
+    }
 }
 
 /// Image batcher
@@ -276,7 +299,13 @@ impl ImageBatcher {
         })
     }
 
-    fn set_texture(&mut self, gfx: &mut Graphics, texture: &Texture, projection: &Matrix4, mask: &MaskMode) {
+    fn set_texture(
+        &mut self,
+        gfx: &mut Graphics,
+        texture: &Texture,
+        projection: &Matrix4,
+        mask: &MaskMode,
+    ) {
         match &self.texture {
             Some(tex) => {
                 if tex.raw() != texture.raw() {
@@ -390,6 +419,16 @@ impl BaseBatcher for ImageBatcher {
             apply_mask_to_pipeline(&mut self.pipeline, mask);
             self.mask = *mask;
         }
+    }
+
+    fn clear_mask(&mut self, gfx: &mut Graphics, mask: &MaskMode, color: Color) {
+        self.set_mask(mask);
+        gfx.set_pipeline(&self.pipeline);
+        gfx.clear(&ClearOptions {
+            stencil: Some(0xff),
+            color: Some(color),
+            ..Default::default()
+        });
     }
 }
 
@@ -622,6 +661,16 @@ impl BaseBatcher for ColorBatcher {
             apply_mask_to_pipeline(&mut self.pipeline, mask);
             self.mask = *mask;
         }
+    }
+
+    fn clear_mask(&mut self, gfx: &mut Graphics, mask: &MaskMode, color: Color) {
+        self.set_mask(mask);
+        gfx.set_pipeline(&self.pipeline);
+        gfx.clear(&ClearOptions {
+            stencil: Some(0xff),
+            color: Some(color),
+            ..Default::default()
+        });
     }
 }
 

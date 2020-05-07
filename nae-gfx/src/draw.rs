@@ -71,53 +71,15 @@ impl Draw {
 
         flush(self);
 
-
         self.mask = MaskMode::Drawing;
-        // self.clear_options.stencil = Some(0xff);
-        /*let mut opts = StencilOptions {
-            stencil_fail: StencilAction::Keep,
-            depth_fail: StencilAction::Keep,
-            pass: StencilAction::Replace,
-            compare: CompareMode::Always,
-            read_mask: 0xff,
-            write_mask: 0xff,
-            reference: 1,
-        };
+        self.clear_options.stencil = Some(0xff);
 
-        self.gfx.set_stencil(Some(&opts));*/
-
-        unsafe {
-            // self.gfx.gl.enable(glow::STENCIL_TEST);
-            // self.gfx
-            //     .gl
-            //     .stencil_op(glow::KEEP, glow::KEEP, glow::REPLACE);
-            // self.gfx.gl.stencil_func(glow::ALWAYS, 1, 0xff);
-            // self.gfx.gl.stencil_mask(0xff);
-            // self.gfx.gl.depth_mask(false);
-            // self.gfx.gl.color_mask(false, false, false, false);
-        }
-
-        // let last_clear_color =
-        //     std::mem::replace(&mut self.clear_options.color, Some(Color::TRANSPARENT));
-        // self.gfx.clear(&self.clear_options);
+        clear_mask(self);
         mask(self);
 
         flush(self);
-        // self.clear_options.color = last_clear_color;
 
-        /*opts.pass = StencilAction::Replace;
-        opts.compare = CompareMode::Equal;
-        opts.write_mask = 0x00;
-
-        self.gfx.set_stencil(Some(&opts));*/
         self.mask = MaskMode::Masking;
-
-        unsafe {
-            // self.gfx.gl.stencil_func(glow::EQUAL, 1, 0xff);
-            // self.gfx.gl.stencil_mask(0x00);
-            // self.gfx.gl.depth_mask(true);
-            // self.gfx.gl.color_mask(true, true, true, true);
-        }
     }
 
     pub fn end_mask(&mut self) {
@@ -620,6 +582,17 @@ fn projection(width: f32, height: f32, is_flipped: bool) -> Matrix4 {
     }
 }
 
+fn clear_mask(draw: &mut Draw) {
+    let mut batcher: &mut BaseBatcher = match draw.current_mode {
+        PaintMode::Color => &mut draw.color_batcher,
+        PaintMode::Image => &mut draw.image_batcher,
+        PaintMode::Pattern => &mut draw.pattern_batcher,
+        _ => return,
+    };
+
+    batcher.clear_mask(&mut draw.gfx, &draw.mask, Color::TRANSPARENT);
+}
+
 fn flush(draw: &mut Draw) {
     let mut batcher: &mut BaseBatcher = match draw.current_mode {
         PaintMode::Color => &mut draw.color_batcher,
@@ -634,7 +607,7 @@ fn flush(draw: &mut Draw) {
             Some(p) => p,
             _ => &draw.render_projection,
         },
-        &draw.mask
+        &draw.mask,
     );
 }
 
@@ -729,12 +702,11 @@ fn draw_pattern(
     )
 }
 
-
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub(crate) enum MaskMode {
     None,
     Drawing,
-    Masking
+    Masking,
 }
 
 #[derive(Debug, PartialEq)]
