@@ -120,7 +120,7 @@ impl Default for ColorMask {
             r: true,
             g: true,
             b: true,
-            a: true
+            a: true,
         }
     }
 }
