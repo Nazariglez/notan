@@ -1,7 +1,7 @@
 use nae::prelude::*;
 
 struct State {
-    tex: Texture,
+    tex: nae_gfx::texture::Texture,
     count: f32,
 }
 
@@ -12,29 +12,29 @@ fn main() {
 
 fn init(app: &mut App) -> State {
     State {
-        tex: app.load_file("./examples/assets/ferris.png").unwrap(),
+        tex: nae_gfx::texture::Texture::from_bytes(app, include_bytes!("assets/ferris.png"))
+            .unwrap(),
         count: 0.0,
     }
 }
 
 fn draw(app: &mut App, state: &mut State) {
     let image = &state.tex;
-    let draw = app.draw();
     let ww = image.width() * 0.5;
     let hh = image.height() * 0.5;
 
-    draw.begin();
-    //    draw.clear(Color::RED);
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
+    let draw = app.draw2();
 
-    draw.set_color(Color::YELLOW);
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
+
+    draw.color = Color::YELLOW;
     draw.circle(
         400.0 + state.count.cos() * 250.0,
         300.0 + (state.count * 7.0).cos() * 150.0,
         100.0,
     );
 
-    draw.set_color(Color::WHITE);
+    draw.color = Color::WHITE;
     draw.circle(
         400.0 + state.count.sin() * 250.0,
         300.0 + (state.count * 5.0).sin() * 150.0,
@@ -57,11 +57,11 @@ fn draw(app: &mut App, state: &mut State) {
         let xx = 100.0 + (ww + 20.0) * col;
         let yy = 100.0 + (hh + 20.0) * row;
 
-        draw.set_blend(blend.1);
+        draw.blend_mode = blend.1;
         draw.image_ext(&image, xx, yy, ww, hh, 0.0, 0.0, 0.0, 0.0);
 
-        draw.set_blend(BlendMode::NORMAL);
-        draw.text(blend.0, xx, yy, 20.0);
+        draw.blend_mode = BlendMode::NORMAL;
+        // draw.text(blend.0, xx, yy, 20.0); TODO
     });
 
     draw.end();

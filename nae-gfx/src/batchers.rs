@@ -136,6 +136,12 @@ impl PatternBatcher {
             self.flush(gfx, data.projection, data.mask);
         }
 
+        // Flush if we change the blend mode
+        if self.pipeline.options.color_blend != data.blend {
+            self.flush(gfx, data.projection, data.mask);
+            self.pipeline.options.color_blend = data.blend;
+        }
+
         for (i, index) in data.indices.iter().enumerate() {
             self.indices[self.index + i] = self.index as u32 + *index;
         }
@@ -333,6 +339,12 @@ impl ImageBatcher {
         let next_index = self.index + data.indices.len();
         if next_index >= self.indices.len() {
             self.flush(gfx, data.projection, data.mask);
+        }
+
+        // Flush if we change the blend mode
+        if self.pipeline.options.color_blend != data.blend {
+            self.flush(gfx, data.projection, data.mask);
+            self.pipeline.options.color_blend = data.blend;
         }
 
         for (i, index) in data.indices.iter().enumerate() {
