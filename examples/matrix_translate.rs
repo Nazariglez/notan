@@ -1,7 +1,7 @@
 use nae::prelude::*;
 
 struct State {
-    tex: Texture,
+    tex: nae_gfx::texture::Texture,
     count: f32,
 }
 
@@ -20,22 +20,22 @@ fn draw(app: &mut App, state: &mut State) {
     let x = initial_x + cos * 200.0;
     let y = initial_y + sin * 150.0;
 
-    let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
+    let draw = app.draw2();
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
-    draw.push_translate(x, y);
+    draw.push_translation(x, y);
     draw.image(img, 0.0, 0.0);
-    draw.text_ext(
-        &format!("x: {}, y: {}", x.round(), y.round()),
-        img.width() * 0.5,
-        img.height(),
-        24.0,
-        HorizontalAlign::Center,
-        VerticalAlign::Top,
-        None,
-    );
-    draw.pop_matrix();
+    //TODO
+    // draw.text_ext(
+    //     &format!("x: {}, y: {}", x.round(), y.round()),
+    //     img.width() * 0.5,
+    //     img.height(),
+    //     24.0,
+    //     HorizontalAlign::Center,
+    //     VerticalAlign::Top,
+    //     None,
+    // );
+    draw.pop();
 
     draw.end();
 
@@ -44,7 +44,8 @@ fn draw(app: &mut App, state: &mut State) {
 
 fn init(app: &mut App) -> State {
     State {
-        tex: app.load_file("./examples/assets/ferris.png").unwrap(),
+        tex: nae_gfx::texture::Texture::from_bytes(app, include_bytes!("assets/ferris.png"))
+            .unwrap(),
         count: 0.0,
     }
 }

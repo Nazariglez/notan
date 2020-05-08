@@ -8,8 +8,9 @@ use crate::shapes::ShapeTessellator;
 use crate::texture::Texture;
 use crate::{
     matrix4_identity, matrix4_mul_matrix4, matrix4_mul_vector4, matrix4_orthogonal,
-    matrix4_rotation_z, matrix4_scale, matrix4_translate, Device, Graphics, IndexBuffer, Matrix4,
-    Pipeline, RenderTarget, Shader, Uniform, VertexAttr, VertexBuffer, VertexFormat,
+    matrix4_rotation_z, matrix4_scale, matrix4_skew, matrix4_translate, Device, Graphics,
+    IndexBuffer, Matrix4, Pipeline, RenderTarget, Shader, Uniform, VertexAttr, VertexBuffer,
+    VertexFormat,
 };
 use glow::HasContext;
 use std::cell::RefMut;
@@ -112,6 +113,10 @@ impl Draw {
 
     pub fn push_scale(&mut self, x: f32, y: f32) {
         self.push(&matrix4_scale(x, y, 1.0));
+    }
+
+    pub fn push_skew(&mut self, x: f32, y: f32) {
+        self.push(&matrix4_skew(x, y));
     }
 
     pub fn push_translation(&mut self, x: f32, y: f32) {
