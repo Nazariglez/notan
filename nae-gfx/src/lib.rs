@@ -1,16 +1,18 @@
 mod batchers;
 mod draw;
 mod matrix;
+mod pipeline;
 mod render_target;
 mod shapes;
 pub mod texture;
 mod uniform;
 
-use crate::shader::{BufferKey, InnerShader};
-pub use crate::shader::{Shader, VertexFormat};
+pub use crate::shader::VertexFormat;
+use crate::shader::{BufferKey, InnerShader, Shader};
 pub use draw::*;
 use glow::{Context, HasContext, DEPTH_TEST};
 pub use matrix::*;
+pub use pipeline::*;
 pub use render_target::*;
 pub use uniform::*;
 // pub use texture::*;
@@ -420,18 +422,6 @@ impl Graphics {
     }
 }
 
-fn should_disable_stencil(stencil: &Option<StencilOptions>) -> bool {
-    match stencil {
-        Some(stencil) => {
-            stencil.compare == CompareMode::Always
-                && stencil.stencil_fail == StencilAction::Keep
-                && stencil.depth_fail == StencilAction::Keep
-                && stencil.pass == StencilAction::Keep
-        }
-        None => true,
-    }
-}
-
 impl BaseGfx for Graphics {
     type Location = Uniform;
     type Texture = texture::Texture;
@@ -465,6 +455,11 @@ impl BaseGfx for Graphics {
     }
 
     fn bind_texture_slot(&mut self, slot: u32, location: &Self::Location, tex: &texture::Texture) {
+        debug_assert!(
+            self.pipeline_in_use,
+            "A pipeline should be set before bind textures"
+        );
+
         unsafe {
             let gl_slot = match slot {
                 0 => glow::TEXTURE0,
@@ -690,161 +685,24 @@ impl BaseVertexBuffer for VertexBuffer {
 }
 
 pub trait AttrLocationId {
-    fn location(&self, shader: &Shader) -> u32;
+    fn location(&self, pipeline: &Pipeline) -> u32;
 }
 
 impl AttrLocationId for u32 {
-    fn location(&self, shader: &Shader) -> u32 {
+    fn location(&self, pipeline: &Pipeline) -> u32 {
         *self
     }
 }
 
 impl AttrLocationId for String {
-    fn location(&self, shader: &Shader) -> u32 {
+    fn location(&self, pipeline: &Pipeline) -> u32 {
         unsafe {
-            shader
+            pipeline
+                .shader
                 .inner
                 .gl
-                .get_attrib_location(shader.inner.raw, &self)
+                .get_attrib_location(pipeline.shader.inner.raw, &self)
                 .expect("Invalid location") as u32
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct Pipeline {
-    gl: GlContext,
-    vao: <glow::Context as HasContext>::VertexArray,
-    shader: Shader,
-    pub options: PipelineOptions,
-}
-
-impl Drop for Pipeline {
-    fn drop(&mut self) {
-        unsafe {
-            self.gl.delete_vertex_array(self.vao);
-        }
-    }
-}
-
-impl Pipeline {
-    pub fn new(graphics: &Graphics, shader: &Shader, opts: PipelineOptions) -> Self {
-        let gl = graphics.gl.clone();
-        let vao = unsafe {
-            let vao = gl.create_vertex_array().unwrap();
-            gl.bind_vertex_array(Some(vao));
-            vao
-        };
-        Self {
-            gl,
-            vao,
-            options: opts,
-            shader: shader.clone(),
-        }
-    }
-}
-
-impl BasePipeline for Pipeline {
-    type Graphics = Graphics;
-
-    fn bind(&self, gfx: &mut Self::Graphics) {
-        unsafe {
-            //Stencil
-            if should_disable_stencil(&self.options.stencil) {
-                self.gl.disable(glow::STENCIL_TEST);
-            } else {
-                if let Some(opts) = &self.options.stencil {
-                    self.gl.enable(glow::STENCIL_TEST);
-                    self.gl.stencil_mask(opts.write_mask);
-                    self.gl.stencil_op(
-                        opts.stencil_fail.glow_value(),
-                        opts.depth_fail.glow_value(),
-                        opts.pass.glow_value(),
-                    );
-                    self.gl.stencil_func(
-                        opts.compare.glow_value().unwrap_or(glow::ALWAYS),
-                        opts.reference as _,
-                        opts.read_mask,
-                    );
-                }
-            }
-
-            //Depth stencil
-            if let Some(d) = self.options.depth_stencil.compare.glow_value() {
-                gfx.gl.enable(glow::DEPTH_TEST);
-                gfx.gl.depth_func(d);
-            } else {
-                gfx.gl.disable(glow::DEPTH_TEST);
-            }
-
-            gfx.gl.depth_mask(self.options.depth_stencil.write);
-
-            //Color mask
-            self.gl.color_mask(
-                self.options.color_mask.r,
-                self.options.color_mask.g,
-                self.options.color_mask.b,
-                self.options.color_mask.a,
-            );
-
-            //Culling
-            if let Some(mode) = self.options.cull_mode.glow_value() {
-                gfx.gl.enable(glow::CULL_FACE);
-                gfx.gl.cull_face(mode);
-            } else {
-                gfx.gl.disable(glow::CULL_FACE);
-            }
-
-            //Blend modes
-            match (self.options.color_blend, self.options.alpha_blend) {
-                (Some(cbm), None) => {
-                    gfx.gl.enable(glow::BLEND);
-                    gfx.gl
-                        .blend_func(cbm.src.glow_value(), cbm.dst.glow_value());
-                    gfx.gl.blend_equation(cbm.op.glow_value());
-                }
-                (Some(cbm), Some(abm)) => {
-                    gfx.gl.enable(glow::BLEND);
-                    gfx.gl.blend_func_separate(
-                        cbm.src.glow_value(),
-                        cbm.dst.glow_value(),
-                        abm.src.glow_value(),
-                        abm.dst.glow_value(),
-                    );
-                    gfx.gl
-                        .blend_equation_separate(cbm.op.glow_value(), abm.op.glow_value());
-                }
-                (None, Some(abm)) => {
-                    let cbm = BlendMode::NORMAL;
-                    gfx.gl.enable(glow::BLEND);
-                    gfx.gl.blend_func_separate(
-                        cbm.src.glow_value(),
-                        cbm.dst.glow_value(),
-                        abm.src.glow_value(),
-                        abm.dst.glow_value(),
-                    );
-                    gfx.gl
-                        .blend_equation_separate(cbm.op.glow_value(), abm.op.glow_value());
-                }
-                (None, None) => {
-                    gfx.gl.disable(glow::BLEND);
-                }
-            }
-
-            gfx.gl.bind_vertex_array(Some(self.vao));
-            gfx.gl.use_program(Some(self.shader.inner.raw));
-        }
-    }
-
-    fn options(&mut self) -> &mut PipelineOptions {
-        &mut self.options
-    }
-
-    fn uniform_location(&self, id: &str) -> <Self::Graphics as BaseGfx>::Location {
-        unsafe {
-            self.gl
-                .get_uniform_location(self.shader.inner.raw, id)
-                .unwrap()
         }
     }
 }

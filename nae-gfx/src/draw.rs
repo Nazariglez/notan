@@ -9,8 +9,7 @@ use crate::texture::Texture;
 use crate::{
     matrix4_identity, matrix4_mul_matrix4, matrix4_mul_vector4, matrix4_orthogonal,
     matrix4_rotation_z, matrix4_scale, matrix4_skew, matrix4_translate, Device, Graphics,
-    IndexBuffer, Matrix4, Pipeline, RenderTarget, Shader, Uniform, VertexAttr, VertexBuffer,
-    VertexFormat,
+    IndexBuffer, Matrix4, Pipeline, RenderTarget, Uniform, VertexAttr, VertexBuffer, VertexFormat,
 };
 use glow::HasContext;
 use std::cell::RefMut;
@@ -24,10 +23,7 @@ pub struct Draw {
     pub blend_mode: BlendMode,
     pub projection: Option<Matrix4>,
     pub matrix: Option<Matrix4>,
-    pub shader: Option<Shader>,
-
     last_blend_mode: BlendMode,
-    last_shader: Option<Shader>,
     last_paint_mode: PaintMode,
 
     render_projection: Matrix4,
@@ -63,10 +59,7 @@ impl Draw {
             blend_mode,
             current_mode: paint_mode,
             matrix_stack: vec![matrix4_identity()],
-            shader: None,
-
             last_blend_mode: blend_mode,
-            last_shader: None,
             last_paint_mode: paint_mode,
 
             color_batcher,
@@ -637,14 +630,14 @@ pub(crate) struct DrawParams<'a> {
 }
 
 fn flush_if_necessary(draw: &mut Draw) {
-    let need_flush = draw.current_mode != draw.last_paint_mode
-        || draw.blend_mode != draw.last_blend_mode
-        || draw.shader != draw.last_shader;
+    let change_paint_mode = draw.current_mode != draw.last_paint_mode;
+    let change_blend_mode = draw.blend_mode != draw.last_blend_mode;
+    let need_flush = change_paint_mode || change_blend_mode;
+
     if need_flush {
         flush(draw);
     }
 
-    draw.last_shader = draw.shader.clone();
     draw.last_blend_mode = draw.blend_mode;
     draw.last_paint_mode = draw.current_mode;
 }
