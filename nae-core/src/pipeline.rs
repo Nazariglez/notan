@@ -126,19 +126,19 @@ impl Default for ColorMask {
 }
 
 impl ColorMask {
-    pub fn enable_rgba(&mut self) {
-        self.r = true;
-        self.g = true;
-        self.b = true;
-        self.a = true;
-    }
+    pub const ALL: ColorMask = ColorMask {
+        r: true,
+        g: true,
+        b: true,
+        a: true,
+    };
 
-    pub fn disable_rgba(&mut self) {
-        self.r = false;
-        self.g = false;
-        self.b = false;
-        self.a = false;
-    }
+    pub const NONE: ColorMask = ColorMask {
+        r: false,
+        g: false,
+        b: false,
+        a: false,
+    };
 }
 
 /// Represents the color mask

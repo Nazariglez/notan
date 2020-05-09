@@ -11,7 +11,7 @@ use crate::{
     Pipeline, Shader, Uniform, VertexAttr, VertexBuffer, VertexFormat,
 };
 use nae_core::{
-    log, BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, CompareMode, DrawUsage,
+    log, BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, ColorMask, CompareMode, DrawUsage,
     GraphicsAPI, PipelineOptions, StencilAction, StencilOptions,
 };
 
@@ -449,7 +449,7 @@ fn apply_mask_to_pipeline(pipeline: &mut Pipeline, mask: &MaskMode) {
         MaskMode::None => {
             pipeline.options.stencil = None;
             pipeline.options.depth_stencil.write = true;
-            pipeline.options.color_mask.enable_rgba();
+            pipeline.options.color_mask = ColorMask::ALL;
         }
         MaskMode::Drawing => {
             pipeline.options.stencil = Some(StencilOptions {
@@ -462,7 +462,7 @@ fn apply_mask_to_pipeline(pipeline: &mut Pipeline, mask: &MaskMode) {
                 reference: 1,
             });
             pipeline.options.depth_stencil.write = false;
-            pipeline.options.color_mask.disable_rgba();
+            pipeline.options.color_mask = ColorMask::NONE;
         }
         MaskMode::Masking => {
             pipeline.options.stencil = Some(StencilOptions {
@@ -475,7 +475,7 @@ fn apply_mask_to_pipeline(pipeline: &mut Pipeline, mask: &MaskMode) {
                 reference: 1,
             });
             pipeline.options.depth_stencil.write = true;
-            pipeline.options.color_mask.enable_rgba();
+            pipeline.options.color_mask = ColorMask::ALL;
         }
     }
 }
