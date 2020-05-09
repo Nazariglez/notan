@@ -5,10 +5,11 @@
 type VERTICES = Vec<f32>;
 type INDICES = Vec<u32>;
 
+use crate::pipeline::Pipeline;
 use crate::texture::Texture;
 use crate::{
     matrix4_identity, matrix4_mul_vector4, DrawData, Graphics, IndexBuffer, MaskMode, Matrix4,
-    Pipeline, Shader, Uniform, VertexAttr, VertexBuffer, VertexFormat,
+    Uniform, VertexAttr, VertexBuffer, VertexFormat,
 };
 use nae_core::{
     log, BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, ColorMask, CompareMode, DrawUsage,
@@ -41,16 +42,7 @@ pub(crate) struct PatternBatcher {
 
 impl PatternBatcher {
     pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
-        let shader = Shader::new(gfx, Shader::PATTERN_VERTEX, Shader::PATTERN_FRAG)?;
-        let pipeline = Pipeline::new(
-            gfx,
-            &shader,
-            PipelineOptions {
-                color_blend: Some(BlendMode::NORMAL),
-                ..Default::default()
-            },
-        );
-
+        let pipeline = Pipeline::from_pattern_fragment(gfx, Pipeline::PATTERN_FRAG)?;
         let matrix_loc = pipeline.uniform_location("u_matrix");
         let texture_loc = pipeline.uniform_location("u_texture");
         let frame_loc = pipeline.uniform_location("u_frame");
@@ -253,16 +245,7 @@ pub(crate) struct ImageBatcher {
 
 impl ImageBatcher {
     pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
-        let shader = Shader::new(gfx, Shader::IMAGE_VERTEX, Shader::IMAGE_FRAG)?;
-        let pipeline = Pipeline::new(
-            gfx,
-            &shader,
-            PipelineOptions {
-                color_blend: Some(BlendMode::NORMAL),
-                ..Default::default()
-            },
-        );
-
+        let pipeline = Pipeline::from_image_fragment(gfx, Pipeline::IMAGE_FRAG)?;
         let matrix_loc = pipeline.uniform_location("u_matrix");
         let texture_loc = pipeline.uniform_location("u_texture");
 
@@ -486,16 +469,7 @@ pub(crate) struct ColorBatcher {
 
 impl ColorBatcher {
     pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
-        let shader = Shader::new(gfx, Shader::COLOR_VERTEX, Shader::COLOR_FRAG)?;
-        let pipeline = Pipeline::new(
-            gfx,
-            &shader,
-            PipelineOptions {
-                color_blend: Some(BlendMode::NORMAL),
-                ..Default::default()
-            },
-        );
-
+        let pipeline = Pipeline::from_color_fragment(gfx, Pipeline::COLOR_FRAG)?;
         let matrix_loc = pipeline.uniform_location("u_matrix");
 
         let vertex_buffer = VertexBuffer::new(

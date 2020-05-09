@@ -53,20 +53,11 @@ impl PartialEq for InnerShader {
 }
 
 #[derive(PartialEq, Clone)]
-pub struct Shader {
+pub(crate) struct Shader {
     pub(crate) inner: Rc<InnerShader>,
 }
 
 impl Shader {
-    pub const COLOR_VERTEX: &'static [u8] = include_bytes!("shaders/color.vert.spv");
-    pub const COLOR_FRAG: &'static [u8] = include_bytes!("shaders/color.frag.spv");
-
-    pub const IMAGE_VERTEX: &'static [u8] = include_bytes!("shaders/image.vert.spv");
-    pub const IMAGE_FRAG: &'static [u8] = include_bytes!("shaders/image.frag.spv");
-
-    pub const PATTERN_VERTEX: &'static [u8] = include_bytes!("shaders/pattern.vert.spv");
-    pub const PATTERN_FRAG: &'static [u8] = include_bytes!("shaders/pattern.frag.spv");
-
     pub fn new(graphics: &Graphics, vertex: &[u8], fragment: &[u8]) -> Result<Self, String> {
         let vert_spv = read_spirv(Cursor::new(&vertex[..])).map_err(|e| e.to_string())?;
         let frag_spv = read_spirv(Cursor::new(&fragment[..])).map_err(|e| e.to_string())?;
@@ -95,22 +86,6 @@ impl Shader {
         Ok(Self {
             inner: Rc::new(inner),
         })
-    }
-
-    pub fn from_color_fragment(graphics: &Graphics, fragment: &[u8]) -> Result<Self, String> {
-        Self::new(graphics, Shader::COLOR_VERTEX, fragment)
-    }
-
-    pub fn from_image_fragment(graphics: &Graphics, fragment: &[u8]) -> Result<Self, String> {
-        Self::new(graphics, Shader::IMAGE_VERTEX, fragment)
-    }
-
-    pub fn from_pattern_fragment(graphics: &Graphics, fragment: &[u8]) -> Result<Self, String> {
-        Self::new(graphics, Shader::PATTERN_VERTEX, fragment)
-    }
-
-    pub fn from_text_fragment(graphics: &Graphics, fragment: &[u8]) -> Result<Self, String> {
-        unimplemented!()
     }
 }
 
