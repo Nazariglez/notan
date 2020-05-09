@@ -1,5 +1,5 @@
 use crate::shader::Shader;
-use crate::{GlContext, GlowValue, Graphics};
+use crate::{GlContext, GlowValue, Graphics, VertexAttr, VertexFormat};
 use glow::HasContext;
 use nae_core::{
     BaseGfx, BasePipeline, BlendMode, CompareMode, PipelineOptions, StencilAction, StencilOptions,
@@ -9,8 +9,18 @@ use nae_core::{
 pub struct Pipeline {
     gl: GlContext,
     vao: <glow::Context as HasContext>::VertexArray,
-    pub(crate) shader: Shader,
+
     pub options: PipelineOptions,
+
+    pub(crate) shader: Shader,
+    pub(crate) stride: usize,
+    pub(crate) attrs: Vec<GlowVertexAttr>,
+}
+
+impl PartialEq for Pipeline {
+    fn eq(&self, other: &Self) -> bool {
+        self.vao == other.vao
+    }
 }
 
 impl Drop for Pipeline {
@@ -35,6 +45,7 @@ impl Pipeline {
         gfx: &Graphics,
         vertex: &[u8],
         fragment: &[u8],
+        attributes: &[VertexAttr],
         options: PipelineOptions,
     ) -> Result<Self, String> {
         let gl = gfx.gl.clone();
@@ -47,11 +58,34 @@ impl Pipeline {
             vao
         };
 
+        let stride = attributes
+            .iter()
+            .fold(0, |acc, data| acc + data.format.bytes()) as usize;
+
+        let mut offset = 0;
+        let attrs = attributes
+            .iter()
+            .map(|attr| {
+                let parsed_attr = GlowVertexAttr {
+                    location: attr.location,
+                    size: attr.format.size(),
+                    data_type: attr.format.glow_value(),
+                    normalized: attr.format.normalized(),
+                    offset: offset,
+                };
+                offset += attr.format.bytes();
+
+                parsed_attr
+            })
+            .collect::<Vec<_>>();
+
         Ok(Self {
             gl,
             vao,
             options,
             shader,
+            stride,
+            attrs,
         })
     }
 
@@ -60,6 +94,10 @@ impl Pipeline {
             gfx,
             Pipeline::COLOR_VERTEX,
             fragment,
+            &[
+                VertexAttr::new(0, VertexFormat::Float3),
+                VertexAttr::new(1, VertexFormat::Float4),
+            ],
             PipelineOptions {
                 color_blend: Some(BlendMode::NORMAL),
                 ..Default::default()
@@ -72,6 +110,11 @@ impl Pipeline {
             gfx,
             Pipeline::IMAGE_VERTEX,
             fragment,
+            &[
+                VertexAttr::new(0, VertexFormat::Float3),
+                VertexAttr::new(1, VertexFormat::Float4),
+                VertexAttr::new(2, VertexFormat::Float2),
+            ],
             PipelineOptions {
                 color_blend: Some(BlendMode::NORMAL),
                 ..Default::default()
@@ -84,6 +127,11 @@ impl Pipeline {
             gfx,
             Pipeline::PATTERN_VERTEX,
             fragment,
+            &[
+                VertexAttr::new(0, VertexFormat::Float3),
+                VertexAttr::new(1, VertexFormat::Float4),
+                VertexAttr::new(2, VertexFormat::Float2),
+            ],
             PipelineOptions {
                 color_blend: Some(BlendMode::NORMAL),
                 ..Default::default()
@@ -93,6 +141,14 @@ impl Pipeline {
 
     pub fn from_text_fragment(gfx: &mut Graphics, fragment: &[u8]) -> Result<Self, String> {
         unimplemented!();
+    }
+
+    pub fn stride(&self) -> usize {
+        self.stride
+    }
+
+    pub fn offset(&self) -> usize {
+        self.stride / 4
     }
 }
 
@@ -211,4 +267,13 @@ fn should_disable_stencil(stencil: &Option<StencilOptions>) -> bool {
         }
         None => true,
     }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct GlowVertexAttr {
+    pub location: u32,
+    pub size: i32,
+    pub data_type: u32,
+    pub normalized: bool,
+    pub offset: i32,
 }
