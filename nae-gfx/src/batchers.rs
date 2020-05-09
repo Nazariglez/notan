@@ -130,16 +130,11 @@ impl PatternBatcher {
     ) {
         // self.check_batch_size(gfx, &data); //performance is worst with this...
         self.set_texture(gfx, texture, data.projection, data.mask);
+        self.pipeline.options.color_blend = data.blend;
 
         let next_index = self.index + data.indices.len();
         if next_index >= self.indices.len() {
             self.flush(gfx, data.projection, data.mask);
-        }
-
-        // Flush if we change the blend mode
-        if self.pipeline.options.color_blend != data.blend {
-            self.flush(gfx, data.projection, data.mask);
-            self.pipeline.options.color_blend = data.blend;
         }
 
         for (i, index) in data.indices.iter().enumerate() {
@@ -335,16 +330,11 @@ impl ImageBatcher {
     ) {
         // self.check_batch_size(gfx, &data); //perfromance is worst with this...
         self.set_texture(gfx, texture, data.projection, data.mask);
+        self.pipeline.options.color_blend = data.blend;
 
         let next_index = self.index + data.indices.len();
         if next_index >= self.indices.len() {
             self.flush(gfx, data.projection, data.mask);
-        }
-
-        // Flush if we change the blend mode
-        if self.pipeline.options.color_blend != data.blend {
-            self.flush(gfx, data.projection, data.mask);
-            self.pipeline.options.color_blend = data.blend;
         }
 
         for (i, index) in data.indices.iter().enumerate() {
@@ -563,6 +553,7 @@ impl ColorBatcher {
 
     pub fn push_data(&mut self, gfx: &mut Graphics, data: DrawData) {
         self.check_batch_size(gfx, &data);
+        self.pipeline.options.color_blend = data.blend;
 
         // Check if the batch is bigger than the max_vertices allowed and split it
         if data.indices.len() > self.indices.len() {
@@ -573,12 +564,6 @@ impl ColorBatcher {
         let next_index = self.index + data.indices.len();
         if next_index >= self.indices.len() {
             self.flush(gfx, data.projection, data.mask);
-        }
-
-        // Flush if we change the blend mode
-        if self.pipeline.options.color_blend != data.blend {
-            self.flush(gfx, data.projection, data.mask);
-            self.pipeline.options.color_blend = data.blend;
         }
 
         // Push the vertices on the current batch
