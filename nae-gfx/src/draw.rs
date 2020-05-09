@@ -24,6 +24,11 @@ pub struct Draw {
     pub blend_mode: BlendMode,
     pub projection: Option<Matrix4>,
     pub matrix: Option<Matrix4>,
+    pub shader: Option<Shader>,
+
+    last_blend_mode: BlendMode,
+    last_shader: Option<Shader>,
+    last_paint_mode: PaintMode,
 
     render_projection: Matrix4,
     matrix_stack: Vec<Matrix4>,
@@ -46,15 +51,24 @@ impl Draw {
         let (width, height) = gfx.size(); //TODO multiply for dpi
         let render_projection = matrix4_orthogonal(0.0, width, height, 0.0, -1.0, 1.0);
 
+        let blend_mode = BlendMode::NORMAL;
+        let paint_mode = PaintMode::None;
+
         Ok(Self {
             gfx,
             clear_options: Default::default(),
             color: Color::WHITE,
             alpha: 1.0,
             depth: 0.0,
-            blend_mode: BlendMode::NORMAL,
-            current_mode: PaintMode::None,
+            blend_mode,
+            current_mode: paint_mode,
             matrix_stack: vec![matrix4_identity()],
+            shader: None,
+
+            last_blend_mode: blend_mode,
+            last_shader: None,
+            last_paint_mode: paint_mode,
+
             color_batcher,
             image_batcher,
             pattern_batcher,
@@ -588,7 +602,7 @@ fn projection(width: f32, height: f32, is_flipped: bool) -> Matrix4 {
 }
 
 fn clear_mask(draw: &mut Draw) {
-    let mut batcher: &mut BaseBatcher = match draw.current_mode {
+    let mut batcher: &mut BaseBatcher = match draw.last_paint_mode {
         PaintMode::Color => &mut draw.color_batcher,
         PaintMode::Image => &mut draw.image_batcher,
         PaintMode::Pattern => &mut draw.pattern_batcher,
@@ -599,7 +613,7 @@ fn clear_mask(draw: &mut Draw) {
 }
 
 fn flush(draw: &mut Draw) {
-    let mut batcher: &mut BaseBatcher = match draw.current_mode {
+    let mut batcher: &mut BaseBatcher = match draw.last_paint_mode {
         PaintMode::Color => &mut draw.color_batcher,
         PaintMode::Image => &mut draw.image_batcher,
         PaintMode::Pattern => &mut draw.pattern_batcher,
@@ -622,13 +636,22 @@ pub(crate) struct DrawParams<'a> {
     mask: &'a MaskMode,
 }
 
-fn paint_mode(draw: &mut Draw, mode: PaintMode) {
-    if draw.current_mode == mode {
-        return;
+fn flush_if_necessary(draw: &mut Draw) {
+    let need_flush = draw.current_mode != draw.last_paint_mode
+        || draw.blend_mode != draw.last_blend_mode
+        || draw.shader != draw.last_shader;
+    if need_flush {
+        flush(draw);
     }
 
-    flush(draw);
+    draw.last_shader = draw.shader.clone();
+    draw.last_blend_mode = draw.blend_mode;
+    draw.last_paint_mode = draw.current_mode;
+}
+
+fn paint_mode(draw: &mut Draw, mode: PaintMode) {
     draw.current_mode = mode;
+    flush_if_necessary(draw);
 }
 
 fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32], color: Option<Color>) {
@@ -645,7 +668,7 @@ fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32], color: Option<
                 Some(p) => p,
                 _ => &draw.matrix_stack.last().as_ref().unwrap(),
             },
-            blend: Some(draw.blend_mode),
+            blend: Some(draw.last_blend_mode),
             color: color.unwrap_or(draw.color),
             alpha: draw.alpha,
             mask: &draw.mask,
@@ -669,7 +692,7 @@ fn draw_image(draw: &mut Draw, texture: &Texture, vertices: &[f32], uvs: &[f32],
                 Some(p) => p,
                 _ => &draw.matrix_stack.last().as_ref().unwrap(),
             },
-            blend: Some(draw.blend_mode),
+            blend: Some(draw.last_blend_mode),
             color: draw.color,
             alpha: draw.alpha,
             mask: &draw.mask,
@@ -699,7 +722,7 @@ fn draw_pattern(
                 Some(p) => p,
                 _ => &draw.matrix_stack.last().as_ref().unwrap(),
             },
-            blend: Some(draw.blend_mode),
+            blend: Some(draw.last_blend_mode),
             color: draw.color,
             alpha: draw.alpha,
             mask: &draw.mask,
@@ -714,7 +737,7 @@ pub(crate) enum MaskMode {
     Masking,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 enum PaintMode {
     None,
     Color,

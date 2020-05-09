@@ -46,7 +46,13 @@ impl Drop for InnerShader {
     }
 }
 
-#[derive(Clone)]
+impl PartialEq for InnerShader {
+    fn eq(&self, other: &Self) -> bool {
+        self.raw == other.raw
+    }
+}
+
+#[derive(PartialEq, Clone)]
 pub struct Shader {
     pub(crate) inner: Rc<InnerShader>,
 }
