@@ -1,4 +1,5 @@
 mod batchers;
+mod buffers;
 mod draw;
 mod matrix;
 mod pipeline;
@@ -9,6 +10,7 @@ mod uniform;
 
 pub use crate::shader::VertexFormat;
 use crate::shader::{BufferKey, InnerShader, Shader};
+pub use buffers::*;
 pub use draw::*;
 use glow::{Context, HasContext, DEPTH_TEST};
 pub use matrix::*;
@@ -425,6 +427,7 @@ impl Graphics {
 impl BaseGfx for Graphics {
     type Location = Uniform;
     type Texture = texture::Texture;
+    type Pipeline = Pipeline;
 
     fn size(&self) -> (f32, f32) {
         (self.width, self.height)
@@ -497,18 +500,23 @@ impl BaseGfx for Graphics {
         self.draw_calls = 0;
     }
 
-    fn set_pipeline(&mut self, pipeline: &BasePipeline<Graphics = Self>) {
+    fn set_pipeline(&mut self, pipeline: &Self::Pipeline) {
         pipeline.bind(self);
         self.pipeline_in_use = true;
         self.indices_in_use = false;
     }
 
-    fn bind_vertex_buffer(&mut self, buffer: &BaseVertexBuffer<Graphics = Self>, data: &[f32]) {
+    fn bind_vertex_buffer(
+        &mut self,
+        buffer: &BaseVertexBuffer<Graphics = Self>,
+        pipeline: &Self::Pipeline,
+        data: &[f32],
+    ) {
         debug_assert!(
             self.pipeline_in_use,
             "A pipeline should be set before bind the vertex buffer"
         );
-        buffer.bind(self, data);
+        buffer.bind(self, pipeline, data);
     }
 
     fn bind_index_buffer(&mut self, buffer: &BaseIndexBuffer<Graphics = Self>, data: &[u32]) {
@@ -558,128 +566,6 @@ impl VertexAttr {
         Self {
             location: location,
             format: vertex_data,
-        }
-    }
-}
-
-fn vf_to_u8(v: &[f32]) -> &[u8] {
-    unsafe { std::slice::from_raw_parts(v.as_ptr() as *const u8, v.len() * 4) }
-}
-
-fn vfi_to_u8(v: &[u32]) -> &[u8] {
-    unsafe { std::slice::from_raw_parts(v.as_ptr() as *const u8, v.len() * 4) }
-}
-
-pub struct IndexBuffer {
-    inner: Rc<InnerBuffer>,
-    usage: DrawUsage,
-}
-
-impl IndexBuffer {
-    pub fn new(graphics: &Graphics, usage: DrawUsage) -> Result<Self, String> {
-        unsafe {
-            let gl = graphics.gl.clone();
-            let buffer = gl.create_buffer()?;
-            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(buffer));
-
-            let inner = Rc::new(InnerBuffer { buffer, gl });
-
-            Ok(Self { inner, usage })
-        }
-    }
-}
-
-impl BaseIndexBuffer for IndexBuffer {
-    type Graphics = Graphics;
-
-    fn bind(&self, gfx: &mut Graphics, indices: &[u32]) {
-        let gl = &gfx.gl;
-
-        unsafe {
-            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.inner.buffer));
-            gl.buffer_data_u8_slice(
-                glow::ELEMENT_ARRAY_BUFFER,
-                vfi_to_u8(&indices),
-                self.usage.glow_value(),
-            );
-        }
-    }
-}
-
-struct InnerBuffer {
-    gl: GlContext,
-    buffer: BufferKey,
-}
-
-impl Drop for InnerBuffer {
-    fn drop(&mut self) {
-        unsafe {
-            self.gl.delete_buffer(self.buffer);
-        }
-    }
-}
-
-pub struct VertexBuffer {
-    stride: usize,
-    inner: Rc<InnerBuffer>,
-    usage: DrawUsage,
-}
-
-impl VertexBuffer {
-    pub fn new(
-        graphics: &Graphics,
-        attributes: &[VertexAttr],
-        usage: DrawUsage,
-    ) -> Result<Self, String> {
-        unsafe {
-            let gl = graphics.gl.clone();
-            let buffer = gl.create_buffer()?;
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(buffer));
-
-            let stride = attributes
-                .iter()
-                .fold(0, |acc, data| acc + data.format.bytes());
-
-            let mut offset = 0;
-            for attr in attributes {
-                let location = attr.location;
-                let size = attr.format.size();
-                let data_type = attr.format.glow_value();
-                let normalized = attr.format.normalized();
-
-                gl.enable_vertex_attrib_array(location);
-                gl.vertex_attrib_pointer_f32(location, size, data_type, normalized, stride, offset);
-
-                offset += attr.format.bytes();
-            }
-
-            let inner = Rc::new(InnerBuffer { buffer, gl });
-
-            Ok(VertexBuffer {
-                inner,
-                usage,
-                stride: stride as usize,
-            })
-        }
-    }
-
-    pub fn stride(&self) -> usize {
-        self.stride
-    }
-
-    pub fn offset(&self) -> usize {
-        self.stride / 4
-    }
-}
-
-impl BaseVertexBuffer for VertexBuffer {
-    type Graphics = Graphics;
-
-    fn bind(&self, gfx: &mut Graphics, data: &[f32]) {
-        let gl = &gfx.gl;
-        unsafe {
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.inner.buffer));
-            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, vf_to_u8(data), self.usage.glow_value());
         }
     }
 }

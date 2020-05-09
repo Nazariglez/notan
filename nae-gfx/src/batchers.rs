@@ -47,23 +47,15 @@ impl PatternBatcher {
         let texture_loc = pipeline.uniform_location("u_texture");
         let frame_loc = pipeline.uniform_location("u_frame");
 
-        let vertex_buffer = VertexBuffer::new(
-            gfx,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float4),
-                VertexAttr::new(2, VertexFormat::Float2),
-            ],
-            DrawUsage::Dynamic,
-        )?;
+        let vertex_buffer = VertexBuffer::new(gfx, DrawUsage::Dynamic)?;
 
         let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic)?;
 
         let max_vertices = max_vertices(gfx);
-        let batch_size = batch_vertices(vertex_buffer.offset());
+        let batch_size = batch_vertices(pipeline.offset());
 
         let vertices = vec![0.0; batch_size];
-        let indices = vec![0; batch_size / vertex_buffer.offset()];
+        let indices = vec![0; batch_size / pipeline.offset()];
 
         Ok(Self {
             pipeline,
@@ -133,7 +125,7 @@ impl PatternBatcher {
             self.indices[self.index + i] = self.index as u32 + *index;
         }
 
-        let offset = self.vbo.offset();
+        let offset = self.pipeline.offset();
         let [r, g, b, a] = data.color.to_rgba();
         let mut index_offset = self.index * offset;
 
@@ -175,7 +167,7 @@ impl PatternBatcher {
             if is_bigger || is_more {
                 self.flush(gfx, data.projection, data.mask);
 
-                let index_next_size = next_size / self.vbo.offset();
+                let index_next_size = next_size / self.pipeline.offset();
                 log::debug!(
                     "ColorBatcher -> Increasing vertex_buffer to {} and index_buffer to {}",
                     next_size,
@@ -201,7 +193,7 @@ impl BaseBatcher for PatternBatcher {
             gfx.bind_texture(&self.texture_loc, tex);
             gfx.bind_uniform(&self.matrix_loc, projection);
             gfx.bind_uniform(&self.frame_loc, &self.frame_coords);
-            gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
+            gfx.bind_vertex_buffer(&self.vbo, &self.pipeline, &self.vertices);
             gfx.bind_index_buffer(&self.ibo, &self.indices);
             gfx.draw(0, self.index as _);
         }
@@ -249,23 +241,15 @@ impl ImageBatcher {
         let matrix_loc = pipeline.uniform_location("u_matrix");
         let texture_loc = pipeline.uniform_location("u_texture");
 
-        let vertex_buffer = VertexBuffer::new(
-            gfx,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float4),
-                VertexAttr::new(2, VertexFormat::Float2),
-            ],
-            DrawUsage::Dynamic,
-        )?;
+        let vertex_buffer = VertexBuffer::new(gfx, DrawUsage::Dynamic)?;
 
         let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic)?;
 
         let max_vertices = max_vertices(gfx);
-        let batch_size = batch_vertices(vertex_buffer.offset());
+        let batch_size = batch_vertices(pipeline.offset());
 
         let vertices = vec![0.0; batch_size];
-        let indices = vec![0; batch_size / vertex_buffer.offset()];
+        let indices = vec![0; batch_size / pipeline.offset()];
 
         Ok(Self {
             pipeline,
@@ -324,7 +308,7 @@ impl ImageBatcher {
             self.indices[self.index + i] = self.index as u32 + *index;
         }
 
-        let offset = self.vbo.offset();
+        let offset = self.pipeline.offset();
         let [r, g, b, a] = data.color.to_rgba();
         let mut index_offset = self.index * offset;
 
@@ -366,7 +350,7 @@ impl ImageBatcher {
             if is_bigger || is_more {
                 self.flush(gfx, data.projection, data.mask);
 
-                let index_next_size = next_size / self.vbo.offset();
+                let index_next_size = next_size / self.pipeline.offset();
                 log::debug!(
                     "ColorBatcher -> Increasing vertex_buffer to {} and index_buffer to {}",
                     next_size,
@@ -390,7 +374,7 @@ impl BaseBatcher for ImageBatcher {
         if let Some(tex) = &self.texture {
             gfx.set_pipeline(&self.pipeline);
             gfx.bind_texture(&self.texture_loc, tex);
-            gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
+            gfx.bind_vertex_buffer(&self.vbo, &self.pipeline, &self.vertices);
             gfx.bind_index_buffer(&self.ibo, &self.indices);
             gfx.bind_uniform(&self.matrix_loc, projection);
             gfx.draw(0, self.index as _);
@@ -472,22 +456,15 @@ impl ColorBatcher {
         let pipeline = Pipeline::from_color_fragment(gfx, Pipeline::COLOR_FRAG)?;
         let matrix_loc = pipeline.uniform_location("u_matrix");
 
-        let vertex_buffer = VertexBuffer::new(
-            &gfx,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float4),
-            ],
-            DrawUsage::Dynamic,
-        )?;
+        let vertex_buffer = VertexBuffer::new(&gfx, DrawUsage::Dynamic)?;
 
         let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic)?;
 
         let max_vertices = max_vertices(gfx);
-        let batch_size = batch_vertices(vertex_buffer.offset());
+        let batch_size = batch_vertices(pipeline.offset());
 
         let vertices = vec![0.0; batch_size];
-        let indices = vec![0; batch_size / vertex_buffer.offset()];
+        let indices = vec![0; batch_size / pipeline.offset()];
 
         Ok(Self {
             pipeline,
@@ -512,7 +489,7 @@ impl ColorBatcher {
             if is_bigger || is_more {
                 self.flush(gfx, data.projection, data.mask);
 
-                let index_next_size = next_size / self.vbo.offset();
+                let index_next_size = next_size / self.pipeline.offset();
                 log::debug!(
                     "ColorBatcher -> Increasing vertex_buffer to {} and index_buffer to {}",
                     next_size,
@@ -587,7 +564,7 @@ impl ColorBatcher {
             self.indices[self.index + i] = self.index as u32 + *index;
         }
 
-        let offset = self.vbo.offset();
+        let offset = self.pipeline.offset();
         let [r, g, b, a] = color.to_rgba();
         let mut index_offset = self.index * offset;
 
@@ -620,7 +597,7 @@ impl BaseBatcher for ColorBatcher {
 
         self.set_mask(mask);
         gfx.set_pipeline(&self.pipeline);
-        gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
+        gfx.bind_vertex_buffer(&self.vbo, &self.pipeline, &self.vertices);
         gfx.bind_index_buffer(&self.ibo, &self.indices);
         gfx.bind_uniform(&self.matrix_loc, projection);
         gfx.draw(0, self.index as i32);
