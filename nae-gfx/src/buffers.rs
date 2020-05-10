@@ -14,7 +14,7 @@ impl IndexBuffer {
         unsafe {
             let gl = gfx.gl.clone();
             let buffer = gl.create_buffer()?;
-            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(buffer));
+            // gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(buffer));
 
             let inner = Rc::new(InnerBuffer { buffer, gl });
 
@@ -65,10 +65,7 @@ impl VertexBuffer {
             let buffer = gl.create_buffer()?;
             let inner = Rc::new(InnerBuffer { buffer, gl });
 
-            Ok(VertexBuffer {
-                inner,
-                usage,
-            })
+            Ok(VertexBuffer { inner, usage })
         }
     }
 }
@@ -86,6 +83,7 @@ impl BaseVertexBuffer for VertexBuffer {
             gfx.gl
                 .bind_buffer(glow::ARRAY_BUFFER, Some(self.inner.buffer));
             let stride = pipeline.stride() as i32;
+
             pipeline.attrs.iter().for_each(|attr| {
                 gfx.gl.enable_vertex_attrib_array(attr.location);
                 gfx.gl.vertex_attrib_pointer_f32(
@@ -97,6 +95,7 @@ impl BaseVertexBuffer for VertexBuffer {
                     attr.offset,
                 );
             });
+
             gfx.gl.buffer_data_u8_slice(
                 glow::ARRAY_BUFFER,
                 vf_to_u8(data),
