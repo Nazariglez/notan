@@ -31,6 +31,51 @@ impl Drop for Pipeline {
     }
 }
 
+fn create_pipeline(
+    gfx: &Graphics,
+    shader: Shader,
+    attributes: &[VertexAttr],
+    options: PipelineOptions,
+) -> Result<Pipeline, String> {
+    let gl = gfx.gl.clone();
+
+    let vao = unsafe {
+        let vao = gl.create_vertex_array().unwrap();
+        gl.bind_vertex_array(Some(vao));
+        vao
+    };
+
+    let stride = attributes
+        .iter()
+        .fold(0, |acc, data| acc + data.format.bytes()) as usize;
+
+    let mut offset = 0;
+    let attrs = attributes
+        .iter()
+        .map(|attr| {
+            let parsed_attr = GlowVertexAttr {
+                location: attr.location,
+                size: attr.format.size(),
+                data_type: attr.format.glow_value(),
+                normalized: attr.format.normalized(),
+                offset: offset,
+            };
+            offset += attr.format.bytes();
+
+            parsed_attr
+        })
+        .collect::<Vec<_>>();
+
+    Ok(Pipeline {
+        gl,
+        vao,
+        options,
+        shader,
+        stride,
+        attrs,
+    })
+}
+
 impl Pipeline {
     pub const COLOR_VERTEX: &'static [u8] = include_bytes!("shaders/color.vert.spv");
     pub const COLOR_FRAG: &'static [u8] = include_bytes!("shaders/color.frag.spv");
@@ -48,45 +93,19 @@ impl Pipeline {
         attributes: &[VertexAttr],
         options: PipelineOptions,
     ) -> Result<Self, String> {
-        let gl = gfx.gl.clone();
-
         let shader = Shader::new(gfx, vertex, fragment)?;
+        create_pipeline(gfx, shader, attributes, options)
+    }
 
-        let vao = unsafe {
-            let vao = gl.create_vertex_array().unwrap();
-            gl.bind_vertex_array(Some(vao));
-            vao
-        };
-
-        let stride = attributes
-            .iter()
-            .fold(0, |acc, data| acc + data.format.bytes()) as usize;
-
-        let mut offset = 0;
-        let attrs = attributes
-            .iter()
-            .map(|attr| {
-                let parsed_attr = GlowVertexAttr {
-                    location: attr.location,
-                    size: attr.format.size(),
-                    data_type: attr.format.glow_value(),
-                    normalized: attr.format.normalized(),
-                    offset: offset,
-                };
-                offset += attr.format.bytes();
-
-                parsed_attr
-            })
-            .collect::<Vec<_>>();
-
-        Ok(Self {
-            gl,
-            vao,
-            options,
-            shader,
-            stride,
-            attrs,
-        })
+    pub fn from_source(
+        gfx: &Graphics,
+        vertex: &str,
+        fragment: &str,
+        attributes: &[VertexAttr],
+        options: PipelineOptions,
+    ) -> Result<Self, String> {
+        let shader = Shader::from_source(gfx, vertex, fragment)?;
+        create_pipeline(gfx, shader, attributes, options)
     }
 
     pub fn from_color_fragment(gfx: &mut Graphics, fragment: &[u8]) -> Result<Self, String> {
@@ -252,7 +271,7 @@ impl BasePipeline for Pipeline {
         unsafe {
             self.gl
                 .get_uniform_location(self.shader.inner.raw, id)
-                .ok_or("Invalid uniform id".to_string())
+                .ok_or(format!("Invalid uniform id: {}", id))
         }
     }
 }
