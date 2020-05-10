@@ -157,6 +157,9 @@ impl BasePipeline for Pipeline {
 
     fn bind(&self, gfx: &mut Self::Graphics) {
         unsafe {
+            gfx.gl.bind_vertex_array(Some(self.vao));
+            gfx.gl.use_program(Some(self.shader.inner.raw));
+
             //Stencil
             if should_disable_stencil(&self.options.stencil) {
                 self.gl.disable(glow::STENCIL_TEST);
@@ -238,9 +241,6 @@ impl BasePipeline for Pipeline {
                     gfx.gl.disable(glow::BLEND);
                 }
             }
-
-            gfx.gl.bind_vertex_array(Some(self.vao));
-            gfx.gl.use_program(Some(self.shader.inner.raw));
         }
     }
 
@@ -248,11 +248,11 @@ impl BasePipeline for Pipeline {
         &mut self.options
     }
 
-    fn uniform_location(&self, id: &str) -> <Self::Graphics as BaseGfx>::Location {
+    fn uniform_location(&self, id: &str) -> Result<<Self::Graphics as BaseGfx>::Location, String> {
         unsafe {
             self.gl
                 .get_uniform_location(self.shader.inner.raw, id)
-                .unwrap()
+                .ok_or("Invalid uniform id".to_string())
         }
     }
 }

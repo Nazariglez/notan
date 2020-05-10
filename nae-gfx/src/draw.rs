@@ -9,7 +9,8 @@ use crate::texture::Texture;
 use crate::{
     matrix4_identity, matrix4_mul_matrix4, matrix4_mul_vector4, matrix4_orthogonal,
     matrix4_rotation_z, matrix4_scale, matrix4_skew, matrix4_translate, Device, Graphics,
-    IndexBuffer, Matrix4, Pipeline, RenderTarget, Uniform, VertexAttr, VertexBuffer, VertexFormat,
+    IndexBuffer, Matrix4, Pipeline, RenderTarget, Uniform, UniformValue, VertexAttr, VertexBuffer,
+    VertexFormat,
 };
 use glow::HasContext;
 use std::cell::RefMut;
@@ -23,6 +24,8 @@ pub struct Draw {
     pub blend_mode: BlendMode,
     pub projection: Option<Matrix4>,
     pub matrix: Option<Matrix4>,
+
+    pipeline: Option<Pipeline>,
     last_blend_mode: BlendMode,
     last_paint_mode: PaintMode,
 
@@ -61,6 +64,7 @@ impl Draw {
             matrix_stack: vec![matrix4_identity()],
             last_blend_mode: blend_mode,
             last_paint_mode: paint_mode,
+            pipeline: None,
 
             color_batcher,
             image_batcher,
@@ -71,6 +75,22 @@ impl Draw {
             shapes: ShapeTessellator::new(),
             mask: MaskMode::None,
         })
+    }
+
+    pub fn set_pipeline(&mut self, pipeline: Option<&Pipeline>) {
+        if self.pipeline.as_ref() != pipeline {
+            flush(self);
+            self.pipeline = pipeline.cloned();
+        }
+
+        if let Some(pip) = &self.pipeline {
+            //bind here before the user set uniforms
+            self.gfx.set_pipeline(pip);
+        }
+    }
+
+    pub fn set_uniform(&mut self, location: &Uniform, value: &UniformValue<Graphics = Graphics>) {
+        self.gfx.bind_uniform(location, value);
     }
 
     pub fn start_mask<T: FnMut(&mut Self)>(&mut self, mut mask: T) {
@@ -615,6 +635,7 @@ fn flush(draw: &mut Draw) {
 
     batcher.flush(
         &mut draw.gfx,
+        &draw.pipeline,
         match &draw.projection {
             Some(p) => p,
             _ => &draw.render_projection,
@@ -665,6 +686,7 @@ fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32], color: Option<
             color: color.unwrap_or(draw.color),
             alpha: draw.alpha,
             mask: &draw.mask,
+            pipeline: &draw.pipeline,
         },
     );
 }
@@ -689,6 +711,7 @@ fn draw_image(draw: &mut Draw, texture: &Texture, vertices: &[f32], uvs: &[f32],
             color: draw.color,
             alpha: draw.alpha,
             mask: &draw.mask,
+            pipeline: &draw.pipeline,
         },
     )
 }
@@ -719,6 +742,7 @@ fn draw_pattern(
             color: draw.color,
             alpha: draw.alpha,
             mask: &draw.mask,
+            pipeline: &draw.pipeline,
         },
     )
 }
@@ -746,6 +770,7 @@ pub(crate) struct DrawData<'data> {
     pub color: Color,
     pub alpha: f32,
     pub blend: Option<BlendMode>,
+    pub pipeline: &'data Option<Pipeline>,
     pub projection: &'data Matrix4,
     pub matrix: &'data Matrix4,
     pub mask: &'data MaskMode,

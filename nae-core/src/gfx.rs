@@ -222,7 +222,7 @@ pub trait BasePipeline {
 
     fn bind(&self, gfx: &mut Self::Graphics);
     fn options(&mut self) -> &mut PipelineOptions;
-    fn uniform_location(&self, id: &str) -> <Self::Graphics as BaseGfx>::Location;
+    fn uniform_location(&self, id: &str) -> Result<<Self::Graphics as BaseGfx>::Location, String>;
 }
 
 // pub trait UniformValue {
