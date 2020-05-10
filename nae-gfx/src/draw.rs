@@ -90,6 +90,7 @@ impl Draw {
     }
 
     pub fn set_uniform(&mut self, location: &Uniform, value: &UniformValue<Graphics = Graphics>) {
+        flush(self);
         self.gfx.bind_uniform(location, value);
     }
 

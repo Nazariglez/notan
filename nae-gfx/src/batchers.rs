@@ -202,10 +202,24 @@ impl BaseBatcher for PatternBatcher {
 
         self.set_mask(mask);
         if let Some(tex) = &self.texture {
-            gfx.set_pipeline(pipeline.as_ref().unwrap_or(&self.pipeline));
-            gfx.bind_texture(&self.texture_loc, tex);
-            gfx.bind_uniform(&self.matrix_loc, projection);
-            gfx.bind_uniform(&self.frame_loc, &self.frame_coords);
+            match pipeline {
+                Some(pipe) => {
+                    let tex_loc = batch_uniform(pipe, "PatternBatcher", "u_texture").unwrap();
+                    let mvp_loc = batch_uniform(pipe, "PatternBatcher", "u_matrix").unwrap();
+                    let frame_loc = batch_uniform(pipe, "PatternBatcher", "u_frame").unwrap();
+                    gfx.set_pipeline(pipe);
+                    gfx.bind_texture(&tex_loc, tex);
+                    gfx.bind_uniform(&mvp_loc, projection);
+                    gfx.bind_uniform(&frame_loc, &self.frame_coords);
+                }
+                None => {
+                    gfx.set_pipeline(&self.pipeline);
+                    gfx.bind_texture(&self.texture_loc, tex);
+                    gfx.bind_uniform(&self.matrix_loc, projection);
+                    gfx.bind_uniform(&self.frame_loc, &self.frame_coords);
+                }
+            };
+
             gfx.bind_vertex_buffer(&self.vbo, &self.pipeline, &self.vertices);
             gfx.bind_index_buffer(&self.ibo, &self.indices);
             gfx.draw(0, self.index as _);
@@ -392,9 +406,21 @@ impl BaseBatcher for ImageBatcher {
 
         self.set_mask(mask);
         if let Some(tex) = &self.texture {
-            gfx.set_pipeline(pipeline.as_ref().unwrap_or(&self.pipeline));
-            gfx.bind_uniform(&self.matrix_loc, projection);
-            gfx.bind_texture(&self.texture_loc, tex);
+            match pipeline {
+                Some(pipe) => {
+                    let tex_loc = batch_uniform(pipe, "ImageBatcher", "u_texture").unwrap();
+                    let mvp_loc = batch_uniform(pipe, "ImageBatcher", "u_matrix").unwrap();
+                    gfx.set_pipeline(pipe);
+                    gfx.bind_uniform(&mvp_loc, projection);
+                    gfx.bind_texture(&tex_loc, tex);
+                }
+                None => {
+                    gfx.set_pipeline(&self.pipeline);
+                    gfx.bind_uniform(&self.matrix_loc, projection);
+                    gfx.bind_texture(&self.texture_loc, tex);
+                }
+            };
+
             gfx.bind_vertex_buffer(&self.vbo, &self.pipeline, &self.vertices);
             gfx.bind_index_buffer(&self.ibo, &self.indices);
             gfx.draw(0, self.index as _);
@@ -622,10 +648,21 @@ impl BaseBatcher for ColorBatcher {
         }
 
         self.set_mask(mask);
-        gfx.set_pipeline(pipeline.as_ref().unwrap_or(&self.pipeline));
+
+        match pipeline {
+            Some(pipe) => {
+                let mvp_loc = batch_uniform(pipe, "ColorBatcher", "u_matrix").unwrap();
+                gfx.set_pipeline(pipe);
+                gfx.bind_uniform(&mvp_loc, projection);
+            }
+            None => {
+                gfx.set_pipeline(&self.pipeline);
+                gfx.bind_uniform(&self.matrix_loc, projection);
+            }
+        };
+
         gfx.bind_vertex_buffer(&self.vbo, &self.pipeline, &self.vertices);
         gfx.bind_index_buffer(&self.ibo, &self.indices);
-        gfx.bind_uniform(&self.matrix_loc, projection);
         gfx.draw(0, self.index as i32);
         self.index = 0;
     }
@@ -674,4 +711,10 @@ fn batch_vertices(offset: usize) -> usize {
     };
 
     size
+}
+
+fn batch_uniform(pipeline: &Pipeline, batcher_name: &str, id: &str) -> Result<Uniform, String> {
+    pipeline
+        .uniform_location(id)
+        .map_err(|e| format!("{} expect {} uniform: {}", batcher_name, id, e))
 }
