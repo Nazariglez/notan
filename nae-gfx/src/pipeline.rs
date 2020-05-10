@@ -4,11 +4,46 @@ use glow::HasContext;
 use nae_core::{
     BaseGfx, BasePipeline, BlendMode, CompareMode, PipelineOptions, StencilAction, StencilOptions,
 };
+use std::rc::Rc;
+
+type VaoKey = <glow::Context as HasContext>::VertexArray;
+
+struct InnerVao {
+    gl: GlContext,
+    vao: VaoKey,
+}
+
+impl InnerVao {
+    fn new(gl: &GlContext) -> Result<Self, String> {
+        let gl = gl.clone();
+        let vao = unsafe {
+            let vao = gl.create_vertex_array()?;
+            gl.bind_vertex_array(Some(vao));
+            vao
+        };
+
+        Ok(Self { gl, vao })
+    }
+}
+
+impl Drop for InnerVao {
+    fn drop(&mut self) {
+        unsafe {
+            self.gl.delete_vertex_array(self.vao);
+        }
+    }
+}
+
+impl PartialEq for InnerVao {
+    fn eq(&self, other: &Self) -> bool {
+        self.vao == other.vao
+    }
+}
 
 #[derive(Clone)]
 pub struct Pipeline {
     gl: GlContext,
-    vao: <glow::Context as HasContext>::VertexArray,
+    vao: Rc<InnerVao>,
 
     pub options: PipelineOptions,
 
@@ -23,14 +58,6 @@ impl PartialEq for Pipeline {
     }
 }
 
-impl Drop for Pipeline {
-    fn drop(&mut self) {
-        unsafe {
-            self.gl.delete_vertex_array(self.vao);
-        }
-    }
-}
-
 fn create_pipeline(
     gfx: &Graphics,
     shader: Shader,
@@ -39,12 +66,7 @@ fn create_pipeline(
 ) -> Result<Pipeline, String> {
     let gl = gfx.gl.clone();
 
-    let vao = unsafe {
-        let vao = gl.create_vertex_array().unwrap();
-        gl.bind_vertex_array(Some(vao));
-        vao
-    };
-
+    let vao = Rc::new(InnerVao::new(&gl)?);
     let stride = attributes
         .iter()
         .fold(0, |acc, data| acc + data.format.bytes()) as usize;
@@ -176,7 +198,7 @@ impl BasePipeline for Pipeline {
 
     fn bind(&self, gfx: &mut Self::Graphics) {
         unsafe {
-            gfx.gl.bind_vertex_array(Some(self.vao));
+            gfx.gl.bind_vertex_array(Some(self.vao.vao));
             gfx.gl.use_program(Some(self.shader.inner.raw));
 
             //Stencil
