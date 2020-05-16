@@ -1,6 +1,7 @@
 mod batchers;
 mod buffers;
 mod draw;
+pub mod font;
 mod matrix;
 mod pipeline;
 mod render_target;
