@@ -184,10 +184,10 @@ impl Texture {
 
 /// Represent the options to create a new texture
 pub struct TextureOptions {
-    format: TextureFormat,
-    internal_format: TextureFormat,
-    min_filter: TextureFilter,
-    mag_filter: TextureFilter,
+    pub format: TextureFormat,
+    pub internal_format: TextureFormat,
+    pub min_filter: TextureFilter,
+    pub mag_filter: TextureFilter,
 }
 
 impl Default for TextureOptions {
@@ -288,11 +288,11 @@ fn bytes_per_pixel(format: &TextureFormat, internal_format: &TextureFormat) -> u
     }
 }
 
-fn max_texture_size(gl: &GlContext) -> i32 {
+pub(crate) fn max_texture_size(gl: &GlContext) -> i32 {
     unsafe { gl.get_parameter_i32(glow::MAX_TEXTURE_SIZE) }
 }
 
-fn texture_from_gl_context(
+pub(crate) fn texture_from_gl_context(
     gl: &GlContext,
     width: i32,
     height: i32,

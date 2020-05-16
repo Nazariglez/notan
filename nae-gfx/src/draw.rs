@@ -1,9 +1,10 @@
 use nae_core::{
     BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, CompareMode, DrawUsage, Geometry,
-    GraphicsAPI, PipelineOptions, StencilAction, StencilOptions,
+    GraphicsAPI, HorizontalAlign, PipelineOptions, StencilAction, StencilOptions, VerticalAlign,
 };
 
 use crate::batchers::{BaseBatcher, ColorBatcher, ImageBatcher, PatternBatcher};
+use crate::font::Font;
 use crate::shapes::ShapeTessellator;
 use crate::texture::Texture;
 use crate::{
@@ -24,6 +25,9 @@ pub struct Draw {
     pub blend_mode: BlendMode,
     pub projection: Option<Matrix4>,
     pub matrix: Option<Matrix4>,
+
+    pub text_horizontal_align: HorizontalAlign,
+    pub text_vertical_align: VerticalAlign,
 
     pipeline: Option<Pipeline>,
     last_blend_mode: BlendMode,
@@ -71,10 +75,17 @@ impl Draw {
             pattern_batcher,
             matrix: None,
             projection: None,
+            text_horizontal_align: HorizontalAlign::Left,
+            text_vertical_align: VerticalAlign::Top,
             render_projection,
             shapes: ShapeTessellator::new(),
             mask: MaskMode::None,
         })
+    }
+
+    pub fn set_text_align(&mut self, horizontal: HorizontalAlign, vertical: VerticalAlign) {
+        self.text_horizontal_align = horizontal;
+        self.text_vertical_align = vertical;
     }
 
     pub fn set_pipeline(&mut self, pipeline: Option<&Pipeline>) {
@@ -339,6 +350,13 @@ impl Draw {
         );
 
         draw_color(self, &vertices, &indices, None);
+    }
+
+    pub fn text(&mut self, font: &Font, text: &str, x: f32, y: f32, size: f32) {
+        self.text_ext(font, text, x, y, size, std::f32::INFINITY);
+    }
+
+    pub fn text_ext(&mut self, font: &Font, text: &str, x: f32, y: f32, size: f32, max_width: f32) {
     }
 
     pub fn image(&mut self, img: &Texture, x: f32, y: f32) {
