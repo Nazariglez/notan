@@ -108,6 +108,9 @@ impl Pipeline {
     pub const PATTERN_VERTEX: &'static [u8] = include_bytes!("shaders/pattern.vert.spv");
     pub const PATTERN_FRAG: &'static [u8] = include_bytes!("shaders/pattern.frag.spv");
 
+    pub const TEXT_VERTEX: &'static [u8] = include_bytes!("shaders/text.vert.spv");
+    pub const TEXT_FRAG: &'static [u8] = include_bytes!("shaders/text.frag.spv");
+
     pub fn new(
         gfx: &Graphics,
         vertex: &[u8],
@@ -181,7 +184,20 @@ impl Pipeline {
     }
 
     pub fn from_text_fragment(gfx: &mut Graphics, fragment: &[u8]) -> Result<Self, String> {
-        unimplemented!();
+        Self::new(
+            gfx,
+            Pipeline::TEXT_VERTEX,
+            fragment,
+            &[
+                VertexAttr::new(0, VertexFormat::Float3),
+                VertexAttr::new(1, VertexFormat::Float4),
+                VertexAttr::new(2, VertexFormat::Float2),
+            ],
+            PipelineOptions {
+                color_blend: Some(BlendMode::NORMAL),
+                ..Default::default()
+            },
+        )
     }
 
     pub fn stride(&self) -> usize {

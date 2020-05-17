@@ -5,15 +5,18 @@
 type VERTICES = Vec<f32>;
 type INDICES = Vec<u32>;
 
+use crate::font::{Font, FontManager, FontTextureData};
 use crate::pipeline::Pipeline;
-use crate::texture::Texture;
+use crate::texture::{texture_from_gl_context, Texture, TextureOptions};
 use crate::{
     matrix4_identity, matrix4_mul_vector4, DrawData, Graphics, IndexBuffer, MaskMode, Matrix4,
     Uniform, VertexAttr, VertexBuffer, VertexFormat,
 };
+use glow::TEXTURE_BUFFER;
 use nae_core::{
     log, BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, ColorMask, CompareMode, DrawUsage,
-    GraphicsAPI, PipelineOptions, StencilAction, StencilOptions,
+    GraphicsAPI, HorizontalAlign, PipelineOptions, StencilAction, StencilOptions, TextureFilter,
+    TextureFormat, VerticalAlign,
 };
 
 pub(crate) trait BaseBatcher {
@@ -26,6 +29,335 @@ pub(crate) trait BaseBatcher {
     );
     fn set_mask(&mut self, mask: &MaskMode);
     fn clear_mask(&mut self, gfx: &mut Graphics, mask: &MaskMode, color: Color);
+}
+
+/// TextBatcher
+pub(crate) struct TextBatcher {
+    pipeline: Pipeline,
+    vbo: VertexBuffer,
+    ibo: IndexBuffer,
+    vertices: VERTICES,
+    indices: INDICES,
+    matrix_loc: Uniform,
+    texture_loc: Uniform,
+    pub(crate) texture: Texture,
+    font: Option<Font>,
+    index: usize,
+    max_vertices: usize,
+    batch_size: usize,
+    mask: MaskMode,
+    font_manager: FontManager<'static>,
+    cached_buffers: Option<Vec<TextBuffer>>,
+    current_matrix: Matrix4,
+}
+
+impl TextBatcher {
+    pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
+        let pipeline = Pipeline::from_text_fragment(gfx, Pipeline::TEXT_FRAG)?;
+        let matrix_loc = pipeline.uniform_location("u_matrix")?;
+        let texture_loc = pipeline.uniform_location("u_texture")?;
+
+        let vertex_buffer = VertexBuffer::new(gfx, DrawUsage::Dynamic)?;
+
+        let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic)?;
+
+        let max_vertices = max_vertices(gfx);
+        let batch_size = batch_vertices(pipeline.offset());
+
+        let vertices = vec![0.0; batch_size];
+        let indices = vec![0; batch_size / pipeline.offset()];
+
+        let font_manager = FontManager::new(&gfx.gl)?;
+        let (width, height) = font_manager.texture_dimensions();
+
+        let texture = texture_from_gl_context(
+            &gfx.gl,
+            width as _,
+            height as _,
+            &TextureOptions {
+                format: TextureFormat::Red,
+                internal_format: TextureFormat::R8,
+                min_filter: TextureFilter::Linear,
+                mag_filter: TextureFilter::Linear,
+            },
+        )?;
+
+        Ok(Self {
+            pipeline,
+            vbo: vertex_buffer,
+            ibo: index_buffer,
+            matrix_loc,
+            texture_loc,
+            vertices,
+            indices,
+            index: 0,
+            max_vertices,
+            batch_size,
+            texture,
+            font: None,
+            mask: MaskMode::None,
+            font_manager,
+            cached_buffers: None,
+            current_matrix: matrix4_identity(),
+        })
+    }
+
+    pub fn add_font(&mut self, data: Vec<u8>) -> usize {
+        self.font_manager.add(data)
+    }
+
+    pub fn push_text(
+        &mut self,
+        gfx: &mut Graphics,
+        font: &Font,
+        x: f32,
+        y: f32,
+        z: f32,
+        text: &str,
+        size: f32,
+        max_width: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+        data: DrawData,
+    ) {
+        let matrix_change = data.matrix != &self.current_matrix;
+        let font_change = match &self.font {
+            Some(f) => f.raw() != font.raw(),
+            None => true,
+        };
+
+        let needs_update = matrix_change || font_change;
+
+        if needs_update {
+            self.flush(gfx, data.pipeline, data.projection, data.mask);
+            self.font = Some(font.clone());
+            self.current_matrix = data.matrix.clone();
+        }
+
+        self.pipeline.options.color_blend = data.blend;
+
+        let [r, g, b, a] = data.color.to_rgba();
+        self.font_manager.queue(
+            font,
+            x,
+            y,
+            z,
+            text,
+            size,
+            [r, g, b, a * data.alpha],
+            max_width,
+            h_align,
+            v_align,
+        );
+    }
+
+    fn push_data(
+        &mut self,
+        gfx: &mut Graphics,
+        pipeline: &Option<Pipeline>,
+        projection: &Matrix4,
+        mask: &MaskMode,
+        data: &TextBuffer,
+    ) {
+        let next_index = self.index + data.indices.len();
+        if next_index >= self.indices.len() {
+            self.flush_to_gpu(gfx, pipeline, projection, mask);
+        }
+
+        for (i, index) in data.indices.iter().enumerate() {
+            self.indices[self.index + i] = self.index as u32 + *index;
+        }
+
+        let offset = self.pipeline.offset();
+        let [r, g, b, a] = data.color;
+        let mut index_offset = self.index * offset;
+
+        let mut uv_index = 0;
+        for (i, _) in data.vertices.iter().enumerate().step_by(3) {
+            let [x, y, z, _] = matrix4_mul_vector4(
+                &self.current_matrix,
+                &[
+                    data.vertices[i + 0],
+                    data.vertices[i + 1],
+                    data.vertices[i + 2],
+                    1.0,
+                ],
+            );
+
+            self.vertices[0 + index_offset] = x;
+            self.vertices[1 + index_offset] = y;
+            self.vertices[2 + index_offset] = z;
+            self.vertices[3 + index_offset] = r;
+            self.vertices[4 + index_offset] = g;
+            self.vertices[5 + index_offset] = b;
+            self.vertices[6 + index_offset] = a;
+            self.vertices[7 + index_offset] = data.uvs[0 + uv_index];
+            self.vertices[8 + index_offset] = data.uvs[1 + uv_index];
+
+            uv_index += 2;
+            index_offset += offset;
+        }
+
+        self.index += data.indices.len();
+    }
+
+    fn check_batch_size(&mut self, gfx: &mut Graphics, data: &DrawData) {
+        // let next_size = self.vertices.len() + self.batch_size;
+        // let can_be_bigger = next_size < self.max_vertices;
+        // if can_be_bigger {
+        //     let is_bigger = data.indices.len() > self.indices.len();
+        //     let is_more = self.index + data.indices.len() >= self.indices.len();
+        //     if is_bigger || is_more {
+        //         self.flush(gfx, data.pipeline, data.projection, data.mask);
+        //
+        //         let index_next_size = next_size / self.pipeline.offset();
+        //         log::debug!(
+        //             "ColorBatcher -> Increasing vertex_buffer to {} and index_buffer to {}",
+        //             next_size,
+        //             index_next_size
+        //         );
+        //
+        //         self.vertices.resize(next_size, 0.0);
+        //         self.indices.resize(index_next_size, 0);
+        //     }
+        // }
+    }
+
+    fn parse_letters(&mut self, data: Vec<FontTextureData>) {
+        let img_ww = self.texture.width();
+        let img_hh = self.texture.height();
+
+        let buffers = data
+            .iter()
+            .map(|data| {
+                let sx = data.source_x;
+                let sy = data.source_y;
+                let sw = data.source_width;
+                let sh = data.source_height;
+
+                let x = data.x;
+                let y = data.y;
+                let x2 = x + sw;
+                let y2 = y + sh;
+
+                let z = data.z;
+
+                let sx1 = sx / img_ww;
+                let sy1 = sy / img_hh;
+                let sx2 = (sx + sw) / img_ww;
+                let sy2 = (sy + sh) / img_hh;
+
+                #[rustfmt::skip]
+                let buffer = TextBuffer {
+                    vertices: [
+                        x, y, z,
+                        x2, y, z,
+                        x, y2, z,
+                        x2, y2, z,
+                    ],
+                    indices: [
+                        0, 1, 2, 2, 1, 3
+                    ],
+                    uvs: [
+                        sx1, sy1,
+                        sx2, sy1,
+                        sx1, sy2,
+                        sx2, sy2
+                    ],
+                    color: data.color
+                };
+
+                buffer
+            })
+            .collect::<Vec<_>>();
+
+        self.cached_buffers = Some(buffers);
+    }
+
+    fn flush_to_gpu(
+        &mut self,
+        gfx: &mut Graphics,
+        pipeline: &Option<Pipeline>,
+        projection: &Matrix4,
+        mask: &MaskMode,
+    ) {
+        if self.index == 0 {
+            return;
+        }
+
+        self.set_mask(mask);
+        match pipeline {
+            Some(pipe) => {
+                let tex_loc = batch_uniform(pipe, "TextBatcher", "u_texture").unwrap();
+                let mvp_loc = batch_uniform(pipe, "TextBatcher", "u_matrix").unwrap();
+                gfx.set_pipeline(pipe);
+                gfx.bind_uniform(&mvp_loc, projection);
+                gfx.bind_texture(&tex_loc, &self.texture);
+            }
+            None => {
+                gfx.set_pipeline(&self.pipeline);
+                gfx.bind_uniform(&self.matrix_loc, projection);
+                gfx.bind_texture(&self.texture_loc, &self.texture);
+            }
+        };
+
+        gfx.bind_vertex_buffer(&self.vbo, &self.pipeline, &self.vertices);
+        gfx.bind_index_buffer(&self.ibo, &self.indices);
+        gfx.draw(0, self.index as _);
+
+        self.index = 0;
+    }
+}
+
+#[derive(Clone, Debug)]
+struct TextBuffer {
+    vertices: [f32; 12],
+    indices: [u32; 6],
+    uvs: [f32; 8],
+    color: [f32; 4],
+}
+
+impl BaseBatcher for TextBatcher {
+    fn flush(
+        &mut self,
+        gfx: &mut Graphics,
+        pipeline: &Option<Pipeline>,
+        projection: &Matrix4,
+        mask: &MaskMode,
+    ) {
+        if let Some(data) = self.font_manager.process_queue(&gfx.gl, &mut self.texture) {
+            self.parse_letters(data);
+        }
+
+        match self.cached_buffers.take() {
+            Some(buffers) => {
+                buffers.iter().for_each(|data| {
+                    self.push_data(gfx, pipeline, projection, mask, data);
+                });
+
+                self.flush_to_gpu(gfx, pipeline, projection, mask);
+                self.cached_buffers = Some(buffers);
+            }
+            _ => {}
+        };
+    }
+
+    fn set_mask(&mut self, mask: &MaskMode) {
+        if *mask != self.mask {
+            apply_mask_to_pipeline(&mut self.pipeline, mask);
+            self.mask = *mask;
+        }
+    }
+
+    fn clear_mask(&mut self, gfx: &mut Graphics, mask: &MaskMode, color: Color) {
+        self.set_mask(mask);
+        gfx.set_pipeline(&self.pipeline);
+        gfx.clear(&ClearOptions {
+            stencil: Some(0xff),
+            color: Some(color),
+            ..Default::default()
+        });
+    }
 }
 
 /// Pattern batcher

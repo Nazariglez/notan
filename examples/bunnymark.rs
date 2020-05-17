@@ -10,9 +10,10 @@ struct Bunny {
 
 struct State {
     rng: Random,
-    img: Texture,
+    img: texture::Texture,
     bunnies: Vec<Bunny>,
     spawning: bool,
+    font: font::Font,
 }
 
 #[nae::main]
@@ -20,7 +21,6 @@ fn main() {
     nae::init_with(init)
         .update(update)
         .draw(draw)
-        .event(event)
         .build()
         .unwrap();
 }
@@ -28,24 +28,13 @@ fn main() {
 fn init(app: &mut App) -> State {
     let mut state = State {
         rng: Random::default(),
-        img: app.load_file("./examples/assets/bunny.png").unwrap(),
+        img: texture::Texture::from_bytes(app, include_bytes!("assets/bunny.png")).unwrap(),
         bunnies: vec![],
         spawning: false,
+        font: font::Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap(),
     };
     spawn(&mut state);
     state
-}
-
-fn event(app: &mut App, state: &mut State, event: Event) {
-    match event {
-        Event::MouseDown { .. } => {
-            state.spawning = true;
-        }
-        Event::MouseUp { .. } => {
-            state.spawning = false;
-        }
-        _ => {}
-    }
 }
 
 fn spawn(state: &mut State) {
@@ -60,7 +49,7 @@ fn spawn(state: &mut State) {
 }
 
 fn update(app: &mut App, state: &mut State) {
-    if state.spawning {
+    if app.mouse.is_down(MouseButton::Left) {
         spawn(state);
     }
 
@@ -92,19 +81,22 @@ fn update(app: &mut App, state: &mut State) {
 
 fn draw(app: &mut App, state: &mut State) {
     let fps = app.fps().round();
+    let calls = app.gfx().draw_calls();
+    let bunnies = state.bunnies.len();
 
-    let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
-    for b in &state.bunnies {
-        draw.image(&state.img, b.x, b.y);
-    }
+    let draw = app.draw2();
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
-    draw.text(
-        &format!("Bunnies: {} - Fps: {}", state.bunnies.len(), fps),
-        10.0,
-        1.0,
-        24.0,
+    state
+        .bunnies
+        .iter()
+        .for_each(|b| draw.image(&state.img, b.x, b.y));
+
+    let debug_text = format!(
+        "Bunnies: {} - Fps: {} - Draw Calls: {}",
+        bunnies, fps, calls
     );
+    draw.text(&state.font, &debug_text, 10.0, 1.0, 24.0);
+
     draw.end();
 }

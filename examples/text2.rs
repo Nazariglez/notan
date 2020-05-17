@@ -4,21 +4,17 @@ const TEXT: &'static str = include_str!("./assets/loremipsum.txt");
 
 #[nae::main]
 fn main() {
-    nae::init().draw(draw).build().unwrap();
+    nae::init_with(init).draw(draw).build().unwrap();
 }
 
-fn draw(app: &mut App, _: &mut ()) {
-    let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
-    draw.text_ext(
-        TEXT,
-        400.0,
-        300.0,
-        16.0,
-        HorizontalAlign::Center,
-        VerticalAlign::Center,
-        Some(600.0),
-    );
+fn init(app: &mut App) -> font::Font {
+    font::Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap()
+}
+
+fn draw(app: &mut App, font: &mut font::Font) {
+    let draw = app.draw2();
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
+    draw.set_text_align(HorizontalAlign::Center, VerticalAlign::Center);
+    draw.text_ext(font, TEXT, 400.0, 300.0, 16.0, 600.0);
     draw.end();
 }

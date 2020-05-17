@@ -3,8 +3,8 @@ use nae_core::{
     GraphicsAPI, HorizontalAlign, PipelineOptions, StencilAction, StencilOptions, VerticalAlign,
 };
 
-use crate::batchers::{BaseBatcher, ColorBatcher, ImageBatcher, PatternBatcher};
-use crate::font::Font;
+use crate::batchers::{BaseBatcher, ColorBatcher, ImageBatcher, PatternBatcher, TextBatcher};
+use crate::font::{Font, FontManager};
 use crate::shapes::ShapeTessellator;
 use crate::texture::Texture;
 use crate::{
@@ -39,6 +39,7 @@ pub struct Draw {
     color_batcher: ColorBatcher,
     image_batcher: ImageBatcher,
     pattern_batcher: PatternBatcher,
+    pub(crate) text_batcher: TextBatcher,
     current_mode: PaintMode,
     shapes: ShapeTessellator,
     mask: MaskMode,
@@ -50,6 +51,7 @@ impl Draw {
         let color_batcher = ColorBatcher::new(&mut gfx)?;
         let image_batcher = ImageBatcher::new(&mut gfx)?;
         let pattern_batcher = PatternBatcher::new(&mut gfx)?;
+        let text_batcher = TextBatcher::new(&mut gfx)?;
 
         let (width, height) = gfx.size(); //TODO multiply for dpi
         let render_projection = matrix4_orthogonal(0.0, width, height, 0.0, -1.0, 1.0);
@@ -73,6 +75,7 @@ impl Draw {
             color_batcher,
             image_batcher,
             pattern_batcher,
+            text_batcher,
             matrix: None,
             projection: None,
             text_horizontal_align: HorizontalAlign::Left,
@@ -357,6 +360,12 @@ impl Draw {
     }
 
     pub fn text_ext(&mut self, font: &Font, text: &str, x: f32, y: f32, size: f32, max_width: f32) {
+        if !font.is_loaded() {
+            return;
+        }
+
+        paint_mode(self, PaintMode::Text);
+        draw_text(self, font, x, y, self.depth, text, size, max_width);
     }
 
     pub fn image(&mut self, img: &Texture, x: f32, y: f32) {
@@ -638,6 +647,7 @@ fn clear_mask(draw: &mut Draw) {
         PaintMode::Color => &mut draw.color_batcher,
         PaintMode::Image => &mut draw.image_batcher,
         PaintMode::Pattern => &mut draw.pattern_batcher,
+        PaintMode::Text => &mut draw.text_batcher,
         _ => return,
     };
 
@@ -649,6 +659,7 @@ fn flush(draw: &mut Draw) {
         PaintMode::Color => &mut draw.color_batcher,
         PaintMode::Image => &mut draw.image_batcher,
         PaintMode::Pattern => &mut draw.pattern_batcher,
+        PaintMode::Text => &mut draw.text_batcher,
         _ => return,
     };
 
@@ -708,6 +719,47 @@ fn draw_color(draw: &mut Draw, vertices: &[f32], indices: &[u32], color: Option<
             pipeline: &draw.pipeline,
         },
     );
+}
+
+fn draw_text(
+    draw: &mut Draw,
+    font: &Font,
+    x: f32,
+    y: f32,
+    z: f32,
+    text: &str,
+    size: f32,
+    max_width: f32,
+) {
+    draw.text_batcher.push_text(
+        &mut draw.gfx,
+        font,
+        x,
+        y,
+        z,
+        text,
+        size,
+        max_width,
+        draw.text_horizontal_align,
+        draw.text_vertical_align,
+        DrawData {
+            vertices: &[],
+            indices: &[],
+            projection: match &draw.projection {
+                Some(p) => p,
+                _ => &draw.render_projection,
+            },
+            matrix: match &draw.matrix {
+                Some(p) => p,
+                _ => &draw.matrix_stack.last().as_ref().unwrap(),
+            },
+            blend: Some(draw.last_blend_mode),
+            color: draw.color,
+            alpha: draw.alpha,
+            mask: &draw.mask,
+            pipeline: &draw.pipeline,
+        },
+    )
 }
 
 fn draw_image(draw: &mut Draw, texture: &Texture, vertices: &[f32], uvs: &[f32], indices: &[u32]) {
