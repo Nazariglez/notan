@@ -45,6 +45,19 @@ impl Font {
         Ok(font)
     }
 
+    pub fn size(
+        &self,
+        draw: &mut Draw,
+        text: &str,
+        size: f32,
+        max_width: Option<f32>,
+    ) -> (f32, f32) {
+        let h_align = draw.text_horizontal_align;
+        let v_align = draw.text_vertical_align;
+        draw.text_batcher
+            .text_size(self, text, size, h_align, v_align, max_width)
+    }
+
     pub fn parse_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
     where
         T: BaseApp<System = S>,
