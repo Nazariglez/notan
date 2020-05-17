@@ -16,6 +16,7 @@ struct State {
     color_index: usize,
     drawing: bool,
     lines: Vec<(Vec<(f32, f32)>, Color)>,
+    font: Font,
 }
 
 #[nae::main]
@@ -33,6 +34,7 @@ fn init(app: &mut App) -> State {
         color_index: 0,
         drawing: false,
         lines: vec![],
+        font: Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap(),
     }
 }
 
@@ -69,19 +71,11 @@ fn process_input(app: &mut App, state: &mut State) {
 
 fn draw(app: &mut App, state: &mut State) {
     let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
-    draw.set_color(Color::WHITE);
-    draw.text_ext(
-        "Click and drag to paint!",
-        400.0,
-        300.0,
-        40.0,
-        HorizontalAlign::Center,
-        VerticalAlign::Center,
-        None,
-    );
+    draw.color = Color::WHITE;
+    draw.set_text_align(HorizontalAlign::Center, VerticalAlign::Center);
+    draw.text(&state.font, "Click and drag to paint!", 400.0, 300.0, 40.0);
 
     draw.geometry(&state.geom);
     draw.end();

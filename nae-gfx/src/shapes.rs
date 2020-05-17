@@ -8,7 +8,6 @@ use lyon::lyon_tessellation::{
     StrokeOptions, StrokeTessellator, VertexBuffers,
 };
 use lyon::math::{rect, Point};
-use nae_core::Vertex;
 
 pub(crate) struct ShapeTessellator {
     fill: FillTessellator,

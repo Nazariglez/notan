@@ -1,7 +1,7 @@
 use nae::prelude::*;
 
 struct State {
-    tex: nae_gfx::texture::Texture,
+    tex: Texture,
     count: f32,
 }
 
@@ -21,7 +21,7 @@ fn draw(app: &mut App, state: &mut State) {
     let sx = initial_sx + cos * 0.5;
     let sy = initial_sy + sin * 0.5;
 
-    let draw = app.draw2();
+    let draw = app.draw();
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
     draw.push_scale(sx, sy);
@@ -35,8 +35,7 @@ fn draw(app: &mut App, state: &mut State) {
 
 fn init(app: &mut App) -> State {
     State {
-        tex: nae_gfx::texture::Texture::from_bytes(app, include_bytes!("assets/ferris.png"))
-            .unwrap(),
+        tex: Texture::from_bytes(app, include_bytes!("assets/ferris.png")).unwrap(),
         count: 0.0,
     }
 }

@@ -1,5 +1,6 @@
 use super::Transform2d;
 use backend::math::Mat3;
+use nae_gfx::Matrix4;
 
 /// Modes or rules used to scale the matrix transformation
 #[derive(Clone, Copy, Debug)]
@@ -147,7 +148,7 @@ impl Scaler {
     }
 
     /// Returns the calculated matrix ready to use
-    pub fn matrix(&mut self) -> &Mat3 {
+    pub fn matrix(&mut self) -> &Matrix4 {
         self.update();
         self.transform.matrix()
     }

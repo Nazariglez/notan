@@ -2,7 +2,7 @@ use nae::prelude::*;
 use nalgebra_glm as glm;
 
 struct State {
-    tex: nae_gfx::texture::Texture,
+    tex: Texture,
     matrix: glm::Mat4,
     angle: f32,
 }
@@ -24,7 +24,7 @@ fn draw(app: &mut App, state: &mut State) {
     let matrix_pivot = glm::translate(&matrix_scale, &glm::vec3(-pivot_x, -pivot_y, 0.0));
 
     //Draw the sprite on the center of the screen while it rotate
-    let draw = app.draw2();
+    let draw = app.draw();
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
     draw.push(&slice_to_matrix4(&matrix_pivot.as_slice()));
@@ -38,8 +38,7 @@ fn draw(app: &mut App, state: &mut State) {
 
 fn init(app: &mut App) -> State {
     State {
-        tex: nae_gfx::texture::Texture::from_bytes(app, include_bytes!("assets/ferris.png"))
-            .unwrap(),
+        tex: Texture::from_bytes(app, include_bytes!("assets/ferris.png")).unwrap(),
         angle: 0.0,
         matrix: glm::identity(),
     }

@@ -6,7 +6,7 @@ fn main() {
 }
 
 fn draw(app: &mut App, _: &mut ()) {
-    let draw = app.draw2();
+    let draw = app.draw();
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
     draw.start_mask(|draw| {

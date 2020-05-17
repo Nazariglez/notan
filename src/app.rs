@@ -46,23 +46,12 @@ impl BaseApp for App {
 }
 
 impl App {
-    pub fn gfx(&mut self) -> &mut nae_gfx::Graphics {
+    pub fn gfx(&mut self) -> &mut Graphics {
         &mut self.sys.draw().gfx
     }
 
-    pub fn draw2(&mut self) -> &mut nae_gfx::Draw {
+    pub fn draw(&mut self) -> &mut Draw {
         self.sys.draw()
-    }
-
-    pub fn draw(&mut self) -> &mut Context2d {
-        self.sys.ctx2()
-    }
-
-    pub fn load_file<A>(&mut self, file: &str) -> Result<A, String>
-    where
-        A: ResourceParser<App = Self> + Resource + Clone + 'static,
-    {
-        self.resources.add(file)
     }
 
     fn tick(&mut self) {
@@ -239,7 +228,9 @@ fn process_events<S>(app: &mut App, state: &mut S, cb: fn(&mut App, &mut S, Even
         app.keyboard.process(&evt, app.delta);
 
         match evt {
-            Event::WindowResize { width, height } => app.sys.ctx2().set_size(width, height),
+            Event::WindowResize { width, height } => {
+                app.sys.draw().set_size(width as _, height as _)
+            }
             _ => {}
         }
 

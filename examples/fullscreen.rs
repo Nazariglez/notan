@@ -2,10 +2,18 @@ use nae::prelude::*;
 
 #[nae::main]
 fn main() {
-    nae::init().draw(draw).size(1200, 800).build().unwrap();
+    nae::init_with(init)
+        .draw(draw)
+        .size(1200, 800)
+        .build()
+        .unwrap();
 }
 
-fn draw(app: &mut App, _: &mut ()) {
+fn init(app: &mut App) -> Font {
+    Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap()
+}
+
+fn draw(app: &mut App, font: &mut Font) {
     let ww = app.width();
     let hh = app.height();
 
@@ -21,16 +29,8 @@ fn draw(app: &mut App, _: &mut ()) {
     };
 
     let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
-    draw.text_ext(
-        text,
-        ww * 0.5,
-        hh * 0.5,
-        40.0,
-        HorizontalAlign::Center,
-        VerticalAlign::Center,
-        None,
-    );
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
+    draw.set_text_align(HorizontalAlign::Center, VerticalAlign::Center);
+    draw.text(font, text, ww * 0.5, hh * 0.5, 40.0);
     draw.end();
 }

@@ -1,4 +1,4 @@
-use super::{Resource, ResourceParser};
+use super::ResourceParser;
 use crate::app::App;
 use crate::resource_parser;
 use nae_core::{BaseApp, BaseSystem};
@@ -22,10 +22,6 @@ impl Blob {
     pub fn data_mut(&mut self) -> RefMut<Vec<u8>> {
         RefMut::map(self.inner.borrow_mut(), |data| data)
     }
-}
-
-impl Resource for Blob {
-    type Context2d = backend::Context2d;
 
     fn new(file: &str) -> Self {
         Self {
@@ -33,18 +29,18 @@ impl Resource for Blob {
         }
     }
 
-    fn parse<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Context2d = Self::Context2d>,
-    {
-        *self.inner.borrow_mut() = data;
-        Ok(())
-    }
-
-    fn is_loaded(&self) -> bool {
-        self.inner.borrow().len() != 0
-    }
+    // fn parse<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
+    // where
+    //     T: BaseApp<System = S>,
+    //     S: BaseSystem<Context2d = Self::Context2d>,
+    // {
+    //     *self.inner.borrow_mut() = data;
+    //     Ok(())
+    // }
+    //
+    // fn is_loaded(&self) -> bool {
+    //     self.inner.borrow().len() != 0
+    // }
 }
 
-resource_parser!(Blob, App);
+// resource_parser!(Blob, App);

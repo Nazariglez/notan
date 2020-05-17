@@ -4,7 +4,7 @@ struct State {
     pipeline: Pipeline,
     size_loc: Uniform,
     tex_size_loc: Uniform,
-    image: nae_gfx::texture::Texture,
+    image: Texture,
     count: f32,
 }
 
@@ -24,8 +24,7 @@ fn init(app: &mut App) -> State {
         pipeline,
         size_loc,
         tex_size_loc,
-        image: nae_gfx::texture::Texture::from_bytes(app, include_bytes!("assets/ferris.png"))
-            .unwrap(),
+        image: Texture::from_bytes(app, include_bytes!("assets/ferris.png")).unwrap(),
         count: 0.0,
     }
 }
@@ -38,7 +37,7 @@ fn draw(app: &mut App, state: &mut State) {
     let height = state.image.height();
     let size = 5.0 + state.count.sin();
 
-    let draw = app.draw2();
+    let draw = app.draw();
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
     // Draw the original sprite as visual reference

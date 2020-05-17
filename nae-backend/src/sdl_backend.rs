@@ -2,8 +2,7 @@ use crate::ToNaeValue;
 use futures::{future, Future};
 use nae_core::window::BaseWindow;
 use nae_core::{BaseApp, BuilderOpts, Event, KeyCode, MouseButton};
-use nae_core::{BaseContext2d, BaseSystem, EventIterator};
-use nae_glow::Context2d;
+use nae_core::{BaseSystem, EventIterator};
 use sdl2::keyboard::{Keycode as SdlKeycode, Scancode};
 use sdl2::mouse::MouseButton as SdlMouseButton;
 use sdl2::video::{FullscreenType, Window as SdlWindow};
@@ -16,24 +15,20 @@ use std::rc::Rc;
 
 pub struct System {
     window: Window,
-    context2d: Context2d,
     events: EventIterator,
     draw: nae_gfx::Draw,
 }
 
 impl BaseSystem for System {
     type Kind = Self;
-    type Context2d = Context2d;
     type Graphics = nae_gfx::Graphics;
     type Draw = nae_gfx::Draw;
 
     fn new(mut opts: BuilderOpts) -> Result<Self, String> {
         let win = Window::new(&opts)?;
-        let ctx2 = Context2d::new(&win.win)?;
         let draw = nae_gfx::Draw::new(&win.win)?;
         Ok(Self {
             window: win,
-            context2d: ctx2,
             events: EventIterator::new(),
             draw,
         })
@@ -45,10 +40,6 @@ impl BaseSystem for System {
 
     fn draw(&mut self) -> &mut Self::Draw {
         &mut self.draw
-    }
-
-    fn ctx2(&mut self) -> &mut Self::Context2d {
-        &mut self.context2d
     }
 
     fn events(&mut self) -> &mut EventIterator {

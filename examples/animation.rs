@@ -17,8 +17,7 @@ fn update(app: &mut App, state: &mut State) {
 
 fn draw(app: &mut App, state: &mut State) {
     let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
     draw.push_scale(2.0, 2.0);
 
     // draw the texture returned by the animation
@@ -26,7 +25,7 @@ fn draw(app: &mut App, state: &mut State) {
         draw.image(tex, 60.0, 50.0);
     }
 
-    draw.pop_matrix();
+    draw.pop();
     draw.end();
 }
 

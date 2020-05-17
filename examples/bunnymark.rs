@@ -10,10 +10,10 @@ struct Bunny {
 
 struct State {
     rng: Random,
-    img: texture::Texture,
+    img: Texture,
     bunnies: Vec<Bunny>,
     spawning: bool,
-    font: font::Font,
+    font: Font,
 }
 
 #[nae::main]
@@ -28,10 +28,10 @@ fn main() {
 fn init(app: &mut App) -> State {
     let mut state = State {
         rng: Random::default(),
-        img: texture::Texture::from_bytes(app, include_bytes!("assets/bunny.png")).unwrap(),
+        img: Texture::from_bytes(app, include_bytes!("assets/bunny.png")).unwrap(),
         bunnies: vec![],
         spawning: false,
-        font: font::Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap(),
+        font: Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap(),
     };
     spawn(&mut state);
     state
@@ -84,7 +84,7 @@ fn draw(app: &mut App, state: &mut State) {
     let calls = app.gfx().draw_calls();
     let bunnies = state.bunnies.len();
 
-    let draw = app.draw2();
+    let draw = app.draw();
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
     state

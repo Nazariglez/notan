@@ -1,8 +1,8 @@
 use nae::prelude::*;
 
 struct State {
-    ubuntu: font::Font,
-    ubuntu_mono: font::Font,
+    ubuntu: Font,
+    ubuntu_mono: Font,
 }
 
 #[nae::main]
@@ -12,14 +12,13 @@ fn main() {
 
 fn init(app: &mut App) -> State {
     State {
-        ubuntu: font::Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap(),
-        ubuntu_mono: font::Font::from_bytes(app, include_bytes!("assets/UbuntuMono-R.ttf"))
-            .unwrap(),
+        ubuntu: Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap(),
+        ubuntu_mono: Font::from_bytes(app, include_bytes!("assets/UbuntuMono-R.ttf")).unwrap(),
     }
 }
 
 fn draw(app: &mut App, state: &mut State) {
-    let draw = app.draw2();
+    let draw = app.draw();
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
     draw.color = Color::WHITE;

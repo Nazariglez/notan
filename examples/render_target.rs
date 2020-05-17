@@ -30,7 +30,7 @@ fn draw(app: &mut App, state: &mut State) {
     let x = ((app.mouse.x / width) - 0.5) * 10.0;
     let y = ((app.mouse.y / height) - 0.5) * 10.0;
 
-    let draw = app.draw2();
+    let draw = app.draw();
 
     // Draw target1 and some primitives to target2
     draw.begin_to(
