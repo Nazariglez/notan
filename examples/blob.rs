@@ -16,10 +16,10 @@ fn init(app: &mut App) -> State {
 fn draw(app: &mut App, state: &mut State) {
     let draw = app.draw();
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
-    if blob.is_loaded() {
+    if state.blob.is_loaded() {
         draw.text(
             &state.font,
-            &format!("Blob: {:?}", blob.data()),
+            &format!("Blob: {:?}", state.blob.data()),
             10.0,
             10.0,
             24.0,
@@ -28,7 +28,7 @@ fn draw(app: &mut App, state: &mut State) {
             &state.font,
             &format!(
                 "Text from blob: {:?}",
-                std::str::from_utf8(&blob.data()).unwrap()
+                std::str::from_utf8(&state.blob.data()).unwrap()
             ),
             10.0,
             60.0,

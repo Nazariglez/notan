@@ -1,6 +1,7 @@
 use super::ResourceParser;
 use crate::app::App;
 use crate::resource_parser;
+use backend::{Draw, Graphics};
 use nae_core::{BaseApp, BaseSystem};
 use std::cell::{Ref, RefCell, RefMut};
 use std::rc::Rc;
@@ -23,24 +24,31 @@ impl Blob {
         RefMut::map(self.inner.borrow_mut(), |data| data)
     }
 
-    fn new(file: &str) -> Self {
-        Self {
-            inner: Rc::new(RefCell::new(vec![])),
-        }
+    pub fn is_loaded(&self) -> bool {
+        self.inner.borrow().len() != 0
     }
 
-    // fn parse<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
-    // where
-    //     T: BaseApp<System = S>,
-    //     S: BaseSystem<Context2d = Self::Context2d>,
-    // {
-    //     *self.inner.borrow_mut() = data;
-    //     Ok(())
-    // }
-    //
-    // fn is_loaded(&self) -> bool {
-    //     self.inner.borrow().len() != 0
-    // }
+    pub fn parse_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem,
+    {
+        *self.inner.borrow_mut() = data;
+        Ok(())
+    }
+
+    /// Create a new blob from bytes
+    pub fn from_bytes<T, S>(app: &mut T, data: &[u8]) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Graphics = Graphics, Draw = Draw>,
+    {
+        let blob = Blob {
+            inner: Rc::new(RefCell::new(data.to_vec())),
+        };
+
+        Ok(blob)
+    }
 }
 
-// resource_parser!(Blob, App);
+resource_parser!(Blob, App);
