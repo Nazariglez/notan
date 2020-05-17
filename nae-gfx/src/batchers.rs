@@ -52,6 +52,19 @@ pub(crate) struct TextBatcher {
 }
 
 impl TextBatcher {
+    pub fn text_size(
+        &mut self,
+        font: &Font,
+        text: &str,
+        size: f32,
+        h_align: HorizontalAlign,
+        v_align: VerticalAlign,
+        max_width: Option<f32>,
+    ) -> (f32, f32) {
+        self.font_manager
+            .text_size(font, text, size, h_align, v_align, max_width)
+    }
+
     pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
         let pipeline = Pipeline::from_text_fragment(gfx, Pipeline::TEXT_FRAG)?;
         let matrix_loc = pipeline.uniform_location("u_matrix")?;
