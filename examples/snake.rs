@@ -4,15 +4,15 @@ use nae::prelude::*;
 const TILE_SIZE: usize = 40;
 const COLS: usize = 800 / TILE_SIZE;
 const ROWS: usize = 600 / TILE_SIZE;
-const BACKGROUND_COLOR: Color = Color::Color::new(0.698, 0.792, 0.376, 1.0);
-const SNAKE_COLOR: Color = Color::Color::new(0.211, 0.298, 0.074, 1.0);
-const LINE_COLOR: Color = Color::Color::new(1.0, 1.0, 1.0, 0.1);
+const BACKGROUND_COLOR: Color = Color::new(0.698, 0.792, 0.376, 1.0);
+const SNAKE_COLOR: Color = Color::new(0.211, 0.298, 0.074, 1.0);
+const LINE_COLOR: Color = Color::new(1.0, 1.0, 1.0, 0.1);
 const MOVEMENT_MS: f32 = 0.2;
 const MIN_MOVEMENT_MS: f32 = 0.02;
 
 #[nae::main]
 fn main() {
-    nae::init_with(|_| State::new())
+    nae::init_with(|app| State::new(app))
         .update(update)
         .draw(draw)
         .build()
@@ -34,28 +34,27 @@ fn draw(app: &mut App, state: &mut State) {
     let tile_size = TILE_SIZE as f32;
 
     let draw = app.draw();
-    draw.begin();
-    draw.clear(BACKGROUND_COLOR);
+    draw.begin(BACKGROUND_COLOR);
 
     // draw grid
     for i in 0..COLS * ROWS {
         let (x, y) = xy(i);
         let pos_x = (x * TILE_SIZE) as f32;
         let pos_y = (y * TILE_SIZE) as f32;
-        draw.set_color(LINE_COLOR);
+        draw.color = LINE_COLOR;
         draw.stroke_rect(pos_x, pos_y, tile_size, tile_size, 1.0);
     }
 
     // how to play
-    draw.set_color(Color::WHITE);
-    draw.text("Use WASD to move", 10.0, 570.0, 20.0);
+    draw.color = Color::WHITE;
+    draw.text(&state.font, "Use WASD to move", 10.0, 570.0, 20.0);
 
     // draw food
     let pos_x = (state.food.0 * TILE_SIZE) as f32;
     let pos_y = (state.food.1 * TILE_SIZE) as f32;
-    draw.set_color(hex(0xa0a0a0ff));
+    draw.color = Color::from_hex(0xa0a0a0ff);
     draw.rect(pos_x, pos_y, tile_size, tile_size);
-    draw.set_color(Color::BLACK);
+    draw.color = Color::BLACK;
     draw.stroke_rect(pos_x, pos_y, tile_size, tile_size, 2.0);
 
     // draw snake
@@ -68,19 +67,31 @@ fn draw(app: &mut App, state: &mut State) {
             SNAKE_COLOR.with_alpha(0.8)
         };
 
-        draw.set_color(color);
+        draw.color = color;
         draw.rect(pos_x, pos_y, tile_size, tile_size);
 
-        draw.set_color(Color::BLACK);
+        draw.color = Color::BLACK;
         draw.stroke_rect(pos_x, pos_y, tile_size, tile_size, 1.0);
     });
 
     // draw the score and the last score if exists
-    draw.set_color(Color::WHITE);
-    draw.text(&format!("Score: {}", state.score), 10.0, 10.0, 30.0);
+    draw.color = Color::WHITE;
+    draw.text(
+        &state.font,
+        &format!("Score: {}", state.score),
+        10.0,
+        10.0,
+        30.0,
+    );
 
     if let Some(last_score) = state.last_score {
-        draw.text(&format!("Last Score: {}", last_score), 10.0, 50.0, 20.0);
+        draw.text(
+            &state.font,
+            &format!("Last Score: {}", last_score),
+            10.0,
+            50.0,
+            20.0,
+        );
     }
 
     draw.end();
@@ -103,12 +114,14 @@ struct State {
     score: i32,
     last_score: Option<i32>,
     accel: f32,
+    font: Font,
 }
 
 impl State {
-    fn new() -> Self {
+    fn new(app: &mut App) -> Self {
         let mut rng = Random::default();
         let food = random_xy(&mut rng);
+        let font = Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap();
         Self {
             time: 0.0,
             rng,
@@ -118,6 +131,7 @@ impl State {
             score: 0,
             last_score: None,
             accel: 0.0,
+            font,
         }
     }
 
