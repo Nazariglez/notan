@@ -2,7 +2,7 @@ use nae::prelude::*;
 use nalgebra_glm as glm;
 
 struct State {
-    texture: nae_gfx::texture::Texture,
+    texture: Texture,
     pipeline: Pipeline,
     vertex_buffer: VertexBuffer,
     clear: ClearOptions,
@@ -20,38 +20,31 @@ fn main() {
 }
 
 fn init(app: &mut App) -> State {
-    let texture =
-        nae_gfx::texture::Texture::from_bytes(app, include_bytes!("assets/cube.png")).unwrap();
+    let texture = Texture::from_bytes(app, include_bytes!("assets/cube.png")).unwrap();
 
     let mut gfx = app.gfx();
-    let shader = nae_gfx::Shader::new(
+    let pipeline = Pipeline::new(
         &gfx,
         include_bytes!("assets/shaders/image_matrix.vert.spv"),
         include_bytes!("assets/shaders/image.frag.spv"),
-    )
-    .unwrap();
-
-    let pipeline = Pipeline::new(
-        &gfx,
-        &shader,
-        PipelineOptions {
-            depth_stencil: DepthStencil::Less,
-            ..Default::default()
-        },
-    );
-
-    let mvp_location = pipeline.uniform_location("u_matrix");
-    let tex_location = pipeline.uniform_location("u_texture");
-
-    let vertex_buffer = VertexBuffer::new(
-        &gfx,
         &[
             VertexAttr::new(0, VertexFormat::Float3),
             VertexAttr::new(1, VertexFormat::Float2),
         ],
-        DrawUsage::Dynamic,
+        PipelineOptions {
+            depth_stencil: DepthStencil {
+                write: true,
+                compare: CompareMode::Less,
+            },
+            ..Default::default()
+        },
     )
     .unwrap();
+
+    let mvp_location = pipeline.uniform_location("u_matrix").unwrap();
+    let tex_location = pipeline.uniform_location("u_texture").unwrap();
+
+    let vertex_buffer = VertexBuffer::new(&gfx, DrawUsage::Dynamic).unwrap();
 
     let clear = ClearOptions {
         color: Some(Color::new(0.1, 0.2, 0.3, 1.0)),
@@ -126,14 +119,14 @@ fn init(app: &mut App) -> State {
 
 fn draw(app: &mut App, state: &mut State) {
     let mvp = rotate_matrix(state);
-    let count = state.vertices.len() / state.vertex_buffer.offset();
+    let count = state.vertices.len() / state.pipeline.offset();
 
     let mut gfx = app.gfx();
     gfx.begin(&state.clear);
     gfx.set_pipeline(&state.pipeline);
     gfx.bind_uniform(&state.mvp_location, slice_to_matrix4(mvp.as_slice()));
     gfx.bind_texture(&state.tex_location, &state.texture);
-    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
+    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.pipeline, &state.vertices);
     gfx.draw(0, count as _);
     gfx.end();
 }

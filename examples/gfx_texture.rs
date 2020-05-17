@@ -1,7 +1,7 @@
 use nae::prelude::*;
 
 struct State {
-    texture: nae_gfx::texture::Texture,
+    texture: Texture,
     pipeline: Pipeline,
     vertex_buffer: VertexBuffer,
     index_buffer: IndexBuffer,
@@ -17,37 +17,28 @@ fn main() {
 }
 
 fn init(app: &mut App) -> State {
-    let texture =
-        nae_gfx::texture::Texture::from_bytes(app, include_bytes!("./assets/ferris.png")).unwrap();
+    let texture = Texture::from_bytes(app, include_bytes!("./assets/ferris.png")).unwrap();
 
     let mut gfx = app.gfx();
-    let shader = nae_gfx::Shader::new(
-        &gfx,
-        include_bytes!("./assets/shaders/image.vert.spv"),
-        include_bytes!("./assets/shaders/image.frag.spv"),
-    )
-    .unwrap();
 
     let pipeline = Pipeline::new(
         &gfx,
-        &shader,
-        PipelineOptions {
-            color_blend: Some(BlendMode::NORMAL),
-            ..Default::default()
-        },
-    );
-
-    let tex_location = pipeline.uniform_location("u_texture");
-
-    let vertex_buffer = VertexBuffer::new(
-        &gfx,
+        include_bytes!("./assets/shaders/image.vert.spv"),
+        include_bytes!("./assets/shaders/image.frag.spv"),
         &[
             VertexAttr::new(0, VertexFormat::Float3),
             VertexAttr::new(1, VertexFormat::Float2),
         ],
-        DrawUsage::Dynamic,
+        PipelineOptions {
+            color_blend: Some(BlendMode::NORMAL),
+            ..Default::default()
+        },
     )
     .unwrap();
+
+    let tex_location = pipeline.uniform_location("u_texture").unwrap();
+
+    let vertex_buffer = VertexBuffer::new(&gfx, DrawUsage::Dynamic).unwrap();
 
     let index_buffer = IndexBuffer::new(&gfx, DrawUsage::Dynamic).unwrap();
 
@@ -88,7 +79,7 @@ fn draw(app: &mut App, state: &mut State) {
     gfx.begin(&state.clear);
     gfx.set_pipeline(&state.pipeline);
     gfx.bind_texture(&state.tex_location, &state.texture);
-    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
+    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.pipeline, &state.vertices);
     gfx.bind_index_buffer(&state.index_buffer, &state.indices);
     gfx.draw(0, state.indices.len() as _);
     gfx.end();
