@@ -23,7 +23,7 @@ impl Color {
     pub const PINK: Color = Color([1.0, 0.753, 0.796, 1.0]);
 
     /// Create a new color from red, green, blue and alpha values
-    pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
+    pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
         Self([r, g, b, a])
     }
 
