@@ -16,8 +16,7 @@ const FIRE_ANGLE_MAX: f32 = 120.0;
 fn main() {
     nae::init_with(|app| {
         State::new(
-            app.load_file("./examples/assets/kenney_pixel-webfont.ttf")
-                .unwrap(),
+            Font::from_bytes(app, include_bytes!("assets/kenney_pixel-webfont.ttf")).unwrap(),
         )
     })
     .size(WIDTH, HEIGHT)
@@ -112,12 +111,11 @@ fn draw(app: &mut App, state: &mut State) {
     let alpha = if state.already_started { 1.0 } else { 0.6 };
 
     let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::BLACK);
+    draw.begin(Color::BLACK);
 
-    draw.set_alpha(alpha);
+    draw.alpha = alpha;
 
-    draw.set_color(Color::WHITE);
+    draw.color = Color::WHITE;
     draw.rect(0.0, 0.0, WIDTH as f32, WALL_SIZE);
     draw.rect(0.0, HEIGHT as f32 - WALL_SIZE, WIDTH as f32, WALL_SIZE);
 
@@ -145,56 +143,48 @@ fn draw(app: &mut App, state: &mut State) {
     );
     draw.rect(state.ball.x, state.ball.y, BALL_SIZE, BALL_SIZE);
 
-    draw.set_font(&state.font);
-
-    draw.text_ext(
+    draw.set_text_align(HorizontalAlign::Right, VerticalAlign::Top);
+    draw.text(
+        &state.font,
         &format!("{}", state.scores.0),
         WIDTH as f32 * 0.5 - WALL_SIZE * 2.0,
         WALL_SIZE * 2.0,
         120.0,
-        HorizontalAlign::Right,
-        VerticalAlign::Top,
-        None,
     );
-    draw.text_ext(
+
+    draw.text_horizontal_align = HorizontalAlign::Left;
+    draw.text(
+        &state.font,
         &format!("{}", state.scores.1),
         WIDTH as f32 * 0.5 + WALL_SIZE * 2.0,
         WALL_SIZE * 2.0,
         120.0,
-        HorizontalAlign::Left,
-        VerticalAlign::Top,
-        None,
     );
 
-    draw.text_ext(
+    draw.set_text_align(HorizontalAlign::Center, VerticalAlign::Center);
+    draw.text(
+        &state.font,
         "Use W/S to move",
         WIDTH as f32 * 0.25,
         HEIGHT as f32 - 100.0,
         20.0,
-        HorizontalAlign::Center,
-        VerticalAlign::Center,
-        None,
     );
-    draw.text_ext(
+    draw.text(
+        &state.font,
         "Use Up/Down to move",
         WIDTH as f32 - WIDTH as f32 * 0.25,
         HEIGHT as f32 - 100.0,
         20.0,
-        HorizontalAlign::Center,
-        VerticalAlign::Center,
-        None,
     );
 
     if !state.already_started {
-        draw.set_alpha(1.0);
-        draw.text_ext(
+        draw.alpha = 1.0;
+        draw.text(
+            &state.font,
             "Press SPACE to start",
             WIDTH as f32 * 0.5,
             HEIGHT as f32 * 0.5,
             80.0,
-            HorizontalAlign::Center,
-            VerticalAlign::Center,
-            None,
         );
     }
 
