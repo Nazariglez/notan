@@ -20,7 +20,7 @@ fn main() {
 }
 
 fn init(app: &mut App) -> State {
-    State::new(create_texture(app))
+    State::new(app)
 }
 
 fn update(app: &mut App, state: &mut State) {
@@ -59,20 +59,19 @@ fn draw(app: &mut App, state: &mut State) {
     let tile_size = TILE_SIZE as f32;
 
     let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.176, 0.176, 0.176, 1.0));
+    draw.begin(Color::new(0.176, 0.176, 0.176, 1.0));
 
     // draw grid
     for i in 0..COLS * ROWS {
         let (x, y) = xy(i);
         let pos_x = (x * TILE_SIZE) as f32;
         let pos_y = (y * TILE_SIZE) as f32;
-        draw.set_color(Color::WHITE.with_alpha(0.05));
+        draw.color = Color::WHITE.with_alpha(0.05);
         draw.stroke_rect(pos_x, pos_y, tile_size, tile_size, 1.0);
 
         if let Some(tile) = state.grid.get(i as usize) {
             if let Some(s) = tile {
-                draw.set_color(s.color());
+                draw.color = s.color();
                 draw.image(&state.texture, pos_x, pos_y);
             }
         }
@@ -89,10 +88,11 @@ fn draw(app: &mut App, state: &mut State) {
     draw_piece(draw, &state.texture, next_x, next_y, &state.next);
 
     let text_x = (COLS * TILE_SIZE + TILE_SIZE) as f32;
-    draw.set_color(Color::WHITE);
-    draw.text("NEXT", text_x, 10.0, 30.0);
+    draw.color = Color::WHITE;
+    draw.text(&state.font, "NEXT", text_x, 10.0, 30.0);
 
     draw.text(
+        &state.font,
         &format!("Score: {}", state.score_lines),
         text_x,
         next_y + tile_size * 4.0,
@@ -101,6 +101,7 @@ fn draw(app: &mut App, state: &mut State) {
 
     if let Some(lines) = state.last_score {
         draw.text(
+            &state.font,
             &format!("Last score: {}", lines),
             text_x,
             next_y + tile_size * 6.0,
@@ -111,12 +112,12 @@ fn draw(app: &mut App, state: &mut State) {
     draw.end();
 }
 
-fn draw_piece(draw: &mut Context2d, img: &Texture, x: f32, y: f32, piece: &Piece) {
+fn draw_piece(draw: &mut Draw, img: &Texture, x: f32, y: f32, piece: &Piece) {
     let color = piece.shape.color().with_alpha(0.7);
     piece.points.iter().for_each(|(px, py)| {
         let pos_x = x + (px * TILE_SIZE) as f32;
         let pos_y = y + (py * TILE_SIZE) as f32;
-        draw.set_color(color);
+        draw.color = color;
         draw.image(img, pos_x, pos_y);
     });
 }
@@ -284,10 +285,11 @@ struct State {
     texture: Texture,
     remove_lines_time: f32,
     shape_bag: ShuffleBag<Shape>,
+    font: Font,
 }
 
 impl State {
-    fn new(texture: Texture) -> Self {
+    fn new(app: &mut App) -> Self {
         use Shape::*;
         let shapes = [I, J, L, O, Z, T, S];
         let mut shape_bag = ShuffleBag::new(date_now(), 7);
@@ -297,6 +299,9 @@ impl State {
         let next = random_piece(&mut shape_bag);
         let mut grid = VecDeque::with_capacity((COLS * ROWS) as usize);
         grid.resize(grid.capacity(), None);
+
+        let font = Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap();
+        let texture = create_texture(app);
 
         Self {
             piece,
@@ -309,6 +314,7 @@ impl State {
             texture,
             remove_lines_time: 0.0,
             shape_bag,
+            font,
         }
     }
 
@@ -458,22 +464,22 @@ fn index(x: i32, y: i32) -> usize {
 
 fn create_texture(app: &mut App) -> Texture {
     let tile_size = TILE_SIZE as f32;
-    let surface = Surface::from_size(app, TILE_SIZE, TILE_SIZE).unwrap();
+    let target = RenderTarget::from_size(app, TILE_SIZE, TILE_SIZE).unwrap();
 
     let draw = app.draw();
-    draw.begin_to_surface(Some(&surface));
-    draw.set_color(Color::WHITE);
+    draw.begin_to(&target, Color::TRANSPARENT);
+    draw.color = Color::WHITE;
     draw.rect(0.0, 0.0, tile_size, tile_size);
-    draw.set_color(Color::BLACK);
+    draw.color = Color::BLACK;
     draw.stroke_rect(2.0, 2.0, tile_size - 4.0, tile_size - 4.0, 4.0);
-    draw.set_color(Color::from_hex(0xc0c0c0ff));
+    draw.color = Color::from_hex(0xc0c0c0ff);
     draw.rect(
         tile_size * 0.3,
         tile_size * 0.3,
         tile_size * 0.4,
         tile_size * 0.4,
     );
-    draw.set_color(Color::from_hex(0x5a5a5ff));
+    draw.color = Color::from_hex(0x5a5a5ff);
     draw.stroke_rect(
         tile_size * 0.3 + 1.0,
         tile_size * 0.3 + 1.0,
@@ -483,5 +489,5 @@ fn create_texture(app: &mut App) -> Texture {
     );
     draw.end();
 
-    surface.texture().clone()
+    target.texture.clone()
 }
