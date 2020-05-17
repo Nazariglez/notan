@@ -1,5 +1,11 @@
 use nae::prelude::*;
 
+struct State {
+    font: Font,
+    text: String,
+    color: Color,
+}
+
 #[nae::main]
 fn main() {
     nae::init_with(init)
@@ -9,50 +15,46 @@ fn main() {
         .unwrap();
 }
 
-fn init(app: &mut App) -> (String, Color) {
-    (String::from(""), Color::new(0.1, 0.2, 0.3, 1.0))
+fn init(app: &mut App) -> State {
+    State {
+        font: Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap(),
+        color: Color::new(0.1, 0.2, 0.3, 1.0),
+        text: String::from(""),
+    }
 }
 
-fn event(app: &mut App, state: &mut (String, Color), evt: Event) {
+fn event(app: &mut App, state: &mut State, evt: Event) {
     match evt {
         Event::MouseMove { .. } => {
-            state.0 = "Moving...".to_string();
+            state.text = "Moving...".to_string();
         }
         Event::MouseDown { button, .. } => {
-            state.0 = format!("{:?} pressed...", button);
+            state.text = format!("{:?} pressed...", button);
         }
         Event::MouseUp { button, .. } => {
-            state.0 = format!("{:?} released...", button);
+            state.text = format!("{:?} released...", button);
         }
         Event::MouseEnter { .. } => {
-            state.0 = "Entered...".to_string();
-            state.1 = Color::new(0.1, 0.2, 0.3, 1.0);
+            state.text = "Entered...".to_string();
+            state.color = Color::new(0.1, 0.2, 0.3, 1.0);
         }
         Event::MouseLeft { .. } => {
-            state.0 = "Outside...".to_string();
-            state.1 = Color::ORANGE;
+            state.text = "Outside...".to_string();
+            state.color = Color::ORANGE;
         }
         Event::MouseWheel { .. } => {
-            state.0 = "Using Wheel...".to_string();
+            state.text = "Using Wheel...".to_string();
         }
         _ => {}
     }
 }
 
-fn draw(app: &mut App, state: &mut (String, Color)) {
+fn draw(app: &mut App, state: &mut State) {
     let draw = app.draw();
-    draw.begin();
-    draw.clear(state.1);
+    draw.begin(state.color);
 
-    draw.text_ext(
-        &state.0,
-        400.0,
-        300.0,
-        80.0,
-        HorizontalAlign::Center,
-        VerticalAlign::Center,
-        None,
-    );
+    draw.set_text_align(HorizontalAlign::Center, VerticalAlign::Center);
+    draw.text(&state.font, &state.text, 400.0, 300.0, 80.0);
 
     draw.end();
 }

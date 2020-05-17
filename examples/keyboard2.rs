@@ -3,6 +3,7 @@ use nae::prelude::*;
 #[nae::main]
 fn main() {
     nae::init_with(|app| State {
+        font: Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap(),
         msg: "".to_string(),
     })
     .draw(draw)
@@ -28,31 +29,24 @@ fn event(app: &mut App, state: &mut State, evt: Event) {
 
 fn draw(app: &mut App, state: &mut State) {
     let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
-    draw.set_color(Color::YELLOW);
+    draw.color = Color::YELLOW;
     draw.text(
+        &state.font,
         "Just write down whatever is on your head:",
         10.0,
         10.0,
         20.0,
     );
 
-    draw.set_color(Color::WHITE);
-    draw.text_ext(
-        &state.msg,
-        10.0,
-        50.0,
-        20.0,
-        HorizontalAlign::Left,
-        VerticalAlign::Top,
-        Some(780.0),
-    );
+    draw.color = Color::WHITE;
+    draw.text_ext(&state.font, &state.msg, 10.0, 50.0, 20.0, 780.0);
 
     draw.end();
 }
 
 struct State {
+    font: Font,
     msg: String,
 }

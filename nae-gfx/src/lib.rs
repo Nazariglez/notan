@@ -1,22 +1,24 @@
 mod batchers;
 mod buffers;
 mod draw;
-pub mod font;
+mod font;
 mod matrix;
 mod pipeline;
 mod render_target;
 mod shapes;
-pub mod texture;
+mod texture;
 mod uniform;
 
 pub use crate::shader::VertexFormat;
 use crate::shader::{BufferKey, InnerShader, Shader};
 pub use buffers::*;
 pub use draw::*;
+pub use font::*;
 use glow::{Context, HasContext, DEPTH_TEST};
 pub use matrix::*;
 pub use pipeline::*;
 pub use render_target::*;
+pub use texture::*;
 pub use uniform::*;
 // pub use texture::*;
 

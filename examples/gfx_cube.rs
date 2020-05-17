@@ -21,33 +21,28 @@ fn main() {
 
 fn init(app: &mut App) -> State {
     let mut gfx = app.gfx();
-    let shader = nae_gfx::Shader::new(
-        &gfx,
-        include_bytes!("assets/shaders/color_matrix.vert.spv"),
-        include_bytes!("assets/shaders/color.frag.spv"),
-    )
-    .unwrap();
 
     let pipeline = Pipeline::new(
         &gfx,
-        &shader,
-        PipelineOptions {
-            depth_stencil: DepthStencil::Less,
-            ..Default::default()
-        },
-    );
-
-    let mvp_location = pipeline.uniform_location("u_matrix");
-
-    let vertex_buffer = VertexBuffer::new(
-        &gfx,
+        include_bytes!("assets/shaders/color_matrix.vert.spv"),
+        include_bytes!("assets/shaders/color.frag.spv"),
         &[
             VertexAttr::new(0, VertexFormat::Float3),
             VertexAttr::new(1, VertexFormat::Float4),
         ],
-        DrawUsage::Dynamic,
+        PipelineOptions {
+            depth_stencil: DepthStencil {
+                write: true,
+                compare: CompareMode::Less,
+            },
+            ..Default::default()
+        },
     )
     .unwrap();
+
+    let mvp_location = pipeline.uniform_location("u_matrix").unwrap();
+
+    let vertex_buffer = VertexBuffer::new(&gfx, DrawUsage::Dynamic).unwrap();
 
     let index_buffer = IndexBuffer::new(&gfx, DrawUsage::Dynamic).unwrap();
 
@@ -132,7 +127,7 @@ fn draw(app: &mut App, state: &mut State) {
     gfx.begin(&state.clear);
     gfx.set_pipeline(&state.pipeline);
     gfx.bind_uniform(&state.mvp_location, slice_to_matrix4(mvp.as_slice()));
-    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
+    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.pipeline, &state.vertices);
     gfx.bind_index_buffer(&state.index_buffer, &state.indices);
     gfx.draw(0, state.indices.len() as i32);
     gfx.end();

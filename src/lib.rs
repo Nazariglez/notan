@@ -24,6 +24,6 @@ pub use app::{init, init_with, App};
 pub mod prelude {
     pub use super::app::*;
     pub use super::res::*;
-    pub use backend::{Resource, *};
+    pub use backend::*;
     pub use nae_core::*;
 }

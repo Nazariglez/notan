@@ -6,7 +6,7 @@ fn main() {
 }
 
 fn draw(app: &mut App, state: &mut State) {
-    let draw = app.draw2();
+    let draw = app.draw();
     draw.begin(Color::WHITE);
     draw.geometry(&state.geom);
     draw.end();

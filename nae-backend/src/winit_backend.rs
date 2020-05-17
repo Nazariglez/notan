@@ -1,10 +1,7 @@
 use crate::common::ToNaeValue;
 use glutin::{dpi::LogicalSize, ContextBuilder, PossiblyCurrent, WindowedContext};
 use nae_core::window::BaseWindow;
-use nae_core::{
-    BaseApp, BaseContext2d, BaseSystem, BuilderOpts, Event, EventIterator, KeyCode, MouseButton,
-};
-use nae_glow::Context2d;
+use nae_core::{BaseApp, BaseSystem, BuilderOpts, Event, EventIterator, KeyCode, MouseButton};
 use std::cell::{Ref, RefCell, RefMut};
 use std::collections::VecDeque;
 use std::rc::Rc;
@@ -20,25 +17,21 @@ use winit::window::WindowBuilder;
 pub struct System {
     window: Window,
     draw: nae_gfx::Draw,
-    context2d: Context2d,
     events: EventIterator,
     event_loop: Option<EventLoop<()>>,
 }
 
 impl BaseSystem for System {
     type Kind = Self;
-    type Context2d = Context2d;
     type Graphics = nae_gfx::Graphics;
     type Draw = nae_gfx::Draw;
 
     fn new(mut opts: BuilderOpts) -> Result<Self, String> {
         let event_loop = EventLoop::new();
         let win = Window::new(&opts, &event_loop)?;
-        let ctx2 = Context2d::new(&win.win)?;
         let draw = nae_gfx::Draw::new(&win.win)?;
         Ok(Self {
             window: win,
-            context2d: ctx2,
             event_loop: Some(event_loop),
             events: EventIterator::new(),
             draw,
@@ -51,10 +44,6 @@ impl BaseSystem for System {
 
     fn draw(&mut self) -> &mut Self::Draw {
         &mut self.draw
-    }
-
-    fn ctx2(&mut self) -> &mut Self::Context2d {
-        &mut self.context2d
     }
 
     fn events(&mut self) -> &mut EventIterator {

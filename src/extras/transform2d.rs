@@ -1,4 +1,5 @@
 use nae_core::*;
+use nae_gfx::{matrix4_identity, Matrix4};
 
 #[derive(Debug, Default)]
 pub struct Transform2d {
@@ -43,7 +44,7 @@ impl Transform2d {
         self.cached.set_rotation(self.rotation);
     }
 
-    pub fn matrix(&mut self) -> &math::Mat3 {
+    pub fn matrix(&mut self) -> &Matrix4 {
         self.update();
         &self.cached.matrix()
     }
@@ -122,7 +123,7 @@ struct CachedTransform2d {
     dirty: bool,
     dirty_angle: bool,
 
-    matrix: math::Mat3,
+    matrix: Matrix4,
 }
 
 impl Default for CachedTransform2d {
@@ -149,7 +150,7 @@ impl Default for CachedTransform2d {
             skew_sin_y: 0.0,
             dirty: true,
             dirty_angle: true,
-            matrix: math::identity(),
+            matrix: matrix4_identity(),
         }
     }
 }
@@ -290,7 +291,7 @@ impl CachedTransform2d {
         self.dirty_angle = false;
     }
 
-    fn matrix(&mut self) -> &math::Mat3 {
+    fn matrix(&mut self) -> &Matrix4 {
         self.update();
         &self.matrix
     }

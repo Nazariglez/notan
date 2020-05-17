@@ -1,16 +1,31 @@
 use nae::prelude::*;
 
-fn init(app: &mut App) -> Blob {
-    app.load_file("./examples/assets/blob.txt").unwrap()
+//TODO BLOB
+struct State {
+    blob: Blob,
+    font: Font,
 }
 
-fn draw(app: &mut App, blob: &mut Blob) {
+fn init(app: &mut App) -> State {
+    State {
+        font: Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap(),
+        blob: Blob::from_bytes(app, include_bytes!("assets/blob.txt")).unwrap(),
+    }
+}
+
+fn draw(app: &mut App, state: &mut State) {
     let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
     if blob.is_loaded() {
-        draw.text(&format!("Blob: {:?}", blob.data()), 10.0, 10.0, 24.0);
         draw.text(
+            &state.font,
+            &format!("Blob: {:?}", blob.data()),
+            10.0,
+            10.0,
+            24.0,
+        );
+        draw.text(
+            &state.font,
             &format!(
                 "Text from blob: {:?}",
                 std::str::from_utf8(&blob.data()).unwrap()

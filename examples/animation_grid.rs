@@ -98,8 +98,7 @@ fn update(app: &mut App, state: &mut State) {
 
 fn draw(app: &mut App, state: &mut State) {
     let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
     draw.push_scale(3.0, 3.0);
 
     // get the animation based on the direction
@@ -115,23 +114,32 @@ fn draw(app: &mut App, state: &mut State) {
         draw.image(tex, 100.0, 50.0);
     }
 
-    draw.pop_matrix();
+    draw.pop();
 
     // help text
-    draw.text("Use arrows to change the animation.", 10.0, 10.0, 20.0);
+    draw.text(
+        &state.font,
+        "Use arrows to change the animation.",
+        10.0,
+        10.0,
+        20.0,
+    );
     draw.end();
 }
 
 struct State {
     golem: GolemAnim,
     dir: String,
+    font: Font,
 }
 
 impl State {
     fn new(app: &mut App) -> Self {
         let golem = Texture::from_bytes(app, include_bytes!("./assets/golem-walk.png")).unwrap();
+        let font = Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap();
 
         Self {
+            font,
             golem: create_animations(&golem),
             dir: "down".to_string(),
         }

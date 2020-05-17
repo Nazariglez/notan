@@ -83,9 +83,9 @@ impl Animation {
         total_frames: Option<usize>,
         selected_frames: Option<Vec<usize>>,
     ) -> Self {
-        let (xx, yy, width, height) = texture.frame();
-        let ww = width / cols as f32;
-        let hh = height / rows as f32;
+        let frame = texture.frame();
+        let ww = frame.width / cols as f32;
+        let hh = frame.height / rows as f32;
 
         let frames = if let Some(indices) = selected_frames {
             indices
@@ -113,10 +113,10 @@ fn texture_from_index(
     width: f32,
     height: f32,
 ) -> Texture {
-    let (xx, yy, _, _) = texture.frame();
+    let frame = texture.frame();
     let col = (index % cols as usize) as f32;
     let row = (index / cols as usize) as f32;
-    let frame_x = xx + width * col;
-    let frame_y = yy + height * row;
+    let frame_x = frame.x + width * col;
+    let frame_y = frame.y + height * row;
     texture.with_frame(frame_x, frame_y, width, height)
 }

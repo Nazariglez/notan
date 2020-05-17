@@ -32,7 +32,6 @@ wasm-bindgen = "0.2.51"
 members = [
     "nae-derive",
     "nae-core",
-    "nae-glow",
     "nae-backend",
     "nae-gfx",
     "nae-shader"

@@ -1,5 +1,11 @@
 use nae::prelude::*;
 
+struct State {
+    font: Font,
+    x: f32,
+    y: f32,
+}
+
 #[nae::main]
 fn main() {
     nae::init_with(init)
@@ -9,38 +15,40 @@ fn main() {
         .unwrap();
 }
 
-fn init(app: &mut App) -> (f32, f32) {
-    (400.0, 300.0)
+fn init(app: &mut App) -> State {
+    State {
+        font: Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap(),
+        x: 400.0,
+        y: 300.0,
+    }
 }
 
-fn event(app: &mut App, pos: &mut (f32, f32), evt: Event) {
+fn event(app: &mut App, state: &mut State, evt: Event) {
     match evt {
         Event::MouseWheel { delta_x, delta_y } => {
-            pos.0 = (pos.0 + delta_x).max(0.0).min(800.0);
-            pos.1 = (pos.1 + delta_y).max(0.0).min(600.0);
+            state.x = (state.x + delta_x).max(0.0).min(800.0);
+            state.y = (state.y + delta_y).max(0.0).min(600.0);
         }
         _ => {}
     }
 }
 
-fn draw(app: &mut App, pos: &mut (f32, f32)) {
+fn draw(app: &mut App, state: &mut State) {
     let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
+    draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
-    draw.set_color(Color::WHITE);
-    draw.text_ext(
+    draw.color = Color::WHITE;
+    draw.set_text_align(HorizontalAlign::Center, VerticalAlign::Center);
+    draw.text(
+        &state.font,
         "Scroll with your mouse's wheel or touchpad",
         400.0,
         300.0,
         40.0,
-        HorizontalAlign::Center,
-        VerticalAlign::Center,
-        None,
     );
 
-    draw.set_color(Color::RED);
-    draw.circle(pos.0, pos.1, 30.0);
+    draw.color = Color::RED;
+    draw.circle(state.x, state.y, 30.0);
 
     draw.end();
 }

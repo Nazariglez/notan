@@ -26,7 +26,7 @@ fn main() {
 fn draw(app: &mut App, state: &mut State) {
     let time = app.time * 1000.0;
 
-    let draw = app.draw2();
+    let draw = app.draw();
     draw.begin(Color::BLACK);
 
     state.geom.clear();

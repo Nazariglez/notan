@@ -1,7 +1,7 @@
 mod blob;
 mod manager;
 
-pub use backend::{BaseApp, Font, Resource, System, Texture};
+pub use backend::{BaseApp, Font, System, Texture};
 
 use crate::app::App;
 pub use blob::*;
@@ -21,7 +21,7 @@ macro_rules! resource_parser {
             type App = $app;
 
             fn parse_res(&mut self, app: &mut $app, data: Vec<u8>) -> Result<(), String> {
-                self.parse(app, data)
+                self.parse_data(app, data)
             }
 
             fn already_loaded(&mut self) -> bool {

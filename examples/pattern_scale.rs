@@ -1,19 +1,19 @@
 use nae::prelude::*;
 
 struct State {
-    image: nae_gfx::texture::Texture,
+    image: Texture,
     count: f32,
 }
 
 fn init(app: &mut App) -> State {
     State {
-        image: nae_gfx::texture::Texture::from_bytes(app, include_bytes!("assets/t.png")).unwrap(),
+        image: Texture::from_bytes(app, include_bytes!("assets/t.png")).unwrap(),
         count: 0.0,
     }
 }
 
 fn draw(app: &mut App, state: &mut State) {
-    let draw = app.draw2();
+    let draw = app.draw();
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
     draw.pattern_ext(
         &mut state.image,

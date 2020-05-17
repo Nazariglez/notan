@@ -56,14 +56,12 @@ pub trait BaseApp {
 
 pub trait BaseSystem {
     type Kind: BaseSystem;
-    type Context2d: gfx::BaseContext2d;
     type Graphics: BaseGfx;
     type Draw;
 
     fn new(opts: BuilderOpts) -> Result<Self::Kind, String>;
     fn gfx(&mut self) -> &mut Self::Graphics;
     fn draw(&mut self) -> &mut Self::Draw;
-    fn ctx2(&mut self) -> &mut Self::Context2d;
     fn events(&mut self) -> &mut EventIterator;
     fn width(&self) -> f32;
     fn height(&self) -> f32;

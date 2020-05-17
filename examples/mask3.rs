@@ -27,7 +27,7 @@ fn init(_: &mut App) -> State {
 }
 
 fn draw(app: &mut App, state: &mut State) {
-    let draw = app.draw2();
+    let draw = app.draw();
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
     draw.push_translation(400.0, 300.0);

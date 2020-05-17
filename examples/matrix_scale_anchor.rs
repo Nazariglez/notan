@@ -2,7 +2,7 @@ use nae::prelude::*;
 use nalgebra_glm as glm;
 
 struct State {
-    tex: nae_gfx::texture::Texture,
+    tex: Texture,
     matrix: glm::Mat4,
     count: f32,
 }
@@ -31,7 +31,7 @@ fn draw(app: &mut App, state: &mut State) {
     let matrix_scale = glm::scale(&matrix_center, &glm::vec3(sx, sy, 1.0));
     let matrix_anchor = glm::translate(&matrix_scale, &glm::vec3(-anchor_x, -anchor_y, 0.0));
 
-    let draw = app.draw2();
+    let draw = app.draw();
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
 
     draw.push(&slice_to_matrix4(&matrix_anchor.as_slice()));
@@ -45,8 +45,7 @@ fn draw(app: &mut App, state: &mut State) {
 
 fn init(app: &mut App) -> State {
     State {
-        tex: nae_gfx::texture::Texture::from_bytes(app, include_bytes!("assets/ferris.png"))
-            .unwrap(),
+        tex: Texture::from_bytes(app, include_bytes!("assets/ferris.png")).unwrap(),
         count: 0.0,
         matrix: math::identity(),
     }

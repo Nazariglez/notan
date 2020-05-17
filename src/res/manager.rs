@@ -26,12 +26,13 @@ impl<'a> ResourceLoaderManager<'a> {
 
     pub fn add<T>(&mut self, file: &str) -> Result<T, String>
     where
-        T: ResourceParser<App = App> + Resource + Clone + 'a,
+        T: ResourceParser<App = App> + Clone + 'a,
     {
-        let fut = load_file(file);
-        let asset = T::new(file);
-        self.to_load.push((Box::new(asset.clone()), Box::new(fut)));
-        Ok(asset)
+        unimplemented!()
+        // let fut = load_file(file);
+        // let asset = T::new(file);
+        // self.to_load.push((Box::new(asset.clone()), Box::new(fut)));
+        // Ok(asset)
     }
 
     pub fn try_load(
