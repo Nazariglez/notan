@@ -35,7 +35,6 @@ fn main() {
 fn draw(app: &mut App, _: &mut ()) {
     let draw = app.draw();
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));
-    draw.color = Color::GREEN;
     draw.triangle(400.0, 100.0, 100.0, 500.0, 700.0, 500.0);
     draw.end();
 }
@@ -69,9 +68,9 @@ that can be used as a foundation for this purpose.
     - [x] Masking
     - [x] Custom Shader
     - [x] Text
-    - [x] NineSlice
+    - [x] 9Slice
     - [x] BlendModes
-    - [x] Surfaces
+    - [x] RenderTargets
 - Drivers
     - [ ] WebGL
     - [x] WebGL 2
@@ -95,7 +94,7 @@ that can be used as a foundation for this purpose.
     - [x] Transform 
     - [ ] Particles
     - [ ] Tweens
-    - [ ] Atlas
+    - [x] Atlas
     - [ ] SVGs
     - [ ] BitmapText
     - [ ] UI System (Maybe Iced?)
