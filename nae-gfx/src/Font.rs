@@ -1,15 +1,24 @@
-use crate::texture::{max_texture_size, Texture, TextureOptions, texture_from_gl_context};
+use crate::texture::{max_texture_size, texture_from_gl_context, Texture, TextureOptions};
 use crate::{Draw, GlContext, Graphics};
+use glow::HasContext;
 use glyph_brush::rusttype::Scale;
-use glyph_brush::{FontId, GlyphBrush, GlyphBrushBuilder, Section, GlyphCruncher, BrushError, BrushAction, GlyphVertex};
+use glyph_brush::{
+    BrushAction, BrushError, FontId, GlyphBrush, GlyphBrushBuilder, GlyphCruncher, GlyphVertex,
+    Section,
+};
 use nae_core::{BaseApp, BaseSystem, HorizontalAlign, TextureFilter, TextureFormat, VerticalAlign};
 use std::cell::RefCell;
 use std::rc::Rc;
-use glow::HasContext;
 
 #[derive(Clone)]
 pub struct Font {
     inner: Rc<RefCell<InnerFont>>,
+}
+
+impl PartialEq for Font {
+    fn eq(&self, other: &Self) -> bool {
+        self.raw() == other.raw()
+    }
 }
 
 impl Font {
@@ -26,7 +35,7 @@ impl Font {
     pub fn from_bytes<T, S>(app: &mut T, data: &[u8]) -> Result<Self, String>
     where
         T: BaseApp<System = S>,
-        S: BaseSystem<Graphics = Graphics>,
+        S: BaseSystem<Graphics = Graphics, Draw = Draw>,
     {
         let mut font = Font {
             inner: Rc::new(RefCell::new(InnerFont { id: None })),
@@ -39,14 +48,19 @@ impl Font {
     pub fn parse_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
     where
         T: BaseApp<System = S>,
-        S: BaseSystem<Graphics = Graphics>,
+        S: BaseSystem<Graphics = Graphics, Draw = Draw>,
     {
-        Err("".to_string())
+        let id = add_font(app.system().draw(), data);
+        *self.inner.borrow_mut() = InnerFont {
+            id: Some(FontId(id)),
+        };
+
+        Ok(())
     }
 }
 
 fn add_font(draw: &mut Draw, data: Vec<u8>) -> usize {
-    unimplemented!()
+    draw.text_batcher.add_font(data)
 }
 
 struct InnerFont {
@@ -99,18 +113,14 @@ pub(crate) struct FontManager<'a> {
 }
 
 impl<'a> FontManager<'a> {
-    pub fn new<T, S>(app: &mut T) -> Result<Self, String>
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Graphics = Graphics>,
-    {
+    pub fn new(gl: &GlContext) -> Result<Self, String> {
         let cache = GlyphBrushBuilder::without_fonts().build();
         let (width, height) = cache.texture_dimensions();
-        let texture = Texture::from(
-            app,
+        let texture = texture_from_gl_context(
+            gl,
             width as _,
             height as _,
-            TextureOptions {
+            &TextureOptions {
                 format: TextureFormat::Rgba,
                 internal_format: TextureFormat::Rgba,
                 min_filter: TextureFilter::Nearest,
@@ -118,7 +128,7 @@ impl<'a> FontManager<'a> {
             },
         )?;
 
-        let max_texture_size = max_texture_size(&app.system().gfx().gl);
+        let max_texture_size = max_texture_size(gl);
 
         Ok(Self {
             cache,
@@ -170,6 +180,7 @@ impl<'a> FontManager<'a> {
         font: &Font,
         x: f32,
         y: f32,
+        z: f32,
         text: &str,
         size: f32,
         color: [f32; 4],
@@ -180,6 +191,7 @@ impl<'a> FontManager<'a> {
         let section = Section {
             text,
             screen_position: (x, y),
+            z,
             scale: Scale::uniform(size),
             font_id: font.raw().unwrap(),
             bounds: (max_width, std::f32::INFINITY),
@@ -221,7 +233,8 @@ impl<'a> FontManager<'a> {
                             min_filter: TextureFilter::Linear,
                             mag_filter: TextureFilter::Linear,
                         },
-                    ).unwrap();
+                    )
+                    .unwrap();
                     self.cache.resize_texture(width, height);
                 }
             }
@@ -267,6 +280,7 @@ fn update_texture(
 pub(crate) struct FontTextureData {
     pub x: f32,
     pub y: f32,
+    pub z: f32,
     pub source_x: f32,
     pub source_y: f32,
     pub source_width: f32,
@@ -280,6 +294,7 @@ fn glyph_to_data(v: &GlyphVertex, width: f32, height: f32) -> FontTextureData {
     FontTextureData {
         x: v.pixel_coords.min.x as _,
         y: v.pixel_coords.min.y as _,
+        z: v.z,
         source_x: sx,
         source_y: sy,
         source_width: v.tex_coords.max.x * width - sx,
