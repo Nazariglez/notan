@@ -7,6 +7,7 @@ const SCREEN_HEIGHT: f32 = 600.0;
 struct State {
     scaler: Scaler,
     font: Font,
+    texture: Texture,
 }
 
 #[nae::main]
@@ -21,9 +22,14 @@ fn main() {
 }
 
 fn init(app: &mut App) -> State {
+    let texture = Texture::from_bytes(app, include_bytes!("assets/rust.png")).unwrap();
     let font = Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap();
     let scaler = create_scaler();
-    State { font, scaler }
+    State {
+        font,
+        scaler,
+        texture,
+    }
 }
 
 fn create_scaler() -> Scaler {
@@ -75,6 +81,15 @@ fn draw(app: &mut App, state: &mut State) {
     draw.color = Color::YELLOW;
     draw.circle(200.0, 200.0, 50.0);
     draw.stroke_rounded_rect(400.0, 400.0, 100.0, 100.0, 40.0, 10.0);
+
+    // Draw the rust image
+    draw.image_resized(
+        &state.texture,
+        100.0,
+        100.0,
+        state.texture.width() * 0.5,
+        state.texture.height() * 0.5,
+    );
 
     // Just help text
     draw.color = Color::WHITE;
