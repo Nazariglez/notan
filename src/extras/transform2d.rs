@@ -267,24 +267,24 @@ impl CachedTransform2d {
             self.pivot_y
         };
 
-        self.matrix[0 + (0 * 3)] = self.skew_cos_x * scale_x;
-        self.matrix[1 + (0 * 3)] = self.skew_sin_x * scale_x;
-        self.matrix[0 + (1 * 3)] = self.skew_sin_y * scale_y;
-        self.matrix[1 + (1 * 3)] = self.skew_cos_y * scale_y;
+        self.matrix[0 + (0 * 4)] = self.skew_cos_x * scale_x;
+        self.matrix[1 + (0 * 4)] = self.skew_sin_x * scale_x;
+        self.matrix[0 + (1 * 4)] = self.skew_sin_y * scale_y;
+        self.matrix[1 + (1 * 4)] = self.skew_cos_y * scale_y;
 
         let anchor_width = anchor_x * self.width;
         let anchor_height = anchor_y * self.height;
         let pivot_width = pivot_x * self.width;
         let pivot_height = pivot_y * self.height;
 
-        self.matrix[0 + (2 * 3)] = self.x - anchor_width * scale_x + pivot_width * scale_x;
-        self.matrix[1 + (2 * 3)] = self.y - anchor_height * scale_y + pivot_height * scale_y;
+        self.matrix[0 + (3 * 4)] = self.x - anchor_width * scale_x + pivot_width * scale_x;
+        self.matrix[1 + (3 * 4)] = self.y - anchor_height * scale_y + pivot_height * scale_y;
 
         if pivot_width != 0.0 || pivot_height != 0.0 {
-            self.matrix[0 + (2 * 3)] -=
-                pivot_width * self.matrix[0 + (0 * 3)] + pivot_height * self.matrix[0 + (1 * 3)];
-            self.matrix[1 + (2 * 3)] -=
-                pivot_width * self.matrix[1 + (0 * 3)] + pivot_height * self.matrix[1 + (1 * 3)];
+            self.matrix[0 + (3 * 4)] -=
+                pivot_width * self.matrix[0 + (0 * 4)] + pivot_height * self.matrix[0 + (1 * 4)];
+            self.matrix[1 + (3 * 4)] -=
+                pivot_width * self.matrix[1 + (0 * 4)] + pivot_height * self.matrix[1 + (1 * 4)];
         }
 
         self.dirty = false;
