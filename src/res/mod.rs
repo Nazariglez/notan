@@ -1,7 +1,7 @@
 mod blob;
 mod manager;
 
-pub use backend::{BaseApp, Font, System, Texture};
+pub use backend::{BaseApp, Font, Resource, System, Texture};
 
 use crate::app::App;
 pub use blob::*;
