@@ -1,6 +1,7 @@
 use nae_core::{
     BaseGfx, BasePipeline, BlendMode, ClearOptions, Color, CompareMode, DrawUsage, Geometry,
-    GraphicsAPI, HorizontalAlign, PipelineOptions, StencilAction, StencilOptions, VerticalAlign,
+    GraphicsAPI, HorizontalAlign, PipelineOptions, Resource, StencilAction, StencilOptions,
+    VerticalAlign,
 };
 
 use crate::batchers::{BaseBatcher, ColorBatcher, ImageBatcher, PatternBatcher, TextBatcher};

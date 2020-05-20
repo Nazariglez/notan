@@ -8,8 +8,6 @@ use std::cell::RefMut;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-// TODO app.gpu() -> 3d API app.draw() -> 2d API with gpu() inside and accesible via draw.gpu() this should use draw.present_to(app|surface)
-
 /*TODO
     - Custom Error like Nae::NotFound, Nae::GraphicsX
     - use rayon when it's necessary for example processing the batch before draw
@@ -26,7 +24,7 @@ use std::rc::Rc;
 //TODO backend requirements for resvg https://github.com/RazrFalcon/resvg/blob/master/docs/backend_requirements.md
 
 pub struct App {
-    resources: ResourceLoaderManager<'static>,
+    resources: ResourceLoaderManager,
     sys: System,
     fps: VecDeque<f64>,
     last_time: u64,
@@ -46,6 +44,15 @@ impl BaseApp for App {
 }
 
 impl App {
+    pub fn load_resource<T: Resource<Graphics = Graphics> + ResourceParser<App = App> + 'static>(
+        &mut self,
+        file: &str,
+    ) -> Result<T, String> {
+        let res = T::empty(self)?;
+        self.resources.add(file, Box::new(res.clone()))?;
+        Ok(res)
+    }
+
     pub fn gfx(&mut self) -> &mut Graphics {
         &mut self.sys.draw().gfx
     }
@@ -242,9 +249,7 @@ fn process_events<S>(app: &mut App, state: &mut S, cb: fn(&mut App, &mut S, Even
 fn try_load_resources(app: &mut App) -> Result<(), String> {
     if let Some(mut assets_loaded) = app.resources.try_load()? {
         while let Some((data, mut asset)) = assets_loaded.pop() {
-            if !asset.already_loaded() {
-                asset.parse_res(app, data)?;
-            }
+            asset.parse_res(app, data)?;
         }
     }
 

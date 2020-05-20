@@ -1,7 +1,7 @@
 use crate::{GlContext, GlowValue, Graphics, TextureKey};
 use glow::HasContext;
 use nae_core::math::Rect;
-use nae_core::{BaseApp, BaseGfx, BaseSystem, TextureFilter, TextureFormat};
+use nae_core::{BaseApp, BaseGfx, BaseSystem, Resource, TextureFilter, TextureFormat};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -45,12 +45,60 @@ pub struct Texture {
     frame: Option<Rect>,
 }
 
-impl Texture {
-    /// Returns if the texture is ready to render
-    pub fn is_loaded(&self) -> bool {
-        self.inner.borrow().texture.is_some()
+impl Resource for Texture {
+    type Graphics = Graphics;
+
+    fn empty<T, S>(app: &mut T) -> Result<Self, String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Graphics = Self::Graphics>,
+    {
+        Self::from_size(app, 1, 1)
     }
 
+    fn parse_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
+    where
+        T: BaseApp<System = S>,
+        S: BaseSystem<Graphics = Self::Graphics>,
+    {
+        let data = image::load_from_memory(&data)
+            .map_err(|e| e.to_string())?
+            .to_rgba();
+
+        let width = data.width() as _;
+        let height = data.height() as _;
+        let mut inner = self.inner.borrow_mut();
+        let opts = TextureOptions {
+            format: inner.format,
+            internal_format: inner.internal_format,
+            min_filter: inner.min_filter,
+            mag_filter: inner.mag_filter,
+        };
+        let raw_data = data.to_vec();
+
+        let texture = create_texture(
+            &app.system().gfx().gl,
+            width,
+            height,
+            &raw_data,
+            bytes_per_pixel(&opts.format, &opts.internal_format),
+            &opts,
+        )?;
+
+        inner.texture = Some(texture);
+        inner.buffer = raw_data;
+        inner.width = width;
+        inner.height = height;
+
+        Ok(())
+    }
+
+    fn is_loaded(&self) -> bool {
+        self.inner.borrow().texture.is_some()
+    }
+}
+
+impl Texture {
     /// Returns the current frame
     pub fn frame(&self) -> Rect {
         self.frame.clone().unwrap_or(self.inner.borrow().frame())
@@ -142,43 +190,6 @@ impl Texture {
         self.frame
             .as_ref()
             .map_or(self.inner.borrow().height as _, |f| f.height)
-    }
-
-    pub fn parse_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Graphics = Graphics>,
-    {
-        let data = image::load_from_memory(&data)
-            .map_err(|e| e.to_string())?
-            .to_rgba();
-
-        let width = data.width() as _;
-        let height = data.height() as _;
-        let mut inner = self.inner.borrow_mut();
-        let opts = TextureOptions {
-            format: inner.format,
-            internal_format: inner.internal_format,
-            min_filter: inner.min_filter,
-            mag_filter: inner.mag_filter,
-        };
-        let raw_data = data.to_vec();
-
-        let texture = create_texture(
-            &app.system().gfx().gl,
-            width,
-            height,
-            &raw_data,
-            bytes_per_pixel(&opts.format, &opts.internal_format),
-            &opts,
-        )?;
-
-        inner.texture = Some(texture);
-        inner.buffer = raw_data;
-        inner.width = width;
-        inner.height = height;
-
-        Ok(())
     }
 }
 
