@@ -6,7 +6,7 @@ use glyph_brush::{
     BrushAction, BrushError, FontId, GlyphBrush, GlyphBrushBuilder, GlyphCruncher, GlyphVertex,
     Section,
 };
-use nae_core::{BaseApp, BaseSystem, HorizontalAlign, TextureFilter, TextureFormat, VerticalAlign};
+use nae_core::{BaseApp, BaseSystem, HorizontalAlign, TextureFilter, TextureFormat, VerticalAlign, Resource};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -26,11 +26,6 @@ impl Font {
         self.inner.borrow().id
     }
 
-    /// Returns if the font is ready to render
-    pub fn is_loaded(&self) -> bool {
-        self.inner.borrow().id.is_some()
-    }
-
     /// Create a new font from bytes
     pub fn from_bytes<T, S>(app: &mut T, data: &[u8]) -> Result<Self, String>
     where
@@ -41,10 +36,11 @@ impl Font {
             inner: Rc::new(RefCell::new(InnerFont { id: None })),
         };
 
-        font.parse_data(app, data.to_vec());
+        font.set_data(app, data.to_vec());
         Ok(font)
     }
 
+    /// Returns the width and height for the text passed with the current size
     pub fn size(
         &self,
         draw: &mut Draw,
@@ -57,18 +53,32 @@ impl Font {
         draw.text_batcher
             .text_size(self, text, size, h_align, v_align, max_width)
     }
+}
 
-    pub fn parse_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Graphics = Graphics, Draw = Draw>,
-    {
-        let id = add_font(app.system().draw(), data);
+impl Resource for Font {
+    type Graphics = Graphics;
+
+    fn new<T, S>(app: &mut T) -> Result<Self, String> where
+        T: BaseApp<System=S>,
+        S: BaseSystem<Graphics=Self::Graphics> {
+        Ok(Font {
+            inner: Rc::new(RefCell::new(InnerFont { id: None })),
+        })
+    }
+
+    fn set_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String> where
+        T: BaseApp<System=S>,
+        S: BaseSystem<Graphics=Self::Graphics> {
+        let id = 1; //add_font(app.system().draw(), data);
         *self.inner.borrow_mut() = InnerFont {
             id: Some(FontId(id)),
         };
 
         Ok(())
+    }
+
+    fn is_loaded(&self) -> bool {
+        self.inner.borrow().id.is_some()
     }
 }
 

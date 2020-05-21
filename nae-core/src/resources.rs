@@ -1,6 +1,4 @@
 use crate::{BaseApp, BaseGfx, BaseSystem};
-use std::cell::RefCell;
-use std::rc::Rc;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TextureFormat {
@@ -29,16 +27,18 @@ pub enum VerticalAlign {
     Bottom,
 }
 
+/// Represents an external resource
 pub trait Resource: Clone {
     type Graphics: BaseGfx;
+
     /// Create a new empty resource
-    fn empty<T, S>(app: &mut T) -> Result<Self, String>
+    fn new<T, S>(app: &mut T) -> Result<Self, String>
     where
         T: BaseApp<System = S>,
         S: BaseSystem<Graphics = Self::Graphics>;
 
     /// Parse byte data to create to fill the resource
-    fn parse_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
+    fn set_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
     where
         T: BaseApp<System = S>,
         S: BaseSystem<Graphics = Self::Graphics>;

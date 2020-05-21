@@ -44,11 +44,11 @@ impl BaseApp for App {
 }
 
 impl App {
-    pub fn load_resource<T: Resource<Graphics = Graphics> + ResourceParser<App = App> + 'static>(
-        &mut self,
-        file: &str,
-    ) -> Result<T, String> {
-        let res = T::empty(self)?;
+    pub fn load_resource<T>(&mut self, file: &str) -> Result<T, String>
+    where
+        T: Resource<Graphics = Graphics> + ResourceParser<App = App> + 'static,
+    {
+        let res = T::new(self)?;
         self.resources.add(file, Box::new(res.clone()))?;
         Ok(res)
     }
@@ -249,7 +249,7 @@ fn process_events<S>(app: &mut App, state: &mut S, cb: fn(&mut App, &mut S, Even
 fn try_load_resources(app: &mut App) -> Result<(), String> {
     if let Some(mut assets_loaded) = app.resources.try_load()? {
         while let Some((data, mut asset)) = assets_loaded.pop() {
-            asset.parse_res(app, data)?;
+            asset.parse_resource(app, data)?;
         }
     }
 

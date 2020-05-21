@@ -48,7 +48,7 @@ pub struct Texture {
 impl Resource for Texture {
     type Graphics = Graphics;
 
-    fn empty<T, S>(app: &mut T) -> Result<Self, String>
+    fn new<T, S>(app: &mut T) -> Result<Self, String>
     where
         T: BaseApp<System = S>,
         S: BaseSystem<Graphics = Self::Graphics>,
@@ -56,7 +56,7 @@ impl Resource for Texture {
         Self::from_size(app, 1, 1)
     }
 
-    fn parse_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
+    fn set_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
     where
         T: BaseApp<System = S>,
         S: BaseSystem<Graphics = Self::Graphics>,
@@ -160,7 +160,7 @@ impl Texture {
         S: BaseSystem<Graphics = Graphics>,
     {
         let mut texture = Self::from(app, 1, 1, options)?;
-        texture.parse_data(app, data.to_vec());
+        texture.set_data(app, data.to_vec());
         Ok(texture)
     }
 
