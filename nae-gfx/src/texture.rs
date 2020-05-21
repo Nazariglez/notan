@@ -45,21 +45,16 @@ pub struct Texture {
     frame: Option<Rect>,
 }
 
-impl Resource for Texture {
-    type Graphics = Graphics;
+impl<T, S> Resource<T> for Texture
+    where T: BaseApp<System = S>,
+          S: BaseSystem<Graphics = Graphics>
+{
 
-    fn new<T, S>(app: &mut T) -> Result<Self, String>
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Graphics = Self::Graphics>,
-    {
+    fn new(app: &mut T) -> Result<Self, String> {
         Self::from_size(app, 1, 1)
     }
 
-    fn set_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Graphics = Self::Graphics>,
+    fn set_data(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
     {
         let data = image::load_from_memory(&data)
             .map_err(|e| e.to_string())?
@@ -92,13 +87,14 @@ impl Resource for Texture {
 
         Ok(())
     }
-
-    fn is_loaded(&self) -> bool {
-        self.inner.borrow().texture.is_some()
-    }
 }
 
 impl Texture {
+    /// Returns if the resource is already loaded
+    pub fn is_loaded(&self) -> bool {
+        self.inner.borrow().texture.is_some()
+    }
+
     /// Returns the current frame
     pub fn frame(&self) -> Rect {
         self.frame.clone().unwrap_or(self.inner.borrow().frame())

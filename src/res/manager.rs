@@ -26,7 +26,7 @@ impl ResourceLoaderManager {
 
     pub fn add<T>(&mut self, file: &str, resource: Box<T>) -> Result<(), String>
     where
-        T: Resource<Graphics = Graphics> + ResourceParser<App = App> + 'static,
+        T: Resource<App> + ResourceParser<App = App> + 'static,
     {
         let fut = load_file(file);
         self.to_load.push((resource, Box::new(fut)));

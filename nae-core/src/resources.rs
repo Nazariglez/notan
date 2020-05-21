@@ -28,21 +28,10 @@ pub enum VerticalAlign {
 }
 
 /// Represents an external resource
-pub trait Resource: Clone {
-    type Graphics: BaseGfx;
-
+pub trait Resource<T>: Clone {
     /// Create a new empty resource
-    fn new<T, S>(app: &mut T) -> Result<Self, String>
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Graphics = Self::Graphics>;
+    fn new(app: &mut T) -> Result<Self, String>;
 
     /// Parse byte data to create to fill the resource
-    fn set_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
-    where
-        T: BaseApp<System = S>,
-        S: BaseSystem<Graphics = Self::Graphics>;
-
-    /// Returns if the texture is ready to render
-    fn is_loaded(&self) -> bool;
+    fn set_data(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>;
 }

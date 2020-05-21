@@ -53,32 +53,30 @@ impl Font {
         draw.text_batcher
             .text_size(self, text, size, h_align, v_align, max_width)
     }
+
+    /// Returns if the resource is already loaded
+    pub fn is_loaded(&self) -> bool {
+        self.inner.borrow().id.is_some()
+    }
 }
 
-impl Resource for Font {
-    type Graphics = Graphics;
-
-    fn new<T, S>(app: &mut T) -> Result<Self, String> where
-        T: BaseApp<System=S>,
-        S: BaseSystem<Graphics=Self::Graphics> {
+impl<T, S> Resource<T> for Font
+where T: BaseApp<System = S>,
+    S: BaseSystem<Draw = Draw>
+{
+    fn new(app: &mut T) -> Result<Self, String> {
         Ok(Font {
             inner: Rc::new(RefCell::new(InnerFont { id: None })),
         })
     }
 
-    fn set_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String> where
-        T: BaseApp<System=S>,
-        S: BaseSystem<Graphics=Self::Graphics> {
-        let id = 1; //add_font(app.system().draw(), data);
+    fn set_data(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String> {
+        let id = add_font(app.system().draw(), data);
         *self.inner.borrow_mut() = InnerFont {
             id: Some(FontId(id)),
         };
 
         Ok(())
-    }
-
-    fn is_loaded(&self) -> bool {
-        self.inner.borrow().id.is_some()
     }
 }
 

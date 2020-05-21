@@ -46,7 +46,7 @@ impl BaseApp for App {
 impl App {
     pub fn load_resource<T>(&mut self, file: &str) -> Result<T, String>
     where
-        T: Resource<Graphics = Graphics> + ResourceParser<App = App> + 'static,
+        T: Resource<Self> + ResourceParser<App = App> + 'static,
     {
         let res = T::new(self)?;
         self.resources.add(file, Box::new(res.clone()))?;

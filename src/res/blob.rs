@@ -36,30 +36,21 @@ impl Blob {
 
         Ok(blob)
     }
+
+    /// Returns if the resource is already loaded
+    pub fn is_loaded(&self) -> bool {
+        self.inner.borrow().len() != 0
+    }
 }
 
-impl Resource for Blob {
-    type Graphics = Graphics;
-
-    fn new<T, S>(app: &mut T) -> Result<Self, String>
-    where
-        T: BaseApp<System=S>,
-        S: BaseSystem<Graphics=Self::Graphics>
-    {
+impl Resource<App> for Blob {
+    fn new(app: &mut App) -> Result<Self, String> {
         Self::from_bytes(app, &[])
     }
 
-    fn set_data<T, S>(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
-    where
-        T: BaseApp<System=S>,
-        S: BaseSystem<Graphics=Self::Graphics>
-    {
+    fn set_data(&mut self, app: &mut App, data: Vec<u8>) -> Result<(), String> {
         *self.inner.borrow_mut() = data;
         Ok(())
-    }
-
-    fn is_loaded(&self) -> bool {
-        self.inner.borrow().len() != 0
     }
 }
 
