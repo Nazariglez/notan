@@ -15,6 +15,7 @@ pub(crate) trait ToNaeValue {
     fn to_nae(&self) -> Self::Kind;
 }
 
+//TODO this should be done in a async way, keeping in mind that this should work on mobile devices and desktops
 /// Read the content of a file and return a future with the content
 #[cfg(not(target_arch = "wasm32"))]
 pub fn load_file(path: &str) -> impl Future<Item = Vec<u8>, Error = String> {
