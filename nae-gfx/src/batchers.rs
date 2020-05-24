@@ -509,7 +509,7 @@ impl PatternBatcher {
 
                 let index_next_size = next_size / self.pipeline.offset();
                 log::debug!(
-                    "ColorBatcher -> Increasing vertex_buffer to {} and index_buffer to {}",
+                    "PatternBatcher -> Increasing vertex_buffer to {} and index_buffer to {}",
                     next_size,
                     index_next_size
                 );
