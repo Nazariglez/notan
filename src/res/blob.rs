@@ -44,7 +44,7 @@ impl Blob {
 }
 
 impl Resource<App> for Blob {
-    fn new(app: &mut App) -> Result<Self, String> {
+    fn prepare(app: &mut App, file: &str) -> Result<Self, String> {
         Self::from_bytes(app, &[])
     }
 

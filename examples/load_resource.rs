@@ -30,6 +30,7 @@ fn update(app: &mut App, state: &mut State) {
     if state.time >= 0.5 {
         state.time = 0.0;
         if let Some(file) = state.to_load.pop() {
+            // Try to load the file
             let texture = app
                 .load_resource(&format!("./examples/assets/{}", file))
                 .unwrap();
@@ -57,6 +58,7 @@ fn draw(app: &mut App, state: &mut State) {
     draw.color = Color::BLACK;
     draw.stroke_rounded_rect(200.0, 280.0, 400.0, 40.0, 10.0, 10.0);
 
+    // Draw the "All Loaded" message on top of the bar
     if loaded == capacity {
         draw.set_text_align(HorizontalAlign::Center, VerticalAlign::Center);
         draw.text(&state.font, "All Loaded", 400.0, 300.0, 20.0);
@@ -65,6 +67,7 @@ fn draw(app: &mut App, state: &mut State) {
     draw.end();
 }
 
+// Count the number of textures are loaded
 fn loaded_length(resources: &[Texture]) -> usize {
     resources
         .iter()

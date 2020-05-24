@@ -175,6 +175,7 @@ impl Pipeline {
                 VertexAttr::new(0, VertexFormat::Float3),
                 VertexAttr::new(1, VertexFormat::Float4),
                 VertexAttr::new(2, VertexFormat::Float2),
+                VertexAttr::new(3, VertexFormat::Float4),
             ],
             PipelineOptions {
                 color_blend: Some(BlendMode::NORMAL),

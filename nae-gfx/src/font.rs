@@ -67,7 +67,7 @@ where
     T: BaseApp<System = S>,
     S: BaseSystem<Draw = Draw>,
 {
-    fn new(app: &mut T) -> Result<Self, String> {
+    fn prepare(app: &mut T, _file: &str) -> Result<Self, String> {
         Ok(Font {
             inner: Rc::new(RefCell::new(InnerFont { id: None })),
         })

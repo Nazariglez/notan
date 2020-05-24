@@ -382,9 +382,7 @@ pub(crate) struct PatternBatcher {
     indices: INDICES,
     matrix_loc: Uniform,
     texture_loc: Uniform,
-    frame_loc: Uniform,
     texture: Option<Texture>,
-    frame_coords: [f32; 4],
     index: usize,
     max_vertices: usize,
     batch_size: usize,
@@ -396,7 +394,6 @@ impl PatternBatcher {
         let pipeline = Pipeline::from_pattern_fragment(gfx, Pipeline::PATTERN_FRAG)?;
         let matrix_loc = pipeline.uniform_location("u_matrix")?;
         let texture_loc = pipeline.uniform_location("u_texture")?;
-        let frame_loc = pipeline.uniform_location("u_frame")?;
 
         let vertex_buffer = VertexBuffer::new(gfx, DrawUsage::Dynamic)?;
 
@@ -414,14 +411,12 @@ impl PatternBatcher {
             ibo: index_buffer,
             matrix_loc,
             texture_loc,
-            frame_loc,
             vertices,
             indices,
             index: 0,
             max_vertices,
             batch_size,
             texture: None,
-            frame_coords: [0.0; 4],
             mask: MaskMode::None,
         })
     }
@@ -441,18 +436,6 @@ impl PatternBatcher {
 
         if needs_update {
             self.flush(gfx, pipeline, projection, mask);
-
-            let frame = texture.frame();
-            let base_width = texture.base_width();
-            let base_height = texture.base_height();
-
-            self.frame_coords = [
-                frame.x / base_width,
-                frame.y / base_height,
-                frame.width / base_width,
-                frame.height / base_height,
-            ];
-
             self.texture = Some(texture.clone());
         }
     }
@@ -462,6 +445,7 @@ impl PatternBatcher {
         gfx: &mut Graphics,
         texture: &Texture,
         uvs: &[f32],
+        frames: &[f32],
         data: DrawData,
     ) {
         // self.check_batch_size(gfx, &data); //performance is worst with this...
@@ -502,6 +486,10 @@ impl PatternBatcher {
             self.vertices[6 + index_offset] = a * data.alpha;
             self.vertices[7 + index_offset] = uvs[0 + uv_index];
             self.vertices[8 + index_offset] = uvs[1 + uv_index];
+            self.vertices[9 + index_offset] = frames[0];
+            self.vertices[10 + index_offset] = frames[1];
+            self.vertices[11 + index_offset] = frames[2];
+            self.vertices[12 + index_offset] = frames[3];
 
             uv_index += 2;
             index_offset += offset;
@@ -551,17 +539,14 @@ impl BaseBatcher for PatternBatcher {
                 Some(pipe) => {
                     let tex_loc = batch_uniform(pipe, "PatternBatcher", "u_texture").unwrap();
                     let mvp_loc = batch_uniform(pipe, "PatternBatcher", "u_matrix").unwrap();
-                    let frame_loc = batch_uniform(pipe, "PatternBatcher", "u_frame").unwrap();
                     gfx.set_pipeline(pipe);
                     gfx.bind_texture(&tex_loc, tex);
                     gfx.bind_uniform(&mvp_loc, projection);
-                    gfx.bind_uniform(&frame_loc, &self.frame_coords);
                 }
                 None => {
                     gfx.set_pipeline(&self.pipeline);
                     gfx.bind_texture(&self.texture_loc, tex);
                     gfx.bind_uniform(&self.matrix_loc, projection);
-                    gfx.bind_uniform(&self.frame_loc, &self.frame_coords);
                 }
             };
 
