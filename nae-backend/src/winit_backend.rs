@@ -193,8 +193,9 @@ where
                     scale_factor,
                     new_inner_size,
                 } => {
-                    //TODO
-                    println!("TODO scale_factor: {} {:?}", scale_factor, new_inner_size);
+                    app.system().events.push(Event::ScreenAspectChange {
+                        ratio: *scale_factor as _
+                    });
                 }
                 WindowEvent::MouseInput { state, button, .. } => {
                     let evt = match state {
