@@ -32,12 +32,7 @@ pub trait BasePipeline {
 
 pub trait BaseVertexBuffer {
     type Graphics: BaseGfx;
-    fn bind(
-        &self,
-        gfx: &mut Self::Graphics,
-        pipeline: &<Self::Graphics as BaseGfx>::Pipeline,
-        data: &[f32],
-    );
+    fn bind(&self, gfx: &mut Self::Graphics, data: &[f32]);
 }
 
 pub trait BaseIndexBuffer {
@@ -62,12 +57,7 @@ where
     fn bind_texture_slot(&mut self, slot: u32, location: &Self::Location, texture: &Self::Texture);
     fn end(&mut self);
     fn set_pipeline(&mut self, pipeline: &Self::Pipeline);
-    fn bind_vertex_buffer(
-        &mut self,
-        buffer: &BaseVertexBuffer<Graphics = Self>,
-        pipeline: &Self::Pipeline,
-        data: &[f32],
-    );
+    fn bind_vertex_buffer(&mut self, buffer: &BaseVertexBuffer<Graphics = Self>, data: &[f32]);
     fn bind_index_buffer(&mut self, buffer: &BaseIndexBuffer<Graphics = Self>, data: &[u32]);
     fn draw(&mut self, offset: i32, count: i32);
     // fn bind_uniform(&mut self, location: Self::Location, value: &UniformValue<Graphics = Self>);

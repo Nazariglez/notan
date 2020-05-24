@@ -177,7 +177,7 @@ pub struct Graphics {
     pub(crate) gl: GlContext,
     pub(crate) gfx_api: GraphicsAPI,
     index_type: u32,
-    pipeline_in_use: bool,
+    pipeline: Option<Pipeline>,
     indices_in_use: bool,
     width: f32,
     height: f32,
@@ -339,12 +339,12 @@ impl Graphics {
             height: info.height as _,
             running: false,
             gfx_api: info.api,
-            pipeline_in_use: false,
             indices_in_use: false,
             draw_calls: 0,
             last_pass_draw_calls: 0,
             index_type,
             render_target: None,
+            pipeline: None,
 
             #[cfg(feature = "sdl")]
             _sdl_gl: info._sdl_gl,
@@ -357,7 +357,7 @@ impl Graphics {
         value: &UniformValue<Graphics = Self>,
     ) {
         debug_assert!(
-            self.pipeline_in_use,
+            self.pipeline.is_some(),
             "A pipeline should be set before bind uniforms"
         );
         value.bind_uniform(self, location.clone());
@@ -462,7 +462,7 @@ impl BaseGfx for Graphics {
 
     fn bind_texture_slot(&mut self, slot: u32, location: &Self::Location, tex: &texture::Texture) {
         debug_assert!(
-            self.pipeline_in_use,
+            self.pipeline.is_some(),
             "A pipeline should be set before bind textures"
         );
 
@@ -496,7 +496,7 @@ impl BaseGfx for Graphics {
         }
 
         self.indices_in_use = false;
-        self.pipeline_in_use = false;
+        self.pipeline = None;
         self.running = false;
 
         self.last_pass_draw_calls = self.draw_calls;
@@ -504,27 +504,22 @@ impl BaseGfx for Graphics {
     }
 
     fn set_pipeline(&mut self, pipeline: &Self::Pipeline) {
+        self.pipeline = Some(pipeline.clone());
         pipeline.bind(self);
-        self.pipeline_in_use = true;
         self.indices_in_use = false;
     }
 
-    fn bind_vertex_buffer(
-        &mut self,
-        buffer: &BaseVertexBuffer<Graphics = Self>,
-        pipeline: &Self::Pipeline,
-        data: &[f32],
-    ) {
+    fn bind_vertex_buffer(&mut self, buffer: &BaseVertexBuffer<Graphics = Self>, data: &[f32]) {
         debug_assert!(
-            self.pipeline_in_use,
+            self.pipeline.is_some(),
             "A pipeline should be set before bind the vertex buffer"
         );
-        buffer.bind(self, pipeline, data);
+        buffer.bind(self, data);
     }
 
     fn bind_index_buffer(&mut self, buffer: &BaseIndexBuffer<Graphics = Self>, data: &[u32]) {
         debug_assert!(
-            self.pipeline_in_use,
+            self.pipeline.is_some(),
             "A pipeline should be set before bind the vertex buffer"
         );
         buffer.bind(self, data);
@@ -532,7 +527,10 @@ impl BaseGfx for Graphics {
     }
 
     fn draw(&mut self, offset: i32, count: i32) {
-        debug_assert!(self.pipeline_in_use, "A pipeline should be set before draw");
+        debug_assert!(
+            self.pipeline.is_some(),
+            "A pipeline should be set before draw"
+        );
         // TODO draw instanced?
 
         unsafe {

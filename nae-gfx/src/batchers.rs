@@ -314,7 +314,7 @@ impl TextBatcher {
             }
         };
 
-        gfx.bind_vertex_buffer(&self.vbo, &self.pipeline, &self.vertices);
+        gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
         gfx.bind_index_buffer(&self.ibo, &self.indices);
         gfx.draw(0, self.index as _);
 
@@ -550,7 +550,7 @@ impl BaseBatcher for PatternBatcher {
                 }
             };
 
-            gfx.bind_vertex_buffer(&self.vbo, &self.pipeline, &self.vertices);
+            gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
             gfx.bind_index_buffer(&self.ibo, &self.indices);
             gfx.draw(0, self.index as _);
         }
@@ -751,7 +751,7 @@ impl BaseBatcher for ImageBatcher {
                 }
             };
 
-            gfx.bind_vertex_buffer(&self.vbo, &self.pipeline, &self.vertices);
+            gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
             gfx.bind_index_buffer(&self.ibo, &self.indices);
             gfx.draw(0, self.index as _);
         }
@@ -991,7 +991,7 @@ impl BaseBatcher for ColorBatcher {
             }
         };
 
-        gfx.bind_vertex_buffer(&self.vbo, &self.pipeline, &self.vertices);
+        gfx.bind_vertex_buffer(&self.vbo, &self.vertices);
         gfx.bind_index_buffer(&self.ibo, &self.indices);
         gfx.draw(0, self.index as i32);
         self.index = 0;

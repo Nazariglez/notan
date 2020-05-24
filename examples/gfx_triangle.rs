@@ -49,7 +49,7 @@ fn draw(app: &mut App, state: &mut State) {
     let mut gfx = app.gfx();
     gfx.begin(&state.clear);
     gfx.set_pipeline(&state.pipeline);
-    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.pipeline, &state.vertices);
+    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
     gfx.draw(0, 3);
     gfx.end();
 }

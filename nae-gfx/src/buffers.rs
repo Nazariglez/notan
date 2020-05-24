@@ -73,34 +73,31 @@ impl VertexBuffer {
 impl BaseVertexBuffer for VertexBuffer {
     type Graphics = Graphics;
 
-    fn bind(
-        &self,
-        gfx: &mut Graphics,
-        pipeline: &<Self::Graphics as BaseGfx>::Pipeline,
-        data: &[f32],
-    ) {
+    fn bind(&self, gfx: &mut Graphics, data: &[f32]) {
         unsafe {
-            gfx.gl
-                .bind_buffer(glow::ARRAY_BUFFER, Some(self.inner.buffer));
-            let stride = pipeline.stride() as i32;
+            if let Some(pipeline) = gfx.pipeline.as_ref() {
+                gfx.gl
+                    .bind_buffer(glow::ARRAY_BUFFER, Some(self.inner.buffer));
+                let stride = pipeline.stride() as i32;
 
-            pipeline.attrs.iter().for_each(|attr| {
-                gfx.gl.enable_vertex_attrib_array(attr.location);
-                gfx.gl.vertex_attrib_pointer_f32(
-                    attr.location,
-                    attr.size,
-                    attr.data_type,
-                    attr.normalized,
-                    stride,
-                    attr.offset,
+                pipeline.attrs.iter().for_each(|attr| {
+                    gfx.gl.enable_vertex_attrib_array(attr.location);
+                    gfx.gl.vertex_attrib_pointer_f32(
+                        attr.location,
+                        attr.size,
+                        attr.data_type,
+                        attr.normalized,
+                        stride,
+                        attr.offset,
+                    );
+                });
+
+                gfx.gl.buffer_data_u8_slice(
+                    glow::ARRAY_BUFFER,
+                    vf_to_u8(data),
+                    self.usage.glow_value(),
                 );
-            });
-
-            gfx.gl.buffer_data_u8_slice(
-                glow::ARRAY_BUFFER,
-                vf_to_u8(data),
-                self.usage.glow_value(),
-            );
+            }
         }
     }
 }
