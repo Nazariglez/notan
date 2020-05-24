@@ -46,16 +46,34 @@ pub struct Texture {
 }
 
 impl<T, S> Resource<T> for Texture
-    where T: BaseApp<System = S>,
-          S: BaseSystem<Graphics = Graphics>
+where
+    T: BaseApp<System = S>,
+    S: BaseSystem<Graphics = Graphics>,
 {
-
     fn new(app: &mut T) -> Result<Self, String> {
-        Self::from_size(app, 1, 1)
+        let gl = app.system().gfx().gl.clone();
+
+        let opts: TextureOptions = Default::default();
+
+        let inner = InnerTexture {
+            gl,
+            texture: None,
+            width: 1,
+            height: 1,
+            internal_format: opts.internal_format,
+            format: opts.format,
+            min_filter: opts.min_filter,
+            mag_filter: opts.mag_filter,
+            buffer: vec![],
+        };
+
+        Ok(Texture {
+            inner: Rc::new(RefCell::new(inner)),
+            frame: None,
+        })
     }
 
-    fn set_data(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>
-    {
+    fn set_data(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String> {
         let data = image::load_from_memory(&data)
             .map_err(|e| e.to_string())?
             .to_rgba();
