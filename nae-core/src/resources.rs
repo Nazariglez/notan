@@ -29,8 +29,8 @@ pub enum VerticalAlign {
 
 /// Represents an external resource
 pub trait Resource<T>: Clone {
-    /// Create a new empty resource
-    fn new(app: &mut T) -> Result<Self, String>;
+    /// Create a empty resource ready to be loaded
+    fn prepare(app: &mut T, file: &str) -> Result<Self, String>;
 
     /// Parse byte data to create to fill the resource
     fn set_data(&mut self, app: &mut T, data: Vec<u8>) -> Result<(), String>;

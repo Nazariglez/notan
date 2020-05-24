@@ -10,7 +10,9 @@ struct State {
 
 fn init(app: &mut App) -> State {
     State {
-        atlas: app.load_file("./examples/assets/sunnyland.json").unwrap(),
+        atlas: app
+            .load_resource("./examples/assets/sunnyland.json")
+            .unwrap(),
     }
 }
 
@@ -18,44 +20,49 @@ fn draw(app: &mut App, state: &mut State) {
     if !state.atlas.is_loaded() {
         return;
     }
+
     let textures = state.atlas.textures();
 
-    let house = textures.get("house").unwrap();
-    let tree = textures.get("tree").unwrap();
-    let door = textures.get("door").unwrap();
-
     let draw = app.draw();
-    draw.begin();
-    draw.clear(Color::ORANGE);
+    draw.begin(Color::ORANGE);
 
-    draw.image(house, 300.0, 300.0);
-
-    for i in 0..3 {
-        draw.image(tree, 400.0 + tree.width() * i as f32, 0.0)
+    // Draw all the frames
+    let mut xx = 10.0;
+    let mut yy = 10.0;
+    for (_, tex) in textures.iter() {
+        draw.image(tex, xx, yy);
+        xx += tex.width() + 4.0;
     }
 
-    for i in 0..20 {
-        draw.image(door, 20.0 + door.width() * i as f32, 200.0);
-    }
-
+    // Draw patterns using the textures on the atlas
     draw.pattern(
-        house,
-        10.0,
+        textures.get("tree").unwrap(),
+        400.0,
+        150.0,
+        320.0,
         300.0,
-        house.width() * 2.0,
-        house.height() * 2.0,
         0.0,
         0.0,
     );
-    //    panic!();
-    draw.image_crop(
-        house,
-        550.0,
+    // draw.image(textures.get("door").unwrap(), 750.0, 550.0);
+    draw.pattern(
+        textures.get("house").unwrap(),
+        100.0,
+        150.0,
+        280.0,
         300.0,
-        house.width() * 0.5,
-        house.height() * 0.5,
-        house.width() * 0.5,
-        house.height() * 0.5,
+        0.0,
+        0.0,
+    );
+
+    draw.pattern(
+        textures.get("face-block").unwrap(),
+        100.0,
+        500.0,
+        600.0,
+        80.0,
+        0.0,
+        0.0,
     );
 
     draw.end();

@@ -48,7 +48,7 @@ impl App {
     where
         T: Resource<Self> + ResourceParser<App = App> + 'static,
     {
-        let res = T::new(self)?;
+        let res = T::prepare(self, file)?;
         self.resources.add(file, Box::new(res.clone()))?;
         Ok(res)
     }

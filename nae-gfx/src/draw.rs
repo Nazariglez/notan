@@ -595,7 +595,10 @@ impl Draw {
         let x2 = x + width;
         let y2 = y + height;
 
+        let base_width = img.base_width();
+        let base_height = img.base_height();
         let frame = img.frame();
+
         let offset_x = offset_x * scale_x;
         let offset_y = offset_y * scale_y;
         let ww = frame.width * scale_x;
@@ -628,6 +631,12 @@ impl Draw {
                 sx1, sy2,
                 sx2, sy1,
                 sx1, sy1,
+            ],
+            &[
+                frame.x / base_width,
+                frame.y / base_height,
+                frame.width / base_width,
+                frame.height / base_height,
             ],
             &[
                 0, 1, 2, 2, 1, 3
@@ -793,12 +802,14 @@ fn draw_pattern(
     texture: &Texture,
     vertices: &[f32],
     uvs: &[f32],
+    frames: &[f32],
     indices: &[u32],
 ) {
     draw.pattern_batcher.push_data(
         &mut draw.gfx,
         texture,
         uvs,
+        frames,
         DrawData {
             vertices,
             indices,

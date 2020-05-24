@@ -50,7 +50,7 @@ where
     T: BaseApp<System = S>,
     S: BaseSystem<Graphics = Graphics>,
 {
-    fn new(app: &mut T) -> Result<Self, String> {
+    fn prepare(app: &mut T, _file: &str) -> Result<Self, String> {
         let gl = app.system().gfx().gl.clone();
 
         let opts: TextureOptions = Default::default();
