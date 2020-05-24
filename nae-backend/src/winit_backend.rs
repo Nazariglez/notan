@@ -194,7 +194,7 @@ where
                     new_inner_size,
                 } => {
                     app.system().events.push(Event::ScreenAspectChange {
-                        ratio: *scale_factor as _
+                        ratio: *scale_factor as _,
                     });
                 }
                 WindowEvent::MouseInput { state, button, .. } => {

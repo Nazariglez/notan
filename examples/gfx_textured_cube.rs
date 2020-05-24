@@ -126,7 +126,7 @@ fn draw(app: &mut App, state: &mut State) {
     gfx.set_pipeline(&state.pipeline);
     gfx.bind_uniform(&state.mvp_location, slice_to_matrix4(mvp.as_slice()));
     gfx.bind_texture(&state.tex_location, &state.texture);
-    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.pipeline, &state.vertices);
+    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
     gfx.draw(0, count as _);
     gfx.end();
 }

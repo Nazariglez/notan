@@ -79,7 +79,7 @@ fn draw(app: &mut App, state: &mut State) {
     gfx.begin(&state.clear);
     gfx.set_pipeline(&state.pipeline);
     gfx.bind_texture(&state.tex_location, &state.texture);
-    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.pipeline, &state.vertices);
+    gfx.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
     gfx.bind_index_buffer(&state.index_buffer, &state.indices);
     gfx.draw(0, state.indices.len() as _);
     gfx.end();
