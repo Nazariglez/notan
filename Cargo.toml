@@ -39,6 +39,7 @@ members = [
 
 [dev-dependencies]
 nalgebra-glm = "0.4.2"
+specs = "0.16.1"
 
 [profile.release]
 lto = true
