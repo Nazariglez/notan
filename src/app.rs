@@ -129,6 +129,9 @@ impl<S> AppBuilder<S> {
             keyboard: Keyboard::new(),
         };
 
+        let dpi = app.dpi();
+        app.draw().update_dpi(dpi);
+
         let mut state = (self.state_cb)(&mut app);
         let draw_cb = self.draw_callback.take().unwrap_or(|_, _| {});
         let update_cb = self.update_callback.take().unwrap_or(|_, _| {});
@@ -236,7 +239,10 @@ fn process_events<S>(app: &mut App, state: &mut S, cb: fn(&mut App, &mut S, Even
 
         match evt {
             Event::WindowResize { width, height } => {
-                app.sys.draw().set_size(width as _, height as _)
+                app.sys.draw().set_size(width as _, height as _);
+            }
+            Event::ScreenAspectChange { ratio } => {
+                app.sys.draw().update_dpi(ratio);
             }
             _ => {}
         }

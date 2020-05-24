@@ -128,6 +128,9 @@ pub enum Event {
     /// `web` target will dispatch this event when the browser window is resized, not the canvas itself.
     WindowResize { width: i32, height: i32 },
 
+    /// Represent a change of the screen aspect ratio
+    ScreenAspectChange { ratio: f32 },
+
     //#[cfg(feature = "mouse")]
     /// Represent the current mouse's position after it was moved
     /// `mouse` feature must be enabled

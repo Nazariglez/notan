@@ -44,6 +44,7 @@ pub struct Draw {
     current_mode: PaintMode,
     shapes: ShapeTessellator,
     mask: MaskMode,
+    dpi: f32,
 }
 
 impl Draw {
@@ -55,7 +56,7 @@ impl Draw {
         let text_batcher = TextBatcher::new(&mut gfx)?;
 
         let (width, height) = gfx.size(); //TODO multiply for dpi
-        let render_projection = matrix4_orthogonal(0.0, width, height, 0.0, -1.0, 1.0);
+        let render_projection = projection(width, height, false, 1.0);
 
         let blend_mode = BlendMode::NORMAL;
         let paint_mode = PaintMode::None;
@@ -84,7 +85,23 @@ impl Draw {
             render_projection,
             shapes: ShapeTessellator::new(),
             mask: MaskMode::None,
+            dpi: 1.0,
         })
+    }
+
+    pub fn update_dpi(&mut self, dpi: f32) {
+        if self.dpi != dpi {
+            self.dpi = dpi;
+            self.render_projection = projection(self.gfx.width, self.gfx.height, false, self.dpi);
+        }
+    }
+
+    pub fn set_size(&mut self, width: f32, height: f32) {
+        let width = width * self.dpi;
+        let height = height * self.dpi;
+        self.gfx.set_size(width, height);
+        self.render_projection =
+            projection(width, height, self.gfx.render_target.is_some(), self.dpi);
     }
 
     pub fn set_text_align(&mut self, horizontal: HorizontalAlign, vertical: VerticalAlign) {
@@ -132,11 +149,6 @@ impl Draw {
         self.mask = MaskMode::None;
     }
 
-    pub fn set_size(&mut self, width: f32, height: f32) {
-        self.gfx.set_size(width, height);
-        self.render_projection = projection(width, height, self.gfx.render_target.is_some());
-    }
-
     pub fn size(&self) -> (f32, f32) {
         self.gfx.size()
     }
@@ -176,7 +188,7 @@ impl Draw {
 
     pub fn begin(&mut self, color: Color) {
         if self.gfx.render_target.is_some() {
-            self.render_projection = projection(self.gfx.width, self.gfx.height, false);
+            self.render_projection = projection(self.gfx.width, self.gfx.height, false, self.dpi);
         }
 
         self.clear_options.color = Some(color);
@@ -184,7 +196,7 @@ impl Draw {
     }
 
     pub fn begin_to(&mut self, target: &RenderTarget, color: Color) {
-        self.render_projection = projection(target.width(), target.height(), true);
+        self.render_projection = projection(target.width(), target.height(), true, 1.0);
 
         self.clear_options.color = Some(color);
         self.gfx.begin_to(Some(target), &self.clear_options);
@@ -645,7 +657,9 @@ impl Draw {
     }
 }
 
-fn projection(width: f32, height: f32, is_flipped: bool) -> Matrix4 {
+fn projection(width: f32, height: f32, is_flipped: bool, dpi: f32) -> Matrix4 {
+    let width = width / dpi;
+    let height = height / dpi;
     match is_flipped {
         true => matrix4_orthogonal(0.0, width, 0.0, height, -1.0, 1.0),
         false => matrix4_orthogonal(0.0, width, height, 0.0, -1.0, 1.0),
