@@ -6,7 +6,9 @@ use glyph_brush::{
     BrushAction, BrushError, FontId, GlyphBrush, GlyphBrushBuilder, GlyphCruncher, GlyphVertex,
     Section,
 };
-use nae_core::{BaseApp, BaseSystem, HorizontalAlign, TextureFilter, TextureFormat, VerticalAlign, Resource};
+use nae_core::{
+    BaseApp, BaseSystem, HorizontalAlign, Resource, TextureFilter, TextureFormat, VerticalAlign,
+};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -61,8 +63,9 @@ impl Font {
 }
 
 impl<T, S> Resource<T> for Font
-where T: BaseApp<System = S>,
-    S: BaseSystem<Draw = Draw>
+where
+    T: BaseApp<System = S>,
+    S: BaseSystem<Draw = Draw>,
 {
     fn new(app: &mut T) -> Result<Self, String> {
         Ok(Font {

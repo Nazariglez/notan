@@ -68,7 +68,7 @@ fn try_load_asset(loader: &mut ResourceLoader) -> Result<AssetState, String> {
     let (_, ref mut future) = loader;
     return future.poll().map(|s| {
         if let Async::Ready(buff) = s {
-            AssetState::Done(buff.to_vec())
+            AssetState::Done(buff)
         } else {
             AssetState::OnProgress
         }

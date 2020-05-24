@@ -1,8 +1,11 @@
 use futures::future::{poll_fn, result};
-use futures::{future, Async, Future};
-use std::fs::File;
+use futures::{future, Async, Future, Poll};
+use std::fs::{read, File};
 use std::io::Read;
 use std::path::Path;
+use std::sync::mpsc::{channel, Receiver};
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 #[cfg(target_arch = "wasm32")]
 use js_sys::Uint8Array;
@@ -15,18 +18,57 @@ pub(crate) trait ToNaeValue {
     fn to_nae(&self) -> Self::Kind;
 }
 
-//TODO this should be done in a async way, keeping in mind that this should work on mobile devices and desktops
 /// Read the content of a file and return a future with the content
 #[cfg(not(target_arch = "wasm32"))]
 pub fn load_file(path: &str) -> impl Future<Item = Vec<u8>, Error = String> {
-    future::result(load_from_disk(path)).map_err(|e| e.to_string())
+    AsyncFileReader::new(path)
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-fn load_from_disk(path: impl AsRef<Path>) -> Result<Vec<u8>, std::io::Error> {
-    let mut buf = Vec::new();
-    File::open(path)?.read_to_end(&mut buf)?;
-    Ok(buf)
+fn load_file_from_disk(file: &str) -> Result<Vec<u8>, String> {
+    read(file).map_err(|e| e.to_string())
+}
+
+fn load_file_async(file: &str) -> Arc<Mutex<Option<Result<Vec<u8>, String>>>> {
+    let file = file.to_string();
+    let result = Arc::new(Mutex::new(None));
+    let r_clone = result.clone();
+    thread::spawn(move || {
+        *r_clone.lock().unwrap() = Some(load_file_from_disk(&file));
+    });
+
+    result
+}
+
+struct AsyncFileReader {
+    buff: Arc<Mutex<Option<Result<Vec<u8>, String>>>>,
+}
+
+impl AsyncFileReader {
+    fn new(file: &str) -> impl Future<Item = Vec<u8>, Error = String> {
+        Self {
+            buff: load_file_async(file),
+        }
+    }
+}
+
+impl Future for AsyncFileReader {
+    type Item = Vec<u8>;
+    type Error = String;
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        let lock = self.buff.try_lock();
+        if let Ok(value) = lock {
+            match &*value {
+                Some(result) => match result.clone() {
+                    Ok(buff) => Ok(Async::Ready(buff)),
+                    Err(err) => Err(err),
+                },
+                _ => Ok(Async::NotReady),
+            }
+        } else {
+            Ok(Async::NotReady)
+        }
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
