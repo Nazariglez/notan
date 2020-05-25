@@ -47,6 +47,6 @@ fn init(app: &mut App) -> State {
     State {
         tex: Texture::from_bytes(app, include_bytes!("assets/ferris.png")).unwrap(),
         count: 0.0,
-        matrix: math::identity(),
+        matrix: glm::identity(),
     }
 }
