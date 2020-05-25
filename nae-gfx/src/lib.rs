@@ -20,7 +20,6 @@ pub use pipeline::*;
 pub use render_target::*;
 pub use texture::*;
 pub use uniform::*;
-// pub use texture::*;
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "sdl")))]
 use glutin::event::{Event, WindowEvent};
@@ -43,9 +42,6 @@ use wasm_bindgen::JsCast;
 type VertexArray = <glow::Context as HasContext>::VertexArray;
 type Program = <glow::Context as HasContext>::Program;
 type TextureKey = <glow::Context as HasContext>::Texture;
-
-// TODO delete on drop opengl allocations
-// Shader should got app or gfx as first parameter?
 
 #[derive(Debug)]
 struct TextureData {
@@ -404,8 +400,7 @@ impl Graphics {
         unsafe {
             if let Some(color) = &opts.color {
                 mask |= glow::COLOR_BUFFER_BIT;
-                self.gl
-                    .clear_color(color.red(), color.green(), color.blue(), color.alpha());
+                self.gl.clear_color(color.r, color.g, color.b, color.a);
             }
 
             if let Some(depth) = opts.depth {
