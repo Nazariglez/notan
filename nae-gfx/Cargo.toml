@@ -16,7 +16,7 @@ hashbrown = "0.7"
 lyon = "0.15"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-glutin = "0.22"
+glutin = "0.24"
 sdl2 = { version = "0.33", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

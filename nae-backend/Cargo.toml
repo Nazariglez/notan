@@ -39,8 +39,8 @@ features = [
 ]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-winit = { version="0.20", optional=true }
-glutin = { version="0.22", optional=true }
+winit = { version="0.22", optional=true }
+glutin = { version="0.24", optional=true }
 sdl2 = { version="0.33", optional=true }
 
 [features]

@@ -238,8 +238,8 @@ where
                     app.system().events.push(evt);
                 }
                 WindowEvent::CursorMoved { position, .. } => {
-                    last_mouse_x = position.x;
-                    last_mouse_y = position.y;
+                    last_mouse_x = position.x as _;
+                    last_mouse_y = position.y as _;
                     app.system().events.push(Event::MouseMove {
                         x: last_mouse_x,
                         y: last_mouse_y,
