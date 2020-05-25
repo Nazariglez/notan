@@ -582,7 +582,9 @@ pub(crate) struct ImageBatcher {
     vbo: VertexBuffer,
     ibo: IndexBuffer,
     vertices: VERTICES,
+    vertices_size: usize,
     indices: INDICES,
+    indices_size: usize,
     matrix_loc: Uniform,
     texture_loc: Uniform,
     texture: Option<Texture>,
@@ -599,14 +601,15 @@ impl ImageBatcher {
         let texture_loc = pipeline.uniform_location("u_texture")?;
 
         let vertex_buffer = VertexBuffer::new(gfx, DrawUsage::Dynamic)?;
-
         let index_buffer = IndexBuffer::new(gfx, DrawUsage::Dynamic)?;
+        let offset = pipeline.offset();
 
         let max_vertices = max_vertices(gfx);
-        let batch_size = batch_vertices(pipeline.offset());
+        let vertices_size = batch_vertices(offset);
+        let indices_size = vertices_size / offset;
 
-        let vertices = vec![0.0; batch_size];
-        let indices = vec![0; batch_size / pipeline.offset()];
+        let vertices = vec![0.0; vertices_size];
+        let indices = vec![0; indices_size];
 
         Ok(Self {
             pipeline,
@@ -615,10 +618,12 @@ impl ImageBatcher {
             matrix_loc,
             texture_loc,
             vertices,
+            vertices_size,
             indices,
+            indices_size,
             index: 0,
             max_vertices,
-            batch_size,
+            batch_size: vertices_size,
             texture: None,
             mask: MaskMode::None,
         })
@@ -653,12 +658,12 @@ impl ImageBatcher {
         uvs: &[f32],
         data: DrawData,
     ) {
-        // self.check_batch_size(gfx, &data); //perfromance is worst with this...
+        self.check_batch_size(gfx, &data);
         self.set_texture(gfx, texture, data.pipeline, data.projection, data.mask);
         self.pipeline.options.color_blend = data.blend;
 
         let next_index = self.index + data.indices.len();
-        if next_index >= self.indices.len() {
+        if next_index >= self.indices_size {
             self.flush(gfx, data.pipeline, data.projection, data.mask);
         }
 
@@ -700,25 +705,32 @@ impl ImageBatcher {
     }
 
     fn check_batch_size(&mut self, gfx: &mut Graphics, data: &DrawData) {
-        let next_size = self.vertices.len() + self.batch_size;
+        let data_indices_len = data.indices.len();
+
+        let next_size = self.vertices_size + self.batch_size;
         let can_be_bigger = next_size < self.max_vertices;
         if can_be_bigger {
-            let is_bigger = data.indices.len() > self.indices.len();
-            let is_more = self.index + data.indices.len() >= self.indices.len();
+            let is_bigger = data_indices_len > self.indices_size;
+            let is_more = self.index + data_indices_len >= self.indices_size;
             if is_bigger || is_more {
                 self.flush(gfx, data.pipeline, data.projection, data.mask);
-
-                let index_next_size = next_size / self.pipeline.offset();
-                log::debug!(
-                    "ColorBatcher -> Increasing vertex_buffer to {} and index_buffer to {}",
-                    next_size,
-                    index_next_size
-                );
-
-                self.vertices.resize(next_size, 0.0);
-                self.indices.resize(index_next_size, 0);
+                self.resize(next_size);
             }
         }
+    }
+
+    fn resize(&mut self, size: usize) {
+        let index_size = size / self.pipeline.offset();
+        log::debug!(
+            "ImageBatcher -> Increasing vertex_buffer to {} and index_buffer to {}",
+            size,
+            index_size
+        );
+
+        self.vertices.resize(size, 0.0);
+        self.indices.resize(index_size, 0);
+        self.vertices_size = size;
+        self.indices_size = index_size;
     }
 }
 
