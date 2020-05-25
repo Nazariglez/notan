@@ -1,4 +1,3 @@
-use nae::extras::ShuffleBag;
 use nae::prelude::*;
 use std::collections::VecDeque;
 
