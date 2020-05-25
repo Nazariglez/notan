@@ -1,5 +1,4 @@
-use nae::extras::Animation;
-use nae::prelude::*;
+use nae::prelude::{m2d::Animation, *};
 
 #[nae::main]
 fn main() {

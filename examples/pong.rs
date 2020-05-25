@@ -1,4 +1,3 @@
-use nae::extras::Random;
 use nae::prelude::*;
 
 const WIDTH: i32 = 800;

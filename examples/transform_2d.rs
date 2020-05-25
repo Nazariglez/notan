@@ -1,5 +1,4 @@
-use nae::extras::Transform2d;
-use nae::prelude::*;
+use nae::prelude::{m2d::Transform2d, *};
 
 struct State {
     tex: Texture,

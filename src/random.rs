@@ -55,6 +55,7 @@ impl Default for Random {
     }
 }
 
+/// Returns a random number for a predefined bag of them
 pub struct ShuffleBag<T>
 where
     T: Sized + Clone,

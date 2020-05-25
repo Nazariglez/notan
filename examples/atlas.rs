@@ -1,5 +1,4 @@
-use nae::extras::TextureAtlas;
-use nae::prelude::*;
+use nae::prelude::{m2d::TextureAtlas, *};
 use std::collections::HashMap;
 
 struct State {

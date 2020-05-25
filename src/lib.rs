@@ -1,9 +1,8 @@
 mod app;
 mod input;
+pub mod m2d;
+mod random;
 mod res;
-
-#[cfg(feature = "extras")]
-pub mod extras;
 
 pub use nae_derive::main;
 
@@ -23,6 +22,8 @@ pub use app::{init, init_with, App};
 
 pub mod prelude {
     pub use super::app::*;
+    pub use super::m2d;
+    pub use super::random::*;
     pub use super::res::*;
     pub use backend::*;
     pub use nae_core::*;

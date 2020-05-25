@@ -1,5 +1,7 @@
-use nae::extras::{Scaler, ScalerMode};
-use nae::prelude::*;
+use nae::prelude::{
+    m2d::{Scaler, ScalerMode},
+    *,
+};
 
 const SCREEN_WIDTH: f32 = 600.0;
 const SCREEN_HEIGHT: f32 = 600.0;
