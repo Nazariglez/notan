@@ -28,6 +28,10 @@ sdl = ["backend/sdl"]
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 wasm-bindgen = "0.2.51"
 
+[dev-dependencies]
+nalgebra-glm = "0.4.2"
+specs = { version = "0.16.1", default-features = false }
+
 [workspace]
 members = [
     "nae-derive",
@@ -36,10 +40,6 @@ members = [
     "nae-gfx",
     "nae-shader"
 ]
-
-[dev-dependencies]
-nalgebra-glm = "0.4.2"
-specs = "0.16.1"
 
 [profile.release]
 lto = true
