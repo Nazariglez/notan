@@ -1,6 +1,7 @@
 use nae::prelude::*;
 
 struct State {
+    font: Font,
     tex: Texture,
     count: f32,
 }
@@ -12,6 +13,7 @@ fn main() {
 
 fn init(app: &mut App) -> State {
     State {
+        font: Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap(),
         tex: Texture::from_bytes(app, include_bytes!("assets/ferris.png")).unwrap(),
         count: 0.0,
     }
@@ -60,7 +62,7 @@ fn draw(app: &mut App, state: &mut State) {
         draw.image_ext(&image, xx, yy, ww, hh, 0.0, 0.0, 0.0, 0.0);
 
         draw.blend_mode = BlendMode::NORMAL;
-        // draw.text(blend.0, xx, yy, 20.0); TODO
+        draw.text(&state.font, blend.0, xx, yy, 20.0);
     });
 
     draw.end();
