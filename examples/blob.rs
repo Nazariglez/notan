@@ -1,6 +1,5 @@
 use nae::prelude::*;
 
-//TODO BLOB
 struct State {
     blob: Blob,
     font: Font,

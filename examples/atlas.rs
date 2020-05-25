@@ -2,8 +2,6 @@ use nae::extras::TextureAtlas;
 use nae::prelude::*;
 use std::collections::HashMap;
 
-// TODO Warning: experimental support it's not done yet.
-
 struct State {
     atlas: TextureAtlas,
 }

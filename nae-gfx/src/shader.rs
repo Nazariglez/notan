@@ -1,7 +1,6 @@
 use crate::{GlContext, GlowValue, Graphics};
 use glow::HasContext;
 use hashbrown::HashMap;
-use nae_core::math::Mat3;
 use nae_core::GraphicsAPI;
 use nae_core::{BaseApp, BaseSystem};
 use spirv_cross::{glsl, spirv, ErrorCode};

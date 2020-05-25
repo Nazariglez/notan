@@ -1,5 +1,4 @@
 use super::Transform2d;
-use backend::math::Mat3;
 use nae_gfx::Matrix4;
 
 /// Modes or rules used to scale the matrix transformation

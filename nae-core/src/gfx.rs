@@ -1,4 +1,3 @@
-use super::math::Mat3;
 use crate::resources::{HorizontalAlign, VerticalAlign};
 use crate::{BaseApp, BaseSystem, BlendMode, ClearOptions, Color, Geometry, PipelineOptions};
 

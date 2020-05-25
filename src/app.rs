@@ -8,19 +8,6 @@ use std::cell::RefMut;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-/*TODO
-    - Custom Error like Nae::NotFound, Nae::GraphicsX
-    - use rayon when it's necessary for example processing the batch before draw
-    -
-*/
-
-/*TODO avoid to skip the draw callback:
-    returning from update: DrawState::Skip (to draw DrawState::Draw)
-    or from a function on the app: app.skip_next_draw(); //app.resume_next_draw() to cancel?
-    --
-    This is useful for GUI systems, and mobile devices, to save battery.
-*/
-
 //TODO backend requirements for resvg https://github.com/RazrFalcon/resvg/blob/master/docs/backend_requirements.md
 
 pub struct App {

@@ -9,7 +9,6 @@ edition = "2018"
 [dependencies]
 lyon = "0.15.6"
 log = "0.4.8"
-nalgebra-glm = "0.4.2"
 rand_pcg = "0.2.1"
 rand = {version = "0.7.2", features = ["wasm-bindgen"]}
 lazy_static = "1.4"
