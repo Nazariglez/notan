@@ -372,7 +372,7 @@ impl Graphics {
             let (width, height) = match target {
                 Some(rt) => {
                     let needs_update = match &self.render_target {
-                        Some(current_rt) => current_rt.raw != rt.raw,
+                        Some(current_rt) => current_rt.raw() != rt.raw(),
                         None => true,
                     };
 
@@ -380,8 +380,8 @@ impl Graphics {
                         self.render_target = Some(rt.clone());
                     }
 
-                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, Some(rt.raw));
-                    self.gl.draw_buffer(glow::COLOR_ATTACHMENT0);
+                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, Some(rt.raw()));
+                    // self.gl.draw_buffer(glow::COLOR_ATTACHMENT0);
                     (rt.width(), rt.height())
                 }
                 None => {

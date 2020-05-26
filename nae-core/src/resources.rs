@@ -5,6 +5,7 @@ pub enum TextureFormat {
     Rgba,
     Red,
     R8,
+    Depth,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

@@ -12,8 +12,8 @@ fn main() {
 }
 
 fn init(app: &mut App) -> State {
-    let target1 = RenderTarget::from_size(app, app.width() as _, app.height() as _).unwrap();
-    let target2 = RenderTarget::from_size(app, app.width() as _, app.height() as _).unwrap();
+    let target1 = RenderTarget::from_size(app, app.width() as _, app.height() as _, false).unwrap();
+    let target2 = RenderTarget::from_size(app, app.width() as _, app.height() as _, false).unwrap();
     State {
         target1,
         target2,

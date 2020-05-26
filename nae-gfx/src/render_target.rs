@@ -1,24 +1,45 @@
 use crate::texture::{Texture, TextureOptions};
-use crate::{matrix4_orthogonal, GlContext, Graphics, Matrix4};
+use crate::{matrix4_orthogonal, texture_from_gl_context, GlContext, Graphics, Matrix4};
 use glow::HasContext;
-use nae_core::{BaseApp, BaseSystem};
+use nae_core::{BaseApp, BaseSystem, TextureFilter, TextureFormat};
+use std::rc::Rc;
 
 type FramebufferKey = <glow::Context as HasContext>::Framebuffer;
 
 #[derive(Clone)]
+struct RenderTargetKey {
+    gl: GlContext,
+    raw: FramebufferKey,
+}
+
+impl Drop for RenderTargetKey {
+    fn drop(&mut self) {
+        unsafe {
+            self.gl.delete_framebuffer(self.raw);
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct RenderTarget {
+    depth_texture: Option<Texture>,
     pub texture: Texture,
-    pub(crate) raw: FramebufferKey,
+    raw: Rc<RenderTargetKey>,
 }
 
 impl RenderTarget {
     /// Create a new surface with the default options and custom size
-    pub fn from_size<T, S>(app: &mut T, width: i32, height: i32) -> Result<Self, String>
+    pub fn from_size<T, S>(
+        app: &mut T,
+        width: i32,
+        height: i32,
+        depth: bool,
+    ) -> Result<Self, String>
     where
         T: BaseApp<System = S>,
         S: BaseSystem<Graphics = Graphics>,
     {
-        Self::from(app, width, height, Default::default())
+        Self::from(app, width, height, depth, Default::default())
     }
 
     /// Create a new texture with custom options and size
@@ -26,6 +47,7 @@ impl RenderTarget {
         app: &mut T,
         width: i32,
         height: i32,
+        depth: bool,
         options: TextureOptions,
     ) -> Result<Self, String>
     where
@@ -33,8 +55,19 @@ impl RenderTarget {
         S: BaseSystem<Graphics = Graphics>,
     {
         let texture = Texture::from(app, width, height, options)?;
-        let raw = create_framebuffer(app.system().gfx(), &texture)?;
-        Ok(Self { texture, raw })
+        let (raw, depth_texture) =
+            create_framebuffer(app.system().gfx(), &texture, width, height, depth)?;
+
+        let key = RenderTargetKey {
+            gl: app.system().gfx().gl.clone(),
+            raw,
+        };
+
+        Ok(Self {
+            texture,
+            raw: Rc::new(key),
+            depth_texture,
+        })
     }
 
     /// Returns the width of the inner texture
@@ -46,9 +79,19 @@ impl RenderTarget {
     pub fn height(&self) -> f32 {
         self.texture.height()
     }
+
+    pub(crate) fn raw(&self) -> FramebufferKey {
+        self.raw.raw
+    }
 }
 
-fn create_framebuffer(gfx: &Graphics, texture: &Texture) -> Result<FramebufferKey, String> {
+fn create_framebuffer(
+    gfx: &Graphics,
+    texture: &Texture,
+    width: i32,
+    height: i32,
+    depth: bool,
+) -> Result<(FramebufferKey, Option<Texture>), String> {
     let gl = &gfx.gl;
     unsafe {
         let fb = gl.create_framebuffer()?;
@@ -60,7 +103,33 @@ fn create_framebuffer(gfx: &Graphics, texture: &Texture) -> Result<FramebufferKe
             texture.raw(),
             0,
         );
+
+        let depth_tex = if depth {
+            Some(texture_from_gl_context(
+                gl,
+                width,
+                height,
+                &TextureOptions {
+                    format: TextureFormat::Depth,
+                    internal_format: TextureFormat::Depth,
+                    min_filter: TextureFilter::Linear,
+                    mag_filter: TextureFilter::Linear,
+                },
+            )?)
+        } else {
+            None
+        };
+
+        let status = gl.check_framebuffer_status(glow::FRAMEBUFFER);
+        nae_core::log::info!(
+            "status {:?} {} {}",
+            status == glow::FRAMEBUFFER_COMPLETE,
+            width,
+            height
+        );
+
         gl.bind_framebuffer(glow::FRAMEBUFFER, None);
-        Ok(fb)
+
+        Ok((fb, depth_tex))
     }
 }

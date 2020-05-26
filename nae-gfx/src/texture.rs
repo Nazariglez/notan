@@ -235,6 +235,7 @@ impl GlowValue for TextureFormat {
             Rgba => glow::RGBA,
             Red => glow::RED,
             R8 => glow::R8,
+            Depth => glow::DEPTH_COMPONENT16,
         }
     }
 }
@@ -260,8 +261,10 @@ fn create_texture(
     opts: &TextureOptions,
 ) -> Result<TextureKey, String> {
     unsafe {
+        let depth = TextureFormat::Depth == opts.format;
+
         let texture = gl.create_texture()?;
-        let format = opts.format.glow_value();
+        let mut format = opts.format.glow_value();
         let internal = opts.internal_format.glow_value();
         let min_filter = opts.min_filter.glow_value();
         let mag_filter = opts.mag_filter.glow_value();
@@ -286,6 +289,41 @@ fn create_texture(
 
         gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, mag_filter as _);
         gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, min_filter as _);
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_S,
+            glow::CLAMP_TO_EDGE as _,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_WRAP_T,
+            glow::CLAMP_TO_EDGE as _,
+        );
+
+        let mut typ = glow::UNSIGNED_BYTE;
+        if depth {
+            format = glow::DEPTH_COMPONENT;
+            typ = glow::UNSIGNED_SHORT;
+
+            gl.tex_parameter_i32(
+                glow::TEXTURE_2D,
+                glow::TEXTURE_MAG_FILTER,
+                glow::NEAREST as _,
+            );
+            gl.tex_parameter_i32(
+                glow::TEXTURE_2D,
+                glow::TEXTURE_MIN_FILTER,
+                glow::NEAREST as _,
+            );
+
+            gl.framebuffer_texture_2d(
+                glow::FRAMEBUFFER,
+                glow::DEPTH_ATTACHMENT,
+                glow::TEXTURE_2D,
+                Some(texture),
+                0,
+            );
+        }
 
         gl.tex_image_2d(
             glow::TEXTURE_2D,
@@ -295,7 +333,7 @@ fn create_texture(
             height,
             0,
             format as _,
-            glow::UNSIGNED_BYTE,
+            typ,
             Some(data),
         );
 
@@ -305,6 +343,7 @@ fn create_texture(
     }
 }
 
+//https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D
 fn bytes_per_pixel(format: &TextureFormat, internal_format: &TextureFormat) -> usize {
     use TextureFormat::*;
     match (format, internal_format) {
