@@ -11,7 +11,6 @@ struct State {
 
 #[nae::main]
 fn main() {
-    log::init();
     nae::init_with(init).draw(draw).build().unwrap();
 }
 

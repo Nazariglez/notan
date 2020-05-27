@@ -92,6 +92,14 @@ fn create_framebuffer(
     height: i32,
     depth: bool,
 ) -> Result<(FramebufferKey, Option<Texture>), String> {
+    // TODO depth texture doesn't works with wasm32
+    // TODO check to repreoduce it with a simple glow example
+    let depth = if cfg!(target_arch = "wasm32") {
+        false
+    } else {
+        depth
+    };
+
     let gl = &gfx.gl;
     unsafe {
         let fb = gl.create_framebuffer()?;
@@ -121,15 +129,11 @@ fn create_framebuffer(
         };
 
         let status = gl.check_framebuffer_status(glow::FRAMEBUFFER);
-        nae_core::log::info!(
-            "status {:?} {} {}",
-            status == glow::FRAMEBUFFER_COMPLETE,
-            width,
-            height
-        );
+        if status != glow::FRAMEBUFFER_COMPLETE {
+            return Err(String::from("Framebuffer incomplete..."));
+        }
 
         gl.bind_framebuffer(glow::FRAMEBUFFER, None);
-
         Ok((fb, depth_tex))
     }
 }
