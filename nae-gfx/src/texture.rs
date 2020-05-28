@@ -252,7 +252,7 @@ impl GlowValue for TextureFilter {
     }
 }
 
-fn create_texture(
+pub(crate) fn create_texture(
     gl: &GlContext,
     width: i32,
     height: i32,
@@ -300,10 +300,12 @@ fn create_texture(
             glow::CLAMP_TO_EDGE as _,
         );
 
+        let mut data = Some(data);
         let mut typ = glow::UNSIGNED_BYTE;
         if depth {
             format = glow::DEPTH_COMPONENT;
             typ = glow::UNSIGNED_SHORT;
+            data = None;
 
             gl.tex_parameter_i32(
                 glow::TEXTURE_2D,
@@ -334,7 +336,7 @@ fn create_texture(
             0,
             format as _,
             typ,
-            Some(data),
+            data,
         );
 
         //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);

@@ -1,20 +1,28 @@
 use crate::texture::{Texture, TextureOptions};
-use crate::{matrix4_orthogonal, texture_from_gl_context, GlContext, Graphics, Matrix4};
+use crate::{
+    create_texture, matrix4_orthogonal, texture_from_gl_context, GlContext, Graphics, Matrix4,
+};
 use glow::HasContext;
 use nae_core::{BaseApp, BaseSystem, TextureFilter, TextureFormat};
 use std::rc::Rc;
 
 type FramebufferKey = <glow::Context as HasContext>::Framebuffer;
+type TextureKey = <glow::Context as HasContext>::Texture;
 
 #[derive(Clone)]
 struct RenderTargetKey {
     gl: GlContext,
     raw: FramebufferKey,
+    depth_tex: Option<TextureKey>,
 }
 
 impl Drop for RenderTargetKey {
     fn drop(&mut self) {
         unsafe {
+            if let Some(depth_tex) = self.depth_tex.take() {
+                self.gl.delete_texture(depth_tex);
+            }
+
             self.gl.delete_framebuffer(self.raw);
         }
     }
@@ -22,7 +30,6 @@ impl Drop for RenderTargetKey {
 
 #[derive(Clone)]
 pub struct RenderTarget {
-    depth_texture: Option<Texture>,
     pub texture: Texture,
     raw: Rc<RenderTargetKey>,
 }
@@ -55,18 +62,18 @@ impl RenderTarget {
         S: BaseSystem<Graphics = Graphics>,
     {
         let texture = Texture::from(app, width, height, options)?;
-        let (raw, depth_texture) =
+        let (raw, depth_tex) =
             create_framebuffer(app.system().gfx(), &texture, width, height, depth)?;
 
         let key = RenderTargetKey {
             gl: app.system().gfx().gl.clone(),
             raw,
+            depth_tex,
         };
 
         Ok(Self {
             texture,
             raw: Rc::new(key),
-            depth_texture,
         })
     }
 
@@ -91,15 +98,7 @@ fn create_framebuffer(
     width: i32,
     height: i32,
     depth: bool,
-) -> Result<(FramebufferKey, Option<Texture>), String> {
-    // TODO depth texture doesn't works with wasm32
-    // TODO check to repreoduce it with a simple glow example
-    let depth = if cfg!(target_arch = "wasm32") {
-        false
-    } else {
-        depth
-    };
-
+) -> Result<(FramebufferKey, Option<TextureKey>), String> {
     let gl = &gfx.gl;
     unsafe {
         let fb = gl.create_framebuffer()?;
@@ -113,10 +112,12 @@ fn create_framebuffer(
         );
 
         let depth_tex = if depth {
-            Some(texture_from_gl_context(
+            Some(create_texture(
                 gl,
                 width,
                 height,
+                &[],
+                4,
                 &TextureOptions {
                     format: TextureFormat::Depth,
                     internal_format: TextureFormat::Depth,
