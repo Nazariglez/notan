@@ -108,6 +108,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[cfg(target_arch = "wasm32")]
     use wasm_bindgen_test::*;
 
     #[test]

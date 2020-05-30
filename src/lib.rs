@@ -3,6 +3,7 @@ mod input;
 pub mod m2d;
 mod random;
 mod res;
+pub mod tween;
 
 pub use nae_derive::main;
 
@@ -25,6 +26,7 @@ pub mod prelude {
     pub use super::m2d;
     pub use super::random::*;
     pub use super::res::*;
+    pub use super::tween;
     pub use backend::*;
     pub use nae_core::*;
 }
