@@ -463,7 +463,7 @@ fn index(x: i32, y: i32) -> usize {
 
 fn create_texture(app: &mut App) -> Texture {
     let tile_size = TILE_SIZE as f32;
-    let target = RenderTarget::from_size(app, TILE_SIZE, TILE_SIZE).unwrap();
+    let target = RenderTarget::from_size(app, TILE_SIZE, TILE_SIZE, false).unwrap();
 
     let draw = app.draw();
     draw.begin_to(&target, Color::TRANSPARENT);
