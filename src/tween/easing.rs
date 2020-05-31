@@ -17,7 +17,7 @@ pub fn interpolate_with(
     from + ((to - from) * easing(elapsed_time / total_time))
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum Easing {
     Linear,
     InQuad,
