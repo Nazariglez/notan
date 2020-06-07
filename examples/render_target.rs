@@ -32,11 +32,11 @@ fn draw(app: &mut App, state: &mut State) {
 
     let draw = app.draw();
 
+    // Set the target texture where we're going to draw
+    draw.gfx.set_render_target(Some(&state.target2));
+
     // Draw target1 and some primitives to target2
-    draw.begin_to(
-        &state.target2,
-        Color::new((0.0 + state.count) % 1.0, 0.0, 0.0, 1.0),
-    );
+    draw.begin(Color::new((0.0 + state.count) % 1.0, 0.0, 0.0, 1.0));
     draw.color = Color::WHITE;
     draw.image_resized(
         &state.target1.texture,
@@ -51,6 +51,9 @@ fn draw(app: &mut App, state: &mut State) {
     draw.color = Color::PINK;
     draw.stroke_circle(half_w + x, half_h + y, 25.0, 10.0);
     draw.end();
+
+    // Remove the render target to draw to the screen
+    draw.gfx.set_render_target(None);
 
     // Draw target to the screen
     draw.begin(Color::new(0.1, 0.2, 0.3, 1.0));

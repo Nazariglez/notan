@@ -42,9 +42,12 @@ fn draw(app: &mut App, state: &mut State) {
     let mut gfx = app.gfx();
 
     // Render the colored cube to a RenderTarget
-    gfx.begin_to(Some(&state.render_target), &state.clear_target);
+    gfx.set_render_target(Some(&state.render_target));
+    gfx.begin(&state.clear_target);
     state.colored_cube.draw(gfx);
     gfx.end();
+
+    gfx.set_render_target(None);
 
     // Draw the RenderTarget to the TexturedCube
     gfx.begin(&state.clear);
