@@ -363,38 +363,6 @@ impl Graphics {
         self.last_pass_draw_calls
     }
 
-    pub fn begin_to(&mut self, target: Option<&RenderTarget>, opts: &ClearOptions) {
-        debug_assert!(!self.running, "Graphics pass already running.");
-
-        self.running = true;
-
-        unsafe {
-            let (width, height) = match target {
-                Some(rt) => {
-                    let needs_update = match &self.render_target {
-                        Some(current_rt) => current_rt.raw() != rt.raw(),
-                        None => true,
-                    };
-
-                    if needs_update {
-                        self.render_target = Some(rt.clone());
-                    }
-
-                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, Some(rt.raw()));
-                    // self.gl.draw_buffer(glow::COLOR_ATTACHMENT0);
-                    (rt.width(), rt.height())
-                }
-                None => {
-                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
-                    (self.width, self.height)
-                }
-            };
-
-            self.viewport(0.0, 0.0, width, height);
-            self.clear(opts);
-        }
-    }
-
     pub fn clear(&mut self, opts: &ClearOptions) {
         let mut mask = 0;
         unsafe {
@@ -418,6 +386,22 @@ impl Graphics {
             }
 
             self.gl.clear(mask);
+        }
+    }
+
+    pub fn set_render_target(&mut self, target: Option<&RenderTarget>) {
+        debug_assert!(
+            !self.running,
+            "Graphics should no be running to set a render target"
+        );
+        let needs_update = match (target, &self.render_target) {
+            (Some(rt), Some(current_rt)) => current_rt.raw() != rt.raw(),
+            (Some(_), None) | (None, Some(_)) => true,
+            _ => false,
+        };
+
+        if needs_update {
+            self.render_target = target.cloned();
         }
     }
 }
@@ -448,7 +432,26 @@ impl BaseGfx for Graphics {
     }
 
     fn begin(&mut self, opts: &ClearOptions) {
-        self.begin_to(None, opts);
+        debug_assert!(!self.running, "Graphics pass already running.");
+
+        self.running = true;
+
+        unsafe {
+            let (width, height) = match &self.render_target {
+                Some(rt) => {
+                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, Some(rt.raw()));
+                    // self.gl.draw_buffer(glow::COLOR_ATTACHMENT0);
+                    (rt.width(), rt.height())
+                }
+                None => {
+                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+                    (self.width, self.height)
+                }
+            };
+
+            self.viewport(0.0, 0.0, width, height);
+            self.clear(opts);
+        }
     }
 
     fn bind_texture(&mut self, location: &Self::Location, tex: &texture::Texture) {

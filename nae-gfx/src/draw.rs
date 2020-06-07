@@ -187,19 +187,15 @@ impl Draw {
     }
 
     pub fn begin(&mut self, color: Color) {
-        if self.gfx.render_target.is_some() {
-            self.render_projection = projection(self.gfx.width, self.gfx.height, false, self.dpi);
-        }
+        let projection = match &self.gfx.render_target {
+            Some(rt) => projection(rt.width(), rt.height(), true, 1.0),
+            None => projection(self.gfx.width, self.gfx.height, false, self.dpi),
+        };
+
+        self.render_projection = projection;
 
         self.clear_options.color = Some(color);
         self.gfx.begin(&self.clear_options);
-    }
-
-    pub fn begin_to(&mut self, target: &RenderTarget, color: Color) {
-        self.render_projection = projection(target.width(), target.height(), true, 1.0);
-
-        self.clear_options.color = Some(color);
-        self.gfx.begin_to(Some(target), &self.clear_options);
     }
 
     pub fn end(&mut self) {
