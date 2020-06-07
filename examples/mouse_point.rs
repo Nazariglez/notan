@@ -1,7 +1,5 @@
 use m2d::point;
-use nae::prelude::*;
-
-const DEG_TO_RAD:f32 = std::f32::consts::PI / 180.0;
+use nae::prelude::{math::DEG_TO_RAD, *};
 
 #[nae::main]
 fn main() {
