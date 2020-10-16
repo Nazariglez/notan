@@ -40,7 +40,7 @@ fn draw(app: &mut App, _: &mut ()) {
 }
 
 ```
-![Triangle](./assets/triangle.png)
+![Triangle](assetsriangle.png)
 
 **More examples**
 - [Triangle](https://github.com/Nazariglez/nae/blob/master/examples/triangle.rs)

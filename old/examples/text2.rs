@@ -1,6 +1,6 @@
 use nae::prelude::*;
 
-const TEXT: &'static str = include_str!("./assets/loremipsum.txt");
+const TEXT: &'static str = include_str!("assets/loremipsum.txt");
 
 #[nae::main]
 fn main() {
