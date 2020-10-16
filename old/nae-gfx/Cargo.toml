@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 glow = "0.4"
 glyph_brush = "0.6.3"
-nae-core = { path="../nae-core" }
+nae-core = { path= "../nae-core" }
 spirv_cross = { version = "0.17.1", features = ["glsl"] }
 image = "0.23.0"
 hashbrown = "0.7"

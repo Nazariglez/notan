@@ -17,14 +17,14 @@ fn main() {
 }
 
 fn init(app: &mut App) -> State {
-    let texture = Texture::from_bytes(app, include_bytes!("./assets/ferris.png")).unwrap();
+    let texture = Texture::from_bytes(app, include_bytes!("assets/ferris.png")).unwrap();
 
     let mut gfx = app.gfx();
 
     let pipeline = Pipeline::new(
         &gfx,
-        include_bytes!("./assets/shaders/image.vert.spv"),
-        include_bytes!("./assets/shaders/image.frag.spv"),
+        include_bytes!("assets/shaders/image.vert.spv"),
+        include_bytes!("assets/shaders/image.frag.spv"),
         &[
             VertexAttr::new(0, VertexFormat::Float3),
             VertexAttr::new(1, VertexFormat::Float2),

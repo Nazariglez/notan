@@ -31,15 +31,15 @@ fn draw(app: &mut App, state: &mut State) {
 // Create an animation using textures as frames
 fn create_animation(app: &mut App) -> Result<Animation, String> {
     let frames = vec![
-        Texture::from_bytes(app, include_bytes!("./assets/pixelExplosion00.png"))?,
-        Texture::from_bytes(app, include_bytes!("./assets/pixelExplosion01.png"))?,
-        Texture::from_bytes(app, include_bytes!("./assets/pixelExplosion02.png"))?,
-        Texture::from_bytes(app, include_bytes!("./assets/pixelExplosion03.png"))?,
-        Texture::from_bytes(app, include_bytes!("./assets/pixelExplosion04.png"))?,
-        Texture::from_bytes(app, include_bytes!("./assets/pixelExplosion05.png"))?,
-        Texture::from_bytes(app, include_bytes!("./assets/pixelExplosion06.png"))?,
-        Texture::from_bytes(app, include_bytes!("./assets/pixelExplosion07.png"))?,
-        Texture::from_bytes(app, include_bytes!("./assets/pixelExplosion08.png"))?,
+        Texture::from_bytes(app, include_bytes!("assets/pixelExplosion00.png"))?,
+        Texture::from_bytes(app, include_bytes!("assets/pixelExplosion01.png"))?,
+        Texture::from_bytes(app, include_bytes!("assets/pixelExplosion02.png"))?,
+        Texture::from_bytes(app, include_bytes!("assets/pixelExplosion03.png"))?,
+        Texture::from_bytes(app, include_bytes!("assets/pixelExplosion04.png"))?,
+        Texture::from_bytes(app, include_bytes!("assets/pixelExplosion05.png"))?,
+        Texture::from_bytes(app, include_bytes!("assets/pixelExplosion06.png"))?,
+        Texture::from_bytes(app, include_bytes!("assets/pixelExplosion07.png"))?,
+        Texture::from_bytes(app, include_bytes!("assets/pixelExplosion08.png"))?,
     ];
 
     Ok(Animation::new(frames, 0.1))

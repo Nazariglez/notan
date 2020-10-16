@@ -134,7 +134,7 @@ struct State {
 
 impl State {
     fn new(app: &mut App) -> Self {
-        let golem = Texture::from_bytes(app, include_bytes!("./assets/golem-walk.png")).unwrap();
+        let golem = Texture::from_bytes(app, include_bytes!("assets/golem-walk.png")).unwrap();
         let font = Font::from_bytes(app, include_bytes!("assets/Ubuntu-B.ttf")).unwrap();
 
         Self {
