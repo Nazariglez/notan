@@ -1,30 +1,59 @@
-pub trait Backend /*: Send + Sync*/ {
-    fn hello(&self) {
-        println!("ok");
-    }
-    fn runner<B: Backend, S, R: FnMut(&mut App<B>, &mut S)>(
-        &mut self,
-    ) -> Box<Fn(App<B>, S, R) -> Result<(), String>>;
-}
+mod backend;
+pub use backend::{Backend, InitializeFn};
 
 type BuildCallback<B: Backend, S> = fn(&mut App<B>, &mut S);
 
-pub struct EmptyBackend;
+#[derive(Default)]
+pub struct EmptyBackend {
+    size: (i32, i32),
+    is_fullscreen: bool,
+    exit_requested: bool,
+}
 
 impl Backend for EmptyBackend {
-    fn runner<B: Backend, S, R: FnMut(&mut App<B>, &mut S)>(
-        &mut self,
-    ) -> Box<Fn(App<B>, S, R) -> Result<(), String>> {
-        Box::new(|mut app: App<B>, mut state: S, mut cb: R| {
+    type Impl = EmptyBackend;
+
+    fn get_impl(&mut self) -> &mut Self::Impl {
+        self
+    }
+
+    fn initialize<B, S, R>(&mut self) -> Result<Box<InitializeFn<B, S, R>>, String>
+    where
+        B: Backend<Impl = Self::Impl> + 'static,
+        S: 'static,
+        R: FnMut(&mut App<B>, &mut S) + 'static,
+    {
+        Ok(Box::new(|mut app: App<B>, mut state: S, mut cb: R| {
             loop {
                 cb(&mut app, &mut state);
 
-                if app.exit_was_requested() {
+                let backend = app.backend.get_impl();
+                if backend.exit_requested {
                     break;
                 }
             }
             Ok(())
-        })
+        }))
+    }
+
+    fn set_size(&mut self, width: i32, height: i32) {
+        self.size = (width, height);
+    }
+
+    fn size(&self) -> (i32, i32) {
+        self.size
+    }
+
+    fn set_fullscreen(&mut self, enabled: bool) {
+        self.is_fullscreen = enabled;
+    }
+
+    fn is_fullscreen(&self) -> bool {
+        self.is_fullscreen
+    }
+
+    fn exit(&mut self) {
+        self.exit_requested = true;
     }
 }
 
@@ -57,7 +86,8 @@ where
 
 impl<S, B> AppBuilder<S, B>
 where
-    B: Backend,
+    B: Backend + 'static,
+    S: 'static,
 {
     pub fn set_config(mut self, config: &AppConfig<B, S>) -> Self {
         config.apply(&mut self);
@@ -86,14 +116,14 @@ where
             ..
         } = self;
 
-        let runner = backend.runner();
+        let initialize = backend.initialize()?;
         let mut app = App::new(backend);
 
         if let Some(cb) = init_callback {
             cb(&mut app, &mut state);
         }
 
-        runner(app, state, move |mut app, mut state| {
+        initialize(app, state, move |mut app, mut state| {
             app.tick();
 
             if let Some(cb) = event_callback {
@@ -116,31 +146,32 @@ where
 
 pub struct App<B: Backend> {
     pub backend: B,
-    request_exit: bool,
 }
 
 impl<B: Backend> App<B> {
     fn new(backend: B) -> Self {
         Self {
-            request_exit: false,
             backend,
         }
-    }
-
-    pub fn hello(&self) {
-        self.backend.hello();
     }
 
     pub fn tick(&mut self) {
         //TODO
     }
 
+    #[inline]
     pub fn exit(&mut self) {
-        self.request_exit = true;
+        self.backend.exit();
     }
 
-    pub fn exit_was_requested(&self) -> bool {
-        self.request_exit
+    #[inline]
+    pub fn set_size(&mut self, width: i32, height: i32) {
+        self.backend.set_size(width, height);
+    }
+
+    #[inline]
+    pub fn size(&mut self) -> (i32, i32) {
+        self.backend.size()
     }
 }
 
@@ -148,11 +179,11 @@ pub struct Notan;
 
 impl Notan {
     pub fn init() -> AppBuilder<(), EmptyBackend> {
-        Self::init_with_backend((), EmptyBackend {})
+        Self::init_with(())
     }
 
     pub fn init_with<S>(state: S) -> AppBuilder<S, EmptyBackend> {
-        Self::init_with_backend(state, EmptyBackend {})
+        Self::init_with_backend(state, Default::default())
     }
 
     pub fn init_with_backend<S, T: Backend>(state: S, backend: T) -> AppBuilder<S, T> {
