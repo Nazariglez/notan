@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 notan_app = { path = "../notan_app" }
 winit = "0.23"
+crossbeam-channel = "0.5"
