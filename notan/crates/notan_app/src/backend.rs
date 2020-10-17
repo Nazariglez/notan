@@ -1,11 +1,12 @@
 use crate::App;
 
 /// Closure returned from the backend's initilize method
-pub type InitializeFn<B, S, R> = Fn(App<B>, S, R) -> Result<(), String>;
+pub type InitializeFn<B, S, R> = dyn Fn(App<B>, S, R) -> Result<(), String>;
 
 /// Represents the backend implementation
 pub trait Backend: Send + Sync {
     type Impl: Backend;
+    type Window: WindowBackend;
 
     /// Returns the backend forcing the implementation type.
     /// Useful for have access inside the runner callback to the private fields from itself.
@@ -18,6 +19,15 @@ pub trait Backend: Send + Sync {
             S: 'static,
             R: FnMut(&mut App<B>, &mut S) + 'static;
 
+    /// Retutns the window implementation
+    fn window(&mut self) -> &mut Self::Window;
+
+    /// Closes the application
+    fn exit(&mut self);
+}
+
+/// Represents a window
+pub trait WindowBackend: Send + Sync {
     /// Sets the window's size
     fn set_size(&mut self, width: i32, height: i32);
 
@@ -29,7 +39,4 @@ pub trait Backend: Send + Sync {
 
     /// Returns true if the window is in fullscreen mode
     fn is_fullscreen(&self) -> bool;
-
-    /// Closes the application
-    fn exit(&mut self);
 }

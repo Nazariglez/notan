@@ -8,6 +8,12 @@ edition = "2018"
 
 [dependencies]
 notan_app = { path = "./crates/notan_app" }
+notan_derive = { path = "./crates/notan_derive" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+notan_web = { path = "./crates/notan_web" }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 notan_winit = { path = "./crates/notan_winit" }
 
 [workspace]
