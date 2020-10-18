@@ -1,59 +1,31 @@
+use crate::messages::*;
+use crate::window::DesktopWindowBackend;
+use crossbeam_channel::{Receiver, Sender};
 use notan_app::{App, Backend, InitializeFn, WindowBackend};
+use winit::dpi::LogicalSize;
+use winit::event::DeviceEvent::Button;
+use winit::event::Event::DeviceEvent;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
-use winit::window::{Window, WindowBuilder, Fullscreen};
-use crossbeam_channel::{Sender, Receiver};
 use winit::platform::macos::WindowExtMacOS;
-use winit::event::Event::DeviceEvent;
-use winit::event::DeviceEvent::Button;
-use winit::dpi::LogicalSize;
+use winit::window::{Fullscreen, Window, WindowBuilder};
 
-pub struct WinitWindowBackend {
-    sender: Sender<BackendMessages>,
-    receiver: Receiver<BackendMessages>,
-    is_fullscreen: bool,
-    size: (i32, i32),
-}
-
-impl WindowBackend for WinitWindowBackend {
-    fn set_size(&mut self, width: i32, height: i32) {
-        if self.sender.send(BackendMessages::Size { width, height }).is_ok() {
-            self.size = (width, height);
-        }
-    }
-
-    fn size(&self) -> (i32, i32) {
-        self.size
-    }
-
-    fn set_fullscreen(&mut self, enabled: bool) {
-        if self.sender.send(BackendMessages::FullscreenMode(enabled)).is_ok() {
-            self.is_fullscreen = enabled;
-        }
-    }
-
-    fn is_fullscreen(&self) -> bool {
-        self.is_fullscreen
-    }
-
-}
-
-pub struct WinitBackend {
+pub struct DesktopBackend {
     sender: Sender<BackendMessages>,
     exit_requested: bool,
-    window: WinitWindowBackend,
+    window: DesktopWindowBackend,
 }
 
-impl WinitBackend {
+impl DesktopBackend {
     pub fn new() -> Result<Self, String> {
         let (sender, receiver) = crossbeam_channel::unbounded();
         let size = (800, 600);
 
-        let window = WinitWindowBackend {
+        let window = DesktopWindowBackend {
             sender: sender.clone(),
             receiver,
             is_fullscreen: false,
-            size
+            size,
         };
 
         Ok(Self {
@@ -65,15 +37,9 @@ impl WinitBackend {
     }
 }
 
-enum BackendMessages {
-    FullscreenMode(bool),
-    Size { width: i32, height: i32 },
-    Exit,
-}
-
-impl Backend for WinitBackend {
-    type Impl = WinitBackend;
-    type Window = WinitWindowBackend;
+impl Backend for DesktopBackend {
+    type Impl = DesktopBackend;
+    type Window = DesktopWindowBackend;
 
     fn get_impl(&mut self) -> &mut Self::Impl {
         self
@@ -85,14 +51,14 @@ impl Backend for WinitBackend {
         S: 'static,
         R: FnMut(&mut App<B>, &mut S) + 'static,
     {
-
         Ok(Box::new(move |mut app: App<B>, mut state: S, mut cb: R| {
             let event_loop = EventLoop::new();
 
             let window = WindowBuilder::new()
                 .with_title("yeah")
                 .build(&event_loop)
-                .map_err(|e| format!("{:?}", e)).unwrap();
+                .map_err(|e| format!("{:?}", e))
+                .unwrap();
 
             let backend = app.backend.get_impl();
             let receiver = backend.window.receiver.clone();
@@ -141,14 +107,14 @@ impl Backend for WinitBackend {
                             let (width, height) = backend.window.size();
                             if button == 0 {
                                 backend.window.set_size(width + 10, height + 10);
-                                //app.backend.get_impl().set_fullscreen(true);
+                            //app.backend.get_impl().set_fullscreen(true);
                             } else {
                                 backend.window.set_size(width - 10, height - 10);
                                 //app.backend.get_impl().set_fullscreen(false);
                             }
                         }
                         _ => {}
-                    }
+                    },
                     _ => {}
                 }
 

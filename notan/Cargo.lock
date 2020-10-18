@@ -603,9 +603,8 @@ name = "notan"
 version = "0.1.0"
 dependencies = [
  "notan_app",
+ "notan_default_backend",
  "notan_derive",
- "notan_web",
- "notan_winit",
 ]
 
 [[package]]
@@ -613,11 +612,28 @@ name = "notan_app"
 version = "0.1.0"
 
 [[package]]
+name = "notan_default_backend"
+version = "0.1.0"
+dependencies = [
+ "notan_desktop",
+ "notan_web",
+]
+
+[[package]]
 name = "notan_derive"
 version = "0.1.0"
 dependencies = [
  "quote 0.6.13",
  "syn 0.15.44",
+]
+
+[[package]]
+name = "notan_desktop"
+version = "0.1.0"
+dependencies = [
+ "crossbeam-channel",
+ "notan_app",
+ "winit",
 ]
 
 [[package]]
@@ -630,15 +646,6 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
-]
-
-[[package]]
-name = "notan_winit"
-version = "0.1.0"
-dependencies = [
- "crossbeam-channel",
- "notan_app",
- "winit",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-use crate::{Backend, InitializeFn, App, WindowBackend};
+use crate::{App, Backend, InitializeFn, WindowBackend};
 
 #[derive(Default)]
 pub struct EmptyWindowBackend {
@@ -30,6 +30,12 @@ pub struct EmptyBackend {
     window: EmptyWindowBackend,
 }
 
+impl EmptyBackend {
+    pub fn new() -> Result<Self, String> {
+        Ok(Default::default())
+    }
+}
+
 impl Backend for EmptyBackend {
     type Impl = EmptyBackend;
     type Window = EmptyWindowBackend;
@@ -39,20 +45,14 @@ impl Backend for EmptyBackend {
     }
 
     fn initialize<B, S, R>(&mut self) -> Result<Box<InitializeFn<B, S, R>>, String>
-        where
-            B: Backend<Impl = Self::Impl> + 'static,
-            S: 'static,
-            R: FnMut(&mut App<B>, &mut S) + 'static,
+    where
+        B: Backend<Impl = Self::Impl> + 'static,
+        S: 'static,
+        R: FnMut(&mut App<B>, &mut S) + 'static,
     {
         Ok(Box::new(|mut app: App<B>, mut state: S, mut cb: R| {
-            loop {
-                cb(&mut app, &mut state);
-
-                let backend = app.backend.get_impl();
-                if backend.exit_requested {
-                    break;
-                }
-            }
+            // This function should block with a loop or raf in the platform specific backends
+            cb(&mut app, &mut state);
             Ok(())
         }))
     }
