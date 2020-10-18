@@ -14,10 +14,10 @@ pub trait Backend: Send + Sync {
 
     /// Returns a closure where the backend is initialized and the application loops is managed
     fn initialize<B, S, R>(&mut self) -> Result<Box<InitializeFn<B, S, R>>, String>
-        where
-            B: Backend<Impl = Self::Impl> + 'static,
-            S: 'static,
-            R: FnMut(&mut App<B>, &mut S) + 'static;
+    where
+        B: Backend<Impl = Self::Impl> + 'static,
+        S: 'static,
+        R: FnMut(&mut App<B>, &mut S) + 'static;
 
     /// Retutns the window implementation
     fn window(&mut self) -> &mut Self::Window;
