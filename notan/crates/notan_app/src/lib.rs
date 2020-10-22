@@ -5,8 +5,12 @@ mod app;
 mod backend;
 mod builder;
 
+mod events;
+pub mod mouse;
+
 pub use app::*;
 pub use backend::*;
+pub use events::*;
 
 pub use builder::*;
 

@@ -1,4 +1,4 @@
-use crate::{App, Backend, InitializeFn, WindowBackend};
+use crate::{App, Backend, EventIterator, InitializeFn, WindowBackend};
 
 #[derive(Default)]
 pub struct EmptyWindowBackend {
@@ -59,6 +59,10 @@ impl Backend for EmptyBackend {
 
     fn window(&mut self) -> &mut Self::Window {
         &mut self.window
+    }
+
+    fn events_iter(&mut self) -> EventIterator {
+        Default::default()
     }
 
     fn exit(&mut self) {
