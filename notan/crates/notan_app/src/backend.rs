@@ -1,6 +1,6 @@
-use crate::App;
+use crate::{App, EventIterator};
 
-/// Closure returned from the backend's initilize method
+/// Closure returned from the backend's initialize method
 pub type InitializeFn<B, S, R> = dyn Fn(App<B>, S, R) -> Result<(), String>;
 
 /// Represents the backend implementation
@@ -19,8 +19,11 @@ pub trait Backend: Send + Sync {
         S: 'static,
         R: FnMut(&mut App<B>, &mut S) + 'static;
 
-    /// Retutns the window implementation
+    /// Returns the window implementation
     fn window(&mut self) -> &mut Self::Window;
+
+    /// Returns an iterator that contains the backend events
+    fn events_iter(&mut self) -> EventIterator;
 
     /// Closes the application
     fn exit(&mut self);

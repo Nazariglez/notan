@@ -68,9 +68,13 @@ where
         initialize(app, state, move |mut app, mut state| {
             app.tick();
 
-            if let Some(cb) = event_callback {
-                cb(&mut app, &mut state);
-            }
+            app.backend.events_iter().for_each(|evt| {
+                app.mouse.process_events(&evt, app.delta);
+
+                if let Some(cb) = event_callback {
+                    cb(&mut app, &mut state);
+                }
+            });
 
             if let Some(cb) = update_callback {
                 cb(&mut app, &mut state);
@@ -80,6 +84,8 @@ where
             if let Some(cb) = draw_callback {
                 cb(&mut app, &mut state);
             }
+
+            app.mouse.clear();
         })?;
 
         Ok(())

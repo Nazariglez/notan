@@ -1,12 +1,20 @@
+use crate::mouse::Mouse;
 use crate::{Backend, WindowBackend};
 
 pub struct App<B: Backend> {
     pub backend: B,
+    pub mouse: Mouse,
+    pub delta: f32,
 }
 
 impl<B: Backend> App<B> {
     pub(crate) fn new(backend: B) -> Self {
-        Self { backend }
+        let mouse = Default::default();
+        Self {
+            backend,
+            mouse,
+            delta: 0.0,
+        }
     }
 
     pub fn tick(&mut self) {
