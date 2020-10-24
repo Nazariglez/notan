@@ -1,4 +1,4 @@
-use crate::mouse::{enable_mouse, MouseContext};
+use crate::mouse::{enable_mouse, MouseCallbacks};
 use crate::utils::{canvas_add_event_listener, get_or_create_canvas, window_add_event_listener};
 use notan_app::{Event, EventIterator, WindowBackend};
 use notan_log as log;
@@ -26,7 +26,7 @@ pub struct WebWindowBackend {
 
     context_menu_callback_ref: Closure<FnMut(WebEvent)>,
 
-    pub(crate) mouse_context: MouseContext,
+    pub(crate) mouse_callbacks: MouseCallbacks,
 }
 
 impl WebWindowBackend {
@@ -55,14 +55,14 @@ impl WebWindowBackend {
         let max_size = None; //From options
         let resize_callback_ref = None;
 
-        let mouse_context = Default::default();
+        let mouse_callbacks: MouseCallbacks = Default::default();
 
         Ok(Self {
             window,
             document,
             canvas,
             canvas_parent,
-            mouse_context,
+            mouse_callbacks,
             fullscreen_requested,
             fullscreen_last_size,
             fullscreen_callback_ref,
@@ -81,7 +81,7 @@ impl WebWindowBackend {
         enable_keyboard(self, fullscreen_dispatcher.clone())?;
 
         //if is_resizable {
-        enable_resize(self, fullscreen_dispatcher.clone())?;
+        enable_resize(self)?;
         // }
 
         enable_fullscreen(self)?;
@@ -176,7 +176,6 @@ fn enable_keyboard(
 
 fn enable_resize(
     win: &mut WebWindowBackend,
-    fullscreen_dispatcher: Rc<RefCell<dyn Fn()>>,
 ) -> Result<(), String> {
     let events = win.events.clone();
     let canvas = win.canvas.clone();
@@ -184,7 +183,6 @@ fn enable_resize(
     let min_size = win.min_size.clone();
     let max_size = win.max_size.clone();
     win.resize_callback_ref = Some(window_add_event_listener("resize", move |e: WebEvent| {
-        (*fullscreen_dispatcher.borrow())();
         let mut p_width = parent.client_width();
         let mut p_height = parent.client_height();
 
