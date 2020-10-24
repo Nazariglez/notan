@@ -6,6 +6,7 @@ mod backend;
 mod builder;
 
 mod events;
+pub mod keyboard;
 pub mod mouse;
 
 pub use app::*;

@@ -1,4 +1,6 @@
-use crate::utils::{canvas_add_event_listener, canvas_position_from_global};
+use crate::utils::{
+    canvas_add_event_listener, canvas_position_from_global, window_add_event_listener,
+};
 use crate::window::WebWindowBackend;
 use notan_app::mouse::MouseButton;
 use notan_app::Event;
@@ -60,8 +62,7 @@ pub fn enable_mouse(
     let events = win.events.clone();
     let canvas = win.canvas.clone();
     let fullscreen = fullscreen_dispatcher.clone();
-    callbacks.on_up = Some(canvas_add_event_listener(
-        &canvas.clone(),
+    callbacks.on_up = Some(window_add_event_listener(
         "mouseup",
         move |e: MouseEvent| {
             (*fullscreen.borrow())();

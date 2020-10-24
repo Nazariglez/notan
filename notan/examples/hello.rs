@@ -17,13 +17,19 @@ fn init<B: Backend, S>(app: &mut App<B>, state: &mut S) {
 }
 
 fn update<B: Backend>(app: &mut App<B>, state: &mut i32) {
-    *state += 1;
-    // let (width, height) = app.window().size();
-    // if width < 1200 {
-    //     app.window().set_size(width + 1, height);
+    // *state += 1;
+    // // let (width, height) = app.window().size();
+    // // if width < 1200 {
+    // //     app.window().set_size(width + 1, height);
+    // // }
+    // if *state == 60 {
+    //     log::info!("here!");
+    //     app.window().set_fullscreen(true);
     // }
-    if *state == 60 {
-        log::info!("here!");
-        app.window().set_fullscreen(true);
-    }
+    // log::info!("{{x: {},y: {}}}", app.mouse.x, app.mouse.y);
+    log::info!(
+        "space was pressed {:?}",
+        app.keyboard
+            .was_pressed(notan::app::keyboard::KeyCode::Space)
+    );
 }

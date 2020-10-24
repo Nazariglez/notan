@@ -1,3 +1,4 @@
+use crate::keyboard::{enable_keyboard, KeyboardCallbacks};
 use crate::mouse::{enable_mouse, MouseCallbacks};
 use crate::utils::{canvas_add_event_listener, get_or_create_canvas, window_add_event_listener};
 use notan_app::{Event, EventIterator, WindowBackend};
@@ -27,6 +28,7 @@ pub struct WebWindowBackend {
     context_menu_callback_ref: Closure<FnMut(WebEvent)>,
 
     pub(crate) mouse_callbacks: MouseCallbacks,
+    pub(crate) keyboard_callbacks: KeyboardCallbacks,
 }
 
 impl WebWindowBackend {
@@ -55,7 +57,8 @@ impl WebWindowBackend {
         let max_size = None; //From options
         let resize_callback_ref = None;
 
-        let mouse_callbacks: MouseCallbacks = Default::default();
+        let mouse_callbacks = Default::default();
+        let keyboard_callbacks = Default::default();
 
         Ok(Self {
             window,
@@ -63,6 +66,7 @@ impl WebWindowBackend {
             canvas,
             canvas_parent,
             mouse_callbacks,
+            keyboard_callbacks,
             fullscreen_requested,
             fullscreen_last_size,
             fullscreen_callback_ref,
@@ -167,16 +171,7 @@ fn fullscreen_dispatcher_callback(win: &mut WebWindowBackend) -> Rc<RefCell<dyn 
     }))
 }
 
-fn enable_keyboard(
-    win: &mut WebWindowBackend,
-    fullscreen_dispatcher: Rc<RefCell<dyn Fn()>>,
-) -> Result<(), String> {
-    Ok(())
-}
-
-fn enable_resize(
-    win: &mut WebWindowBackend,
-) -> Result<(), String> {
+fn enable_resize(win: &mut WebWindowBackend) -> Result<(), String> {
     let events = win.events.clone();
     let canvas = win.canvas.clone();
     let parent = win.canvas_parent.clone();
