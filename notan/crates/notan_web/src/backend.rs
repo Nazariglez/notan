@@ -1,6 +1,6 @@
 use crate::utils::request_animation_frame;
 use crate::window::WebWindowBackend;
-use notan_app::{App, Backend, EventIterator, InitializeFn};
+use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::panic;
@@ -27,29 +27,35 @@ impl WebBackend {
 }
 
 impl Backend for WebBackend {
-    type Impl = WebBackend;
-    type Window = WebWindowBackend;
-
-    fn get_impl(&mut self) -> &mut Self::Impl {
-        self
+    fn events_iter(&mut self) -> EventIterator {
+        self.events.borrow_mut().take_events()
     }
 
-    fn initialize<B, S, R>(&mut self) -> Result<Box<InitializeFn<B, S, R>>, String>
+    fn window(&mut self) -> &mut WindowBackend {
+        &mut self.window
+    }
+
+    fn exit(&mut self) {
+        self.exit_requested = true;
+    }
+}
+
+impl BackendSystem for WebBackend {
+    fn initialize<S, R>(&mut self) -> Result<Box<InitializeFn<S, R>>, String>
     where
-        B: Backend<Impl = Self::Impl> + 'static,
         S: 'static,
-        R: FnMut(&mut App<B>, &mut S) + 'static,
+        R: FnMut(&mut App, &mut S) + 'static,
     {
-        Ok(Box::new(move |mut app: App<B>, mut state: S, mut cb: R| {
+        Ok(Box::new(move |mut app: App, mut state: S, mut cb: R| {
             let callback = Rc::new(RefCell::new(None));
             let inner_callback = callback.clone();
 
-            app.backend.get_impl().window.enable_events();
+            backend(&mut app).window.enable_events();
 
             *callback.borrow_mut() = Some(Closure::wrap(Box::new(move || {
                 cb(&mut app, &mut state);
 
-                let backend = app.backend.get_impl();
+                let backend = backend(&mut app);
                 if !backend.exit_requested {
                     request_animation_frame(
                         &backend.window.window,
@@ -63,19 +69,11 @@ impl Backend for WebBackend {
             Ok(())
         }))
     }
-
-    fn events_iter(&mut self) -> EventIterator {
-        self.events.borrow_mut().take_events()
-    }
-
-    fn window(&mut self) -> &mut Self::Window {
-        &mut self.window
-    }
-
-    fn exit(&mut self) {
-        self.exit_requested = true;
-    }
 }
 
 unsafe impl Send for WebBackend {}
 unsafe impl Sync for WebBackend {}
+
+fn backend(app: &mut App) -> &mut WebBackend {
+    app.backend.downcast_mut::<WebBackend>().unwrap()
+}
