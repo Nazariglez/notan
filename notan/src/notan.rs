@@ -1,4 +1,4 @@
-use crate::app::{AppBuilder, Backend};
+use crate::app::{AppBuilder, BackendSystem};
 
 #[cfg(not(feature = "default_backend"))]
 use crate::app::empty::EmptyBackend as DefaultBackend;
@@ -23,7 +23,7 @@ where
 pub fn init_with_backend<S, B>(state: S, backend: B) -> AppBuilder<S, B>
 where
     S: 'static,
-    B: Backend + 'static,
+    B: BackendSystem + 'static,
 {
     AppBuilder::new(state, backend)
 }

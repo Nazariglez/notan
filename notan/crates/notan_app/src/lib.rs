@@ -8,6 +8,7 @@ mod builder;
 mod events;
 pub mod keyboard;
 pub mod mouse;
+pub mod plugins;
 
 pub use app::*;
 pub use backend::*;
@@ -15,16 +16,16 @@ pub use events::*;
 
 pub use builder::*;
 
-pub trait AppConfig<B: Backend, S> {
-    fn apply(&self, builder: &mut AppBuilder<S, B>);
-}
-
-pub struct WindowConfig {
-    pub cosas: i32,
-}
-
-impl<B: Backend, S> AppConfig<B, S> for WindowConfig {
-    fn apply(&self, builder: &mut AppBuilder<S, B>) {
-        builder.window = "NOP!".to_string();
-    }
-}
+// pub trait AppConfig<B: Backend, S> {
+//     fn apply(&self, builder: &mut AppBuilder<S, B>);
+// }
+//
+// pub struct WindowConfig {
+//     pub cosas: i32,
+// }
+//
+// impl<B: Backend, S> AppConfig<B, S> for WindowConfig {
+//     fn apply(&self, builder: &mut AppBuilder<S, B>) {
+//         builder.window = "NOP!".to_string();
+//     }
+// }

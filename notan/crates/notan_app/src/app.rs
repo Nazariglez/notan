@@ -1,16 +1,17 @@
 use crate::keyboard::Keyboard;
 use crate::mouse::Mouse;
 use crate::{Backend, WindowBackend};
+use std::sync::Arc;
 
-pub struct App<B: Backend> {
-    pub backend: B,
+pub struct App {
+    pub backend: Box<Backend>,
     pub mouse: Mouse,
     pub keyboard: Keyboard,
     pub delta: f32,
 }
 
-impl<B: Backend> App<B> {
-    pub(crate) fn new(backend: B) -> Self {
+impl App {
+    pub(crate) fn new(backend: Box<Backend>) -> Self {
         let mouse = Default::default();
         let keyboard = Default::default();
         Self {
@@ -31,7 +32,7 @@ impl<B: Backend> App<B> {
     }
 
     #[inline]
-    pub fn window(&mut self) -> &mut impl WindowBackend {
+    pub fn window(&mut self) -> &mut WindowBackend {
         self.backend.window()
     }
 }
