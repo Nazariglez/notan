@@ -54,12 +54,11 @@ impl BackendSystem for EmptyBackend {
     fn initialize<S, R>(&mut self) -> Result<Box<InitializeFn<S, R>>, String>
     where
         S: 'static,
-        R: FnMut(&mut App, &mut S) + 'static,
+        R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static,
     {
         Ok(Box::new(|mut app: App, mut state: S, mut cb: R| {
             // This function should block with a loop or raf in the platform specific backends
-            cb(&mut app, &mut state);
-            Ok(())
+            cb(&mut app, &mut state)
         }))
     }
 }

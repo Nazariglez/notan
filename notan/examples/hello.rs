@@ -1,5 +1,5 @@
-use notan::app::plugins::{Plugin, Plugins};
-use notan::app::{App, AppState};
+use notan::app::plugins::{Plugin, Plugins, AppFlow};
+use notan::app::App;
 use notan::log;
 use notan::prelude::*;
 
@@ -11,6 +11,15 @@ impl Plugin for PP {
     //     let pp = app.plugins.get::<PP>();
     //     let pa = app.plugins.get::<PA>();
     //     Ok(())
+    // }
+    // fn update(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    //     log::info!("update...");
+    //     self.0 += 1;
+    //     if self.0 % 2 == 0 {
+    //         return Ok(AppFlow::SkipFrame);
+    //     }
+    //
+    //     Ok(Default::default())
     // }
 }
 
@@ -27,7 +36,7 @@ fn main() -> Result<(), String> {
         // .set_config(&WindowConfig { cosas: 0 })
         .initialize(|| log::info!("ok..."))
         // .update(update)
-        .update(update2)
+        .update(update)
         .build()
 }
 fn init() {
@@ -35,7 +44,7 @@ fn init() {
 }
 
 fn update(app: &mut App, state: &mut State) {
-    log::info!("with app and state");
+    // log::info!("with app and state");
 }
 
 fn update2(app: &mut App, plugins: &mut Plugins) {}

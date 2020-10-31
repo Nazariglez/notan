@@ -3,6 +3,10 @@ use crate::mouse::Mouse;
 use crate::{Backend, WindowBackend};
 use std::sync::Arc;
 
+/// Represents the state of the application, always accessible across the event's cycle
+pub trait AppState {}
+
+/// Represents the context of the application
 pub struct App {
     pub backend: Box<Backend>,
     pub mouse: Mouse,
