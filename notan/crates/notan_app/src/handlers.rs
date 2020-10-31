@@ -1,4 +1,5 @@
 use crate::app::{App, AppState};
+use crate::events::Event;
 use crate::plugins::{Plugin, Plugins};
 
 pub enum AppCallback<S> {
@@ -110,5 +111,124 @@ where
 {
     fn callback(self) -> AppCallback<S> {
         AppCallback::S(Box::new(self))
+    }
+}
+
+pub enum EventCallback<S> {
+    E(Box<Fn(Event)>),
+
+    AE(Box<Fn(&mut App, Event)>),
+    ASE(Box<Fn(&mut App, &mut S, Event)>),
+    APE(Box<Fn(&mut App, &mut Plugins, Event)>),
+    APSE(Box<Fn(&mut App, &mut Plugins, &mut S, Event)>),
+
+    PE(Box<Fn(&mut Plugins, Event)>),
+    PSE(Box<Fn(&mut Plugins, &mut S, Event)>),
+
+    SE(Box<Fn(&mut S, Event)>),
+}
+
+impl<State> EventCallback<State> {
+    pub(crate) fn exec(
+        &self,
+        app: &mut App,
+        plugins: &mut Plugins,
+        state: &mut State,
+        event: Event,
+    ) {
+        use EventCallback::*;
+        match self {
+            E(cb) => cb(event),
+
+            AE(cb) => cb(app, event),
+            ASE(cb) => cb(app, state, event),
+            APE(cb) => cb(app, plugins, event),
+            APSE(cb) => cb(app, plugins, state, event),
+
+            PE(cb) => cb(plugins, event),
+            PSE(cb) => cb(plugins, state, event),
+
+            SE(cb) => cb(state, event),
+        }
+    }
+}
+
+pub trait EventHandler<S, Params> {
+    fn callback(self) -> EventCallback<S>;
+}
+
+impl<F, S> EventHandler<S, (Event)> for F
+where
+    F: Fn(Event) + 'static,
+{
+    fn callback(self) -> EventCallback<S> {
+        EventCallback::E(Box::new(self))
+    }
+}
+
+impl<F, S> EventHandler<S, (&mut App, Event)> for F
+where
+    F: Fn(&mut App, Event) + 'static,
+{
+    fn callback(self) -> EventCallback<S> {
+        EventCallback::AE(Box::new(self))
+    }
+}
+
+impl<F, S> EventHandler<S, (&mut App, &mut S, Event)> for F
+where
+    F: Fn(&mut App, &mut S, Event) + 'static,
+    S: AppState,
+{
+    fn callback(self) -> EventCallback<S> {
+        EventCallback::ASE(Box::new(self))
+    }
+}
+
+impl<F, S> EventHandler<S, (&mut App, &mut Plugins, Event)> for F
+where
+    F: Fn(&mut App, &mut Plugins, Event) + 'static,
+{
+    fn callback(self) -> EventCallback<S> {
+        EventCallback::APE(Box::new(self))
+    }
+}
+
+impl<F, S> EventHandler<S, (&mut App, &mut Plugins, &mut S, Event)> for F
+where
+    F: Fn(&mut App, &mut Plugins, &mut S, Event) + 'static,
+    S: AppState,
+{
+    fn callback(self) -> EventCallback<S> {
+        EventCallback::APSE(Box::new(self))
+    }
+}
+
+impl<F, S> EventHandler<S, (&mut Plugins, Event)> for F
+where
+    F: Fn(&mut Plugins, Event) + 'static,
+{
+    fn callback(self) -> EventCallback<S> {
+        EventCallback::PE(Box::new(self))
+    }
+}
+
+impl<F, S> EventHandler<S, (&mut Plugins, &mut S, Event)> for F
+where
+    F: Fn(&mut Plugins, &mut S, Event) + 'static,
+    S: AppState,
+{
+    fn callback(self) -> EventCallback<S> {
+        EventCallback::PSE(Box::new(self))
+    }
+}
+
+impl<F, S> EventHandler<S, (&mut S, Event)> for F
+where
+    F: Fn(&mut S, Event) + 'static,
+    S: AppState,
+{
+    fn callback(self) -> EventCallback<S> {
+        EventCallback::SE(Box::new(self))
     }
 }

@@ -1,5 +1,5 @@
 use crate::config::*;
-use crate::handlers::{AppCallback, AppHandler};
+use crate::handlers::{AppCallback, AppHandler, EventCallback, EventHandler};
 use crate::plugins::*;
 use crate::{App, Backend, BackendSystem};
 use notan_log as log;
@@ -25,7 +25,7 @@ pub struct AppBuilder<S, B> {
     init_callback: Option<AppCallback<S>>,
     update_callback: Option<AppCallback<S>>,
     draw_callback: Option<AppCallback<S>>,
-    event_callback: Option<AppCallback<S>>,
+    event_callback: Option<EventCallback<S>>,
 
     pub window: WindowConfig,
 }
@@ -72,6 +72,15 @@ where
         H: AppHandler<S, Params>,
     {
         self.update_callback = Some(handler.callback());
+        self
+    }
+
+    /// Sets a callback to be used on each event
+    pub fn event<H, Params>(mut self, handler: H) -> Self
+    where
+        H: EventHandler<S, Params>,
+    {
+        self.event_callback = Some(handler.callback());
         self
     }
 
@@ -126,7 +135,7 @@ where
                     AppFlow::Skip => {}
                     AppFlow::Next => {
                         if let Some(cb) = &event_callback {
-                            cb.exec(&mut app, &mut plugins, &mut state); //pass event
+                            cb.exec(&mut app, &mut plugins, &mut state, evt); //pass event
                         }
                     }
                     AppFlow::SkipFrame => return Ok(()),
