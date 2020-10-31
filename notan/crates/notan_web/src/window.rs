@@ -1,6 +1,7 @@
 use crate::keyboard::{enable_keyboard, KeyboardCallbacks};
 use crate::mouse::{enable_mouse, MouseCallbacks};
 use crate::utils::{canvas_add_event_listener, get_or_create_canvas, window_add_event_listener};
+use notan_app::config::WindowConfig;
 use notan_app::{Event, EventIterator, WindowBackend};
 use notan_log as log;
 use std::cell::RefCell;
@@ -29,10 +30,12 @@ pub struct WebWindowBackend {
 
     pub(crate) mouse_callbacks: MouseCallbacks,
     pub(crate) keyboard_callbacks: KeyboardCallbacks,
+
+    config: WindowConfig,
 }
 
 impl WebWindowBackend {
-    pub fn new(events: Rc<RefCell<EventIterator>>) -> Result<Self, String> {
+    pub fn new(config: WindowConfig, events: Rc<RefCell<EventIterator>>) -> Result<Self, String> {
         let window = web_sys::window().ok_or(String::from("Can't access window dom object."))?;
         let document = window
             .document()
@@ -53,8 +56,8 @@ impl WebWindowBackend {
         let fullscreen_last_size = Rc::new(RefCell::new(None));
         let fullscreen_callback_ref = None;
 
-        let min_size = None; //From options
-        let max_size = None; //From options
+        let min_size = config.min_size.clone();
+        let max_size = config.max_size.clone();
         let resize_callback_ref = None;
 
         let mouse_callbacks = Default::default();
@@ -75,20 +78,26 @@ impl WebWindowBackend {
             max_size,
             resize_callback_ref,
             context_menu_callback_ref,
+            config,
         })
     }
 
-    pub(crate) fn enable_events(&mut self) -> Result<(), String> {
+    pub(crate) fn init(&mut self) -> Result<(), String> {
+        self.set_size(self.config.width, self.config.height); //TODO maximized option?
+
         let fullscreen_dispatcher = fullscreen_dispatcher_callback(self);
 
         enable_mouse(self, fullscreen_dispatcher.clone())?;
         enable_keyboard(self, fullscreen_dispatcher.clone())?;
 
-        //if is_resizable {
-        enable_resize(self)?;
-        // }
+        if self.config.resizable {
+            enable_resize(self)?;
+        }
 
         enable_fullscreen(self)?;
+        if self.config.fullscreen {
+            self.set_fullscreen(true);
+        }
 
         Ok(())
     }
