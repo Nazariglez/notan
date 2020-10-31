@@ -3,11 +3,20 @@ use crate::plugins::*;
 use crate::{App, Backend, BackendSystem};
 use notan_log as log;
 
+/// Configurations used at build time
+pub trait BuildConfig<S, B>
+where
+    B: Backend,
+{
+    /// Applies the configuration on the builder
+    fn apply(&self, builder: AppBuilder<S, B>) -> AppBuilder<S, B>;
+}
+
+/// The builder is charge of create and configure the application
 pub struct AppBuilder<S, B> {
     state: S,
     backend: B,
     plugins: Plugins,
-    pub window: String,
     init_callback: Option<AppCallback<S>>,
     update_callback: Option<AppCallback<S>>,
     draw_callback: Option<AppCallback<S>>,
@@ -19,24 +28,25 @@ where
     S: 'static,
     B: BackendSystem + 'static,
 {
+    /// Creates a new instance of the builder
     pub fn new(state: S, backend: B) -> Self {
         AppBuilder {
             state,
             backend,
             plugins: Plugins::new(),
-            window: "Yeah".to_string(),
             init_callback: None,
             update_callback: None,
             draw_callback: None,
             event_callback: None,
         }
     }
-    //
-    // pub fn set_config(mut self, config: &dyn AppConfig<S>) -> Self {
-    //     config.apply(&mut self);
-    //     self
-    // }
 
+    /// Applies a configuration
+    pub fn set_config(mut self, config: &dyn BuildConfig<S, B>) -> Self {
+        config.apply(self)
+    }
+
+    /// Sets a callback used before the application loop starts running
     pub fn initialize<H, Params>(mut self, handler: H) -> Self
     where
         H: AppHandler<S, Params>,
@@ -45,6 +55,7 @@ where
         self
     }
 
+    /// Sets a callback used on each frame
     pub fn update<H, Params>(mut self, handler: H) -> Self
     where
         H: AppHandler<S, Params>,
@@ -53,11 +64,13 @@ where
         self
     }
 
+    /// Sets a plugin that can alter or control the app
     pub fn set_plugin<P: Plugin>(mut self, plugin: P) -> Self {
         self.plugins.set(plugin);
         self
     }
 
+    /// Creates and run the application
     pub fn build(mut self) -> Result<(), String> {
         let AppBuilder {
             mut backend,
