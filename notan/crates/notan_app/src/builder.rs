@@ -52,6 +52,11 @@ where
         self
     }
 
+    pub fn set_plugin<P: Plugin>(mut self, plugin: P) -> Self {
+        self.plugins.set(plugin);
+        self
+    }
+
     pub fn build(mut self) -> Result<(), String> {
         let AppBuilder {
             mut backend,
@@ -66,40 +71,41 @@ where
 
         let initialize = backend.initialize()?;
         let mut app = App::new(Box::new(backend));
-        //
-        // plugins.map.iter_mut().for_each(|(_, v)| {
-        //     // let n = v.downcast_ref::<Box<Plugin>>();
-        //     // n.init(app);
-        //     v.init(&mut app);
-        // });
 
+        plugins.init(&mut app);
         if let Some(cb) = &init_callback {
             cb.exec(&mut app, &mut plugins, &mut state);
         }
 
+        //TODO manage plugin error
         initialize(app, state, move |mut app, mut state| {
+            plugins.pre_frame(&mut app);
             app.tick();
 
             app.backend.events_iter().for_each(|evt| {
                 app.mouse.process_events(&evt, app.delta);
                 app.keyboard.process_events(&evt, app.delta);
 
+                plugins.event(&mut app, evt);
                 if let Some(cb) = &event_callback {
-                    cb.exec(&mut app, &mut plugins, &mut state);
+                    cb.exec(&mut app, &mut plugins, &mut state); //pass event
                 }
             });
 
+            plugins.update(&mut app);
             if let Some(cb) = &update_callback {
                 cb.exec(&mut app, &mut plugins, &mut state);
             }
 
             //TODO check frame here?
-            if let Some(cb) = draw_callback {
+            plugins.draw(&mut app);
+            if let Some(cb) = &draw_callback {
                 cb.exec(&mut app, &mut plugins, &mut state);
             }
 
             app.mouse.clear();
             app.keyboard.clear();
+            plugins.post_frame(&mut app);
         })?;
 
         Ok(())

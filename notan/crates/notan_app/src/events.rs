@@ -2,7 +2,7 @@ use crate::keyboard::*;
 use crate::mouse::*;
 use std::collections::{HashSet, VecDeque};
 
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
 /// Application events usually received from the user
 pub enum Event {
     /// When the app is about to close

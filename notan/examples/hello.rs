@@ -23,6 +23,7 @@ impl AppState for State {}
 fn main() -> Result<(), String> {
     log::init();
     notan::init_with(State(0))
+        .set_plugin(PP(0))
         // .set_config(&WindowConfig { cosas: 0 })
         .initialize(|| log::info!("ok..."))
         // .update(update)
