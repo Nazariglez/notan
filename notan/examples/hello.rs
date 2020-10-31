@@ -12,6 +12,7 @@ fn main() -> Result<(), String> {
     notan::init_with(State(0))
         .set_config(WindowConfig::new().size(1200, 800))
         .initialize(|| log::info!("ok..."))
+        .event(|evt| log::info!("{:?}", evt))
         .update(update)
         .build()
 }
