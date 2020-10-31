@@ -1,7 +1,10 @@
+use crate::config::*;
 use crate::handlers::{AppCallback, AppHandler};
 use crate::plugins::*;
 use crate::{App, Backend, BackendSystem};
 use notan_log as log;
+
+//TODO read this https://floooh.github.io/2017/05/15/oryol-spirv.html
 
 /// Configurations used at build time
 pub trait BuildConfig<S, B>
@@ -9,18 +12,22 @@ where
     B: Backend,
 {
     /// Applies the configuration on the builder
-    fn apply(&self, builder: AppBuilder<S, B>) -> AppBuilder<S, B>;
+    fn apply(self, builder: AppBuilder<S, B>) -> AppBuilder<S, B>;
 }
 
 /// The builder is charge of create and configure the application
 pub struct AppBuilder<S, B> {
     state: S,
     backend: B,
+
     plugins: Plugins,
+
     init_callback: Option<AppCallback<S>>,
     update_callback: Option<AppCallback<S>>,
     draw_callback: Option<AppCallback<S>>,
     event_callback: Option<AppCallback<S>>,
+
+    pub window: WindowConfig,
 }
 
 impl<S, B> AppBuilder<S, B>
@@ -38,11 +45,15 @@ where
             update_callback: None,
             draw_callback: None,
             event_callback: None,
+            window: Default::default(),
         }
     }
 
     /// Applies a configuration
-    pub fn set_config(mut self, config: &dyn BuildConfig<S, B>) -> Self {
+    pub fn set_config<C>(mut self, config: C) -> Self
+    where
+        C: BuildConfig<S, B>,
+    {
         config.apply(self)
     }
 
@@ -76,14 +87,16 @@ where
             mut backend,
             mut state,
             mut plugins,
+
             init_callback,
             update_callback,
             draw_callback,
             event_callback,
+            window,
             ..
         } = self;
 
-        let initialize = backend.initialize()?;
+        let initialize = backend.initialize(window)?;
         let mut app = App::new(Box::new(backend));
 
         plugins.init(&mut app).map(|flow| match flow {

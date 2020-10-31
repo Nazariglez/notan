@@ -1,3 +1,4 @@
+use notan::app::config::WindowConfig;
 use notan::app::{App, Plugins};
 use notan::log;
 use notan::prelude::*;
@@ -9,6 +10,7 @@ impl AppState for State {}
 fn main() -> Result<(), String> {
     log::init();
     notan::init_with(State(0))
+        .set_config(WindowConfig::new().size(1200, 800))
         .initialize(|| log::info!("ok..."))
         .update(update)
         .build()

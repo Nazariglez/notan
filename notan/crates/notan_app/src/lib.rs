@@ -1,3 +1,4 @@
+pub mod config;
 pub mod empty;
 pub mod keyboard;
 pub mod mouse;

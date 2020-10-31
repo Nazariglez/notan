@@ -1,3 +1,4 @@
+use crate::config::WindowConfig;
 use crate::{App, EventIterator};
 use downcast_rs::{impl_downcast, Downcast};
 
@@ -18,9 +19,10 @@ pub trait Backend: Send + Sync + Downcast {
 
 impl_downcast!(Backend);
 
+/// Backend initialization run
 pub trait BackendSystem: Backend {
     /// Returns a closure where the backend is initialized and the application loops is managed
-    fn initialize<S, R>(&mut self) -> Result<Box<InitializeFn<S, R>>, String>
+    fn initialize<S, R>(&mut self, window: WindowConfig) -> Result<Box<InitializeFn<S, R>>, String>
     where
         Self: Backend,
         S: 'static,

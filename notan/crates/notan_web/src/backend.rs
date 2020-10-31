@@ -1,5 +1,6 @@
 use crate::utils::request_animation_frame;
 use crate::window::WebWindowBackend;
+use notan_app::config::WindowConfig;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 use notan_log as log;
 use std::cell::RefCell;
@@ -9,7 +10,7 @@ use std::rc::Rc;
 use wasm_bindgen::closure::Closure;
 
 pub struct WebBackend {
-    window: WebWindowBackend,
+    window: Option<WebWindowBackend>,
     events: Rc<RefCell<EventIterator>>,
     exit_requested: bool,
 }
@@ -20,7 +21,7 @@ impl WebBackend {
         let events = Rc::new(RefCell::new(EventIterator::new()));
 
         Ok(Self {
-            window: WebWindowBackend::new(events.clone())?,
+            window: None,
             events: events,
             exit_requested: false,
         })
@@ -33,7 +34,7 @@ impl Backend for WebBackend {
     }
 
     fn window(&mut self) -> &mut WindowBackend {
-        &mut self.window
+        self.window.as_mut().unwrap()
     }
 
     fn exit(&mut self) {
@@ -42,16 +43,18 @@ impl Backend for WebBackend {
 }
 
 impl BackendSystem for WebBackend {
-    fn initialize<S, R>(&mut self) -> Result<Box<InitializeFn<S, R>>, String>
+    fn initialize<S, R>(&mut self, window: WindowConfig) -> Result<Box<InitializeFn<S, R>>, String>
     where
         S: 'static,
         R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static,
     {
+        self.window = Some(WebWindowBackend::new(window, self.events.clone())?);
+
         Ok(Box::new(move |mut app: App, mut state: S, mut cb: R| {
             let callback = Rc::new(RefCell::new(None));
             let inner_callback = callback.clone();
 
-            backend(&mut app).window.enable_events();
+            backend(&mut app).window.as_mut().unwrap().init();
 
             *callback.borrow_mut() = Some(Closure::wrap(Box::new(move || {
                 if let Err(e) = cb(&mut app, &mut state) {
@@ -62,7 +65,7 @@ impl BackendSystem for WebBackend {
                 let backend = backend(&mut app);
                 if !backend.exit_requested {
                     request_animation_frame(
-                        &backend.window.window,
+                        &backend.window.as_ref().unwrap().window,
                         inner_callback.borrow().as_ref().unwrap(),
                     );
                 }
