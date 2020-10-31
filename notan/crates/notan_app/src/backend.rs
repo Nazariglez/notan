@@ -24,7 +24,7 @@ pub trait BackendSystem: Backend {
     where
         Self: Backend,
         S: 'static,
-        R: FnMut(&mut App, &mut S) + 'static;
+        R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static;
 }
 
 /// Represents a window

@@ -4,6 +4,7 @@ pub mod prelude;
 mod app;
 mod backend;
 mod builder;
+mod handlers;
 
 mod events;
 pub mod keyboard;

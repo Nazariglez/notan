@@ -1,16 +1,17 @@
+use crate::handlers::{AppCallback, AppHandler};
 use crate::plugins::*;
 use crate::{App, Backend, BackendSystem};
-use std::sync::Arc;
+use notan_log as log;
 
 pub struct AppBuilder<S, B> {
     state: S,
     backend: B,
     plugins: Plugins,
     pub window: String,
-    init_callback: Option<BuildCallback<S>>,
-    update_callback: Option<BuildCallback<S>>,
-    draw_callback: Option<BuildCallback<S>>,
-    event_callback: Option<BuildCallback<S>>,
+    init_callback: Option<AppCallback<S>>,
+    update_callback: Option<AppCallback<S>>,
+    draw_callback: Option<AppCallback<S>>,
+    event_callback: Option<AppCallback<S>>,
 }
 
 impl<S, B> AppBuilder<S, B>
@@ -72,157 +73,75 @@ where
         let initialize = backend.initialize()?;
         let mut app = App::new(Box::new(backend));
 
-        plugins.init(&mut app);
+        plugins.init(&mut app).map(|flow| match flow {
+            AppFlow::Next => Ok(()),
+            _ => Err(format!(
+                "Aborted application loop because a plugin returns on the init method AppFlow::{:?} instead of AppFlow::Next",
+                flow
+            )),
+        })?;
+
         if let Some(cb) = &init_callback {
             cb.exec(&mut app, &mut plugins, &mut state);
         }
 
-        //TODO manage plugin error
-        initialize(app, state, move |mut app, mut state| {
-            plugins.pre_frame(&mut app);
-            app.tick();
-
-            app.backend.events_iter().for_each(|evt| {
-                app.mouse.process_events(&evt, app.delta);
-                app.keyboard.process_events(&evt, app.delta);
-
-                plugins.event(&mut app, evt);
-                if let Some(cb) = &event_callback {
-                    cb.exec(&mut app, &mut plugins, &mut state); //pass event
-                }
-            });
-
-            plugins.update(&mut app);
-            if let Some(cb) = &update_callback {
-                cb.exec(&mut app, &mut plugins, &mut state);
+        if let Err(e) = initialize(app, state, move |mut app, mut state| {
+            // Manage pre frame events
+            match plugins.pre_frame(&mut app)? {
+                AppFlow::SkipFrame => return Ok(()),
+                _ => {}
             }
 
-            //TODO check frame here?
-            plugins.draw(&mut app);
-            if let Some(cb) = &draw_callback {
-                cb.exec(&mut app, &mut plugins, &mut state);
+            app.tick();
+
+            // Manage each event
+            for evt in app.backend.events_iter() {
+                match plugins.event(&mut app, &evt)? {
+                    AppFlow::Skip => {}
+                    AppFlow::Next => {
+                        if let Some(cb) = &event_callback {
+                            cb.exec(&mut app, &mut plugins, &mut state); //pass event
+                        }
+                    }
+                    AppFlow::SkipFrame => return Ok(()),
+                }
+            }
+
+            // Manage update callback
+            match plugins.update(&mut app)? {
+                AppFlow::Skip => {}
+                AppFlow::Next => {
+                    if let Some(cb) = &update_callback {
+                        cb.exec(&mut app, &mut plugins, &mut state);
+                    }
+                }
+                AppFlow::SkipFrame => return Ok(()),
+            }
+
+            // Manage draw callback
+            match plugins.draw(&mut app)? {
+                AppFlow::Skip => {}
+                AppFlow::Next => {
+                    if let Some(cb) = &draw_callback {
+                        cb.exec(&mut app, &mut plugins, &mut state);
+                    }
+                }
+                AppFlow::SkipFrame => return Ok(()),
             }
 
             app.mouse.clear();
             app.keyboard.clear();
-            plugins.post_frame(&mut app);
-        })?;
+
+            // Manage post frame event
+            match plugins.post_frame(&mut app)? {
+                _ => {}
+            }
+
+            Ok(())
+        }) {
+            log::error!("{}", e);
+        }
 
         Ok(())
-    }
-}
-
-pub enum BuildCallback<S> {
-    Empty(Box<Fn()>),
-
-    A(Box<Fn(&mut App)>),
-    AS(Box<Fn(&mut App, &mut S)>),
-    AP(Box<Fn(&mut App, &mut Plugins)>),
-    APS(Box<Fn(&mut App, &mut Plugins, &mut S)>),
-
-    P(Box<Fn(&mut Plugins)>),
-    PS(Box<Fn(&mut Plugins, &mut S)>),
-
-    S(Box<Fn(&mut S)>),
-}
-
-impl<State> BuildCallback<State> {
-    fn exec(&self, app: &mut App, plugins: &mut Plugins, state: &mut State) {
-        use BuildCallback::*;
-        match &*self {
-            Empty(cb) => cb(),
-            A(cb) => cb(app),
-            AS(cb) => cb(app, state),
-            AP(cb) => cb(app, plugins),
-            APS(cb) => cb(app, plugins, state),
-
-            P(cb) => cb(plugins),
-            PS(cb) => cb(plugins, state),
-
-            S(cb) => cb(state),
-        }
-    }
-}
-
-pub trait AppState {}
-//impl<F> AppState for F {}
-
-pub trait AppHandler<S, Params> {
-    fn callback(self) -> BuildCallback<S>;
-}
-
-impl<F, S> AppHandler<S, ()> for F
-where
-    F: Fn() + 'static,
-{
-    fn callback(self) -> BuildCallback<S> {
-        BuildCallback::Empty(Box::new(self))
-    }
-}
-
-impl<F, S> AppHandler<S, (&mut App)> for F
-where
-    F: Fn(&mut App) + 'static,
-{
-    fn callback(self) -> BuildCallback<S> {
-        BuildCallback::A(Box::new(self))
-    }
-}
-
-impl<F, S> AppHandler<S, (&mut App, &mut S)> for F
-where
-    F: Fn(&mut App, &mut S) + 'static,
-    S: AppState,
-{
-    fn callback(self) -> BuildCallback<S> {
-        BuildCallback::AS(Box::new(self))
-    }
-}
-
-impl<F, S> AppHandler<S, (&mut App, &mut Plugins)> for F
-where
-    F: Fn(&mut App, &mut Plugins) + 'static,
-{
-    fn callback(self) -> BuildCallback<S> {
-        BuildCallback::AP(Box::new(self))
-    }
-}
-
-impl<F, S> AppHandler<S, (&mut App, &mut Plugins, &mut S)> for F
-where
-    F: Fn(&mut App, &mut Plugins, &mut S) + 'static,
-    S: AppState,
-{
-    fn callback(self) -> BuildCallback<S> {
-        BuildCallback::APS(Box::new(self))
-    }
-}
-
-impl<F, S> AppHandler<S, (&mut Plugins)> for F
-where
-    F: Fn(&mut Plugins) + 'static,
-{
-    fn callback(self) -> BuildCallback<S> {
-        BuildCallback::P(Box::new(self))
-    }
-}
-
-impl<F, S> AppHandler<S, (&mut Plugins, &mut S)> for F
-where
-    F: Fn(&mut Plugins, &mut S) + 'static,
-    S: AppState,
-{
-    fn callback(self) -> BuildCallback<S> {
-        BuildCallback::PS(Box::new(self))
-    }
-}
-
-impl<F, S> AppHandler<S, (&mut S)> for F
-where
-    F: Fn(&mut S) + 'static,
-    S: AppState,
-{
-    fn callback(self) -> BuildCallback<S> {
-        BuildCallback::S(Box::new(self))
     }
 }

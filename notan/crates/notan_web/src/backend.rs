@@ -1,6 +1,7 @@
 use crate::utils::request_animation_frame;
 use crate::window::WebWindowBackend;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
+use notan_log as log;
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::panic;
@@ -44,7 +45,7 @@ impl BackendSystem for WebBackend {
     fn initialize<S, R>(&mut self) -> Result<Box<InitializeFn<S, R>>, String>
     where
         S: 'static,
-        R: FnMut(&mut App, &mut S) + 'static,
+        R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static,
     {
         Ok(Box::new(move |mut app: App, mut state: S, mut cb: R| {
             let callback = Rc::new(RefCell::new(None));
@@ -53,7 +54,10 @@ impl BackendSystem for WebBackend {
             backend(&mut app).window.enable_events();
 
             *callback.borrow_mut() = Some(Closure::wrap(Box::new(move || {
-                cb(&mut app, &mut state);
+                if let Err(e) = cb(&mut app, &mut state) {
+                    log::error!("{}", e);
+                    return;
+                }
 
                 let backend = backend(&mut app);
                 if !backend.exit_requested {
