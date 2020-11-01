@@ -10,4 +10,6 @@ edition = "2018"
 hashbrown = "0.9"
 notan_log = { path = "../notan_log" }
 downcast-rs = "1.2"
-indexmap = "1.6.0"
+indexmap = "1.6"
+futures = "0.3"
+platter = {version = "0.1.4", features = ["web-sys"] }

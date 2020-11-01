@@ -105,8 +105,9 @@ where
             ..
         } = self;
 
+        let load_file = backend.get_file_loader();
         let initialize = backend.initialize(window)?;
-        let mut app = App::new(Box::new(backend));
+        let mut app = App::new(Box::new(backend), load_file);
 
         plugins.init(&mut app).map(|flow| match flow {
             AppFlow::Next => Ok(()),
