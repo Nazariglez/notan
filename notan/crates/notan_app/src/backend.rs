@@ -1,9 +1,14 @@
 use crate::config::WindowConfig;
 use crate::{App, EventIterator};
 use downcast_rs::{impl_downcast, Downcast};
+use futures::prelude::*;
+use futures::Future;
 
 /// Closure returned from the backend's initialize method
 pub type InitializeFn<S, R> = dyn Fn(App, S, R) -> Result<(), String>;
+
+/// Closure used to load files
+pub type LoadFileFn = Box<Fn(String) -> Box<dyn Future<Output = Result<Vec<u8>, String>>>>;
 
 /// Represents the backend implementation
 pub trait Backend: Send + Sync + Downcast {
@@ -27,6 +32,11 @@ pub trait BackendSystem: Backend {
         Self: Backend,
         S: 'static,
         R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static;
+
+    /// Returns a function that load files
+    fn get_file_loader(&self) -> LoadFileFn {
+        Box::new(|path| Box::new(platter::load_file(path).map_err(|e| e.to_string())))
+    }
 }
 
 /// Represents a window
