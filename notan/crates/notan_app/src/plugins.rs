@@ -139,6 +139,9 @@ where
     fn post_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
         Ok(Default::default())
     }
+
+    /// Executed when it's added to the builder
+    fn build<S, B>(&mut self, builder: &mut AppBuilder<S, B>) where Self: Sized {}
 }
 
 pub trait MyAny: Any {

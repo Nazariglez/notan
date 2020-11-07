@@ -85,7 +85,8 @@ where
     }
 
     /// Sets a plugin that can alter or control the app
-    pub fn set_plugin<P: Plugin>(mut self, plugin: P) -> Self {
+    pub fn set_plugin<P: Plugin>(mut self, mut plugin: P) -> Self {
+        plugin.build(&mut self);
         self.plugins.set(plugin);
         self
     }
