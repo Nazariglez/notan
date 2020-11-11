@@ -9,6 +9,7 @@ mod backend;
 mod builder;
 mod handlers;
 
+pub mod assets;
 mod events;
 mod plugins;
 
