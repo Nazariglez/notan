@@ -13,3 +13,4 @@ downcast-rs = "1.2"
 indexmap = "1.6"
 futures = "0.3"
 platter = {version = "0.1.4", features = ["web-sys"] }
+parking_lot = "0.11.0"

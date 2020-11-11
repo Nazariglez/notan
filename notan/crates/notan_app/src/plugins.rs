@@ -2,6 +2,7 @@ use crate::app::App;
 use crate::backend::*;
 use crate::builder::AppBuilder;
 use crate::events::Event;
+use downcast_rs::{impl_downcast, Downcast};
 use indexmap::IndexMap;
 use std::any::{Any, TypeId};
 
@@ -32,28 +33,28 @@ pub struct Plugins {
 }
 
 impl Plugins {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             map: IndexMap::new(),
         }
     }
 
-    pub(crate) fn set<T: Plugin + 'static>(&mut self, value: T) {
+    pub fn set<T: Plugin + 'static>(&mut self, value: T) {
         self.map.insert(TypeId::of::<T>(), Box::new(value));
     }
 
     /// Returns the plugin of the type passed
-    pub fn get<T: Plugin + 'static + MyAny>(&self) -> Option<&T> {
+    pub fn get<T: Plugin + 'static>(&self) -> Option<&T> {
         self.map
             .get(&TypeId::of::<T>())
-            .map(|value| value.as_any().downcast_ref().unwrap())
+            .map(|value| value.downcast_ref().unwrap())
     }
 
     /// Returns the plugin of the type passed as mutable reference
     pub fn get_mut<T: Plugin + 'static>(&mut self) -> Option<&mut T> {
         self.map
             .get_mut(&TypeId::of::<T>())
-            .map(|value| value.as_any_mut().downcast_mut().unwrap())
+            .map(|value| value.downcast_mut().unwrap())
     }
 
     pub(crate) fn init(&mut self, app: &mut App) -> Result<AppFlow, String> {
@@ -108,7 +109,7 @@ impl Plugins {
 /// A plugin allow the user to extend or alter the application
 pub trait Plugin
 where
-    Self: Any + Send + Sync,
+    Self: Any + Send + Sync + Downcast,
 {
     /// Executed before the application loop
     fn init(&mut self, app: &mut App) -> Result<AppFlow, String> {
@@ -141,20 +142,11 @@ where
     }
 
     /// Executed when it's added to the builder
-    fn build<S, B>(&mut self, builder: &mut AppBuilder<S, B>) where Self: Sized {}
-}
-
-pub trait MyAny: Any {
-    fn as_any(&self) -> &(Any + '_);
-    fn as_any_mut(&mut self) -> &mut (Any + '_);
-}
-
-impl<T: Any> MyAny for T {
-    fn as_any(&self) -> &(Any + '_) {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut (Any + '_) {
-        self
+    fn build<S, B>(&mut self, builder: &mut AppBuilder<S, B>)
+    where
+        Self: Sized,
+    {
     }
 }
+
+impl_downcast!(Plugin);
