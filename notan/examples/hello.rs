@@ -28,9 +28,11 @@ fn main() -> Result<(), String> {
 
     // app.build();
     //
-    let mut manager = LoadManager::new();
+    let mut manager = AssetManager::new();
     manager.add_loader::<BlobLoader>();
-    // let b = manager.load_asset::<Blob>("lel.blob")?;
+    let b = manager.load_asset::<Blob>("lel.blob")?;
+    let c = manager.load_asset::<Blob>("lel.blob")?;
+    log::info!("{:?}", b == c);
     //log::info!("{:?}", b.lock());
     manager.load(&["lel.txt"]);
     log::info!("{:?}", manager.get::<Blob>("lel.txt").unwrap().lock());
