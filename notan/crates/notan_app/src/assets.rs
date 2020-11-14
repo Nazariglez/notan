@@ -1,5 +1,7 @@
 use crate::app::App;
 use downcast_rs::{impl_downcast, Downcast};
+use futures::prelude::*;
+use futures::Future;
 use hashbrown::HashMap;
 use indexmap::{IndexMap, IndexSet};
 use parking_lot::{MappedRwLockReadGuard, RwLock, RwLockReadGuard};
@@ -51,27 +53,47 @@ where
 
 impl<A> Eq for Asset<A> where A: Send + Sync {}
 
-#[derive(Clone)]
 struct LoadState {
+    fut: Box<dyn Future<Output = Result<Vec<u8>, String>>>,
     loaded: Arc<AtomicBool>,
     asset: Arc<dyn Any + Send + Sync>,
 }
 
 impl LoadState {
-    fn new<A>(asset: A) -> Self
+    fn new<A>(asset: A, fut: Box<dyn Future<Output = Result<Vec<u8>, String>>>) -> Self
     where
         A: Send + Sync + 'static,
     {
         Self {
+            fut,
             loaded: Arc::new(AtomicBool::new(false)),
             asset: Arc::new(RwLock::new(asset)),
         }
+    }
+
+    fn tracker(&self) -> LoadTracker {
+        LoadTracker {
+            loaded: self.loaded.clone(),
+            asset: self.asset.clone(),
+        }
+    }
+}
+
+#[derive(Clone)]
+struct LoadTracker {
+    loaded: Arc<AtomicBool>,
+    asset: Arc<dyn Any + Send + Sync>,
+}
+
+impl LoadTracker {
+    fn is_loaded(&self) -> bool {
+        self.loaded.load(Ordering::SeqCst)
     }
 }
 
 #[derive(Default)]
 pub struct AssetStorage {
-    loader: Option<Loader>,
+    list: Option<AssetList>,
     assets: HashMap<TypeId, HashMap<String, LoadState>>,
 }
 
@@ -81,12 +103,12 @@ impl AssetStorage {
         A: Send + Sync + 'static,
     {
         let type_id = TypeId::of::<A>();
-        let state = LoadState::new(asset);
+        let fut = platter::load_file(id.to_string()).map_err(|e| e.to_string());
+        let state = LoadState::new(asset, Box::new(fut));
 
-        // In case that exists a loader append the state to it
-        if let Some(loader) = &mut self.loader {
-            let mut list = loader.assets.entry(type_id).or_insert(HashMap::new());
-            list.insert(id.to_string(), state.clone());
+        // In case that exists a list append the state to it
+        if let Some(loader) = &mut self.list {
+            loader.insert(type_id, id, state.tracker());
         }
 
         let mut list = self.assets.entry(type_id).or_insert(HashMap::new());
@@ -111,16 +133,31 @@ impl AssetStorage {
                 res: state.asset.clone().downcast::<RwLock<A>>().unwrap(),
             })
     }
+
+    fn try_load(&mut self) {
+        self.assets.retain(|_, list| {
+            list.retain(|_, state| try_load(state));
+            list.len() != 0
+        });
+    }
+}
+
+fn try_load(state: &mut LoadState) -> bool {
+    // match state.fut.as_ref().poll() {
+    //     _ => true
+    // }
+
+    true
 }
 
 /// Assets and loaders can be set and get from this struct
-pub struct LoadManager {
+pub struct AssetManager {
     loaders: HashMap<TypeId, Arc<AssetLoader>>,
     extensions: HashMap<String, TypeId>,
     storage: AssetStorage,
 }
 
-impl LoadManager {
+impl AssetManager {
     /// Returns a new manager
     pub fn new() -> Self {
         let mut manager = Self {
@@ -165,9 +202,13 @@ impl LoadManager {
         self.storage.get(path)
     }
 
-    /// Starts loading a list of [Asset]s and return a [Loader] to get them and check the progress
-    pub fn load(&mut self, paths: &[&str]) -> Result<Loader, String> {
-        self.storage.loader = Some(Default::default());
+    fn tick(&mut self) {
+        self.storage.try_load();
+    }
+
+    /// Starts loading a list of [Asset]s and return an [AssetList] to get them and check the progress
+    pub fn load(&mut self, paths: &[&str]) -> Result<AssetList, String> {
+        self.storage.list = Some(Default::default());
 
         paths.iter().for_each(|p| {
             let ext = Path::new(p)
@@ -187,13 +228,13 @@ impl LoadManager {
             loader.load(p, &mut self.storage);
         });
 
-        let loader = self
+        let asset_list = self
             .storage
-            .loader
+            .list
             .take()
-            .ok_or("Loader cannot be extracted from LoadManager".to_string())?;
+            .ok_or("AssetList cannot be extracted from AssetManager".to_string())?;
 
-        Ok(loader)
+        Ok(asset_list)
     }
 
     fn get_loader(&self, ext: &str) -> Result<&Arc<AssetLoader>, String> {
@@ -243,20 +284,95 @@ impl AssetLoader for BlobLoader {
     }
 }
 
+///
 #[derive(Default, Clone)]
-pub struct Loader {
-    assets: HashMap<TypeId, HashMap<String, LoadState>>,
+pub struct AssetList {
+    count: usize,
+    assets: HashMap<TypeId, HashMap<String, LoadTracker>>,
 }
 
-impl Loader {
+impl AssetList {
+    fn insert(&mut self, type_id: TypeId, id: &str, tracker: LoadTracker) {
+        let mut list = self.assets.entry(type_id).or_insert(HashMap::new());
+        list.insert(id.to_string(), tracker);
+        self.count += 1;
+    }
+
+    /// Returns true if all the assets were loaded
     pub fn is_loaded(&self) -> bool {
-        unimplemented!()
+        let still_loading = self
+            .assets
+            .values()
+            .find(|list| list.values().find(|tracker| !tracker.is_loaded()).is_some())
+            .is_some();
+
+        !still_loading
     }
 
+    /// Returns the total count of assets
+    pub fn len(&self) -> usize {
+        self.count
+    }
+
+    /// Returns a value between 0.0 and 1.0 meaning 0.0 nothing has been loaded and 1.0 everything is loaded
     pub fn progress(&self) -> f32 {
-        unimplemented!() //todo 0.0 to 1.0
+        let loaded = self.assets.values().fold(0, |acc, list| {
+            let loaded = list.values().fold(
+                0,
+                |acc, tracker| if tracker.is_loaded() { acc + 1 } else { acc },
+            );
+
+            acc + loaded
+        });
+
+        (loaded as f32 / self.count as f32)
     }
 
-    //pub fn get() {} //Returns Asset<A>
-    //pub fn take() {} //Returns Asset<A> and remove it from the list
+    /// Returns the [Asset]
+    pub fn get<A>(&self, id: &str) -> Result<Asset<A>, String>
+    where
+        A: Send + Sync + 'static,
+    {
+        let storage = match self.assets.get(&TypeId::of::<A>()) {
+            Some(map) => map,
+            _ => return Err("Invalid asset type".to_string()),
+        };
+
+        storage
+            .get(id)
+            .ok_or("Invalid asset id".to_string())
+            .map(|tracker| Asset {
+                id: id.to_string(),
+                loaded: tracker.loaded.clone(),
+                res: tracker.asset.clone().downcast::<RwLock<A>>().unwrap(),
+            })
+    }
+
+    /// Returns and remove from this list the [Asset]
+    pub fn remove<A>(&mut self, id: &str) -> Result<Asset<A>, String>
+    where
+        A: Send + Sync + 'static,
+    {
+        let mut storage = match self.assets.get_mut(&TypeId::of::<A>()) {
+            Some(map) => map,
+            _ => return Err("Invalid asset type".to_string()),
+        };
+
+        let asset = storage
+            .remove(id)
+            .ok_or("Invalid asset id".to_string())
+            .map(|tracker| Asset {
+                id: id.to_string(),
+                loaded: tracker.loaded.clone(),
+                res: tracker.asset.clone().downcast::<RwLock<A>>().unwrap(),
+            })?;
+
+        self.count -= 1;
+        Ok(asset)
+    }
+
+    /// Returns true if this list doesn't contains any asset
+    pub fn is_empty(&self) -> bool {
+        self.count == 0
+    }
 }
