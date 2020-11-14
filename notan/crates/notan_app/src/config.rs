@@ -19,7 +19,7 @@ impl Default for WindowConfig {
             title: String::from("Notan App"),
             width: 800,
             height: 600,
-            fullscreen: true,
+            fullscreen: false,
             min_size: None,
             max_size: None,
             maximized: false,

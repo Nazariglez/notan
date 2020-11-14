@@ -1,6 +1,8 @@
 use crate::app::App;
 use downcast_rs::{impl_downcast, Downcast};
+use futures::future::{BoxFuture, LocalBoxFuture};
 use futures::prelude::*;
+use futures::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
 use futures::Future;
 use hashbrown::HashMap;
 use indexmap::{IndexMap, IndexSet};
@@ -54,13 +56,13 @@ where
 impl<A> Eq for Asset<A> where A: Send + Sync {}
 
 struct LoadState {
-    fut: Box<dyn Future<Output = Result<Vec<u8>, String>>>,
+    fut: LocalBoxFuture<'static, Result<Vec<u8>, String>>,
     loaded: Arc<AtomicBool>,
     asset: Arc<dyn Any + Send + Sync>,
 }
 
 impl LoadState {
-    fn new<A>(asset: A, fut: Box<dyn Future<Output = Result<Vec<u8>, String>>>) -> Self
+    fn new<A>(asset: A, fut: LocalBoxFuture<'static, Result<Vec<u8>, String>>) -> Self
     where
         A: Send + Sync + 'static,
     {
@@ -103,8 +105,8 @@ impl AssetStorage {
         A: Send + Sync + 'static,
     {
         let type_id = TypeId::of::<A>();
-        let fut = platter::load_file(id.to_string()).map_err(|e| e.to_string());
-        let state = LoadState::new(asset, Box::new(fut));
+        let fut = Box::pin(platter::load_file(id.to_string()).map_err(|e| e.to_string()));
+        let state = LoadState::new(asset, fut);
 
         // In case that exists a list append the state to it
         if let Some(loader) = &mut self.list {
@@ -134,23 +136,44 @@ impl AssetStorage {
             })
     }
 
-    fn try_load(&mut self) {
-        self.assets.retain(|_, list| {
-            list.retain(|_, state| try_load(state));
+    fn try_load(&mut self) -> Option<Vec<(TypeId, String, Vec<u8>)>> {
+        if self.assets.len() == 0 {
+            return None;
+        }
+
+        let mut to_update = vec![];
+        self.assets.retain(|type_id, list| {
+            list.retain(|path_id, state| match try_load(state) {
+                Some(buff) => {
+                    to_update.push((type_id.clone(), path_id.clone(), buff));
+                    false
+                }
+                _ => true,
+            });
             list.len() != 0
         });
+
+        Some(to_update)
     }
 }
 
-fn try_load(state: &mut LoadState) -> bool {
-    // match state.fut.as_ref().poll() {
-    //     _ => true
-    // }
-
-    true
+fn try_load(state: &mut LoadState) -> Option<Vec<u8>> {
+    let waker = DummyWaker.into_task_waker();
+    let mut ctx = Context::from_waker(&waker);
+    match state.fut.as_mut().poll(&mut ctx) {
+        Poll::Ready(r_buff) => match r_buff {
+            Ok(buff) => Some(buff),
+            Err(err) => {
+                notan_log::error!("{}", err);
+                None
+            }
+        },
+        _ => None,
+    }
 }
 
 /// Assets and loaders can be set and get from this struct
+#[derive(Default)]
 pub struct AssetManager {
     loaders: HashMap<TypeId, Arc<AssetLoader>>,
     extensions: HashMap<String, TypeId>,
@@ -192,18 +215,17 @@ impl AssetManager {
         A: Send + Sync + 'static,
     {
         let _ = self.load(&[path])?;
-        self.get(path)
-    }
-
-    pub fn get<A>(&self, path: &str) -> Result<Asset<A>, String>
-    where
-        A: Send + Sync + 'static,
-    {
         self.storage.get(path)
     }
 
-    fn tick(&mut self) {
-        self.storage.try_load();
+    pub fn tick(&mut self) {
+        if let Some(to_update) = self.storage.try_load() {
+            notan_log::info!(
+                "retained: {:?}, loaded: {:?}",
+                self.storage.assets.len(),
+                to_update
+            );
+        }
     }
 
     /// Starts loading a list of [Asset]s and return an [AssetList] to get them and check the progress
@@ -376,3 +398,31 @@ impl AssetList {
         self.count == 0
     }
 }
+
+// No-op dummy waker and context to simulate an executor.
+// We don't need an executor because the download on native is sync and on wasm is managed by js
+// Code based on this example https://github.com/jkarneges/rust-executor-example/blob/master/async.rs
+static VTABLE: RawWakerVTable = RawWakerVTable::new(vt_clone, vt_dummy, vt_dummy, vt_dummy);
+struct DummyWaker;
+impl DummyWaker {
+    //Noop
+    fn into_task_waker(self) -> Waker {
+        unsafe {
+            let w = Box::new(self);
+            let rw = RawWaker::new(Box::into_raw(w) as *mut (), &VTABLE);
+            Waker::from_raw(rw)
+        }
+    }
+
+    fn wake(mut self) {}
+
+    fn wake_by_ref(&mut self) {}
+}
+
+unsafe fn vt_clone(data: *const ()) -> RawWaker {
+    let w = (data as *const DummyWaker).as_ref().unwrap();
+    let new_w = Box::new(w.clone());
+    RawWaker::new(Box::into_raw(new_w) as *mut (), &VTABLE)
+}
+
+unsafe fn vt_dummy(data: *const ()) {}
