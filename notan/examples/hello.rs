@@ -6,8 +6,8 @@ use notan::prelude::*;
 
 #[derive(Default)]
 struct State {
-    manager: AssetManager,
     count: u32,
+    hello: Option<Asset<Blob>>,
 }
 
 impl AppState for State {}
@@ -18,9 +18,9 @@ fn main() -> Result<(), String> {
 
     notan::init_with(State::default())
         .set_config(WindowConfig::new().size(1200, 800))
-        .initialize(|state: &mut State| {
-            state.manager.add_loader::<BlobLoader>();
-            state.manager.load_asset::<Blob>("hello.html");
+        .add_loader::<BlobLoader>()
+        .initialize(|assets: &mut AssetManager, state: &mut State| {
+            state.hello = Some(assets.load_asset::<Blob>("hello.html").unwrap());
         })
         .update(update)
         .build();
@@ -29,5 +29,7 @@ fn main() -> Result<(), String> {
 }
 
 fn update(app: &mut App, state: &mut State) {
-    state.manager.tick();
+    if let Some(asset) = &state.hello {
+        log::info!("{:?}", asset.is_loaded());
+    }
 }

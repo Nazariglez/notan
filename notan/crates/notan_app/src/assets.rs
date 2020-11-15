@@ -117,6 +117,19 @@ impl AssetStorage {
         list.insert(id.to_string(), state);
     }
 
+    fn update<A>(&mut self, id: &str, asset: A)
+    where
+        A: Send + Sync + 'static,
+    {
+        match self.get::<A>(id) {
+            Ok(stored_asset) => {
+                *stored_asset.res.write() = asset;
+                stored_asset.loaded.store(true, Ordering::SeqCst);
+            }
+            Err(err) => notan_log::error!("{}", err),
+        }
+    }
+
     fn get<A>(&self, id: &str) -> Result<Asset<A>, String>
     where
         A: Send + Sync + 'static,
@@ -136,16 +149,17 @@ impl AssetStorage {
             })
     }
 
-    fn try_load(&mut self) -> Option<Vec<(TypeId, String, Vec<u8>)>> {
+    fn try_load(&mut self) -> Option<Vec<(String, Vec<u8>)>> {
         if self.assets.len() == 0 {
             return None;
         }
 
+        //TODO needs update before retain...
         let mut to_update = vec![];
         self.assets.retain(|type_id, list| {
             list.retain(|path_id, state| match try_load(state) {
                 Some(buff) => {
-                    to_update.push((type_id.clone(), path_id.clone(), buff));
+                    to_update.push((path_id.clone(), buff));
                     false
                 }
                 _ => true,
@@ -218,13 +232,25 @@ impl AssetManager {
         self.storage.get(path)
     }
 
-    pub fn tick(&mut self) {
-        if let Some(to_update) = self.storage.try_load() {
-            notan_log::info!(
-                "retained: {:?}, loaded: {:?}",
-                self.storage.assets.len(),
-                to_update
-            );
+    pub(crate) fn tick(&mut self, app: &mut App) {
+        if let Some(mut to_update) = self.storage.try_load() {
+            while let Some((id, data)) = to_update.pop() {
+                let ext = Path::new(&id)
+                    .extension()
+                    .map(|ext| ext.to_str().unwrap())
+                    .unwrap_or("blob");
+
+                let loader = match self.get_loader(ext) {
+                    Ok(loader) => loader,
+                    Err(err) => {
+                        notan_log::warn!("Asset: {} -> {} -> loading as Blob", id, err);
+                        self.get_loader("blob").unwrap()
+                    }
+                }
+                .clone();
+
+                loader.load(app, &mut self.storage, &id, data);
+            }
         }
     }
 
@@ -247,7 +273,7 @@ impl AssetManager {
             }
             .clone();
 
-            loader.load(p, &mut self.storage);
+            loader.store(p, &mut self.storage);
         });
 
         let asset_list = self
@@ -278,8 +304,8 @@ pub trait AssetLoader
 where
     Self: Send + Sync + Downcast,
 {
-    fn load(&self, id: &str, storage: &mut AssetStorage);
-    // fn from_bytes(data: &[u8]) -> Result<Self, String> where Self: Sized;
+    fn store(&self, id: &str, storage: &mut AssetStorage);
+    fn load(&self, app: &mut App, storage: &mut AssetStorage, id: &str, data: Vec<u8>);
     fn extensions(&self) -> &[&str];
 }
 
@@ -298,9 +324,14 @@ impl Deref for Blob {
 #[derive(Default)]
 pub struct BlobLoader;
 impl AssetLoader for BlobLoader {
-    fn load(&self, id: &str, storage: &mut AssetStorage) {
+    fn store(&self, id: &str, storage: &mut AssetStorage) {
         storage.store(id, Blob(vec![]));
     }
+
+    fn load(&self, app: &mut App, storage: &mut AssetStorage, id: &str, data: Vec<u8>) {
+        storage.update(id, Blob(data));
+    }
+
     fn extensions(&self) -> &[&str] {
         &["blob"]
     }
