@@ -1,3 +1,4 @@
+use crate::assets::{AssetLoader, AssetManager};
 use crate::config::*;
 use crate::handlers::{AppCallback, AppHandler, EventCallback, EventHandler};
 use crate::plugins::*;
@@ -21,6 +22,7 @@ pub struct AppBuilder<S, B> {
     backend: B,
 
     plugins: Plugins,
+    assets: AssetManager,
 
     init_callback: Option<AppCallback<S>>,
     update_callback: Option<AppCallback<S>>,
@@ -41,6 +43,7 @@ where
             state,
             backend,
             plugins: Plugins::new(),
+            assets: AssetManager::new(),
             init_callback: None,
             update_callback: None,
             draw_callback: None,
@@ -91,12 +94,22 @@ where
         self
     }
 
+    /// Adds a new [AssetLoader]
+    pub fn add_loader<L>(mut self) -> Self
+    where
+        L: AssetLoader + Default + 'static,
+    {
+        self.assets.add_loader::<L>();
+        self
+    }
+
     /// Creates and run the application
     pub fn build(mut self) -> Result<(), String> {
         let AppBuilder {
             mut backend,
             mut state,
             mut plugins,
+            mut assets,
 
             init_callback,
             update_callback,
@@ -108,7 +121,8 @@ where
 
         let load_file = backend.get_file_loader();
         let initialize = backend.initialize(window)?;
-        let mut app = App::new(Box::new(backend), load_file);
+
+        let mut app = App::new(Box::new(backend));
 
         plugins.init(&mut app).map(|flow| match flow {
             AppFlow::Next => Ok(()),
@@ -119,7 +133,7 @@ where
         })?;
 
         if let Some(cb) = &init_callback {
-            cb.exec(&mut app, &mut plugins, &mut state);
+            cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
         }
 
         if let Err(e) = initialize(app, state, move |mut app, mut state| {
@@ -129,7 +143,8 @@ where
                 _ => {}
             }
 
-            app.tick();
+            assets.tick(&mut app);
+            app.tick(); //todo delta here?
 
             // Manage each event
             for evt in app.backend.events_iter() {
@@ -137,7 +152,7 @@ where
                     AppFlow::Skip => {}
                     AppFlow::Next => {
                         if let Some(cb) = &event_callback {
-                            cb.exec(&mut app, &mut plugins, &mut state, evt); //pass event
+                            cb.exec(&mut app, &mut assets, &mut plugins, &mut state, evt);
                         }
                     }
                     AppFlow::SkipFrame => return Ok(()),
@@ -149,7 +164,7 @@ where
                 AppFlow::Skip => {}
                 AppFlow::Next => {
                     if let Some(cb) = &update_callback {
-                        cb.exec(&mut app, &mut plugins, &mut state);
+                        cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
                     }
                 }
                 AppFlow::SkipFrame => return Ok(()),
@@ -160,7 +175,7 @@ where
                 AppFlow::Skip => {}
                 AppFlow::Next => {
                     if let Some(cb) = &draw_callback {
-                        cb.exec(&mut app, &mut plugins, &mut state);
+                        cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
                     }
                 }
                 AppFlow::SkipFrame => return Ok(()),
