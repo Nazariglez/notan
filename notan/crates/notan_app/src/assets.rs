@@ -93,6 +93,7 @@ impl LoadTracker {
     }
 }
 
+/// Store the assets while they are loading
 #[derive(Default)]
 pub struct AssetStorage {
     list: Option<AssetList>,
@@ -100,7 +101,8 @@ pub struct AssetStorage {
 }
 
 impl AssetStorage {
-    fn set_default<A>(&mut self, id: &str, asset: A)
+    /// Sets a default version of an asset that could be used while the real one is loading
+    pub fn set_default<A>(&mut self, id: &str, asset: A)
     where
         A: Send + Sync + 'static,
     {
@@ -117,7 +119,8 @@ impl AssetStorage {
         list.insert(id.to_string(), state);
     }
 
-    fn update<A>(&mut self, id: &str, asset: A)
+    /// Update a default asset with the loaded one
+    pub fn update<A>(&mut self, id: &str, asset: A)
     where
         A: Send + Sync + 'static,
     {
@@ -154,20 +157,27 @@ impl AssetStorage {
             return None;
         }
 
-        //TODO needs update before retain...
-        let mut to_update = vec![];
+        let loaded = self
+            .assets
+            .iter_mut()
+            .flat_map(|(_, list)| {
+                list.iter_mut()
+                    .filter_map(|(id, state)| match try_load(state) {
+                        Some(data) => Some((id.clone(), data)),
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+
+        Some(loaded)
+    }
+
+    fn clean(&mut self, ids: &[String]) {
         self.assets.retain(|type_id, list| {
-            list.retain(|path_id, state| match try_load(state) {
-                Some(buff) => {
-                    to_update.push((path_id.clone(), buff));
-                    false
-                }
-                _ => true,
-            });
+            list.retain(|path_id, _| !ids.contains(&path_id));
             list.len() != 0
         });
-
-        Some(to_update)
     }
 }
 
@@ -223,6 +233,7 @@ impl AssetManager {
         self.loaders.insert(type_id, Arc::new(loader));
     }
 
+    #[inline(always)]
     /// Starts loading a file and returns an [Asset]
     pub fn load_asset<A>(&mut self, path: &str) -> Result<Asset<A>, String>
     where
@@ -232,26 +243,45 @@ impl AssetManager {
         self.storage.get(path)
     }
 
+    #[inline(always)]
     pub(crate) fn tick(&mut self, app: &mut App) {
-        if let Some(mut to_update) = self.storage.try_load() {
-            while let Some((id, data)) = to_update.pop() {
-                let ext = Path::new(&id)
-                    .extension()
-                    .map(|ext| ext.to_str().unwrap())
-                    .unwrap_or("blob");
+        match self.storage.try_load() {
+            Some(to_update) => self.update_assets_list(app, to_update),
+            _ => {}
+        }
+    }
 
-                let loader = match self.get_loader(ext) {
-                    Ok(loader) => loader,
-                    Err(err) => {
-                        notan_log::warn!("Asset: {} -> {} -> loading as Blob", id, err);
-                        self.get_loader("blob").unwrap()
-                    }
-                }
-                .clone();
+    #[inline(always)]
+    fn update_assets_list(&mut self, app: &mut App, mut to_update: Vec<(String, Vec<u8>)>) {
+        let to_clean = to_update
+            .drain(..)
+            .rev()
+            .map(|(id, data)| {
+                self.update_asset(app, &id, data);
+                id
+            })
+            .collect::<Vec<_>>();
 
-                loader.load(&id, data, app, &mut self.storage);
+        self.storage.clean(&to_clean);
+    }
+
+    #[inline(always)]
+    fn update_asset(&mut self, app: &mut App, id: &str, data: Vec<u8>) {
+        let ext = Path::new(&id)
+            .extension()
+            .map(|ext| ext.to_str().unwrap())
+            .unwrap_or("blob");
+
+        let loader = match self.get_loader(ext) {
+            Ok(loader) => loader,
+            Err(err) => {
+                notan_log::warn!("Asset: {} -> {} -> loading as Blob", id, err);
+                self.get_loader("blob").unwrap()
             }
         }
+        .clone();
+
+        loader.load(&id, data, app, &mut self.storage);
     }
 
     /// Starts loading a list of [Asset]s and return an [AssetList] to get them and check the progress
@@ -285,6 +315,7 @@ impl AssetManager {
         Ok(asset_list)
     }
 
+    #[inline(always)]
     fn get_loader(&self, ext: &str) -> Result<&Arc<AssetLoader>, String> {
         let type_id = match self.extensions.get(ext) {
             Some(type_id) => type_id,
