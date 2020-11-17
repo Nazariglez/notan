@@ -55,13 +55,13 @@ where
 
 impl<A> Eq for Asset<A> where A: Send + Sync {}
 
-struct LoadState {
+struct LoadWrapper {
     fut: LocalBoxFuture<'static, Result<Vec<u8>, String>>,
     loaded: Arc<AtomicBool>,
     asset: Arc<dyn Any + Send + Sync>,
 }
 
-impl LoadState {
+impl LoadWrapper {
     fn new<A>(asset: A, fut: LocalBoxFuture<'static, Result<Vec<u8>, String>>) -> Self
     where
         A: Send + Sync + 'static,
@@ -96,17 +96,17 @@ impl LoadTracker {
 #[derive(Default)]
 pub struct AssetStorage {
     list: Option<AssetList>,
-    assets: HashMap<TypeId, HashMap<String, LoadState>>,
+    assets: HashMap<TypeId, HashMap<String, LoadWrapper>>,
 }
 
 impl AssetStorage {
-    fn store<A>(&mut self, id: &str, asset: A)
+    fn set_default<A>(&mut self, id: &str, asset: A)
     where
         A: Send + Sync + 'static,
     {
         let type_id = TypeId::of::<A>();
         let fut = Box::pin(platter::load_file(id.to_string()).map_err(|e| e.to_string()));
-        let state = LoadState::new(asset, fut);
+        let state = LoadWrapper::new(asset, fut);
 
         // In case that exists a list append the state to it
         if let Some(loader) = &mut self.list {
@@ -171,7 +171,7 @@ impl AssetStorage {
     }
 }
 
-fn try_load(state: &mut LoadState) -> Option<Vec<u8>> {
+fn try_load(state: &mut LoadWrapper) -> Option<Vec<u8>> {
     let waker = DummyWaker.into_task_waker();
     let mut ctx = Context::from_waker(&waker);
     match state.fut.as_mut().poll(&mut ctx) {
@@ -249,7 +249,7 @@ impl AssetManager {
                 }
                 .clone();
 
-                loader.load(app, &mut self.storage, &id, data);
+                loader.load(&id, data, app, &mut self.storage);
             }
         }
     }
@@ -258,8 +258,8 @@ impl AssetManager {
     pub fn load(&mut self, paths: &[&str]) -> Result<AssetList, String> {
         self.storage.list = Some(Default::default());
 
-        paths.iter().for_each(|p| {
-            let ext = Path::new(p)
+        paths.iter().for_each(|id| {
+            let ext = Path::new(id)
                 .extension()
                 .map(|ext| ext.to_str().unwrap())
                 .unwrap_or("blob");
@@ -267,13 +267,13 @@ impl AssetManager {
             let loader = match self.get_loader(ext) {
                 Ok(loader) => loader,
                 Err(err) => {
-                    notan_log::warn!("Asset: {} -> {} -> loading as Blob", p, err);
+                    notan_log::warn!("Asset: {} -> {} -> loading as Blob", id, err);
                     self.get_loader("blob").unwrap()
                 }
             }
             .clone();
 
-            loader.store(p, &mut self.storage);
+            loader.set_default(id, &mut self.storage);
         });
 
         let asset_list = self
@@ -304,8 +304,8 @@ pub trait AssetLoader
 where
     Self: Send + Sync + Downcast,
 {
-    fn store(&self, id: &str, storage: &mut AssetStorage);
-    fn load(&self, app: &mut App, storage: &mut AssetStorage, id: &str, data: Vec<u8>);
+    fn set_default(&self, id: &str, storage: &mut AssetStorage);
+    fn load(&self, id: &str, data: Vec<u8>, app: &mut App, storage: &mut AssetStorage);
     fn extensions(&self) -> &[&str];
 }
 
@@ -324,12 +324,12 @@ impl Deref for Blob {
 #[derive(Default)]
 pub struct BlobLoader;
 impl AssetLoader for BlobLoader {
-    fn store(&self, id: &str, storage: &mut AssetStorage) {
-        storage.store(id, Blob(vec![]));
+    fn set_default(&self, id: &str, storage: &mut AssetStorage) {
+        storage.set_default(id, Blob(vec![]));
     }
 
-    fn load(&self, app: &mut App, storage: &mut AssetStorage, id: &str, data: Vec<u8>) {
-        storage.update(id, Blob(data));
+    fn load(&self, id: &str, data: Vec<u8>, app: &mut App, storage: &mut AssetStorage) {
+        storage.update(&id, Blob(data));
     }
 
     fn extensions(&self) -> &[&str] {
@@ -337,8 +337,8 @@ impl AssetLoader for BlobLoader {
     }
 }
 
-///
 #[derive(Default, Clone)]
+/// A list of loading assets
 pub struct AssetList {
     count: usize,
     assets: HashMap<TypeId, HashMap<String, LoadTracker>>,
