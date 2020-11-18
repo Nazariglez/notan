@@ -17,7 +17,7 @@ pub fn get_or_create_canvas(doc: &Document, canvas_id: &str) -> Result<HtmlCanva
 
             let body = doc
                 .body()
-                .ok_or("body doesn't exists on document.".to_string())?;
+                .ok_or_else(|| "body doesn't exists on document.".to_string())?;
             body.append_child(&c).map_err(|e| format!("{:?}", e))?;
 
             c.set_id(canvas_id);
@@ -57,7 +57,7 @@ where
     E: wasm_bindgen::convert::FromWasmAbi + 'static,
     F: FnMut(E) + 'static,
 {
-    let win = web_sys::window().ok_or("global window doesn't exists".to_string())?;
+    let win = web_sys::window().ok_or_else(|| "global window doesn't exists".to_string())?;
 
     let mut handler = handler;
     let closure = Closure::wrap(Box::new(move |e: E| {

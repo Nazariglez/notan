@@ -23,8 +23,7 @@ impl AssetList {
         let still_loading = self
             .assets
             .values()
-            .find(|list| list.values().find(|tracker| !tracker.is_loaded()).is_some())
-            .is_some();
+            .any(|list| list.values().any(|tracker| !tracker.is_loaded()));
 
         !still_loading
     }
@@ -60,7 +59,7 @@ impl AssetList {
 
         storage
             .get(id)
-            .ok_or("Invalid asset id".to_string())
+            .ok_or_else(|| "Invalid asset id".to_string())
             .map(|tracker| Asset {
                 id: id.to_string(),
                 loaded: tracker.loaded.clone(),
@@ -80,7 +79,7 @@ impl AssetList {
 
         let asset = storage
             .remove(id)
-            .ok_or("Invalid asset id".to_string())
+            .ok_or_else(|| "Invalid asset id".to_string())
             .map(|tracker| Asset {
                 id: id.to_string(),
                 loaded: tracker.loaded.clone(),

@@ -21,7 +21,7 @@ impl WebBackend {
 
         Ok(Self {
             window: None,
-            events: events,
+            events,
             exit_requested: false,
         })
     }

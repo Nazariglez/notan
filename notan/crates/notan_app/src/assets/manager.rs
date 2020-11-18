@@ -58,9 +58,8 @@ impl AssetManager {
 
     #[inline(always)]
     pub(crate) fn tick(&mut self, app: &mut App) {
-        match self.storage.try_load() {
-            Some(to_update) => self.update_assets_list(app, to_update),
-            _ => {}
+        if let Some(to_update) = self.storage.try_load() {
+            self.update_assets_list(app, to_update)
         }
     }
 
@@ -124,7 +123,7 @@ impl AssetManager {
             .storage
             .list
             .take()
-            .ok_or("AssetList cannot be extracted from AssetManager".to_string())?;
+            .ok_or_else(|| "AssetList cannot be extracted from AssetManager".to_string())?;
 
         Ok(asset_list)
     }

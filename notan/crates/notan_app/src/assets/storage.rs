@@ -61,7 +61,7 @@ impl AssetStorage {
 
         storage
             .get(id)
-            .ok_or("Invalid asset id".to_string())
+            .ok_or_else(|| "Invalid asset id".to_string())
             .map(|state| Asset {
                 id: id.to_string(),
                 loaded: state.loaded.clone(),
@@ -70,7 +70,7 @@ impl AssetStorage {
     }
 
     pub(crate) fn try_load(&mut self) -> Option<Vec<(String, Vec<u8>)>> {
-        if self.assets.len() == 0 {
+        if self.assets.is_empty() {
             return None;
         }
 
@@ -93,7 +93,7 @@ impl AssetStorage {
     pub(crate) fn clean(&mut self, ids: &[String]) {
         self.assets.retain(|_, list| {
             list.retain(|path_id, _| !ids.contains(&path_id));
-            list.len() != 0
+            !list.is_empty()
         });
     }
 }
