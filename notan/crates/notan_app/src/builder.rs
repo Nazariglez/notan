@@ -47,7 +47,7 @@ where
         AppBuilder {
             setup_callback: setup.callback(),
             backend,
-            plugins: Plugins::new(),
+            plugins: Default::default(),
             assets: AssetManager::new(),
             init_callback: None,
             update_callback: None,
@@ -144,9 +144,8 @@ where
 
         if let Err(e) = initialize(app, state, move |mut app, mut state| {
             // Manage pre frame events
-            match plugins.pre_frame(&mut app)? {
-                AppFlow::SkipFrame => return Ok(()),
-                _ => {}
+            if let AppFlow::SkipFrame = plugins.pre_frame(&mut app)? {
+                return Ok(());
             }
 
             assets.tick(&mut app);
@@ -194,9 +193,7 @@ where
             app.keyboard.clear();
 
             // Manage post frame event
-            match plugins.post_frame(&mut app)? {
-                _ => {}
-            }
+            let _ = plugins.post_frame(&mut app)?;
 
             Ok(())
         }) {

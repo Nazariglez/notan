@@ -47,6 +47,6 @@ impl App {
     pub fn backend<T: Backend>(&mut self) -> Result<&mut T, String> {
         self.backend
             .downcast_mut::<T>()
-            .ok_or("Invalid backend type.".to_string())
+            .ok_or_else(|| "Invalid backend type.".to_string())
     }
 }

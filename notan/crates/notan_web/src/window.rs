@@ -25,7 +25,7 @@ pub struct WebWindowBackend {
     max_size: Option<(i32, i32)>,
     resize_callback_ref: Option<Closure<dyn FnMut(WebEvent)>>,
 
-    context_menu_callback_ref: Closure<dyn FnMut(WebEvent)>,
+    _context_menu_callback_ref: Closure<dyn FnMut(WebEvent)>,
 
     pub(crate) mouse_callbacks: MouseCallbacks,
     pub(crate) keyboard_callbacks: KeyboardCallbacks,
@@ -35,7 +35,8 @@ pub struct WebWindowBackend {
 
 impl WebWindowBackend {
     pub fn new(config: WindowConfig, events: Rc<RefCell<EventIterator>>) -> Result<Self, String> {
-        let window = web_sys::window().ok_or(String::from("Can't access window dom object."))?;
+        let window =
+            web_sys::window().ok_or_else(|| String::from("Can't access window dom object."))?;
         let document = window
             .document()
             .ok_or("Can't access document dom object ")?;
@@ -55,8 +56,8 @@ impl WebWindowBackend {
         let fullscreen_last_size = Rc::new(RefCell::new(None));
         let fullscreen_callback_ref = None;
 
-        let min_size = config.min_size.clone();
-        let max_size = config.max_size.clone();
+        let min_size = config.min_size;
+        let max_size = config.max_size;
         let resize_callback_ref = None;
 
         let mouse_callbacks = Default::default();
@@ -76,7 +77,7 @@ impl WebWindowBackend {
             min_size,
             max_size,
             resize_callback_ref,
-            context_menu_callback_ref,
+            _context_menu_callback_ref: context_menu_callback_ref,
             config,
         })
     }
@@ -180,8 +181,8 @@ fn enable_resize(win: &mut WebWindowBackend) -> Result<(), String> {
     let events = win.events.clone();
     let canvas = win.canvas.clone();
     let parent = win.canvas_parent.clone();
-    let min_size = win.min_size.clone();
-    let max_size = win.max_size.clone();
+    let min_size = win.min_size;
+    let max_size = win.max_size;
     win.resize_callback_ref = Some(window_add_event_listener("resize", move |_| {
         let mut p_width = parent.client_width();
         let mut p_height = parent.client_height();

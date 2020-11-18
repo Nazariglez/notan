@@ -37,7 +37,7 @@ pub fn enable_mouse(
     let events = win.events.clone();
     let canvas = win.canvas.clone();
     callbacks.on_move = Some(canvas_add_event_listener(
-        &canvas.clone(),
+        &win.canvas,
         "mousemove",
         move |e: MouseEvent| {
             let (x, y) = canvas_position_from_global(&canvas, e);
@@ -49,7 +49,7 @@ pub fn enable_mouse(
     let canvas = win.canvas.clone();
     let fullscreen = fullscreen_dispatcher.clone();
     callbacks.on_down = Some(canvas_add_event_listener(
-        &canvas.clone(),
+        &win.canvas,
         "mousedown",
         move |e: MouseEvent| {
             (*fullscreen.borrow())();
@@ -76,7 +76,7 @@ pub fn enable_mouse(
     let canvas = win.canvas.clone();
     let fullscreen = fullscreen_dispatcher.clone();
     callbacks.on_left_window = Some(canvas_add_event_listener(
-        &canvas.clone(),
+        &win.canvas,
         "mouseout",
         move |e: MouseEvent| {
             (*fullscreen.borrow())();
@@ -89,7 +89,7 @@ pub fn enable_mouse(
     let canvas = win.canvas.clone();
     let fullscreen = fullscreen_dispatcher.clone();
     callbacks.on_enter_window = Some(canvas_add_event_listener(
-        &canvas.clone(),
+        &win.canvas,
         "mouseover",
         move |e: MouseEvent| {
             (*fullscreen.borrow())();
@@ -99,9 +99,8 @@ pub fn enable_mouse(
     )?);
 
     let events = win.events.clone();
-    let canvas = win.canvas.clone();
     callbacks.on_wheel = Some(canvas_add_event_listener(
-        &canvas.clone(),
+        &win.canvas,
         "wheel",
         move |e: WheelEvent| {
             let delta_x = e.delta_x() as _;

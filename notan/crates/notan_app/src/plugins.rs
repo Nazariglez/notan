@@ -26,18 +26,13 @@ impl Default for AppFlow {
     }
 }
 
+#[derive(Default)]
 /// A container of plugins that allow get them to use it
 pub struct Plugins {
     pub(crate) map: IndexMap<TypeId, Box<dyn Plugin>>,
 }
 
 impl Plugins {
-    pub fn new() -> Self {
-        Self {
-            map: IndexMap::new(),
-        }
-    }
-
     pub fn set<T: Plugin + 'static>(&mut self, value: T) {
         self.map.insert(TypeId::of::<T>(), Box::new(value));
     }
@@ -61,7 +56,7 @@ impl Plugins {
             .iter_mut()
             .map(|(_, p)| p.init(app))
             .max()
-            .unwrap_or(Ok(Default::default()))
+            .unwrap_or_else(|| Ok(Default::default()))
     }
 
     pub(crate) fn pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
@@ -69,7 +64,7 @@ impl Plugins {
             .iter_mut()
             .map(|(_, p)| p.pre_frame(app))
             .max()
-            .unwrap_or(Ok(Default::default()))
+            .unwrap_or_else(|| Ok(Default::default()))
     }
 
     pub(crate) fn event(&mut self, app: &mut App, event: &Event) -> Result<AppFlow, String> {
@@ -77,7 +72,7 @@ impl Plugins {
             .iter_mut()
             .map(|(_, p)| p.event(app, event))
             .max()
-            .unwrap_or(Ok(Default::default()))
+            .unwrap_or_else(|| Ok(Default::default()))
     }
 
     pub(crate) fn update(&mut self, app: &mut App) -> Result<AppFlow, String> {
@@ -85,7 +80,7 @@ impl Plugins {
             .iter_mut()
             .map(|(_, p)| p.update(app))
             .max()
-            .unwrap_or(Ok(Default::default()))
+            .unwrap_or_else(|| Ok(Default::default()))
     }
 
     pub(crate) fn draw(&mut self, app: &mut App) -> Result<AppFlow, String> {
@@ -93,7 +88,7 @@ impl Plugins {
             .iter_mut()
             .map(|(_, p)| p.draw(app))
             .max()
-            .unwrap_or(Ok(Default::default()))
+            .unwrap_or_else(|| Ok(Default::default()))
     }
 
     pub(crate) fn post_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
@@ -101,7 +96,7 @@ impl Plugins {
             .iter_mut()
             .map(|(_, p)| p.post_frame(app))
             .max()
-            .unwrap_or(Ok(Default::default()))
+            .unwrap_or_else(|| Ok(Default::default()))
     }
 }
 
