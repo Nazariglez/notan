@@ -1,5 +1,4 @@
 use crate::app::App;
-use crate::backend::*;
 use crate::builder::AppBuilder;
 use crate::events::Event;
 use downcast_rs::{impl_downcast, Downcast};
@@ -29,7 +28,7 @@ impl Default for AppFlow {
 
 /// A container of plugins that allow get them to use it
 pub struct Plugins {
-    pub(crate) map: IndexMap<TypeId, Box<Plugin>>,
+    pub(crate) map: IndexMap<TypeId, Box<dyn Plugin>>,
 }
 
 impl Plugins {
@@ -106,6 +105,7 @@ impl Plugins {
     }
 }
 
+#[allow(unused_variables)]
 /// A plugin allow the user to extend or alter the application
 pub trait Plugin
 where

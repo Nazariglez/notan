@@ -1,10 +1,9 @@
 use super::asset::Asset;
 use super::list::AssetList;
 use super::waker::DummyWaker;
-use futures::future::{BoxFuture, LocalBoxFuture};
+use futures::future::LocalBoxFuture;
 use futures::prelude::*;
-use futures::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
-use futures::Future;
+use futures::task::{Context, Poll};
 use hashbrown::HashMap;
 use parking_lot::RwLock;
 use std::any::{Any, TypeId};
@@ -33,7 +32,7 @@ impl AssetStorage {
             loader.insert(type_id, id, state.tracker());
         }
 
-        let mut list = self.assets.entry(type_id).or_insert(HashMap::new());
+        let list = self.assets.entry(type_id).or_insert(HashMap::new());
         list.insert(id.to_string(), state);
     }
 
@@ -92,7 +91,7 @@ impl AssetStorage {
     }
 
     pub(crate) fn clean(&mut self, ids: &[String]) {
-        self.assets.retain(|type_id, list| {
+        self.assets.retain(|_, list| {
             list.retain(|path_id, _| !ids.contains(&path_id));
             list.len() != 0
         });

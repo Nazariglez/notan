@@ -13,10 +13,6 @@ pub struct Keyboard {
 }
 
 impl Keyboard {
-    pub(crate) fn new() -> Self {
-        Default::default()
-    }
-
     /// returns true if the key was released on the last frame
     pub fn was_released(&self, key: KeyCode) -> bool {
         self.released.contains(&key)

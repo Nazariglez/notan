@@ -5,14 +5,14 @@ use super::loader::AssetLoader;
 use super::storage::AssetStorage;
 use crate::app::App;
 use hashbrown::HashMap;
-use std::any::{Any, TypeId};
+use std::any::TypeId;
 use std::path::Path;
 use std::sync::Arc;
 
 /// Assets and loaders can be set and get from this struct
 #[derive(Default)]
 pub struct AssetManager {
-    loaders: HashMap<TypeId, Arc<AssetLoader>>,
+    loaders: HashMap<TypeId, Arc<dyn AssetLoader>>,
     extensions: HashMap<String, TypeId>,
     storage: AssetStorage,
 }
@@ -87,7 +87,7 @@ impl AssetManager {
 
         let loader = match self.get_loader(ext) {
             Ok(loader) => loader,
-            Err(err) => self.get_loader("blob").unwrap(),
+            Err(_) => self.get_loader("blob").unwrap(),
         }
         .clone();
 
@@ -130,7 +130,7 @@ impl AssetManager {
     }
 
     #[inline(always)]
-    fn get_loader(&self, ext: &str) -> Result<&Arc<AssetLoader>, String> {
+    fn get_loader(&self, ext: &str) -> Result<&Arc<dyn AssetLoader>, String> {
         let type_id = match self.extensions.get(ext) {
             Some(type_id) => type_id,
             _ => return Err("Invalid extension".to_string()),

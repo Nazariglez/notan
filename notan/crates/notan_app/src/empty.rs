@@ -38,7 +38,7 @@ impl EmptyBackend {
 }
 
 impl Backend for EmptyBackend {
-    fn window(&mut self) -> &mut WindowBackend {
+    fn window(&mut self) -> &mut dyn WindowBackend {
         &mut self.window
     }
 
@@ -52,7 +52,7 @@ impl Backend for EmptyBackend {
 }
 
 impl BackendSystem for EmptyBackend {
-    fn initialize<S, R>(&mut self, config: WindowConfig) -> Result<Box<InitializeFn<S, R>>, String>
+    fn initialize<S, R>(&mut self, _config: WindowConfig) -> Result<Box<InitializeFn<S, R>>, String>
     where
         S: 'static,
         R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static,

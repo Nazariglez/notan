@@ -1,6 +1,3 @@
-use crate::window::WebWindowBackend;
-use std::cell::RefCell;
-use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{Document, HtmlCanvasElement, Window};
@@ -36,7 +33,7 @@ pub fn canvas_add_event_listener<F, E>(
     canvas: &HtmlCanvasElement,
     name: &str,
     handler: F,
-) -> Result<Closure<FnMut(E)>, String>
+) -> Result<Closure<dyn FnMut(E)>, String>
 where
     E: wasm_bindgen::convert::FromWasmAbi + 'static,
     F: FnMut(E) + 'static,
@@ -48,11 +45,14 @@ where
 
     canvas
         .add_event_listener_with_callback(name, closure.as_ref().unchecked_ref())
-        .map_err(|e| format!("Invalid event name: {}", name))?;
+        .map_err(|_| format!("Invalid event name: {}", name))?;
     Ok(closure)
 }
 
-pub fn window_add_event_listener<F, E>(name: &str, handler: F) -> Result<Closure<FnMut(E)>, String>
+pub fn window_add_event_listener<F, E>(
+    name: &str,
+    handler: F,
+) -> Result<Closure<dyn FnMut(E)>, String>
 where
     E: wasm_bindgen::convert::FromWasmAbi + 'static,
     F: FnMut(E) + 'static,

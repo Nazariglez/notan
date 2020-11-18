@@ -8,12 +8,12 @@ use futures::Future;
 pub type InitializeFn<S, R> = dyn Fn(App, S, R) -> Result<(), String>;
 
 /// Closure used to load files
-pub type LoadFileFn = Box<Fn(String) -> Box<dyn Future<Output = Result<Vec<u8>, String>>>>;
+pub type LoadFileFn = Box<dyn Fn(String) -> Box<dyn Future<Output = Result<Vec<u8>, String>>>>;
 
 /// Represents the backend implementation
 pub trait Backend: Send + Sync + Downcast {
     /// Returns the window implementation
-    fn window(&mut self) -> &mut WindowBackend;
+    fn window(&mut self) -> &mut dyn WindowBackend;
 
     /// Returns an iterator that contains the backend events
     fn events_iter(&mut self) -> EventIterator;

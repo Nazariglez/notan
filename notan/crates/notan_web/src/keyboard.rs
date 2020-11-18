@@ -9,8 +9,8 @@ use web_sys::KeyboardEvent;
 
 #[derive(Default)]
 pub struct KeyboardCallbacks {
-    on_up: Option<Closure<FnMut(KeyboardEvent)>>,
-    on_down: Option<Closure<FnMut(KeyboardEvent)>>,
+    on_up: Option<Closure<dyn FnMut(KeyboardEvent)>>,
+    on_down: Option<Closure<dyn FnMut(KeyboardEvent)>>,
 }
 
 pub fn enable_keyboard(

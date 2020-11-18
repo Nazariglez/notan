@@ -4,7 +4,6 @@ use notan_app::config::WindowConfig;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 use notan_log as log;
 use std::cell::RefCell;
-use std::collections::VecDeque;
 use std::panic;
 use std::rc::Rc;
 use wasm_bindgen::closure::Closure;
@@ -33,7 +32,7 @@ impl Backend for WebBackend {
         self.events.borrow_mut().take_events()
     }
 
-    fn window(&mut self) -> &mut WindowBackend {
+    fn window(&mut self) -> &mut dyn WindowBackend {
         self.window.as_mut().unwrap()
     }
 
@@ -54,7 +53,7 @@ impl BackendSystem for WebBackend {
             let callback = Rc::new(RefCell::new(None));
             let inner_callback = callback.clone();
 
-            backend(&mut app).window.as_mut().unwrap().init();
+            backend(&mut app).window.as_mut().unwrap().init()?;
 
             *callback.borrow_mut() = Some(Closure::wrap(Box::new(move || {
                 if let Err(e) = cb(&mut app, &mut state) {

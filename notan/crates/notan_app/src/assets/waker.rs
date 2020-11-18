@@ -1,6 +1,4 @@
-use futures::prelude::*;
-use futures::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
-use futures::Future;
+use futures::task::{RawWaker, RawWakerVTable, Waker};
 
 // This is a non operative Waker to simulate an future context
 // To load asset we don't need an executor, on wasm32 web-sys will do the trick, no native the assets are loaded sync
@@ -18,10 +16,6 @@ impl DummyWaker {
             Waker::from_raw(rw)
         }
     }
-
-    fn wake(mut self) {}
-
-    fn wake_by_ref(&mut self) {}
 }
 
 unsafe fn vt_clone(data: *const ()) -> RawWaker {
@@ -30,4 +24,4 @@ unsafe fn vt_clone(data: *const ()) -> RawWaker {
     RawWaker::new(Box::into_raw(new_w) as *mut (), &VTABLE)
 }
 
-unsafe fn vt_dummy(data: *const ()) {}
+unsafe fn vt_dummy(_data: *const ()) {}

@@ -1,18 +1,18 @@
 use crate::app::{App, AppState};
 use crate::assets::AssetManager;
 use crate::events::Event;
-use crate::plugins::{Plugin, Plugins};
+use crate::plugins::Plugins;
 
 //TODO generate this enum should be easy to do with a proc_macro or something...
 pub enum SetupCallback<S> {
-    Empty(Box<Fn() -> S>),
-    A(Box<Fn(&mut App) -> S>),
-    M(Box<Fn(&mut AssetManager) -> S>),
-    AM(Box<Fn(&mut App, &mut AssetManager) -> S>),
-    P(Box<Fn(&mut Plugins) -> S>),
-    AP(Box<Fn(&mut App, &mut Plugins) -> S>),
-    MP(Box<Fn(&mut AssetManager, &mut Plugins) -> S>),
-    AMP(Box<Fn(&mut App, &mut AssetManager, &mut Plugins) -> S>),
+    Empty(Box<dyn Fn() -> S>),
+    A(Box<dyn Fn(&mut App) -> S>),
+    M(Box<dyn Fn(&mut AssetManager) -> S>),
+    AM(Box<dyn Fn(&mut App, &mut AssetManager) -> S>),
+    P(Box<dyn Fn(&mut Plugins) -> S>),
+    AP(Box<dyn Fn(&mut App, &mut Plugins) -> S>),
+    MP(Box<dyn Fn(&mut AssetManager, &mut Plugins) -> S>),
+    AMP(Box<dyn Fn(&mut App, &mut AssetManager, &mut Plugins) -> S>),
 }
 
 impl<State> SetupCallback<State> {
@@ -44,6 +44,7 @@ pub trait SetupHandler<S, Params> {
 
 macro_rules! setup_handler {
     ($variant:expr, $($param:ident),*) => {
+        #[allow(unused_parens)]
         impl<F, S> SetupHandler<S, ($(&mut $param),*)> for F
         where
             F: Fn($(&mut $param),*) -> S + 'static,
@@ -66,26 +67,26 @@ setup_handler!(SetupCallback::MP, AssetManager, Plugins);
 setup_handler!(SetupCallback::P, Plugins);
 
 pub enum AppCallback<S> {
-    Empty(Box<Fn()>),
+    Empty(Box<dyn Fn()>),
 
-    A(Box<Fn(&mut App)>),
-    AS(Box<Fn(&mut App, &mut S)>),
-    AM(Box<Fn(&mut App, &mut AssetManager)>),
-    AP(Box<Fn(&mut App, &mut Plugins)>),
-    APS(Box<Fn(&mut App, &mut Plugins, &mut S)>),
-    AMS(Box<Fn(&mut App, &mut AssetManager, &mut S)>),
-    AMP(Box<Fn(&mut App, &mut AssetManager, &mut Plugins)>),
-    AMPS(Box<Fn(&mut App, &mut AssetManager, &mut Plugins, &mut S)>),
+    A(Box<dyn Fn(&mut App)>),
+    AS(Box<dyn Fn(&mut App, &mut S)>),
+    AM(Box<dyn Fn(&mut App, &mut AssetManager)>),
+    AP(Box<dyn Fn(&mut App, &mut Plugins)>),
+    APS(Box<dyn Fn(&mut App, &mut Plugins, &mut S)>),
+    AMS(Box<dyn Fn(&mut App, &mut AssetManager, &mut S)>),
+    AMP(Box<dyn Fn(&mut App, &mut AssetManager, &mut Plugins)>),
+    AMPS(Box<dyn Fn(&mut App, &mut AssetManager, &mut Plugins, &mut S)>),
 
-    M(Box<Fn(&mut AssetManager)>),
-    MP(Box<Fn(&mut AssetManager, &mut Plugins)>),
-    MS(Box<Fn(&mut AssetManager, &mut S)>),
-    MPS(Box<Fn(&mut AssetManager, &mut Plugins, &mut S)>),
+    M(Box<dyn Fn(&mut AssetManager)>),
+    MP(Box<dyn Fn(&mut AssetManager, &mut Plugins)>),
+    MS(Box<dyn Fn(&mut AssetManager, &mut S)>),
+    MPS(Box<dyn Fn(&mut AssetManager, &mut Plugins, &mut S)>),
 
-    P(Box<Fn(&mut Plugins)>),
-    PS(Box<Fn(&mut Plugins, &mut S)>),
+    P(Box<dyn Fn(&mut Plugins)>),
+    PS(Box<dyn Fn(&mut Plugins, &mut S)>),
 
-    S(Box<Fn(&mut S)>),
+    S(Box<dyn Fn(&mut S)>),
 }
 
 impl<State> AppCallback<State> {
@@ -127,6 +128,7 @@ pub trait AppHandler<S, Params> {
 
 macro_rules! app_handler {
     ($variant:expr, $($param:ident),*) => {
+        #[allow(unused_parens)]
         impl<F, S> AppHandler<S, ($(&mut $param),*)> for F
         where
             F: Fn($(&mut $param),*) + 'static,
@@ -157,25 +159,25 @@ app_handler!(AppCallback::PS, Plugins, S);
 app_handler!(AppCallback::S, S);
 
 pub enum EventCallback<S> {
-    E(Box<Fn(Event)>),
+    E(Box<dyn Fn(Event)>),
 
-    AE(Box<Fn(&mut App, Event)>),
-    AME(Box<Fn(&mut App, &mut AssetManager, Event)>),
-    ASE(Box<Fn(&mut App, &mut S, Event)>),
-    APE(Box<Fn(&mut App, &mut Plugins, Event)>),
-    AMPE(Box<Fn(&mut App, &mut AssetManager, &mut Plugins, Event)>),
-    APSE(Box<Fn(&mut App, &mut Plugins, &mut S, Event)>),
-    AMPSE(Box<Fn(&mut App, &mut AssetManager, &mut Plugins, &mut S, Event)>),
+    AE(Box<dyn Fn(&mut App, Event)>),
+    AME(Box<dyn Fn(&mut App, &mut AssetManager, Event)>),
+    ASE(Box<dyn Fn(&mut App, &mut S, Event)>),
+    APE(Box<dyn Fn(&mut App, &mut Plugins, Event)>),
+    AMPE(Box<dyn Fn(&mut App, &mut AssetManager, &mut Plugins, Event)>),
+    APSE(Box<dyn Fn(&mut App, &mut Plugins, &mut S, Event)>),
+    AMPSE(Box<dyn Fn(&mut App, &mut AssetManager, &mut Plugins, &mut S, Event)>),
 
-    ME(Box<Fn(&mut AssetManager, Event)>),
-    MSE(Box<Fn(&mut AssetManager, &mut S, Event)>),
-    MPE(Box<Fn(&mut AssetManager, &mut Plugins, Event)>),
-    MPSE(Box<Fn(&mut AssetManager, &mut Plugins, &mut S, Event)>),
+    ME(Box<dyn Fn(&mut AssetManager, Event)>),
+    MSE(Box<dyn Fn(&mut AssetManager, &mut S, Event)>),
+    MPE(Box<dyn Fn(&mut AssetManager, &mut Plugins, Event)>),
+    MPSE(Box<dyn Fn(&mut AssetManager, &mut Plugins, &mut S, Event)>),
 
-    PE(Box<Fn(&mut Plugins, Event)>),
-    PSE(Box<Fn(&mut Plugins, &mut S, Event)>),
+    PE(Box<dyn Fn(&mut Plugins, Event)>),
+    PSE(Box<dyn Fn(&mut Plugins, &mut S, Event)>),
 
-    SE(Box<Fn(&mut S, Event)>),
+    SE(Box<dyn Fn(&mut S, Event)>),
 }
 
 impl<State> EventCallback<State> {
@@ -218,6 +220,7 @@ pub trait EventHandler<S, Params> {
 
 macro_rules! event_handler {
     ($variant:expr, $($param:ident),*) => {
+        #[allow(unused_parens)]
         impl<F, S> EventHandler<S, ($(&mut $param,)* Event)> for F
         where
             F: Fn($(&mut $param,)* Event) + 'static,

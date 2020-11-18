@@ -58,7 +58,7 @@ where
     }
 
     /// Applies a configuration
-    pub fn set_config<C>(mut self, config: C) -> Self
+    pub fn set_config<C>(self, config: C) -> Self
     where
         C: BuildConfig<S, B>,
     {
@@ -109,7 +109,7 @@ where
     }
 
     /// Creates and run the application
-    pub fn build(mut self) -> Result<(), String> {
+    pub fn build(self) -> Result<(), String> {
         let AppBuilder {
             mut backend,
             setup_callback,
@@ -124,13 +124,13 @@ where
             ..
         } = self;
 
-        let load_file = backend.get_file_loader();
+        // let load_file = backend.get_file_loader();
         let initialize = backend.initialize(window)?;
 
         let mut app = App::new(Box::new(backend));
         let mut state = setup_callback.exec(&mut app, &mut assets, &mut plugins);
 
-        plugins.init(&mut app).map(|flow| match flow {
+        let _ = plugins.init(&mut app).map(|flow| match flow {
             AppFlow::Next => Ok(()),
             _ => Err(format!(
                 "Aborted application loop because a plugin returns on the init method AppFlow::{:?} instead of AppFlow::Next",
@@ -154,6 +154,9 @@ where
 
             // Manage each event
             for evt in app.backend.events_iter() {
+                app.keyboard.process_events(&evt, app.delta);
+                app.mouse.process_events(&evt, app.delta);
+
                 match plugins.event(&mut app, &evt)? {
                     AppFlow::Skip => {}
                     AppFlow::Next => {

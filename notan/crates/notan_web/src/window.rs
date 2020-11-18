@@ -5,7 +5,6 @@ use notan_app::config::WindowConfig;
 use notan_app::{Event, EventIterator, WindowBackend};
 use notan_log as log;
 use std::cell::RefCell;
-use std::collections::VecDeque;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, Event as WebEvent, HtmlCanvasElement, Window};
@@ -20,13 +19,13 @@ pub struct WebWindowBackend {
 
     fullscreen_requested: Rc<RefCell<Option<bool>>>,
     fullscreen_last_size: Rc<RefCell<Option<(i32, i32)>>>,
-    fullscreen_callback_ref: Option<Closure<FnMut(WebEvent)>>,
+    fullscreen_callback_ref: Option<Closure<dyn FnMut(WebEvent)>>,
 
     min_size: Option<(i32, i32)>,
     max_size: Option<(i32, i32)>,
-    resize_callback_ref: Option<Closure<FnMut(WebEvent)>>,
+    resize_callback_ref: Option<Closure<dyn FnMut(WebEvent)>>,
 
-    context_menu_callback_ref: Closure<FnMut(WebEvent)>,
+    context_menu_callback_ref: Closure<dyn FnMut(WebEvent)>,
 
     pub(crate) mouse_callbacks: MouseCallbacks,
     pub(crate) keyboard_callbacks: KeyboardCallbacks,
@@ -129,12 +128,10 @@ fn enable_fullscreen(win: &mut WebWindowBackend) -> Result<(), String> {
     if win.fullscreen_callback_ref.is_none() {
         let events = win.events.clone();
         let canvas = win.canvas.clone();
-        let parent = win.canvas_parent.clone();
         let document = win.document.clone();
         let last_size = win.fullscreen_last_size.clone();
-        win.fullscreen_callback_ref = Some(window_add_event_listener(
-            "fullscreenchange",
-            move |e: WebEvent| {
+        win.fullscreen_callback_ref =
+            Some(window_add_event_listener("fullscreenchange", move |_| {
                 let (width, height) = if document.fullscreen() {
                     (canvas.client_width(), canvas.client_height())
                 } else {
@@ -152,8 +149,7 @@ fn enable_fullscreen(win: &mut WebWindowBackend) -> Result<(), String> {
                 events
                     .borrow_mut()
                     .push(Event::WindowResize { width, height });
-            },
-        )?);
+            })?);
     }
 
     Ok(())
@@ -186,7 +182,7 @@ fn enable_resize(win: &mut WebWindowBackend) -> Result<(), String> {
     let parent = win.canvas_parent.clone();
     let min_size = win.min_size.clone();
     let max_size = win.max_size.clone();
-    win.resize_callback_ref = Some(window_add_event_listener("resize", move |e: WebEvent| {
+    win.resize_callback_ref = Some(window_add_event_listener("resize", move |_| {
         let mut p_width = parent.client_width();
         let mut p_height = parent.client_height();
 
