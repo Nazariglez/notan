@@ -87,10 +87,7 @@ impl AssetManager {
 
         let loader = match self.get_loader(ext) {
             Ok(loader) => loader,
-            Err(err) => {
-                notan_log::warn!("Asset: {} -> {} -> loading as Blob", id, err);
-                self.get_loader("blob").unwrap()
-            }
+            Err(err) => self.get_loader("blob").unwrap(),
         }
         .clone();
 
@@ -110,7 +107,11 @@ impl AssetManager {
             let loader = match self.get_loader(ext) {
                 Ok(loader) => loader,
                 Err(err) => {
-                    notan_log::warn!("Asset: {} -> {} -> loading as Blob", id, err);
+                    notan_log::warn!(
+                        "Asset: {} -> {} -> loading with BytesLoader as Vec<u8>",
+                        id,
+                        err
+                    );
                     self.get_loader("blob").unwrap()
                 }
             }
