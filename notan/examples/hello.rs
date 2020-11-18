@@ -7,7 +7,7 @@ use notan::prelude::*;
 #[derive(Default)]
 struct State {
     count: u32,
-    hello: Option<Asset<Vec<u8>>>,
+    hello: Asset<Vec<u8>>,
 }
 
 impl AppState for State {}
@@ -16,19 +16,21 @@ impl AppState for State {}
 fn main() -> Result<(), String> {
     log::init();
 
-    notan::init_with(State::default())
+    notan::init_with(init)
         .set_config(WindowConfig::new().size(1200, 800))
-        .initialize(|assets: &mut AssetManager, state: &mut State| {
-            state.hello = Some(assets.load_asset::<Vec<u8>>("hello.html").unwrap());
-        })
         .update(update)
         .build();
 
     Ok(())
 }
 
-fn update(app: &mut App, state: &mut State) {
-    if let Some(asset) = &state.hello {
-        log::info!("{:?}", asset.is_loaded());
+fn init(app: &mut App, assets: &mut AssetManager) -> State {
+    State {
+        count: 0,
+        hello: assets.load_asset::<Vec<u8>>("hello.html").unwrap(),
     }
+}
+
+fn update(app: &mut App, state: &mut State) {
+    log::info!("{:?}", state.hello.is_loaded());
 }

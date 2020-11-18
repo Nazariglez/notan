@@ -18,7 +18,8 @@ where
 
 /// The builder is charge of create and configure the application
 pub struct AppBuilder<S, B> {
-    state: S,
+    state_callback: fn(&mut App, &mut AssetManager) -> S,
+    // state: S,
     backend: B,
 
     plugins: Plugins,
@@ -38,9 +39,9 @@ where
     B: BackendSystem + 'static,
 {
     /// Creates a new instance of the builder
-    pub fn new(state: S, backend: B) -> Self {
+    pub fn new(state_callback: fn(&mut App, &mut AssetManager) -> S, backend: B) -> Self {
         AppBuilder {
-            state,
+            state_callback,
             backend,
             plugins: Plugins::new(),
             assets: AssetManager::new(),
@@ -107,7 +108,7 @@ where
     pub fn build(mut self) -> Result<(), String> {
         let AppBuilder {
             mut backend,
-            mut state,
+            state_callback,
             mut plugins,
             mut assets,
 
@@ -123,6 +124,7 @@ where
         let initialize = backend.initialize(window)?;
 
         let mut app = App::new(Box::new(backend));
+        let mut state = (state_callback)(&mut app, &mut assets);
 
         plugins.init(&mut app).map(|flow| match flow {
             AppFlow::Next => Ok(()),
