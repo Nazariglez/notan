@@ -8,15 +8,14 @@ use notan::prelude::*;
 struct State {
     count: u32,
     hello: Asset<Vec<u8>>,
+    list: AssetList,
 }
 
 impl AppState for State {}
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    log::init();
-
-    notan::init_with(init)
+    notan::init_with(setup)
         .set_config(WindowConfig::new().size(1200, 800))
         .update(update)
         .build();
@@ -24,13 +23,21 @@ fn main() -> Result<(), String> {
     Ok(())
 }
 
-fn init(app: &mut App, assets: &mut AssetManager) -> State {
+fn setup(assets: &mut AssetManager) -> State {
     State {
         count: 0,
         hello: assets.load_asset::<Vec<u8>>("hello.html").unwrap(),
+        list: assets.load_list(&["hello.html", "hell.html"]).unwrap(),
     }
 }
 
 fn update(app: &mut App, state: &mut State) {
-    log::info!("{:?}", state.hello.is_loaded());
+    log::info!(
+        "asset: {:?} -> list: {:?} - {:?}",
+        state.hello.is_loaded(),
+        state.list.is_loaded(),
+        state.list.progress()
+    );
+
+    state.count += 1;
 }

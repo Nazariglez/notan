@@ -16,5 +16,6 @@ notan_default_backend = { path = "./crates/notan_default_backend", optional = tr
 members = ["crates/*"]
 
 [features]
-default = ["default_backend"]
+default = ["default_backend", "log_enabled"]
+log_enabled = []
 default_backend = ["notan_default_backend"]

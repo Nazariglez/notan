@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 /// Represents the state of the application, always accessible across the event's cycle
 pub trait AppState {}
+impl AppState for () {}
 
 /// Represents the context of the application
 pub struct App {

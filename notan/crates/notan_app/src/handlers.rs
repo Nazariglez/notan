@@ -4,6 +4,66 @@ use crate::events::Event;
 use crate::plugins::{Plugin, Plugins};
 
 //TODO generate this enum should be easy to do with a proc_macro or something...
+pub enum SetupCallback<S> {
+    Empty(Box<Fn() -> S>),
+    A(Box<Fn(&mut App) -> S>),
+    M(Box<Fn(&mut AssetManager) -> S>),
+    AM(Box<Fn(&mut App, &mut AssetManager) -> S>),
+    P(Box<Fn(&mut Plugins) -> S>),
+    AP(Box<Fn(&mut App, &mut Plugins) -> S>),
+    MP(Box<Fn(&mut AssetManager, &mut Plugins) -> S>),
+    AMP(Box<Fn(&mut App, &mut AssetManager, &mut Plugins) -> S>),
+}
+
+impl<State> SetupCallback<State> {
+    pub(crate) fn exec(
+        &self,
+        app: &mut App,
+        manager: &mut AssetManager,
+        plugins: &mut Plugins,
+    ) -> State {
+        use SetupCallback::*;
+        match self {
+            Empty(cb) => cb(),
+            A(cb) => cb(app),
+            AM(cb) => cb(app, manager),
+            AP(cb) => cb(app, plugins),
+            AMP(cb) => cb(app, manager, plugins),
+
+            M(cb) => cb(manager),
+            MP(cb) => cb(manager, plugins),
+
+            P(cb) => cb(plugins),
+        }
+    }
+}
+
+pub trait SetupHandler<S, Params> {
+    fn callback(self) -> SetupCallback<S>;
+}
+
+macro_rules! setup_handler {
+    ($variant:expr, $($param:ident),*) => {
+        impl<F, S> SetupHandler<S, ($(&mut $param),*)> for F
+        where
+            F: Fn($(&mut $param),*) -> S + 'static,
+            S: AppState
+        {
+            fn callback(self) -> SetupCallback<S> {
+                $variant(Box::new(self))
+            }
+        }
+    }
+}
+
+setup_handler!(SetupCallback::Empty,);
+setup_handler!(SetupCallback::A, App);
+setup_handler!(SetupCallback::AM, App, AssetManager);
+setup_handler!(SetupCallback::AP, App, Plugins);
+setup_handler!(SetupCallback::AMP, App, AssetManager, Plugins);
+setup_handler!(SetupCallback::M, AssetManager);
+setup_handler!(SetupCallback::MP, AssetManager, Plugins);
+setup_handler!(SetupCallback::P, Plugins);
 
 pub enum AppCallback<S> {
     Empty(Box<Fn()>),

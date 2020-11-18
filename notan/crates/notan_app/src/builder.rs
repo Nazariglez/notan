@@ -1,9 +1,11 @@
 use crate::assets::{AssetLoader, AssetManager};
 use crate::config::*;
-use crate::handlers::{AppCallback, AppHandler, EventCallback, EventHandler};
+use crate::handlers::{AppCallback, AppHandler, EventCallback, EventHandler, SetupCallback};
 use crate::plugins::*;
 use crate::{App, Backend, BackendSystem};
 use notan_log as log;
+
+pub use crate::handlers::SetupHandler;
 
 //TODO read this https://floooh.github.io/2017/05/15/oryol-spirv.html
 
@@ -18,8 +20,7 @@ where
 
 /// The builder is charge of create and configure the application
 pub struct AppBuilder<S, B> {
-    state_callback: fn(&mut App, &mut AssetManager) -> S,
-    // state: S,
+    setup_callback: SetupCallback<S>,
     backend: B,
 
     plugins: Plugins,
@@ -39,9 +40,12 @@ where
     B: BackendSystem + 'static,
 {
     /// Creates a new instance of the builder
-    pub fn new(state_callback: fn(&mut App, &mut AssetManager) -> S, backend: B) -> Self {
+    pub fn new<H, Params>(setup: H, backend: B) -> Self
+    where
+        H: SetupHandler<S, Params>,
+    {
         AppBuilder {
-            state_callback,
+            setup_callback: setup.callback(),
             backend,
             plugins: Plugins::new(),
             assets: AssetManager::new(),
@@ -108,7 +112,7 @@ where
     pub fn build(mut self) -> Result<(), String> {
         let AppBuilder {
             mut backend,
-            state_callback,
+            setup_callback,
             mut plugins,
             mut assets,
 
@@ -124,7 +128,7 @@ where
         let initialize = backend.initialize(window)?;
 
         let mut app = App::new(Box::new(backend));
-        let mut state = (state_callback)(&mut app, &mut assets);
+        let mut state = setup_callback.exec(&mut app, &mut assets, &mut plugins);
 
         plugins.init(&mut app).map(|flow| match flow {
             AppFlow::Next => Ok(()),
