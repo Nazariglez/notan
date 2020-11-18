@@ -31,6 +31,15 @@ where
     pub fn is_loaded(&self) -> bool {
         self.loaded.load(Ordering::SeqCst)
     }
+
+    /// Create a new asset from custom data
+    pub fn from_data(id: &str, data: A) -> Asset<A> {
+        Asset {
+            id: id.to_string(),
+            loaded: Arc::new(AtomicBool::new(true)),
+            res: Arc::new(RwLock::new(data)),
+        }
+    }
 }
 
 impl<A> PartialEq for Asset<A>
@@ -43,3 +52,13 @@ where
 }
 
 impl<A> Eq for Asset<A> where A: Send + Sync {}
+
+impl<A> Default for Asset<A>
+where
+    A: Default + Send + Sync,
+{
+    fn default() -> Asset<A> {
+        let id = std::any::type_name::<A>();
+        Asset::from_data(id, Default::default())
+    }
+}
