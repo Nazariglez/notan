@@ -7,16 +7,16 @@ use notan_app::Event;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
-use web_sys::{Event as WebEvent, MouseEvent, WheelEvent};
+use web_sys::{MouseEvent, WheelEvent};
 
 #[derive(Default)]
 pub struct MouseCallbacks {
-    on_move: Option<Closure<FnMut(MouseEvent)>>,
-    on_down: Option<Closure<FnMut(MouseEvent)>>,
-    on_up: Option<Closure<FnMut(MouseEvent)>>,
-    on_left_window: Option<Closure<FnMut(MouseEvent)>>,
-    on_enter_window: Option<Closure<FnMut(MouseEvent)>>,
-    on_wheel: Option<Closure<FnMut(WheelEvent)>>,
+    on_move: Option<Closure<dyn FnMut(MouseEvent)>>,
+    on_down: Option<Closure<dyn FnMut(MouseEvent)>>,
+    on_up: Option<Closure<dyn FnMut(MouseEvent)>>,
+    on_left_window: Option<Closure<dyn FnMut(MouseEvent)>>,
+    on_enter_window: Option<Closure<dyn FnMut(MouseEvent)>>,
+    on_wheel: Option<Closure<dyn FnMut(WheelEvent)>>,
 }
 
 fn mouse_button_to_nae(btn: i16) -> MouseButton {

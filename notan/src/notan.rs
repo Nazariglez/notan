@@ -1,5 +1,4 @@
-use crate::app::assets::AssetManager;
-use crate::app::{App, AppBuilder, BackendSystem, SetupHandler};
+use crate::app::{AppBuilder, BackendSystem, SetupHandler};
 
 #[cfg(not(feature = "default_backend"))]
 use crate::app::empty::EmptyBackend as DefaultBackend;

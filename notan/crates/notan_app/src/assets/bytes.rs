@@ -10,7 +10,7 @@ impl AssetLoader for BytesLoader {
         storage.set_default::<Vec<u8>>(id, vec![]);
     }
 
-    fn load(&self, id: &str, data: Vec<u8>, app: &mut App, storage: &mut AssetStorage) {
+    fn load(&self, id: &str, data: Vec<u8>, _app: &mut App, storage: &mut AssetStorage) {
         storage.update(&id, data);
     }
 

@@ -1,9 +1,6 @@
 use crate::keyboard::Keyboard;
 use crate::mouse::Mouse;
-use crate::{Backend, LoadFileFn, WindowBackend};
-use std::any::Any;
-use std::path::Path;
-use std::sync::Arc;
+use crate::{Backend, WindowBackend};
 
 //TODO: looks like an interesting API to do the draw2d module https://github.com/RazrFalcon/tiny-skia/tree/master/examples
 
@@ -13,14 +10,14 @@ impl AppState for () {}
 
 /// Represents the context of the application
 pub struct App {
-    pub backend: Box<Backend>,
+    pub backend: Box<dyn Backend>,
     pub mouse: Mouse,
     pub keyboard: Keyboard,
     pub delta: f32,
 }
 
 impl App {
-    pub(crate) fn new(backend: Box<Backend>) -> Self {
+    pub(crate) fn new(backend: Box<dyn Backend>) -> Self {
         let mouse = Default::default();
         let keyboard = Default::default();
         Self {
@@ -41,7 +38,7 @@ impl App {
     }
 
     #[inline]
-    pub fn window(&mut self) -> &mut WindowBackend {
+    pub fn window(&mut self) -> &mut dyn WindowBackend {
         self.backend.window()
     }
 

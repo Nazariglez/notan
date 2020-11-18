@@ -1,6 +1,6 @@
 use crate::keyboard::*;
 use crate::mouse::*;
-use std::collections::{HashSet, VecDeque};
+use std::collections::VecDeque;
 
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
 /// Application events usually received from the user

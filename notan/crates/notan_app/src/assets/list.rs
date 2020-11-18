@@ -2,7 +2,7 @@ use super::asset::Asset;
 use super::storage::LoadTracker;
 use hashbrown::HashMap;
 use parking_lot::RwLock;
-use std::any::{Any, TypeId};
+use std::any::TypeId;
 
 #[derive(Default, Clone)]
 /// A list of loading assets
@@ -13,7 +13,7 @@ pub struct AssetList {
 
 impl AssetList {
     pub(crate) fn insert(&mut self, type_id: TypeId, id: &str, tracker: LoadTracker) {
-        let mut list = self.assets.entry(type_id).or_insert(HashMap::new());
+        let list = self.assets.entry(type_id).or_insert(HashMap::new());
         list.insert(id.to_string(), tracker);
         self.count += 1;
     }
@@ -45,7 +45,7 @@ impl AssetList {
             acc + loaded
         });
 
-        (loaded as f32 / self.count as f32)
+        loaded as f32 / self.count as f32
     }
 
     /// Returns the [Asset]
@@ -73,7 +73,7 @@ impl AssetList {
     where
         A: Send + Sync + 'static,
     {
-        let mut storage = match self.assets.get_mut(&TypeId::of::<A>()) {
+        let storage = match self.assets.get_mut(&TypeId::of::<A>()) {
             Some(map) => map,
             _ => return Err("Invalid asset type".to_string()),
         };
