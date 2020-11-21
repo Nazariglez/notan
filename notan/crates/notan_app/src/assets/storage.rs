@@ -69,6 +69,7 @@ impl AssetStorage {
             })
     }
 
+    #[inline]
     pub(crate) fn try_load(&mut self) -> Option<Vec<(String, Vec<u8>)>> {
         if self.assets.is_empty() {
             return None;
@@ -90,6 +91,7 @@ impl AssetStorage {
         Some(loaded)
     }
 
+    #[inline(always)]
     pub(crate) fn clean(&mut self, ids: &[String]) {
         self.assets.retain(|_, list| {
             list.retain(|path_id, _| !ids.contains(&path_id));
@@ -98,6 +100,7 @@ impl AssetStorage {
     }
 }
 
+#[inline]
 fn try_load(state: &mut LoadWrapper) -> Option<Vec<u8>> {
     let waker = DummyWaker.into_task_waker();
     let mut ctx = Context::from_waker(&waker);

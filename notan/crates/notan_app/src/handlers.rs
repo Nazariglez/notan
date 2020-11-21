@@ -1,6 +1,7 @@
 use crate::app::{App, AppState};
 use crate::assets::AssetManager;
 use crate::events::Event;
+use crate::graphics::Graphics;
 use crate::plugins::Plugins;
 
 //TODO generate this enum should be easy to do with a proc_macro or something...
@@ -13,6 +14,13 @@ pub enum SetupCallback<S> {
     AP(Box<dyn Fn(&mut App, &mut Plugins) -> S>),
     MP(Box<dyn Fn(&mut AssetManager, &mut Plugins) -> S>),
     AMP(Box<dyn Fn(&mut App, &mut AssetManager, &mut Plugins) -> S>),
+    G(Box<dyn Fn(&mut Graphics) -> S>),
+    AG(Box<dyn Fn(&mut App, &mut Graphics) -> S>),
+    MG(Box<dyn Fn(&mut AssetManager, &mut Graphics) -> S>),
+    AMG(Box<dyn Fn(&mut App, &mut AssetManager, &mut Graphics) -> S>),
+    GP(Box<dyn Fn(&mut Graphics, &mut Plugins) -> S>),
+    MGP(Box<dyn Fn(&mut AssetManager, &mut Graphics, &mut Plugins) -> S>),
+    AMGP(Box<dyn Fn(&mut App, &mut AssetManager, &mut Graphics, &mut Plugins) -> S>),
 }
 
 impl<State> SetupCallback<State> {
@@ -20,6 +28,7 @@ impl<State> SetupCallback<State> {
         &self,
         app: &mut App,
         manager: &mut AssetManager,
+        graphics: &mut Graphics,
         plugins: &mut Plugins,
     ) -> State {
         use SetupCallback::*;
@@ -34,6 +43,14 @@ impl<State> SetupCallback<State> {
             MP(cb) => cb(manager, plugins),
 
             P(cb) => cb(plugins),
+
+            G(cb) => cb(graphics),
+            AG(cb) => cb(app, graphics),
+            MG(cb) => cb(manager, graphics),
+            AMG(cb) => cb(app, manager, graphics),
+            GP(cb) => cb(graphics, plugins),
+            MGP(cb) => cb(manager, graphics, plugins),
+            AMGP(cb) => cb(app, manager, graphics, plugins),
         }
     }
 }
@@ -65,6 +82,13 @@ setup_handler!(SetupCallback::AMP, App, AssetManager, Plugins);
 setup_handler!(SetupCallback::M, AssetManager);
 setup_handler!(SetupCallback::MP, AssetManager, Plugins);
 setup_handler!(SetupCallback::P, Plugins);
+setup_handler!(SetupCallback::G, Graphics);
+setup_handler!(SetupCallback::AG, App, Graphics);
+setup_handler!(SetupCallback::MG, AssetManager, Graphics);
+setup_handler!(SetupCallback::AMG, App, AssetManager, Graphics);
+setup_handler!(SetupCallback::GP, Graphics, Plugins);
+setup_handler!(SetupCallback::MGP, AssetManager, Graphics, Plugins);
+setup_handler!(SetupCallback::AMGP, App, AssetManager, Graphics, Plugins);
 
 pub enum AppCallback<S> {
     Empty(Box<dyn Fn()>),

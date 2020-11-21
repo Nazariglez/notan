@@ -19,3 +19,5 @@ pub use events::*;
 
 pub use builder::*;
 pub use plugins::*;
+
+pub use notan_graphics as graphics;
