@@ -1,0 +1,11 @@
+[package]
+name = "notan_graphics"
+version = "0.1.0"
+authors = ["Nazarí González <nazari.nz@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+glam = {version = "0.10", features = ["scalar-math"] }
+bytemuck = "1.4"

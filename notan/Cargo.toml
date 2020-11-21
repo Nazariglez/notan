@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 notan_log = { path = "./crates/notan_log" }
 notan_app = { path = "./crates/notan_app" }
-notan_derive = { path = "./crates/notan_derive" }
+notan_macro = { path = "crates/notan_macro" }
 notan_default_backend = { path = "./crates/notan_default_backend", optional = true }
 
 [workspace]

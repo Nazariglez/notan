@@ -5,6 +5,33 @@ use crate::plugins::*;
 use crate::{App, Backend, BackendSystem};
 use notan_log as log;
 
+use crate::graphics::prelude::*;
+use crate::graphics::{Graphics, GraphicsBackend};
+struct DummyGraphics;
+impl GraphicsBackend for DummyGraphics {
+    fn create_pipeline(
+        &mut self,
+        vertex_source: &[u8],
+        fragment_source: &[u8],
+        vertex_attrs: &[VertexAttr],
+        options: PipelineOptions,
+    ) -> Result<PipelineId, String> {
+        Ok(PipelineId(0))
+    }
+
+    fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<BufferId, String> {
+        Ok(BufferId(0))
+    }
+
+    fn create_index_buffer(&mut self, draw: DrawType) -> Result<BufferId, String> {
+        Ok(BufferId(0))
+    }
+
+    fn render(&mut self, commands: &[Commands]) {
+        commands.iter().for_each(|cmd| println!("{:?}", cmd));
+    }
+}
+
 pub use crate::handlers::SetupHandler;
 
 //TODO read this https://floooh.github.io/2017/05/15/oryol-spirv.html
@@ -83,6 +110,15 @@ where
         self
     }
 
+    /// Sets a callback executed after each update to draw
+    pub fn draw<H, Params>(mut self, handler: H) -> Self
+    where
+        H: AppHandler<S, Params>,
+    {
+        self.draw_callback = Some(handler.callback());
+        self
+    }
+
     /// Sets a callback to be used on each event
     pub fn event<H, Params>(mut self, handler: H) -> Self
     where
@@ -128,7 +164,10 @@ where
         let initialize = backend.initialize(window)?;
 
         let mut app = App::new(Box::new(backend));
-        let mut state = setup_callback.exec(&mut app, &mut assets, &mut plugins);
+        let mut graphics = Graphics::new(Box::new(DummyGraphics));
+        let (width, height) = app.window().size();
+        graphics.set_size(width, height);
+        let mut state = setup_callback.exec(&mut app, &mut assets, &mut graphics, &mut plugins);
 
         let _ = plugins.init(&mut app).map(|flow| match flow {
             AppFlow::Next => Ok(()),
