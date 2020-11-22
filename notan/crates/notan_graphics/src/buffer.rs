@@ -1,35 +1,41 @@
-// pub enum BufferUsage {
-//     Vertex,
-//     Index,
-//     Uniform
-// }
-//
-// pub struct Buffer<'a> {
-//     usage: BufferUsage,
-//     content: &'a [u8]
-// }
-//
-
+use crate::graphics::{DropManager, ResourceId};
 use crate::pipeline::*;
 use std::ops::{Deref, DerefMut};
+use std::sync::Arc;
 
-#[derive(Clone, Copy, Debug, Default)]
-pub struct BufferId(pub i32);
+#[derive(Debug)]
+struct BufferId {
+    id: i32,
+    drop_manager: Arc<DropManager>,
+}
+
+impl Drop for BufferId {
+    fn drop(&mut self) {
+        self.drop_manager.push(ResourceId::Buffer(self.id));
+    }
+}
 
 pub struct Buffer {
-    id: BufferId,
+    id: Arc<BufferId>,
     usage: BufferUsage,
     draw: DrawType,
 }
 
 impl Buffer {
-    pub fn new(id: BufferId, usage: BufferUsage, draw: DrawType) -> Self {
+    pub(crate) fn new(
+        id: i32,
+        usage: BufferUsage,
+        draw: DrawType,
+        drop_manager: Arc<DropManager>,
+    ) -> Self {
+        let id = Arc::new(BufferId { id, drop_manager });
+
         Self { id, usage, draw }
     }
 
     #[inline(always)]
-    pub fn id(&self) -> BufferId {
-        self.id
+    pub fn id(&self) -> i32 {
+        self.id.id
     }
 
     #[inline(always)]
