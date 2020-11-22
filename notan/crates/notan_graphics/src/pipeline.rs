@@ -1,20 +1,34 @@
 use crate::color::Color;
+use crate::graphics::{DropManager, ResourceId};
+use std::sync::Arc;
 
-#[derive(Clone, Copy, Debug, Default)]
-pub struct PipelineId(pub i32);
+#[derive(Debug)]
+struct PipelineId {
+    id: i32,
+    drop_manager: Arc<DropManager>,
+}
+
+impl Drop for PipelineId {
+    fn drop(&mut self) {
+        self.drop_manager.push(ResourceId::Pipeline(self.id));
+    }
+}
+
 pub struct Pipeline {
-    id: PipelineId,
+    id: Arc<PipelineId>,
     pub options: PipelineOptions,
 }
 
 impl Pipeline {
-    pub fn new(id: PipelineId, options: PipelineOptions) -> Self {
+    pub(crate) fn new(id: i32, options: PipelineOptions, drop_manager: Arc<DropManager>) -> Self {
+        let id = Arc::new(PipelineId { id, drop_manager });
+
         Self { id, options }
     }
 
     #[inline(always)]
-    pub fn id(&self) -> PipelineId {
-        self.id
+    pub fn id(&self) -> i32 {
+        self.id.id
     }
 }
 

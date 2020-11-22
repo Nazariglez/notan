@@ -7,7 +7,11 @@ use notan_log as log;
 
 use crate::graphics::prelude::*;
 use crate::graphics::{Graphics, GraphicsBackend};
-struct DummyGraphics;
+#[derive(Default)]
+struct DummyGraphics {
+    id_count: i32,
+}
+
 impl GraphicsBackend for DummyGraphics {
     fn create_pipeline(
         &mut self,
@@ -15,20 +19,27 @@ impl GraphicsBackend for DummyGraphics {
         fragment_source: &[u8],
         vertex_attrs: &[VertexAttr],
         options: PipelineOptions,
-    ) -> Result<PipelineId, String> {
-        Ok(PipelineId(0))
+    ) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
     }
 
-    fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<BufferId, String> {
-        Ok(BufferId(0))
+    fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
     }
 
-    fn create_index_buffer(&mut self, draw: DrawType) -> Result<BufferId, String> {
-        Ok(BufferId(0))
+    fn create_index_buffer(&mut self, draw: DrawType) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
     }
 
     fn render(&mut self, commands: &[Commands]) {
         commands.iter().for_each(|cmd| println!("{:?}", cmd));
+    }
+
+    fn clean(&mut self, to_clean: &[ResourceId]) {
+        notan_log::info!("{:?}", to_clean);
     }
 }
 
@@ -164,7 +175,7 @@ where
         let initialize = backend.initialize(window)?;
 
         let mut app = App::new(Box::new(backend));
-        let mut graphics = Graphics::new(Box::new(DummyGraphics));
+        let mut graphics = Graphics::new(Box::new(DummyGraphics::default()));
         let (width, height) = app.window().size();
         graphics.set_size(width, height);
         let mut state = setup_callback.exec(&mut app, &mut assets, &mut graphics, &mut plugins);
@@ -234,6 +245,8 @@ where
             // Manage post frame event
             let _ = plugins.post_frame(&mut app)?;
 
+            // Clean possible dropped resources on the backend
+            graphics.clean();
             Ok(())
         }) {
             log::error!("{}", e);

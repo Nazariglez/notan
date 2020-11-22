@@ -24,11 +24,11 @@ pub enum Commands<'a> {
     },
     End,
     Pipeline {
-        id: PipelineId,
+        id: i32,
         options: PipelineOptions,
     },
     BindBuffer {
-        id: BufferId,
+        id: i32,
         ptr: &'a [u8],
         usage: BufferUsage,
         draw: DrawType,

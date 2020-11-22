@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 glam = {version = "0.10", features = ["scalar-math"] }
 bytemuck = "1.4"
+parking_lot = "0.11"
