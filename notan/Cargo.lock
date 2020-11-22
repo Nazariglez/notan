@@ -504,6 +504,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "glow"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1625b792e2f9267116dd41eb7d325e0ea2572ceba5069451906745e04f852f33"
+dependencies = [
+ "js-sys",
+ "slotmap",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -829,6 +841,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "notan_glow"
+version = "0.1.0"
+dependencies = [
+ "glow",
+ "js-sys",
+ "notan_graphics",
+ "notan_log",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "notan_graphics"
 version = "0.1.0"
 dependencies = [
@@ -861,6 +885,8 @@ dependencies = [
  "console_error_panic_hook",
  "js-sys",
  "notan_app",
+ "notan_glow",
+ "notan_graphics",
  "notan_log",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -1126,6 +1152,12 @@ name = "slab"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
+
+[[package]]
+name = "slotmap"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c46a3482db8f247956e464d783693ece164ca056e6e67563ee5505bdb86452cd"
 
 [[package]]
 name = "smallvec"

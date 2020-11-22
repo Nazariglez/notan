@@ -5,6 +5,7 @@ use crate::renderer::Renderer;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
+/// Graphics resource ID, used to know which resource was dropped
 #[derive(Debug)]
 pub enum ResourceId {
     Buffer(i32),
@@ -12,7 +13,9 @@ pub enum ResourceId {
     Pipeline(i32),
 }
 
+/// Represents a the implementation graphics backend like glow, wgpu or another
 pub trait GraphicsBackend {
+    /// Create a new pipeline and returns the id
     fn create_pipeline(
         &mut self,
         vertex_source: &[u8],
@@ -20,9 +23,17 @@ pub trait GraphicsBackend {
         vertex_attrs: &[VertexAttr],
         options: PipelineOptions,
     ) -> Result<i32, String>;
+
+    /// Create a new vertex buffer object and returns the id
     fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<i32, String>;
+
+    /// Create a new index buffer object and returns the id
     fn create_index_buffer(&mut self, draw: DrawType) -> Result<i32, String>;
+
+    /// Create a new renderer using the size of the graphics
     fn render(&mut self, commands: &[Commands]);
+
+    /// Clean all the dropped resources
     fn clean(&mut self, to_clean: &[ResourceId]);
 }
 

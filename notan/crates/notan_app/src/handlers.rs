@@ -272,3 +272,95 @@ event_handler!(EventCallback::MPSE, AssetManager, Plugins, S);
 event_handler!(EventCallback::PE, Plugins);
 event_handler!(EventCallback::PSE, Plugins, S);
 event_handler!(EventCallback::SE, S);
+
+pub enum DrawCallback<S> {
+    G(Box<dyn Fn(&mut Graphics)>),
+    GS(Box<dyn Fn(&mut Graphics, &mut S)>),
+    // AE(Box<dyn Fn(&mut App, Event)>),
+    // AME(Box<dyn Fn(&mut App, &mut AssetManager, Event)>),
+    // ASE(Box<dyn Fn(&mut App, &mut S, Event)>),
+    // APE(Box<dyn Fn(&mut App, &mut Plugins, Event)>),
+    // AMPE(Box<dyn Fn(&mut App, &mut AssetManager, &mut Plugins, Event)>),
+    // APSE(Box<dyn Fn(&mut App, &mut Plugins, &mut S, Event)>),
+    // AMPSE(Box<dyn Fn(&mut App, &mut AssetManager, &mut Plugins, &mut S, Event)>),
+    //
+    // ME(Box<dyn Fn(&mut AssetManager, Event)>),
+    // MSE(Box<dyn Fn(&mut AssetManager, &mut S, Event)>),
+    // MPE(Box<dyn Fn(&mut AssetManager, &mut Plugins, Event)>),
+    // MPSE(Box<dyn Fn(&mut AssetManager, &mut Plugins, &mut S, Event)>),
+    //
+    // PE(Box<dyn Fn(&mut Plugins, Event)>),
+    // PSE(Box<dyn Fn(&mut Plugins, &mut S, Event)>),
+    //
+    // SE(Box<dyn Fn(&mut S, Event)>),
+}
+
+impl<State> DrawCallback<State> {
+    pub(crate) fn exec(
+        &self,
+        app: &mut App,
+        manager: &mut AssetManager,
+        graphics: &mut Graphics,
+        plugins: &mut Plugins,
+        state: &mut State,
+    ) {
+        use DrawCallback::*;
+        match self {
+            G(cb) => cb(graphics),
+            GS(cb) => cb(graphics, state),
+            // AE(cb) => cb(app, event),
+            // AME(cb) => cb(app, manager, event),
+            // ASE(cb) => cb(app, state, event),
+            // APE(cb) => cb(app, plugins, event),
+            // AMPE(cb) => cb(app, manager, plugins, event),
+            // APSE(cb) => cb(app, plugins, state, event),
+            // AMPSE(cb) => cb(app, manager, plugins, state, event),
+            //
+            // ME(cb) => cb(manager, event),
+            // MSE(cb) => cb(manager, state, event),
+            // MPE(cb) => cb(manager, plugins, event),
+            // MPSE(cb) => cb(manager, plugins, state, event),
+            //
+            // PE(cb) => cb(plugins, event),
+            // PSE(cb) => cb(plugins, state, event),
+            //
+            // SE(cb) => cb(state, event),
+        }
+    }
+}
+
+pub trait DrawHandler<S, Params> {
+    fn callback(self) -> DrawCallback<S>;
+}
+
+macro_rules! draw_handler {
+    ($variant:expr, $($param:ident),*) => {
+        #[allow(unused_parens)]
+        impl<F, S> DrawHandler<S, ($(&mut $param),*)> for F
+        where
+            F: Fn($(&mut $param),*) + 'static,
+            S: AppState
+        {
+            fn callback(self) -> DrawCallback<S> {
+                $variant(Box::new(self))
+            }
+        }
+    }
+}
+
+draw_handler!(DrawCallback::G, Graphics);
+draw_handler!(DrawCallback::GS, Graphics, S);
+// event_handler!(EventCallback::AE, App);
+// event_handler!(EventCallback::AME, App, AssetManager);
+// event_handler!(EventCallback::ASE, App, S);
+// event_handler!(EventCallback::APE, App, Plugins);
+// event_handler!(EventCallback::AMPE, App, AssetManager, Plugins);
+// event_handler!(EventCallback::APSE, App, Plugins, S);
+// event_handler!(EventCallback::AMPSE, App, AssetManager, Plugins, S);
+// event_handler!(EventCallback::ME, AssetManager);
+// event_handler!(EventCallback::MSE, AssetManager, S);
+// event_handler!(EventCallback::MPE, AssetManager, Plugins);
+// event_handler!(EventCallback::MPSE, AssetManager, Plugins, S);
+// event_handler!(EventCallback::PE, Plugins);
+// event_handler!(EventCallback::PSE, Plugins, S);
+// event_handler!(EventCallback::SE, S);

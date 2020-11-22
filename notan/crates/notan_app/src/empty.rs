@@ -1,4 +1,6 @@
 use crate::config::WindowConfig;
+use crate::graphics::prelude::*;
+use crate::graphics::{Graphics, GraphicsBackend};
 use crate::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 
 #[derive(Default)]
@@ -61,5 +63,47 @@ impl BackendSystem for EmptyBackend {
             // This function should block with a loop or raf in the platform specific backends
             cb(&mut app, &mut state)
         }))
+    }
+
+    fn get_graphics_backend(&self) -> Box<GraphicsBackend> {
+        Box::new(EmptyGraphicsBackend::default())
+    }
+}
+
+#[derive(Default)]
+struct EmptyGraphicsBackend {
+    id_count: i32,
+}
+
+impl GraphicsBackend for EmptyGraphicsBackend {
+    fn create_pipeline(
+        &mut self,
+        vertex_source: &[u8],
+        fragment_source: &[u8],
+        vertex_attrs: &[VertexAttr],
+        options: PipelineOptions,
+    ) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn create_index_buffer(&mut self, draw: DrawType) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn render(&mut self, commands: &[Commands]) {
+        commands
+            .iter()
+            .for_each(|cmd| notan_log::info!("{:?}", cmd));
+    }
+
+    fn clean(&mut self, to_clean: &[ResourceId]) {
+        notan_log::info!("{:?}", to_clean);
     }
 }
