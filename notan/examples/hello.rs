@@ -23,7 +23,7 @@ fn main() -> Result<(), String> {
     notan::init_with(setup)
         .set_config(WindowConfig::new().size(1200, 800))
         // .update(update)
-        // .draw(draw)
+        .draw(draw)
         .build();
 
     Ok(())
@@ -60,15 +60,15 @@ fn setup(gfx: &mut Graphics) -> State {
         vertex_buffer,
     };
 
-    draw(&mut state, gfx);
+    // draw(&mut state, gfx);
 
     state
 }
 
-fn draw(state: &mut State, gfx: &mut Graphics) {
+fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    renderer.begin(&ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0)));
+    renderer.begin(&ClearOptions::new(Color::new(1.0, 0.2, 0.3, 1.0)));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
     renderer.draw(0, 3);

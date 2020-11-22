@@ -1,47 +1,12 @@
 use crate::assets::{AssetLoader, AssetManager};
 use crate::config::*;
-use crate::handlers::{AppCallback, AppHandler, EventCallback, EventHandler, SetupCallback};
+use crate::graphics::Graphics;
+use crate::handlers::{
+    AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler, SetupCallback,
+};
 use crate::plugins::*;
 use crate::{App, Backend, BackendSystem};
 use notan_log as log;
-
-use crate::graphics::prelude::*;
-use crate::graphics::{Graphics, GraphicsBackend};
-#[derive(Default)]
-struct DummyGraphics {
-    id_count: i32,
-}
-
-impl GraphicsBackend for DummyGraphics {
-    fn create_pipeline(
-        &mut self,
-        vertex_source: &[u8],
-        fragment_source: &[u8],
-        vertex_attrs: &[VertexAttr],
-        options: PipelineOptions,
-    ) -> Result<i32, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<i32, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn create_index_buffer(&mut self, draw: DrawType) -> Result<i32, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn render(&mut self, commands: &[Commands]) {
-        commands.iter().for_each(|cmd| println!("{:?}", cmd));
-    }
-
-    fn clean(&mut self, to_clean: &[ResourceId]) {
-        notan_log::info!("{:?}", to_clean);
-    }
-}
 
 pub use crate::handlers::SetupHandler;
 
@@ -66,7 +31,7 @@ pub struct AppBuilder<S, B> {
 
     init_callback: Option<AppCallback<S>>,
     update_callback: Option<AppCallback<S>>,
-    draw_callback: Option<AppCallback<S>>,
+    draw_callback: Option<DrawCallback<S>>,
     event_callback: Option<EventCallback<S>>,
 
     pub window: WindowConfig,
@@ -124,7 +89,7 @@ where
     /// Sets a callback executed after each update to draw
     pub fn draw<H, Params>(mut self, handler: H) -> Self
     where
-        H: AppHandler<S, Params>,
+        H: DrawHandler<S, Params>,
     {
         self.draw_callback = Some(handler.callback());
         self
@@ -174,10 +139,13 @@ where
         // let load_file = backend.get_file_loader();
         let initialize = backend.initialize(window)?;
 
+        let mut graphics = Graphics::new(backend.get_graphics_backend());
+
         let mut app = App::new(Box::new(backend));
-        let mut graphics = Graphics::new(Box::new(DummyGraphics::default()));
+
         let (width, height) = app.window().size();
         graphics.set_size(width, height);
+
         let mut state = setup_callback.exec(&mut app, &mut assets, &mut graphics, &mut plugins);
 
         let _ = plugins.init(&mut app).map(|flow| match flow {
@@ -233,7 +201,13 @@ where
                 AppFlow::Skip => {}
                 AppFlow::Next => {
                     if let Some(cb) = &draw_callback {
-                        cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
+                        cb.exec(
+                            &mut app,
+                            &mut assets,
+                            &mut graphics,
+                            &mut plugins,
+                            &mut state,
+                        );
                     }
                 }
                 AppFlow::SkipFrame => return Ok(()),
