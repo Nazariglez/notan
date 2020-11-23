@@ -35,6 +35,9 @@ pub trait GraphicsBackend {
 
     /// Clean all the dropped resources
     fn clean(&mut self, to_clean: &[ResourceId]);
+
+    /// Sets the render size
+    fn set_size(&mut self, width: i32, height: i32);
 }
 
 /// Helper to drop resources on the backend
@@ -77,6 +80,7 @@ impl Graphics {
     #[inline(always)]
     pub fn set_size(&mut self, width: i32, height: i32) {
         self.size = (width, height);
+        self.backend.set_size(width, height);
     }
 
     #[inline(always)]

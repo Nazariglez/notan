@@ -106,4 +106,6 @@ impl GraphicsBackend for EmptyGraphicsBackend {
     fn clean(&mut self, to_clean: &[ResourceId]) {
         notan_log::info!("{:?}", to_clean);
     }
+
+    fn set_size(&mut self, width: i32, height: i32) {}
 }

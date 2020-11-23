@@ -5,11 +5,7 @@ use notan::app::{App, AppBuilder, Plugins};
 use notan::log;
 use notan::prelude::*;
 
-// #[derive(Default)]
 struct State {
-    // count: u32,
-    // hello: Asset<Vec<u8>>,
-    // list: AssetList,
     clear_options: ClearOptions,
     pipeline: Pipeline,
     vertices: [f32; 21],
@@ -22,7 +18,6 @@ impl AppState for State {}
 fn main() -> Result<(), String> {
     notan::init_with(setup)
         .set_config(WindowConfig::new().size(1200, 800))
-        // .update(update)
         .draw(draw)
         .build();
 
@@ -60,8 +55,6 @@ fn setup(gfx: &mut Graphics) -> State {
         vertex_buffer,
     };
 
-    // draw(&mut state, gfx);
-
     state
 }
 
@@ -76,29 +69,3 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
     gfx.render(&renderer);
 }
-//
-// fn setup(assets: &mut AssetManager) -> State {
-//     State {
-//         // count: 0,
-//         // hello: assets.load_asset::<Vec<u8>>("hello.html").unwrap(),
-//         // list: assets.load_list(&["hello.html", "hell.html"]).unwrap(),
-//     }
-// }
-//
-// fn update(app: &mut App, state: &mut State) {
-//     // log::info!(
-//     //     "asset: {:?} -> list: {:?} - {:?}",
-//     //     state.hello.is_loaded(),
-//     //     state.list.is_loaded(),
-//     //     state.list.progress()
-//     // );
-//     //
-//     // state.count += 1;
-// }
-//
-// #[notan::shader]
-// struct PaintShader {
-//     a: i32,
-//     b: i32,
-//     c: i32,
-// }
