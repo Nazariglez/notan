@@ -161,6 +161,11 @@ where
         }
 
         if let Err(e) = initialize(app, state, move |mut app, mut state| {
+            if app.window().size() != graphics.size() {
+                let (width, height) = app.window().size();
+                graphics.set_size(width, height);
+            }
+
             // Manage pre frame events
             if let AppFlow::SkipFrame = plugins.pre_frame(&mut app)? {
                 return Ok(());
