@@ -845,6 +845,7 @@ name = "notan_glow"
 version = "0.1.0"
 dependencies = [
  "glow",
+ "hashbrown",
  "js-sys",
  "notan_graphics",
  "notan_log",

@@ -10,6 +10,7 @@ edition = "2018"
 glow = "0.6"
 notan_graphics = { path="../notan_graphics" }
 notan_log = { path="../notan_log" }
+hashbrown = "0.9.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"
