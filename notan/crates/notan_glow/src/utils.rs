@@ -53,15 +53,3 @@ fn create_webgl2_context(win: &web_sys::HtmlCanvasElement) -> Result<Rc<glow::Co
     let ctx = Rc::new(glow::Context::from_webgl2_context(gl));
     Ok(ctx)
 }
-
-pub(crate) fn should_disable_stencil(stencil: &Option<StencilOptions>) -> bool {
-    match stencil {
-        Some(stencil) => {
-            stencil.compare == CompareMode::Always
-                && stencil.stencil_fail == StencilAction::Keep
-                && stencil.depth_fail == StencilAction::Keep
-                && stencil.pass == StencilAction::Keep
-        }
-        None => true,
-    }
-}
