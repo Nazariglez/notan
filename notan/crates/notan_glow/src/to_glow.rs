@@ -82,3 +82,27 @@ impl ToOptionalGlow for CullMode {
         })
     }
 }
+
+impl ToGlow for DrawType {
+    fn to_glow(&self) -> u32 {
+        match self {
+            DrawType::Static => glow::STATIC_DRAW,
+            DrawType::Dynamic => glow::DYNAMIC_DRAW,
+        }
+    }
+}
+
+impl ToGlow for BufferUsage {
+    fn to_glow(&self) -> u32 {
+        match self {
+            BufferUsage::Vertex => glow::ARRAY_BUFFER,
+            BufferUsage::Index => glow::ELEMENT_ARRAY_BUFFER,
+        }
+    }
+}
+
+impl ToGlow for VertexFormat {
+    fn to_glow(&self) -> u32 {
+        glow::FLOAT
+    }
+}

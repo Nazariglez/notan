@@ -4,11 +4,12 @@ use notan_graphics::prelude::*;
 use notan_graphics::{Graphics, GraphicsBackend};
 use std::rc::Rc;
 
+mod buffer;
 mod pipeline;
 mod to_glow;
 mod utils;
 
-use pipeline::InnerPipeline;
+use pipeline::{InnerPipeline, VertexAttributes};
 
 pub struct GlowBackend {
     gl: Rc<Context>,
@@ -16,6 +17,8 @@ pub struct GlowBackend {
     pipeline_count: i32,
     size: (i32, i32),
     pipelines: HashMap<i32, InnerPipeline>,
+    current_pipeline: Option<i32>,
+    current_vertex_attrs: Option<VertexAttributes>,
 }
 
 impl GlowBackend {
@@ -29,6 +32,8 @@ impl GlowBackend {
             gl,
             size: (0, 0),
             pipelines: HashMap::new(),
+            current_pipeline: None,
+            current_vertex_attrs: None,
         })
     }
 }
@@ -94,6 +99,8 @@ impl GlowBackend {
             self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }
 
+        self.current_pipeline = None;
+        self.current_vertex_attrs = None;
         //TODO pipeline clean and stats
     }
 
@@ -104,8 +111,16 @@ impl GlowBackend {
     }
 
     fn set_pipeline(&mut self, id: i32, options: &PipelineOptions) {
+        let some_id = Some(id);
+        if self.current_pipeline == some_id {
+            // Avoid bind twice the same pipeline
+            return;
+        }
+
         if let Some(pip) = self.pipelines.get(&id) {
             pip.bind(&self.gl, options);
+            self.current_pipeline = some_id;
+            self.current_vertex_attrs = Some(pip.attrs.clone());
         }
     }
 }
@@ -121,12 +136,13 @@ impl GraphicsBackend for GlowBackend {
         let vertex_source = std::str::from_utf8(vertex_source).map_err(|e| e.to_string())?;
         let fragment_source = std::str::from_utf8(fragment_source).map_err(|e| e.to_string())?;
 
-        let inner_pipeline = InnerPipeline::new(&self.gl, vertex_source, fragment_source)?;
+        let inner_pipeline =
+            InnerPipeline::new(&self.gl, vertex_source, fragment_source, vertex_attrs)?;
+        inner_pipeline.bind(&self.gl, &options);
 
         self.pipeline_count += 1;
-        let id = self.pipeline_count;
-        self.pipelines.insert(id, inner_pipeline);
-        Ok(id)
+        self.pipelines.insert(self.pipeline_count, inner_pipeline);
+        Ok(self.pipeline_count)
     }
 
     fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<i32, String> {

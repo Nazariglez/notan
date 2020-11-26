@@ -48,7 +48,7 @@ impl Buffer {
 pub enum BufferUsage {
     Vertex,
     Index,
-    Uniform,
+    // Uniform,
 }
 
 pub struct VertexAttr {
