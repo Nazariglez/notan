@@ -8,6 +8,7 @@ pub(crate) struct InnerPipeline {
     pub fragment: Shader,
     pub program: Program,
     pub vao: VertexArray,
+    pub attrs: VertexAttributes,
 }
 
 impl InnerPipeline {
@@ -16,8 +17,19 @@ impl InnerPipeline {
         gl: &Rc<Context>,
         vertex_source: &str,
         fragment_source: &str,
+        attrs: &[VertexAttr],
     ) -> Result<Self, String> {
-        create_pipeline(gl, vertex_source, fragment_source)
+        let mut stride = 0;
+        let attrs = attrs
+            .iter()
+            .map(|attr| {
+                let inner_attr = InnerAttr::from(attr, stride);
+                stride += attr.format.bytes();
+                inner_attr
+            })
+            .collect::<Vec<_>>();
+
+        create_pipeline(gl, vertex_source, fragment_source, stride, attrs)
     }
 
     #[inline(always)]
@@ -37,6 +49,59 @@ impl InnerPipeline {
             set_culling(gl, options);
             set_blend_mode(gl, &options);
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct VertexAttributes {
+    pub stride: i32,
+    attrs: Vec<InnerAttr>,
+}
+
+impl VertexAttributes {
+    pub fn new(stride: i32, attrs: Vec<InnerAttr>) -> Self {
+        Self { stride, attrs }
+    }
+
+    pub unsafe fn enable(&self, gl: &Rc<Context>) {
+        self.attrs
+            .iter()
+            .for_each(|attr| attr.enable(gl, self.stride));
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct InnerAttr {
+    pub location: u32,
+    pub size: i32,
+    pub data_type: u32,
+    pub normalized: bool,
+    pub offset: i32,
+}
+
+impl InnerAttr {
+    #[inline(always)]
+    fn from(attr: &VertexAttr, offset: i32) -> InnerAttr {
+        Self {
+            location: attr.location,
+            size: attr.format.size(),
+            data_type: attr.format.to_glow(),
+            normalized: attr.format.normalized(),
+            offset,
+        }
+    }
+
+    #[inline(always)]
+    unsafe fn enable(&self, gl: &Rc<Context>, stride: i32) {
+        gl.enable_vertex_attrib_array(self.location);
+        gl.vertex_attrib_pointer_f32(
+            self.location,
+            self.size,
+            self.data_type,
+            self.normalized,
+            stride,
+            self.offset,
+        );
     }
 }
 
@@ -138,6 +203,7 @@ fn clean_pipeline(gl: &Rc<Context>, pip: InnerPipeline) {
         fragment,
         program,
         vao,
+        ..
     } = pip;
 
     unsafe {
@@ -153,6 +219,8 @@ fn create_pipeline(
     gl: &Rc<Context>,
     vertex_source: &str,
     fragment_source: &str,
+    stride: i32,
+    attrs: Vec<InnerAttr>,
 ) -> Result<InnerPipeline, String> {
     let vertex = create_shader(gl, glow::VERTEX_SHADER, vertex_source)?;
     let fragment = create_shader(gl, glow::FRAGMENT_SHADER, fragment_source)?;
@@ -164,11 +232,14 @@ fn create_pipeline(
         vao
     };
 
+    let attrs = VertexAttributes::new(stride, attrs);
+
     Ok(InnerPipeline {
         vertex,
         fragment,
         program,
         vao,
+        attrs,
     })
 }
 
