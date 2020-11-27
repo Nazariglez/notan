@@ -118,7 +118,26 @@ impl GlowBackend {
     }
 
     fn bind_buffer(&mut self, id: i32, data: &[u8], usage: &BufferUsage, draw: &DrawType) {
-        //if let Some(buffer) = self.
+        if let Some(buffer) = self.buffers.get(&id) {
+            match usage {
+                BufferUsage::Vertex => {
+                    buffer.bind_as_vbo_with_data(&self.gl, &self.current_vertex_attrs, draw, data)
+                }
+                BufferUsage::Index => buffer.bind_as_ebo_with_data(&self.gl, draw, data),
+            }
+        }
+    }
+
+    fn clean_buffer(&mut self, id: i32) {
+        if let Some(buffer) = self.buffers.remove(&id) {
+            buffer.clean(&self.gl);
+        }
+    }
+
+    fn draw(&mut self, offset: i32, count: i32) {
+        unsafe {
+            self.gl.draw_arrays(glow::TRIANGLES, offset, count);
+        }
     }
 }
 
@@ -142,14 +161,19 @@ impl GraphicsBackend for GlowBackend {
         Ok(self.pipeline_count)
     }
 
-    fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<i32, String> {
+    fn create_vertex_buffer(&mut self, _draw: DrawType) -> Result<i32, String> {
+        let inner_buffer = InnerBuffer::new(&self.gl)?;
+        inner_buffer.bind_as_vbo(&self.gl, &self.current_vertex_attrs);
         self.buffer_count += 1;
-        // TODO
+        self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
     }
 
-    fn create_index_buffer(&mut self, draw: DrawType) -> Result<i32, String> {
+    fn create_index_buffer(&mut self, _draw: DrawType) -> Result<i32, String> {
+        let inner_buffer = InnerBuffer::new(&self.gl)?;
+        inner_buffer.bind_as_ebo(&self.gl);
         self.buffer_count += 1;
+        self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
     }
 
@@ -173,6 +197,7 @@ impl GraphicsBackend for GlowBackend {
                     usage,
                     draw,
                 } => self.bind_buffer(*id, ptr, usage, draw),
+                Draw { offset, count } => self.draw(*offset, *count),
                 _ => {}
             }
         });
@@ -182,6 +207,7 @@ impl GraphicsBackend for GlowBackend {
         notan_log::info!("{:?}", to_clean);
         to_clean.iter().for_each(|res| match &res {
             ResourceId::Pipeline(id) => self.clean_pipeline(*id),
+            ResourceId::Buffer(id) => self.clean_buffer(*id),
             _ => {}
         })
     }
