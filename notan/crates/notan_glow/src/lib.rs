@@ -13,7 +13,7 @@ use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
 
 pub struct GlowBackend {
-    gl: Rc<Context>,
+    gl: Context,
     buffer_count: i32,
     pipeline_count: i32,
     size: (i32, i32),
