@@ -14,7 +14,7 @@ pub(crate) struct InnerPipeline {
 impl InnerPipeline {
     #[inline(always)]
     pub fn new(
-        gl: &Rc<Context>,
+        gl: &Context,
         vertex_source: &str,
         fragment_source: &str,
         attrs: &[VertexAttr],
@@ -33,12 +33,12 @@ impl InnerPipeline {
     }
 
     #[inline(always)]
-    pub fn clean(self, gl: &Rc<Context>) {
+    pub fn clean(self, gl: &Context) {
         clean_pipeline(gl, self);
     }
 
     #[inline(always)]
-    pub fn bind(&self, gl: &Rc<Context>, options: &PipelineOptions) {
+    pub fn bind(&self, gl: &Context, options: &PipelineOptions) {
         unsafe {
             gl.bind_vertex_array(Some(self.vao));
             gl.use_program(Some(self.program));
@@ -63,7 +63,7 @@ impl VertexAttributes {
         Self { stride, attrs }
     }
 
-    pub unsafe fn enable(&self, gl: &Rc<Context>) {
+    pub unsafe fn enable(&self, gl: &Context) {
         self.attrs
             .iter()
             .for_each(|attr| attr.enable(gl, self.stride));
@@ -92,7 +92,7 @@ impl InnerAttr {
     }
 
     #[inline(always)]
-    unsafe fn enable(&self, gl: &Rc<Context>, stride: i32) {
+    unsafe fn enable(&self, gl: &Context, stride: i32) {
         gl.enable_vertex_attrib_array(self.location);
         gl.vertex_attrib_pointer_f32(
             self.location,
@@ -106,7 +106,7 @@ impl InnerAttr {
 }
 
 #[inline(always)]
-unsafe fn set_stencil(gl: &Rc<Context>, options: &PipelineOptions) {
+unsafe fn set_stencil(gl: &Context, options: &PipelineOptions) {
     if should_disable_stencil(&options.stencil) {
         gl.disable(glow::STENCIL_TEST);
     } else {
@@ -128,7 +128,7 @@ unsafe fn set_stencil(gl: &Rc<Context>, options: &PipelineOptions) {
 }
 
 #[inline(always)]
-unsafe fn set_depth_stencil(gl: &Rc<Context>, options: &PipelineOptions) {
+unsafe fn set_depth_stencil(gl: &Context, options: &PipelineOptions) {
     match options.depth_stencil.compare.to_glow() {
         Some(d) => {
             gl.enable(glow::DEPTH_TEST);
@@ -141,7 +141,7 @@ unsafe fn set_depth_stencil(gl: &Rc<Context>, options: &PipelineOptions) {
 }
 
 #[inline(always)]
-unsafe fn set_color_mask(gl: &Rc<Context>, options: &PipelineOptions) {
+unsafe fn set_color_mask(gl: &Context, options: &PipelineOptions) {
     gl.color_mask(
         options.color_mask.r,
         options.color_mask.g,
@@ -151,7 +151,7 @@ unsafe fn set_color_mask(gl: &Rc<Context>, options: &PipelineOptions) {
 }
 
 #[inline(always)]
-unsafe fn set_culling(gl: &Rc<Context>, options: &PipelineOptions) {
+unsafe fn set_culling(gl: &Context, options: &PipelineOptions) {
     match options.cull_mode.to_glow() {
         Some(mode) => {
             gl.enable(glow::CULL_FACE);
@@ -162,7 +162,7 @@ unsafe fn set_culling(gl: &Rc<Context>, options: &PipelineOptions) {
 }
 
 #[inline(always)]
-unsafe fn set_blend_mode(gl: &Rc<Context>, options: &PipelineOptions) {
+unsafe fn set_blend_mode(gl: &Context, options: &PipelineOptions) {
     match (options.color_blend, options.alpha_blend) {
         (Some(cbm), None) => {
             gl.enable(glow::BLEND);
@@ -197,7 +197,7 @@ unsafe fn set_blend_mode(gl: &Rc<Context>, options: &PipelineOptions) {
 }
 
 #[inline(always)]
-fn clean_pipeline(gl: &Rc<Context>, pip: InnerPipeline) {
+fn clean_pipeline(gl: &Context, pip: InnerPipeline) {
     let InnerPipeline {
         vertex,
         fragment,
@@ -216,7 +216,7 @@ fn clean_pipeline(gl: &Rc<Context>, pip: InnerPipeline) {
 
 #[inline(always)]
 fn create_pipeline(
-    gl: &Rc<Context>,
+    gl: &Context,
     vertex_source: &str,
     fragment_source: &str,
     stride: i32,
@@ -244,7 +244,7 @@ fn create_pipeline(
 }
 
 #[inline(always)]
-fn create_shader(gl: &Rc<Context>, typ: u32, source: &str) -> Result<Shader, String> {
+fn create_shader(gl: &Context, typ: u32, source: &str) -> Result<Shader, String> {
     unsafe {
         let shader = gl.create_shader(typ)?;
         gl.shader_source(shader, &source);
@@ -262,7 +262,7 @@ fn create_shader(gl: &Rc<Context>, typ: u32, source: &str) -> Result<Shader, Str
 }
 
 #[inline(always)]
-fn create_program(gl: &Rc<Context>, vertex: Shader, fragment: Shader) -> Result<Program, String> {
+fn create_program(gl: &Context, vertex: Shader, fragment: Shader) -> Result<Program, String> {
     unsafe {
         let program = gl.create_program()?;
         gl.attach_shader(program, vertex);

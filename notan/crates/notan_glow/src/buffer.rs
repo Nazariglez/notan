@@ -9,28 +9,28 @@ pub(crate) struct InnerBuffer {
 }
 
 impl InnerBuffer {
-    pub fn new(gl: &Rc<Context>) -> Result<Self, String> {
+    pub fn new(gl: &Context) -> Result<Self, String> {
         let buffer = unsafe { gl.create_buffer()? };
 
         Ok(InnerBuffer { buffer })
     }
 
     #[inline(always)]
-    pub fn clean(self, gl: &Rc<Context>) {
+    pub fn clean(self, gl: &Context) {
         unsafe {
             gl.delete_buffer(self.buffer);
         }
     }
 
     #[inline(always)]
-    pub fn bind_as_ebo(&self, gl: &Rc<Context>) {
+    pub fn bind_as_ebo(&self, gl: &Context) {
         unsafe {
             gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.buffer));
         }
     }
 
     #[inline(always)]
-    pub fn bind_as_ebo_with_data(&self, gl: &Rc<Context>, draw: &DrawType, data: &[u8]) {
+    pub fn bind_as_ebo_with_data(&self, gl: &Context, draw: &DrawType, data: &[u8]) {
         self.bind_as_ebo(gl);
 
         unsafe {
@@ -39,7 +39,7 @@ impl InnerBuffer {
     }
 
     #[inline(always)]
-    pub fn bind_as_vbo(&self, gl: &Rc<Context>, attrs: &Option<VertexAttributes>) {
+    pub fn bind_as_vbo(&self, gl: &Context, attrs: &Option<VertexAttributes>) {
         unsafe {
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.buffer));
 
@@ -52,7 +52,7 @@ impl InnerBuffer {
     #[inline(always)]
     pub fn bind_as_vbo_with_data(
         &self,
-        gl: &Rc<Context>,
+        gl: &Context,
         attrs: &Option<VertexAttributes>,
         draw: &DrawType,
         data: &[u8],
