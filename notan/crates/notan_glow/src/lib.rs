@@ -20,13 +20,25 @@ pub struct GlowBackend {
     pipelines: HashMap<i32, InnerPipeline>,
     buffers: HashMap<i32, InnerBuffer>,
     current_vertex_attrs: Option<VertexAttributes>,
+    gl_index_type: u32,
+    using_indices: bool,
 }
 
 impl GlowBackend {
     #[cfg(target_arch = "wasm32")]
     pub fn new(canvas: &web_sys::HtmlCanvasElement) -> Result<Self, String> {
         let (gl, api) = utils::create_gl_context(canvas)?;
+        Self::from(gl, &api)
+    }
+
+    fn from(gl: Context, api: &str) -> Result<Self, String> {
         notan_log::info!("Using {} graphics api", api);
+
+        let gl_index_type = match api {
+            "webgl" => glow::UNSIGNED_SHORT,
+            _ => glow::UNSIGNED_INT,
+        };
+
         Ok(Self {
             pipeline_count: 0,
             buffer_count: 0,
@@ -35,6 +47,8 @@ impl GlowBackend {
             pipelines: HashMap::new(),
             current_vertex_attrs: None,
             buffers: HashMap::new(),
+            gl_index_type,
+            using_indices: false,
         })
     }
 }
@@ -100,6 +114,7 @@ impl GlowBackend {
             self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }
 
+        self.using_indices = false;
         self.current_vertex_attrs = None;
         //TODO pipeline clean and stats
     }
@@ -114,6 +129,7 @@ impl GlowBackend {
         if let Some(pip) = self.pipelines.get(&id) {
             pip.bind(&self.gl, options);
             self.current_vertex_attrs = Some(pip.attrs.clone());
+            self.using_indices = false;
         }
     }
 
@@ -123,7 +139,10 @@ impl GlowBackend {
                 BufferUsage::Vertex => {
                     buffer.bind_as_vbo_with_data(&self.gl, &self.current_vertex_attrs, draw, data)
                 }
-                BufferUsage::Index => buffer.bind_as_ebo_with_data(&self.gl, draw, data),
+                BufferUsage::Index => {
+                    self.using_indices = true;
+                    buffer.bind_as_ebo_with_data(&self.gl, draw, data)
+                }
             }
         }
     }
@@ -136,7 +155,12 @@ impl GlowBackend {
 
     fn draw(&mut self, offset: i32, count: i32) {
         unsafe {
-            self.gl.draw_arrays(glow::TRIANGLES, offset, count);
+            if self.using_indices {
+                self.gl
+                    .draw_elements(glow::TRIANGLES, count, self.gl_index_type, offset * 4);
+            } else {
+                self.gl.draw_arrays(glow::TRIANGLES, offset, count);
+            }
         }
     }
 }
