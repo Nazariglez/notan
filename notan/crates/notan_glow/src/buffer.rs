@@ -1,25 +1,18 @@
+use crate::pipeline::VertexAttributes;
 use crate::to_glow::*;
 use glow::*;
 use notan_graphics::prelude::*;
 use std::rc::Rc;
 
 pub(crate) struct InnerBuffer {
-    draw: u32,
-    usage: u32,
     buffer: glow::Buffer,
 }
 
 impl InnerBuffer {
     pub fn new(gl: &Rc<Context>, usage: BufferUsage, draw: DrawType) -> Result<Self, String> {
         let buffer = unsafe { gl.create_buffer()? };
-        let draw = draw.to_glow();
-        let usage = usage.to_glow();
 
-        Ok(InnerBuffer {
-            draw,
-            usage,
-            buffer,
-        })
+        Ok(InnerBuffer { buffer })
     }
 
     pub fn clean(self, gl: &Rc<Context>) {
@@ -28,23 +21,24 @@ impl InnerBuffer {
         }
     }
 
-    pub fn bind(&mut self, gl: &Rc<Context>, data: &[u8]) {
+    pub fn bind_as_ebo(&self, gl: &Rc<Context>, draw: &DrawType, data: &[u8]) {
         unsafe {
-            match self.usage {
-                glow::ELEMENT_ARRAY_BUFFER => bind_index_buffer(gl, &self, data),
-                glow::ARRAY_BUFFER => {} //TODO
-                _ => {}
-            }
+            gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.buffer));
+            gl.buffer_data_u8_slice(glow::ELEMENT_ARRAY_BUFFER, data, draw.to_glow());
         }
     }
-}
 
-/*unsafe fn bind_vertex_buffer(gl: &Rc<Context>, data: &[u8], attrs....) {
-
-}*/
-
-#[inline(always)]
-unsafe fn bind_index_buffer(gl: &Rc<Context>, buffer: &InnerBuffer, data: &[u8]) {
-    gl.bind_buffer(buffer.usage, Some(buffer.buffer));
-    gl.buffer_data_u8_slice(buffer.usage, data, buffer.draw);
+    pub fn bind_as_vbo(
+        &self,
+        gl: &Rc<Context>,
+        draw: &DrawType,
+        attrs: &VertexAttributes,
+        data: &[u8],
+    ) {
+        unsafe {
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.buffer));
+            attrs.enable(gl);
+            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, data, draw.to_glow());
+        }
+    }
 }

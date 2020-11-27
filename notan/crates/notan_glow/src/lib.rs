@@ -9,6 +9,7 @@ mod pipeline;
 mod to_glow;
 mod utils;
 
+use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
 
 pub struct GlowBackend {
@@ -17,7 +18,7 @@ pub struct GlowBackend {
     pipeline_count: i32,
     size: (i32, i32),
     pipelines: HashMap<i32, InnerPipeline>,
-    current_pipeline: Option<i32>,
+    buffers: HashMap<i32, InnerBuffer>,
     current_vertex_attrs: Option<VertexAttributes>,
 }
 
@@ -32,8 +33,8 @@ impl GlowBackend {
             gl,
             size: (0, 0),
             pipelines: HashMap::new(),
-            current_pipeline: None,
             current_vertex_attrs: None,
+            buffers: HashMap::new(),
         })
     }
 }
@@ -99,7 +100,6 @@ impl GlowBackend {
             self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }
 
-        self.current_pipeline = None;
         self.current_vertex_attrs = None;
         //TODO pipeline clean and stats
     }
@@ -111,17 +111,14 @@ impl GlowBackend {
     }
 
     fn set_pipeline(&mut self, id: i32, options: &PipelineOptions) {
-        let some_id = Some(id);
-        if self.current_pipeline == some_id {
-            // Avoid bind twice the same pipeline
-            return;
-        }
-
         if let Some(pip) = self.pipelines.get(&id) {
             pip.bind(&self.gl, options);
-            self.current_pipeline = some_id;
             self.current_vertex_attrs = Some(pip.attrs.clone());
         }
+    }
+
+    fn bind_buffer(&mut self, id: i32, data: &[u8], usage: &BufferUsage, draw: &DrawType) {
+        //if let Some(buffer) = self.
     }
 }
 
@@ -147,6 +144,7 @@ impl GraphicsBackend for GlowBackend {
 
     fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<i32, String> {
         self.buffer_count += 1;
+        // TODO
         Ok(self.buffer_count)
     }
 
@@ -169,6 +167,12 @@ impl GraphicsBackend for GlowBackend {
                 } => self.begin(render_target, color, depth, stencil),
                 End => self.end(),
                 Pipeline { id, options } => self.set_pipeline(*id, options),
+                BindBuffer {
+                    id,
+                    ptr,
+                    usage,
+                    draw,
+                } => self.bind_buffer(*id, ptr, usage, draw),
                 _ => {}
             }
         });
