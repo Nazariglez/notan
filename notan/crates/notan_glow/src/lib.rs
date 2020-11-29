@@ -22,6 +22,7 @@ pub struct GlowBackend {
     current_vertex_attrs: Option<VertexAttributes>,
     gl_index_type: u32,
     using_indices: bool,
+    api_name: String,
 }
 
 impl GlowBackend {
@@ -49,6 +50,7 @@ impl GlowBackend {
             buffers: HashMap::new(),
             gl_index_type,
             using_indices: false,
+            api_name: api.to_string(),
         })
     }
 }
@@ -166,6 +168,10 @@ impl GlowBackend {
 }
 
 impl GraphicsBackend for GlowBackend {
+    fn api_name(&self) -> &str {
+        &self.api_name
+    }
+
     fn create_pipeline(
         &mut self,
         vertex_source: &[u8],

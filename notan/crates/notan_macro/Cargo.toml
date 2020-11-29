@@ -9,6 +9,10 @@ edition = "2018"
 [dependencies]
 syn = { version = "1.0", features = ["full"] }
 quote = "1.0"
+bevy-glsl-to-spirv = "0.2.1"
+glsl-to-spirv = "0.1.7"
+proc-macro2 = "1.0.24"
+spirv_cross = { version = "0.22.1", features = ["glsl"] }
 
 [lib]
 proc-macro = true

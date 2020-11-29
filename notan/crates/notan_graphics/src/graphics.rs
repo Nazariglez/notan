@@ -2,6 +2,7 @@ use crate::buffer::*;
 use crate::commands::*;
 use crate::pipeline::*;
 use crate::renderer::Renderer;
+use crate::shader::*;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -15,6 +16,9 @@ pub enum ResourceId {
 
 /// Represents a the implementation graphics backend like glow, wgpu or another
 pub trait GraphicsBackend {
+    /// Returns the name of the api used (like webgl, wgpu, etc...)
+    fn api_name(&self) -> &str;
+
     /// Create a new pipeline and returns the id
     fn create_pipeline(
         &mut self,
@@ -89,7 +93,7 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_pipeline(
+    pub fn create_pipeline_from_raw(
         &mut self,
         vertex_source: &[u8],
         fragment_source: &[u8],
@@ -103,6 +107,24 @@ impl Graphics {
             options.clone(),
         )?;
         Ok(Pipeline::new(id, options, self.drop_manager.clone()))
+    }
+
+    #[inline(always)]
+    pub fn create_pipeline(
+        &mut self,
+        vertex_source: &ShaderSource,
+        fragment_source: &ShaderSource,
+        vertex_attrs: &[VertexAttr],
+        options: PipelineOptions,
+    ) -> Result<Pipeline, String> {
+        let api = self.backend.api_name();
+        let vertex = vertex_source
+            .get_source(api)
+            .ok_or(format!("Vertex shader for api '{}' not available.", api))?;
+        let fragment = fragment_source
+            .get_source(api)
+            .ok_or(format!("Fragment shader for api '{}' not available.", api))?;
+        self.create_pipeline_from_raw(vertex, fragment, vertex_attrs, options)
     }
 
     #[inline(always)]

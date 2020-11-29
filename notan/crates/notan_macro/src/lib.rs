@@ -1,7 +1,10 @@
 extern crate proc_macro;
-use proc_macro::TokenStream;
+use proc_macro::*;
 use quote::quote;
+use syn::{parse_macro_input, LitStr};
 use syn::{ItemFn, ItemStruct};
+
+mod shaders;
 
 #[proc_macro_attribute]
 pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -23,63 +26,42 @@ fn handle_main_func(input: ItemFn) -> TokenStream {
     expand.into()
 }
 
-//https://github.com/rust-tutorials
-//https://floooh.github.io/2017/05/15/oryol-spirv.html
-//http://nercury.github.io/rust/opengl/tutorial/2018/07/11/opengl-in-rust-from-scratch-10-procedural-macros.html
-//https://stackoverflow.com/questions/58246366/rust-macro-that-counts-and-generates-repetitive-struct-fields
+#[proc_macro]
+pub fn vertex_shader(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as LitStr);
+    let content = input.value();
+    let spirv = shaders::spirv_from(&content, shaders::ShaderType::Vertex).unwrap();
+    let source = shaders::source_from_spirv(spirv).unwrap();
 
-#[proc_macro_attribute]
-pub fn shader(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let input = syn::parse_macro_input!(item as syn::ItemStruct);
-    handle_shader_struct(input)
+    source
 }
 
-fn handle_shader_struct(mut input: ItemStruct) -> TokenStream {
-    //https://docs.rs/syn/1.0.48/syn/struct.ItemStruct.html
-    let expand = quote! {
-        #input
-    };
+#[proc_macro]
+pub fn include_vertex_shader(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as LitStr);
+    let relative_path = input.value();
+    let spirv = shaders::spirv_from_file(&relative_path, shaders::ShaderType::Vertex).unwrap();
+    let source = shaders::source_from_spirv(spirv).unwrap();
 
-    expand.into()
+    source
 }
 
-/*
-let vertex = shader! {
-    typ: "vertex",
-    source: "vert.glsl"
-};
+#[proc_macro]
+pub fn fragment_shader(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as LitStr);
+    let content = input.value();
+    let spirv = shaders::spirv_from(&content, shaders::ShaderType::Fragment).unwrap();
+    let source = shaders::source_from_spirv(spirv).unwrap();
 
-let shader = shader! {
-    vertex: "vert.glsl",
-    fragment: "frag.glsl"
-};
-
-let shader = shader! {
-    vertex: r#"
-#version 450
-
-layout(location = 0) in vec4 a_position;
-layout(location = 1) in vec4 a_color;
-
-layout(location = 0) out vec4 v_color;
-layout(location = 0) uniform mat4 u_matrix;
-
-void main() {
-    v_color = a_color;
-    gl_Position = u_matrix * a_position;
+    source
 }
-    "#,
 
-    fragment: r#"
-#version 450
-precision mediump float;
+#[proc_macro]
+pub fn include_fragment_shader(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as LitStr);
+    let relative_path = input.value();
+    let spirv = shaders::spirv_from_file(&relative_path, shaders::ShaderType::Fragment).unwrap();
+    let source = shaders::source_from_spirv(spirv).unwrap();
 
-layout(location = 0) in vec4 v_color;
-layout(location = 0) out vec4 color;
-
-void main() {
-    color = v_color;
+    source
 }
-    "#
-}
-*/
