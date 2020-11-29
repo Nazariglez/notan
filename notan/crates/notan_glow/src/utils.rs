@@ -6,11 +6,11 @@ pub(crate) fn create_gl_context(
     win: &web_sys::HtmlCanvasElement,
 ) -> Result<(glow::Context, String), String> {
     if let Ok(ctx) = create_webgl2_context(win) {
-        return Ok((ctx, "WebGL 2".to_string()));
+        return Ok((ctx, "webgl2".to_string()));
     }
 
     let ctx = create_webgl_context(win)?;
-    Ok((ctx, "WebGL".to_string()))
+    Ok((ctx, "webgl".to_string()))
 }
 
 #[cfg(target_arch = "wasm32")]

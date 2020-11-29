@@ -5,34 +5,34 @@ use notan::app::{App, AppBuilder, Plugins};
 use notan::log;
 use notan::prelude::*;
 
-const fn vertex() -> &'static [u8] {
-    r#"#version 300 es
-    in vec2 a_pos;
-    in vec3 a_color;
+const VERT: ShaderSource = notan::vertex_shader! {
+    r#"
+    #version 450
+    layout(location = 0) in vec2 a_pos;
+    layout(location = 1) in vec3 a_color;
 
-    out vec3 v_color;
+    layout(location = 0) out vec3 v_color;
 
     void main() {
         v_color = a_color;
         gl_Position = vec4(a_pos - 0.5, 0.0, 1.0);
     }
     "#
-    .as_bytes()
-}
+};
 
-const fn fragment() -> &'static [u8] {
-    r#"#version 300 es
+const FRAG: ShaderSource = notan::fragment_shader! {
+    r#"
+    #version 450
     precision mediump float;
-    in vec3 v_color;
 
-    out vec4 color;
+    layout(location = 0) in vec3 v_color;
+    layout(location = 0) out vec4 color;
 
     void main() {
         color = vec4(v_color, 1.0);
     }
     "#
-    .as_bytes()
-}
+};
 
 struct State {
     clear_options: ClearOptions,
@@ -55,8 +55,8 @@ fn setup(gfx: &mut Graphics) -> State {
 
     let pipeline = gfx
         .create_pipeline(
-            vertex(),
-            fragment(),
+            &VERT,
+            &FRAG,
             &[
                 VertexAttr::new(0, VertexFormat::Float2),
                 VertexAttr::new(1, VertexFormat::Float3),

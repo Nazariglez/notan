@@ -76,6 +76,10 @@ struct EmptyGraphicsBackend {
 }
 
 impl GraphicsBackend for EmptyGraphicsBackend {
+    fn api_name(&self) -> &str {
+        ""
+    }
+
     fn create_pipeline(
         &mut self,
         vertex_source: &[u8],
