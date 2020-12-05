@@ -106,6 +106,11 @@ impl GraphicsBackend for EmptyGraphicsBackend {
         Ok(self.id_count)
     }
 
+    fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
     fn render(&mut self, commands: &[Commands]) {
         commands
             .iter()
