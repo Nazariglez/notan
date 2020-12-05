@@ -128,3 +128,20 @@ pub enum TextureFilter {
     Linear,
     Nearest,
 }
+
+// #[derive(Default)]
+// pub struct TextureLoader;
+//
+// impl AssetLoader for TextureLoader {
+//     fn set_default(&self, id: &str, storage: &mut AssetStorage) {
+//         storage.set_default::<Texture>(id, gfx.create_texture(Default::default()));
+//     }
+//
+//     fn load(&self, id: &str, data: Vec<u8>, _app: &mut App, storage: &mut AssetStorage) {
+//         storage.update(&id, data);
+//     }
+//
+//     fn extensions(&self) -> &[&str] {
+//         &["png"]
+//     }
+// }

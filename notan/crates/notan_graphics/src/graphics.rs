@@ -170,7 +170,7 @@ impl Graphics {
 
     #[inline(always)]
     pub fn create_texture(&mut self, info: TextureInfo) -> Result<Texture, String> {
-        let id = self.backend.create_texture(&info)?;
+        let (id) = self.backend.create_texture(&info)?;
         Ok(Texture::new(id, info, self.drop_manager.clone()))
     }
 
