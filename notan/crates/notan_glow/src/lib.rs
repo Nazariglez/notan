@@ -227,7 +227,7 @@ impl GraphicsBackend for GlowBackend {
     }
 
     fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String> {
-        let inner_texture = InnerTexture::new(&self.gl)?;
+        let inner_texture = InnerTexture::new(&self.gl, info)?;
         //TODO bind?
         self.texture_count += 1;
         self.textures.insert(self.texture_count, inner_texture);
