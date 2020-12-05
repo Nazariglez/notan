@@ -67,7 +67,7 @@ impl<'a> Renderer<'a> {
             id: buffer.id(),
             ptr: bytemuck::cast_slice(data),
             usage: BufferUsage::Vertex,
-            draw: buffer.draw_type(),
+            draw: buffer.draw.unwrap_or(DrawType::Dynamic),
         });
     }
 
@@ -76,7 +76,16 @@ impl<'a> Renderer<'a> {
             id: buffer.id(),
             ptr: bytemuck::cast_slice(data),
             usage: BufferUsage::Index,
-            draw: buffer.draw_type(),
+            draw: buffer.draw.unwrap_or(DrawType::Dynamic),
+        });
+    }
+
+    pub fn bind_uniform_buffer(&mut self, buffer: &Buffer, data: &'a [f32]) {
+        self.commands.push(Commands::BindBuffer {
+            id: buffer.id(),
+            ptr: bytemuck::cast_slice(data),
+            usage: buffer.usage,
+            draw: buffer.draw.unwrap_or(DrawType::Dynamic),
         });
     }
 

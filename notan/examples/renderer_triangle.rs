@@ -40,7 +40,6 @@ struct State {
     vertices: [f32; 15],
     vertex_buffer: Buffer,
 }
-
 impl AppState for State {}
 
 #[notan::main]

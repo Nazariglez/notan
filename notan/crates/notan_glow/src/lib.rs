@@ -145,6 +145,9 @@ impl GlowBackend {
                     self.using_indices = true;
                     buffer.bind_as_ebo_with_data(&self.gl, draw, data)
                 }
+                BufferUsage::Uniform(slot) => {
+                    buffer.bind_as_ubo_with_data(&self.gl, *slot, draw, data);
+                }
             }
         }
     }
@@ -188,10 +191,12 @@ impl GraphicsBackend for GlowBackend {
 
         self.pipeline_count += 1;
         self.pipelines.insert(self.pipeline_count, inner_pipeline);
+
+        self.set_pipeline(self.pipeline_count, &options);
         Ok(self.pipeline_count)
     }
 
-    fn create_vertex_buffer(&mut self, _draw: DrawType) -> Result<i32, String> {
+    fn create_vertex_buffer(&mut self) -> Result<i32, String> {
         let inner_buffer = InnerBuffer::new(&self.gl)?;
         inner_buffer.bind_as_vbo(&self.gl, &self.current_vertex_attrs);
         self.buffer_count += 1;
@@ -199,9 +204,17 @@ impl GraphicsBackend for GlowBackend {
         Ok(self.buffer_count)
     }
 
-    fn create_index_buffer(&mut self, _draw: DrawType) -> Result<i32, String> {
+    fn create_index_buffer(&mut self) -> Result<i32, String> {
         let inner_buffer = InnerBuffer::new(&self.gl)?;
         inner_buffer.bind_as_ebo(&self.gl);
+        self.buffer_count += 1;
+        self.buffers.insert(self.buffer_count, inner_buffer);
+        Ok(self.buffer_count)
+    }
+
+    fn create_uniform_buffer(&mut self, slot: u32) -> Result<i32, String> {
+        let inner_buffer = InnerBuffer::new(&self.gl)?;
+        inner_buffer.bind_as_ubo(&self.gl, slot);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)

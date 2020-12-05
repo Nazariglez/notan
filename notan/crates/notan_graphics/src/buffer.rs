@@ -15,17 +15,18 @@ impl Drop for BufferId {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Buffer {
     id: Arc<BufferId>,
-    usage: BufferUsage,
-    draw: DrawType,
+    pub(crate) usage: BufferUsage,
+    pub draw: Option<DrawType>,
 }
 
 impl Buffer {
     pub(crate) fn new(
         id: i32,
         usage: BufferUsage,
-        draw: DrawType,
+        draw: Option<DrawType>,
         drop_manager: Arc<DropManager>,
     ) -> Self {
         let id = Arc::new(BufferId { id, drop_manager });
@@ -37,20 +38,16 @@ impl Buffer {
     pub fn id(&self) -> i32 {
         self.id.id
     }
-
-    #[inline(always)]
-    pub fn draw_type(&self) -> DrawType {
-        self.draw
-    }
 }
 
 #[derive(Clone, Copy, Debug)]
 pub enum BufferUsage {
     Vertex,
     Index,
-    // Uniform,
+    Uniform(u32),
 }
 
+#[derive(Debug, Clone)]
 pub struct VertexAttr {
     pub location: u32,
     pub format: VertexFormat,
@@ -65,6 +62,7 @@ impl VertexAttr {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum VertexFormat {
     Float1,
     Float2,
@@ -74,12 +72,11 @@ pub enum VertexFormat {
 
 impl VertexFormat {
     pub fn size(&self) -> i32 {
-        use VertexFormat::*;
         match self {
-            Float1 => 1,
-            Float2 => 2,
-            Float3 => 3,
-            Float4 => 4,
+            VertexFormat::Float1 => 1,
+            VertexFormat::Float2 => 2,
+            VertexFormat::Float3 => 3,
+            VertexFormat::Float4 => 4,
         }
     }
 

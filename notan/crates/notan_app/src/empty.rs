@@ -91,12 +91,17 @@ impl GraphicsBackend for EmptyGraphicsBackend {
         Ok(self.id_count)
     }
 
-    fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<i32, String> {
+    fn create_vertex_buffer(&mut self) -> Result<i32, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }
 
-    fn create_index_buffer(&mut self, draw: DrawType) -> Result<i32, String> {
+    fn create_index_buffer(&mut self) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn create_uniform_buffer(&mut self, _slot: u32) -> Result<i32, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }

@@ -49,7 +49,7 @@ pub(crate) fn spirv_from_file(relative_path: &str, typ: ShaderType) -> Result<Ve
 pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
     let source = source.trim();
     let mut spirv_output =
-        glsl_to_spirv::compile(source, typ.into()).expect(&format!("Invalid {:?} shader.", typ));
+        glsl_to_spirv::compile(source, typ.into()).expect(&format!("Invalid {:#?} shader.", typ));
 
     let mut spirv = vec![];
     spirv_output
@@ -147,7 +147,7 @@ fn spirv_to_glsl(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
     Ok(ShaderBytes(glsl.as_bytes().to_vec()))
 }
 
-//-
+//- Most of this code is based on https://github.com/gfx-rs/gfx/blob/master/src/backend/gl/src/device.rs
 fn compile_spirv_to_glsl(source: &[u32], api: Output) -> Result<String, String> {
     let module = spirv::Module::from_words(source);
     let mut ast = spirv::Ast::<glsl::Target>::parse(&module).map_err(error_code_to_string)?;
@@ -157,24 +157,15 @@ fn compile_spirv_to_glsl(source: &[u32], api: Output) -> Result<String, String> 
     let version = version.ok_or("Invalid GLSL version")?;
     let vertex = glsl::CompilerVertexOptions::default();
 
-    // ast.set_compiler_options(&glsl::CompilerOptions {
-    //     version,
-    //     vertex,
-    //     ..Default::default()
-    // })
     let mut options = glsl::CompilerOptions::default();
     options.version = version;
     options.vertex = vertex;
+    options.force_zero_initialized_variables = true;
     ast.set_compiler_options(&options)
         .map_err(error_code_to_string)?;
 
-    // println!(
-    //     "{:?} {:?} {:?}",
-    //     res.sampled_images, res.uniform_buffers, res.storage_buffers
-    // );
     //TODO get spirv for vulkan as input and output glsl for opengl
     //https://community.arm.com/developer/tools-software/graphics/b/blog/posts/spirv-cross-working-with-spir-v-in-your-app
-    //https://github.com/gfx-rs/gfx/blob/d6c68cb9a940a6639a42651304c6d49b5399aca7/src/backend/gl/src/device.rs#L238
     fix_ast_for_gl(&mut ast, &res.sampled_images);
     fix_ast_for_gl(&mut ast, &res.uniform_buffers);
     fix_ast_for_gl(&mut ast, &res.storage_buffers);
@@ -183,11 +174,12 @@ fn compile_spirv_to_glsl(source: &[u32], api: Output) -> Result<String, String> 
 }
 
 fn fix_ast_for_gl(ast: &mut spirv::Ast<glsl::Target>, resources: &[spirv::Resource]) {
-    for r in resources {
-        // println!("{:?}", r);
-        ast.unset_decoration(r.id, spirv::Decoration::Binding)
+    resources.iter().for_each(|res| {
+        ast.unset_decoration(res.id, spirv::Decoration::Binding)
             .unwrap();
-    }
+        ast.unset_decoration(res.id, spirv::Decoration::DescriptorSet)
+            .unwrap();
+    });
 }
 
 fn error_code_to_string(err: ErrorCode) -> String {
@@ -200,7 +192,6 @@ fn error_code_to_string(err: ErrorCode) -> String {
     }
 }
 
-// FUNCTION TOOK FROM gfx.rs
 pub fn read_spirv<R: io::Read + io::Seek>(mut x: R) -> io::Result<Vec<u32>> {
     let size = x.seek(io::SeekFrom::End(0))?;
     if size % 4 != 0 {
