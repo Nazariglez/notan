@@ -97,6 +97,7 @@ impl ToGlow for BufferUsage {
         match self {
             BufferUsage::Vertex => glow::ARRAY_BUFFER,
             BufferUsage::Index => glow::ELEMENT_ARRAY_BUFFER,
+            BufferUsage::Uniform(_) => glow::UNIFORM_BUFFER,
         }
     }
 }

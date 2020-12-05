@@ -579,6 +579,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bef81f244b2a421ddb8ccb382857772379c0996fe5948992db5bee51cef3c28e"
+dependencies = [
+ "version_check",
+]
+
+[[package]]
 name = "glow"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -898,6 +907,7 @@ dependencies = [
 name = "notan"
 version = "0.1.0"
 dependencies = [
+ "glam 0.11.2",
  "notan_app",
  "notan_default_backend",
  "notan_log",
@@ -953,7 +963,7 @@ name = "notan_graphics"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "glam",
+ "glam 0.10.2",
  "parking_lot",
 ]
 

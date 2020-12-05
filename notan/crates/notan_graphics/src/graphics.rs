@@ -29,10 +29,13 @@ pub trait GraphicsBackend {
     ) -> Result<i32, String>;
 
     /// Create a new vertex buffer object and returns the id
-    fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<i32, String>;
+    fn create_vertex_buffer(&mut self) -> Result<i32, String>;
 
     /// Create a new index buffer object and returns the id
-    fn create_index_buffer(&mut self, draw: DrawType) -> Result<i32, String>;
+    fn create_index_buffer(&mut self) -> Result<i32, String>;
+
+    /// Create a new uniform buffer and returns the id
+    fn create_uniform_buffer(&mut self, slot: u32) -> Result<i32, String>;
 
     /// Create a new renderer using the size of the graphics
     fn render(&mut self, commands: &[Commands]);
@@ -128,23 +131,35 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_vertex_buffer(&mut self, draw: DrawType) -> Result<Buffer, String> {
-        let id = self.backend.create_vertex_buffer(draw)?;
+    pub fn create_vertex_buffer(&mut self) -> Result<Buffer, String> {
+        let id = self.backend.create_vertex_buffer()?;
         Ok(Buffer::new(
             id,
             BufferUsage::Vertex,
-            draw,
+            None,
             self.drop_manager.clone(),
         ))
     }
 
     #[inline(always)]
-    pub fn create_index_buffer(&mut self, draw: DrawType) -> Result<Buffer, String> {
-        let id = self.backend.create_index_buffer(draw)?;
+    pub fn create_index_buffer(&mut self) -> Result<Buffer, String> {
+        let id = self.backend.create_index_buffer()?;
         Ok(Buffer::new(
             id,
             BufferUsage::Index,
-            draw,
+            None,
+            self.drop_manager.clone(),
+        ))
+    }
+
+    #[inline(always)]
+    pub fn create_uniform_buffer(&mut self, slot: u32) -> Result<Buffer, String> {
+        //debug_assert!(current_pipeline.is_some()) //pipeline should be already binded
+        let id = self.backend.create_uniform_buffer(slot)?;
+        Ok(Buffer::new(
+            id,
+            BufferUsage::Uniform(slot),
+            None,
             self.drop_manager.clone(),
         ))
     }
