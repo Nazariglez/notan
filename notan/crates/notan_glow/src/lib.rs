@@ -6,19 +6,23 @@ use std::rc::Rc;
 
 mod buffer;
 mod pipeline;
+mod texture;
 mod to_glow;
 mod utils;
 
 use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
+use texture::InnerTexture;
 
 pub struct GlowBackend {
     gl: Context,
     buffer_count: i32,
+    texture_count: i32,
     pipeline_count: i32,
     size: (i32, i32),
     pipelines: HashMap<i32, InnerPipeline>,
     buffers: HashMap<i32, InnerBuffer>,
+    textures: HashMap<i32, InnerTexture>,
     current_vertex_attrs: Option<VertexAttributes>,
     gl_index_type: u32,
     using_indices: bool,
@@ -43,11 +47,13 @@ impl GlowBackend {
         Ok(Self {
             pipeline_count: 0,
             buffer_count: 0,
+            texture_count: 0,
             gl,
             size: (0, 0),
             pipelines: HashMap::new(),
             current_vertex_attrs: None,
             buffers: HashMap::new(),
+            textures: HashMap::new(),
             gl_index_type,
             using_indices: false,
             api_name: api.to_string(),
@@ -218,6 +224,14 @@ impl GraphicsBackend for GlowBackend {
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
+    }
+
+    fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String> {
+        let inner_texture = InnerTexture::new(&self.gl)?;
+        //TODO bind?
+        self.texture_count += 1;
+        self.textures.insert(self.texture_count, inner_texture);
+        Ok(self.texture_count)
     }
 
     fn render(&mut self, commands: &[Commands]) {

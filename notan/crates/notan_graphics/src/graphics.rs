@@ -3,6 +3,7 @@ use crate::commands::*;
 use crate::pipeline::*;
 use crate::renderer::Renderer;
 use crate::shader::*;
+use crate::texture::*;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -45,6 +46,9 @@ pub trait GraphicsBackend {
 
     /// Sets the render size
     fn set_size(&mut self, width: i32, height: i32);
+
+    /// Create a new texture and returns the id
+    fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String>;
 }
 
 /// Helper to drop resources on the backend
@@ -162,6 +166,12 @@ impl Graphics {
             None,
             self.drop_manager.clone(),
         ))
+    }
+
+    #[inline(always)]
+    pub fn create_texture(&mut self, info: TextureInfo) -> Result<Texture, String> {
+        let id = self.backend.create_texture(&info)?;
+        Ok(Texture::new(id, info, self.drop_manager.clone()))
     }
 
     #[inline(always)]

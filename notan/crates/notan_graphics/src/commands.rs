@@ -34,6 +34,11 @@ pub enum Commands<'a> {
         usage: BufferUsage,
         draw: DrawType,
     },
+    BindTexture {
+        id: i32,
+        slot: u32,
+        location: u32,
+    },
     Draw {
         offset: i32,
         count: i32,

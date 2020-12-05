@@ -1,6 +1,7 @@
 use crate::buffer::*;
 use crate::commands::*;
 use crate::pipeline::*;
+use crate::texture::*;
 
 #[derive(Default)]
 pub struct Renderer<'a> {
@@ -91,6 +92,18 @@ impl<'a> Renderer<'a> {
 
     pub fn draw(&mut self, offset: i32, count: i32) {
         self.commands.push(Commands::Draw { offset, count })
+    }
+
+    pub fn bind_texture(&mut self, location: u32, texture: &Texture) {
+        self.bind_texture_slot(0, location, texture);
+    }
+
+    pub fn bind_texture_slot(&mut self, slot: u32, location: u32, texture: &Texture) {
+        self.commands.push(Commands::BindTexture {
+            slot,
+            location,
+            id: texture.id(),
+        })
     }
 }
 
