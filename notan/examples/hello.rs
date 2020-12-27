@@ -5,8 +5,7 @@ use notan::app::{App, AppBuilder, Plugins};
 use notan::log;
 use notan::prelude::*;
 
-struct State {
-}
+struct State {}
 
 impl AppState for State {}
 
@@ -27,8 +26,7 @@ fn create_text_loader() -> Loader {
 }
 
 fn setup() -> State {
-    let mut state = State {
-    };
+    let mut state = State {};
 
     // let ss = state.assets.load_asset::<String>("hello.html").unwrap();
     // let ss = state
@@ -39,7 +37,7 @@ fn setup() -> State {
     state
 }
 
-fn text_files_parser(id: &str, bytes: Vec<u8>, storage: &mut AssetStorage2) -> Result<(), String> {
+fn text_files_parser(id: &str, bytes: Vec<u8>, storage: &mut AssetStorage) -> Result<(), String> {
     let text = std::str::from_utf8(&bytes)
         .map_err(|_| format!("Cannot parse file {} to UTF8 text.", id))?
         .to_string();
