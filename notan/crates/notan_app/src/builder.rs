@@ -1,4 +1,4 @@
-use crate::assets::{AssetLoader, AssetManager};
+use crate::assets::{AssetLoader, AssetManager, AssetManager2, Loader};
 use crate::config::*;
 use crate::graphics::Graphics;
 use crate::handlers::{
@@ -28,6 +28,7 @@ pub struct AppBuilder<S, B> {
 
     plugins: Plugins,
     assets: AssetManager,
+    assets2: AssetManager2,
 
     init_callback: Option<AppCallback<S>>,
     update_callback: Option<AppCallback<S>>,
@@ -52,6 +53,7 @@ where
             backend,
             plugins: Default::default(),
             assets: AssetManager::new(),
+            assets2: AssetManager2::new(),
             init_callback: None,
             update_callback: None,
             draw_callback: None,
@@ -112,11 +114,8 @@ where
     }
 
     /// Adds a new [AssetLoader]
-    pub fn add_loader<L>(mut self) -> Self
-    where
-        L: AssetLoader + Default + 'static,
-    {
-        self.assets.add_loader::<L>();
+    pub fn add_loader(mut self, loader: Loader) -> Self {
+        self.assets2.add_loader(loader);
         self
     }
 
@@ -127,6 +126,7 @@ where
             setup_callback,
             mut plugins,
             mut assets,
+            mut assets2,
 
             init_callback,
             update_callback,
@@ -171,7 +171,8 @@ where
                 return Ok(());
             }
 
-            assets.tick(&mut app);
+            // assets.tick(&mut app);
+            assets2.tick()?;
             app.tick(); //todo delta here?
 
             // Manage each event
