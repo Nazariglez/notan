@@ -1,145 +1,109 @@
 use super::asset::Asset;
-use super::bytes::BytesLoader;
 use super::list::AssetList;
-use super::loader::AssetLoader;
+use super::loader::*;
 use super::storage::AssetStorage;
+use super::utils::DoneSignal;
 use crate::app::App;
 use hashbrown::HashMap;
 use std::any::TypeId;
 use std::path::Path;
+use std::rc::Rc;
 use std::sync::Arc;
 
-/// Assets and loaders can be set and get from this struct
-#[derive(Default)]
 pub struct AssetManager {
-    loaders: HashMap<TypeId, Arc<dyn AssetLoader>>,
-    extensions: HashMap<String, TypeId>,
     storage: AssetStorage,
+    pub(crate) loaders: HashMap<String, LoaderCallback>,
+    byte_loader: LoaderCallback,
 }
 
 impl AssetManager {
-    /// Returns a new manager
-    pub fn new() -> Self {
-        let mut manager = Self {
+    pub(crate) fn new() -> Self {
+        let bytes_id = TypeId::of::<Vec<u8>>();
+        let byte_loader = LoaderCallback::Basic(
+            Some(bytes_id),
+            Rc::new(|id, bytes, storage| {
+                storage.parse::<Vec<u8>>(id, bytes);
+                Ok(())
+            }),
+        );
+
+        Self {
             loaders: HashMap::new(),
-            extensions: HashMap::new(),
             storage: AssetStorage::default(),
-        };
-
-        manager.add_loader::<BytesLoader>();
-
-        manager
+            byte_loader,
+        }
     }
 
-    /// Adds a new [AssetLoader]
-    pub fn add_loader<L>(&mut self)
-    where
-        L: AssetLoader + Default + 'static,
-    {
-        let loader = L::default();
-        let type_id = TypeId::of::<L>();
+    pub(crate) fn tick(&mut self) -> Result<(), String> {
+        if let Some(mut to_update) = self.storage.try_load() {
+            while let Some((id, data)) = to_update.pop() {
+                let ext = Path::new(&id)
+                    .extension()
+                    .map(|ext| ext.to_str().unwrap())
+                    .unwrap_or("");
 
-        for ext in loader.extensions() {
-            self.extensions.insert(ext.to_string(), type_id);
+                let loader = match self.loaders.get(ext) {
+                    Some(loader) => loader,
+                    None => {
+                        notan_log::warn!(
+                            "Not found a loader for '{}', loading as bytes (Vec<u8>)",
+                            id
+                        );
+                        &self.byte_loader
+                    }
+                };
+
+                loader.exec(&id, data, &mut self.storage)?;
+                self.storage.clean_asset(&id)?;
+            }
         }
 
-        self.loaders.insert(type_id, Arc::new(loader));
+        Ok(())
     }
 
-    #[inline(always)]
-    /// Starts loading a file and returns an [Asset]
-    pub fn load_asset<A>(&mut self, path: &str) -> Result<Asset<A>, String>
+    pub fn add_loader(&mut self, loader: Loader) {
+        if let Err(e) = loader.apply(self) {
+            notan_log::error!("{}", e);
+        }
+    }
+
+    fn load(&mut self, id: &str) -> Result<DoneSignal, String> {
+        let ext = Path::new(id)
+            .extension()
+            .map(|ext| ext.to_str().unwrap())
+            .unwrap_or("");
+
+        let loader = match self.loaders.get(ext) {
+            Some(loader) => loader,
+            None => {
+                notan_log::warn!(
+                    "Not found a loader for '{}', loading as bytes (Vec<u8>)",
+                    id
+                );
+                &self.byte_loader
+            }
+        };
+
+        Ok(match loader.type_id() {
+            Some(type_id) => self.storage.register(id, type_id),
+            None => return Err("Loader without output type id".to_string()),
+        })
+    }
+
+    pub fn load_asset<A>(&mut self, id: &str) -> Result<Asset<A>, String>
     where
         A: Send + Sync + 'static,
     {
-        let _ = self.load_list(&[path])?;
-        self.storage.get(path)
+        let _ = self.load(id)?;
+        self.storage.get(id, true)
     }
 
-    #[inline(always)]
-    pub(crate) fn tick(&mut self, app: &mut App) {
-        if let Some(to_update) = self.storage.try_load() {
-            self.update_assets_list(app, to_update)
-        }
-    }
-
-    #[inline(always)]
-    fn update_assets_list(&mut self, app: &mut App, mut to_update: Vec<(String, Vec<u8>)>) {
-        let to_clean = to_update
-            .drain(..)
-            .rev()
-            .map(|(id, data)| {
-                self.update_asset(app, &id, data);
-                id
-            })
-            .collect::<Vec<_>>();
-
-        self.storage.clean(&to_clean);
-    }
-
-    #[inline(always)]
-    fn update_asset(&mut self, app: &mut App, id: &str, data: Vec<u8>) {
-        let ext = Path::new(&id)
-            .extension()
-            .map(|ext| ext.to_str().unwrap())
-            .unwrap_or("blob");
-
-        let loader = match self.get_loader(ext) {
-            Ok(loader) => loader,
-            Err(_) => self.get_loader("blob").unwrap(),
-        }
-        .clone();
-
-        loader.load(&id, data, app, &mut self.storage);
-    }
-
-    /// Starts loading a list of [Asset]s and return an [AssetList] to get them and check the progress
     pub fn load_list(&mut self, paths: &[&str]) -> Result<AssetList, String> {
-        self.storage.list = Some(Default::default());
-
-        paths.iter().for_each(|id| {
-            let ext = Path::new(id)
-                .extension()
-                .map(|ext| ext.to_str().unwrap())
-                .unwrap_or("blob");
-
-            let loader = match self.get_loader(ext) {
-                Ok(loader) => loader,
-                Err(err) => {
-                    notan_log::warn!(
-                        "Asset: {} -> {} -> loading with BytesLoader as Vec<u8>",
-                        id,
-                        err
-                    );
-                    self.get_loader("blob").unwrap()
-                }
-            }
-            .clone();
-
-            loader.set_default(id, &mut self.storage);
-        });
-
-        let asset_list = self
-            .storage
-            .list
-            .take()
-            .ok_or_else(|| "AssetList cannot be extracted from AssetManager".to_string())?;
-
-        Ok(asset_list)
-    }
-
-    #[inline(always)]
-    fn get_loader(&self, ext: &str) -> Result<&Arc<dyn AssetLoader>, String> {
-        let type_id = match self.extensions.get(ext) {
-            Some(type_id) => type_id,
-            _ => return Err("Invalid extension".to_string()),
-        };
-
-        let loader = match self.loaders.get(type_id) {
-            Some(loader) => loader,
-            _ => return Err("Invalid asset type".to_string()),
-        };
-
-        Ok(loader)
+        let mut list = AssetList::new(self.storage.tracker.clone());
+        for id in paths {
+            let loaded = self.load(id)?;
+            list.insert(id, loaded);
+        }
+        Ok(list)
     }
 }
