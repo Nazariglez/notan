@@ -29,17 +29,19 @@ impl AssetStorage {
     }
 
     /// Parse an asset with the loaded one
-    pub fn parse<A>(&mut self, id: &str, asset: A)
+    pub fn parse<A>(&mut self, id: &str, asset: A) -> Result<(), String>
     where
         A: Send + Sync + 'static,
     {
-        match self.get::<A>(id, false) {
-            Ok(mut stored_asset) => {
+        self.get::<A>(id, false)
+            .map(|mut stored_asset| {
                 *stored_asset.res.write() = Some(asset);
                 stored_asset.loaded.done();
-            }
-            Err(err) => notan_log::error!("{}", err),
-        }
+            })
+            .map_err(|e| {
+                notan_log::error!("{}", e);
+                e
+            })
     }
 
     pub(crate) fn get<A>(&self, id: &str, claim: bool) -> Result<Asset<A>, String>

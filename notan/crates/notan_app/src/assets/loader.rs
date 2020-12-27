@@ -5,6 +5,7 @@ use downcast_rs::{impl_downcast, Downcast};
 use std::any::TypeId;
 use std::rc::Rc;
 
+/// Defines how parse files once they are loaded
 #[derive(Default, Clone)]
 pub struct Loader {
     extensions: Vec<String>,
@@ -13,10 +14,12 @@ pub struct Loader {
 }
 
 impl Loader {
+    /// Creates a new instance
     pub fn new() -> Self {
         Default::default()
     }
 
+    /// Set the output type
     pub fn output<A>(mut self) -> Self
     where
         A: Send + Sync + 'static,
@@ -25,11 +28,13 @@ impl Loader {
         self
     }
 
+    /// Set the file extension that will be parsed
     pub fn from_extension(mut self, ext: &str) -> Self {
         self.extensions.push(ext.to_string());
         self
     }
 
+    /// Set the file extensions that will be parsed
     pub fn from_extensions(mut self, exts: &[&str]) -> Self {
         for ext in exts {
             self.extensions.push(ext.to_string());
@@ -37,6 +42,7 @@ impl Loader {
         self
     }
 
+    /// Set the parser function
     pub fn use_parser<H, Params>(mut self, handler: H) -> Self
     where
         H: LoaderHandler<Params>,
