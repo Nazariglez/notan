@@ -19,15 +19,6 @@ impl Loader {
         Default::default()
     }
 
-    /// Set the output type
-    pub fn output<A>(mut self) -> Self
-    where
-        A: Send + Sync + 'static,
-    {
-        self.type_id = Some(TypeId::of::<A>());
-        self
-    }
-
     /// Set the file extension that will be parsed
     pub fn from_extension(mut self, ext: &str) -> Self {
         self.extensions.push(ext.to_string());
@@ -43,10 +34,12 @@ impl Loader {
     }
 
     /// Set the parser function
-    pub fn use_parser<H, Params>(mut self, handler: H) -> Self
+    pub fn use_parser<H, A, Params>(mut self, handler: H) -> Self
     where
-        H: LoaderHandler<Params>,
+        H: LoaderHandler<A, Params>,
+        A: Send + Sync + 'static,
     {
+        self.type_id = Some(TypeId::of::<A>());
         self.parser = Some(handler.callback());
         self
     }
@@ -79,23 +72,31 @@ impl Loader {
 pub enum LoaderCallback {
     Basic(
         Option<TypeId>,
-        Rc<dyn Fn(&str, Vec<u8>, &mut AssetStorage) -> Result<(), String>>,
+        Rc<dyn Fn(&mut AssetStorage, &str, Vec<u8>) -> Result<(), String>>,
     ),
 }
 
-pub trait LoaderHandler<Params> {
+pub trait LoaderHandler<A, Params>
+where
+    A: Send + Sync,
+{
     fn callback(self) -> LoaderCallback;
 }
 
 macro_rules! loader_handler {
     ($variant:expr, $($param:ident),*) => {
         #[allow(unused_parens)]
-        impl<F> LoaderHandler<(&str, Vec<u8>, &mut AssetStorage, $(&mut $param),*)> for F
+        impl<A, F> LoaderHandler<A, (&str, Vec<u8>, $(&mut $param),*)> for F
         where
-            F: Fn(&str, Vec<u8>, &mut AssetStorage, $(&mut $param),*) -> Result<(), String> + 'static
+            F: Fn(&str, Vec<u8>, $(&mut $param),*) -> Result<A, String> + 'static,
+            A: Send + Sync + 'static
+
         {
             fn callback(self) -> LoaderCallback {
-                $variant(None, Rc::new(self))
+                $variant(None, Rc::new(move |storage, id, bytes| {
+                    let asset = self(id, bytes)?;
+                    storage.parse::<A>(id, asset)
+                }))
             }
         }
     }
@@ -112,7 +113,7 @@ impl LoaderCallback {
     ) -> Result<(), String> {
         use LoaderCallback::*;
         match self {
-            Basic(_, cb) => cb(id, data, storage),
+            Basic(_, cb) => cb(storage, id, data),
         }
     }
 

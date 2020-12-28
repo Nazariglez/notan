@@ -21,7 +21,7 @@ impl AssetManager {
         let bytes_id = TypeId::of::<Vec<u8>>();
         let byte_loader = LoaderCallback::Basic(
             Some(bytes_id),
-            Rc::new(|id, bytes, storage| storage.parse::<Vec<u8>>(id, bytes)),
+            Rc::new(|storage, id, bytes| storage.parse::<Vec<u8>>(id, bytes)),
         );
 
         Self {
