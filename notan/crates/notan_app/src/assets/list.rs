@@ -95,7 +95,7 @@ impl AssetList {
             .map(|asset| Asset {
                 id: id.to_string(),
                 loaded,
-                res: asset.clone().downcast::<RwLock<Option<A>>>().unwrap(),
+                inner: asset.clone().downcast::<RwLock<Option<A>>>().unwrap(),
             })
     }
 }
