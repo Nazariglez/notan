@@ -6,8 +6,7 @@ use notan::log;
 use notan::prelude::*;
 
 struct State {
-    text: Option<Asset<Text>>,
-    text2: Asset<JS>,
+    list: AssetList,
 }
 
 impl AppState for State {}
@@ -24,50 +23,19 @@ fn main() -> Result<(), String> {
 }
 
 fn setup(assets: &mut AssetManager) -> State {
-    let mut state = State {
-        text: Some(assets.load_asset("hello.html").unwrap()),
-        text2: assets.load_asset("hello/hello.js").unwrap(),
+    let state = State {
+        list: assets.load_list(&["hello.html", "hello/hello.js"]).unwrap(),
     };
 
     state
 }
 
 fn update(state: &mut State) {
-    // log::info!("{:?}", state.text.as_ref().unwrap().lock().is_some());
-    let can_unwrap = match &state.text {
-        Some(asset) => asset.lock().is_some(),
-        _ => false,
-    };
-
-    if can_unwrap {
-        let asset = state.text.take().unwrap();
-        let a = asset.clone();
-        log::info!("{:?}", asset.lock());
-        let inner_asset = asset.unwrap();
-        log::info!("{:?}", inner_asset);
+    log::info!("progress: {:?}", state.list.progress());
+    if state.list.is_loaded() {
+        let js = state.list.take::<Text>("hello.html").unwrap();
+        log::info!("{:?}", js);
     }
-
-    match state.text2.lock() {
-        Some(a) => {
-            log::info!("{:?}", a);
-            panic!();
-        }
-        _ => {}
-    }
-    // if let Some(opt_text) = &state.text {
-    //     // let text = match opt_text.lock() {
-    //     //     Some(asset) => asset,
-    //     //     _ => return,
-    //     // };
-    //     //
-    //     if !opt_text.is_loaded() {
-    //         return;
-    //     }
-    //
-    //     let text = opt_text.unwrap();
-    //     log::info!("{:#?}", text);
-    //     panic!();
-    // }
 }
 
 fn create_text_loader() -> Loader {
