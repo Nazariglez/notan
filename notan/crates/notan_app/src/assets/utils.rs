@@ -106,6 +106,12 @@ struct ClaimTracker {
     claim: bool,
 }
 
+impl ClaimTracker {
+    fn is_ready(&self) -> bool {
+        self.tracker.is_loaded() && self.claim
+    }
+}
+
 #[derive(Default, Clone)]
 pub(crate) struct AssetLoadTracker {
     assets: Arc<RwLock<HashMap<String, ClaimTracker>>>,
@@ -133,12 +139,12 @@ impl AssetLoadTracker {
     pub fn get_asset<A>(
         &self,
         id: &str,
-        loaded: Arc<AtomicBool>,
+        loaded: DoneSignal,
     ) -> Result<Arc<RwLock<Option<A>>>, String>
     where
         A: Send + Sync + 'static,
     {
-        self.insert_if_necessary::<A>(id, DoneSignal::from_atomic(loaded));
+        self.insert_if_necessary::<A>(id, loaded);
         self.assets
             .read()
             .get(id)
@@ -168,5 +174,10 @@ impl AssetLoadTracker {
             .clone()
             .downcast::<RwLock<Option<A>>>()
             .map_err(|_| "Invalid asset type".to_string())
+    }
+
+    #[inline]
+    pub fn clean(&mut self) {
+        self.assets.write().retain(|_, tracker| !tracker.is_ready());
     }
 }

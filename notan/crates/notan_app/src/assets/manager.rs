@@ -53,6 +53,8 @@ impl AssetManager {
                 loader.exec(&id, data, &mut self.storage)?;
                 self.storage.clean_asset(&id)?;
             }
+
+            self.storage.clean_ready_assets();
         }
 
         Ok(())
