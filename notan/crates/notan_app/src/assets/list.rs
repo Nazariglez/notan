@@ -67,8 +67,8 @@ impl AssetList {
         loaded as f32 / self.count as f32
     }
 
-    /// Returns the [Asset]
-    pub fn get<A>(&mut self, id: &str) -> Result<Asset<A>, String>
+    /// Create an [Asset] clone and returns it
+    pub fn get_clone<A>(&mut self, id: &str) -> Result<Asset<A>, String>
     where
         A: Send + Sync + 'static,
     {
@@ -97,5 +97,24 @@ impl AssetList {
                 loaded,
                 inner: asset.clone().downcast::<RwLock<Option<A>>>().unwrap(),
             })
+    }
+
+    /// Remove and returns the [Asset] from the list
+    pub fn take<A>(&mut self, id: &str) -> Result<Asset<A>, String>
+    where
+        A: Send + Sync + 'static,
+    {
+        let asset = self.get_clone::<A>(id)?;
+        self.count -= 1;
+        self.load_tracker.remove(id);
+        self.claimed.remove(id);
+        self.tracker.clean();
+        match self.assets.get_mut(&TypeId::of::<A>()) {
+            Some(map) => {
+                map.remove(id);
+            }
+            _ => {}
+        }
+        Ok(asset)
     }
 }
