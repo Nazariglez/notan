@@ -35,7 +35,7 @@ impl AssetStorage {
     {
         self.get::<A>(id, false)
             .map(|mut stored_asset| {
-                *stored_asset.res.write() = Some(asset);
+                *stored_asset.inner.write() = Some(asset);
                 stored_asset.loaded.done();
             })
             .map_err(|e| {
@@ -55,13 +55,13 @@ impl AssetStorage {
                     let asset = if claim {
                         self.tracker.claim_asset(id, loaded.clone())
                     } else {
-                        self.tracker.get_asset(id, loaded.0.clone())
+                        self.tracker.get_asset(id, loaded.clone())
                     };
 
-                    asset.map(|res| Asset {
+                    asset.map(|inner| Asset {
                         id: id.to_string(),
                         loaded,
-                        res,
+                        inner,
                     })
                 } else {
                     Err("Invalid asset type".to_string())
@@ -104,5 +104,10 @@ impl AssetStorage {
         }
 
         Ok(())
+    }
+
+    #[inline]
+    pub(crate) fn clean_ready_assets(&mut self) {
+        self.tracker.clean();
     }
 }
