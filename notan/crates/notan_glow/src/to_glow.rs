@@ -1,6 +1,7 @@
 use glow::*;
 use notan_graphics::prelude::*;
 
+//TODO use Into<u32> and Into<Option<u32>>?
 pub trait ToGlow {
     fn to_glow(&self) -> u32;
 }
@@ -105,5 +106,27 @@ impl ToGlow for BufferUsage {
 impl ToGlow for VertexFormat {
     fn to_glow(&self) -> u32 {
         glow::FLOAT
+    }
+}
+
+impl ToGlow for TextureFormat {
+    fn to_glow(&self) -> u32 {
+        use TextureFormat::*;
+        match self {
+            Rgba => glow::RGBA,
+            Red => glow::RED,
+            R8 => glow::R8,
+            Depth => glow::DEPTH_COMPONENT16,
+        }
+    }
+}
+
+impl ToGlow for TextureFilter {
+    fn to_glow(&self) -> u32 {
+        use TextureFilter::*;
+        match self {
+            Linear => glow::LINEAR,
+            Nearest => glow::NEAREST,
+        }
     }
 }

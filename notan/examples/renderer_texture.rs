@@ -78,7 +78,8 @@ fn setup(gfx: &mut Graphics) -> State {
     let index_buffer = gfx.create_index_buffer().unwrap();
     let uniform_buffer = gfx.create_uniform_buffer(0).unwrap();
 
-    let texture = gfx.create_texture(Default::default()).unwrap();
+    let image = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
+    let texture = gfx.create_texture(image).unwrap();
 
     #[rustfmt::skip]
     let vertices = [
