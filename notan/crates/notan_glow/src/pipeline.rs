@@ -9,6 +9,9 @@ pub(crate) struct InnerPipeline {
     pub program: Program,
     pub vao: VertexArray,
     pub attrs: VertexAttributes,
+
+    #[cfg(target_arch = "wasm32")]
+    pub uniform_locations: Vec<UniformLocation>,
 }
 
 impl InnerPipeline {
@@ -226,6 +229,24 @@ fn create_pipeline(
     let fragment = create_shader(gl, glow::FRAGMENT_SHADER, fragment_source)?;
     let program = create_program(gl, vertex, fragment)?;
 
+    #[cfg(target_arch = "wasm32")]
+    let uniform_locations = unsafe {
+        let count = gl.get_active_uniforms(program);
+        (0..count)
+            .into_iter()
+            .filter_map(|index| match gl.get_active_uniform(program, index) {
+                Some(u) => match gl.get_uniform_location(program, &u.name) {
+                    Some(loc) => Some(loc),
+                    _ => {
+                        notan_log::debug!("Cannot get uniform location for: {}", u.name);
+                        None
+                    }
+                },
+                _ => None,
+            })
+            .collect::<Vec<_>>()
+    };
+
     let vao = unsafe {
         let vao = gl.create_vertex_array()?;
         gl.bind_vertex_array(Some(vao));
@@ -240,6 +261,9 @@ fn create_pipeline(
         program,
         vao,
         attrs,
+
+        #[cfg(target_arch = "wasm32")]
+        uniform_locations,
     })
 }
 

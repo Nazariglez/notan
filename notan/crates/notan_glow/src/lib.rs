@@ -27,6 +27,9 @@ pub struct GlowBackend {
     gl_index_type: u32,
     using_indices: bool,
     api_name: String,
+
+    #[cfg(target_arch = "wasm32")]
+    current_uniforms: Vec<UniformLocation>,
 }
 
 impl GlowBackend {
@@ -57,6 +60,9 @@ impl GlowBackend {
             gl_index_type,
             using_indices: false,
             api_name: api.to_string(),
+
+            #[cfg(target_arch = "wasm32")]
+            current_uniforms: vec![],
         })
     }
 }
@@ -138,6 +144,11 @@ impl GlowBackend {
             pip.bind(&self.gl, options);
             self.current_vertex_attrs = Some(pip.attrs.clone());
             self.using_indices = false;
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                self.current_uniforms = pip.uniform_locations.clone();
+            }
         }
     }
 
@@ -155,6 +166,25 @@ impl GlowBackend {
                     buffer.bind_as_ubo_with_data(&self.gl, *slot, draw, data);
                 }
             }
+        }
+    }
+
+    fn bind_texture(&mut self, id: i32, slot: u32, location: u32) {
+        if let Some(texture) = self.textures.get(&id) {
+            texture.bind(&self.gl, slot, self.get_uniform_loc(&location));
+        }
+    }
+
+    #[inline(always)]
+    fn get_uniform_loc(&self, location: &u32) -> &UniformLocation {
+        #[cfg(target_arch = "wasm32")]
+        {
+            &self.current_uniforms[*location as usize]
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            location
         }
     }
 
@@ -255,6 +285,7 @@ impl GraphicsBackend for GlowBackend {
                     draw,
                 } => self.bind_buffer(*id, ptr, usage, draw),
                 Draw { offset, count } => self.draw(*offset, *count),
+                BindTexture { id, slot, location } => self.bind_texture(*id, *slot, *location),
                 _ => {}
             }
         });
