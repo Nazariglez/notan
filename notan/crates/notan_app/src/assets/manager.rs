@@ -4,6 +4,9 @@ use super::loader::*;
 use super::storage::AssetStorage;
 use super::utils::DoneSignal;
 use crate::app::App;
+use crate::graphics::Graphics;
+use crate::plugins::Plugins;
+use crate::AppState;
 use hashbrown::HashMap;
 use std::any::TypeId;
 use std::path::Path;
@@ -31,7 +34,13 @@ impl AssetManager {
         }
     }
 
-    pub(crate) fn tick(&mut self) -> Result<(), String> {
+    pub(crate) fn tick<S>(
+        &mut self,
+        app: &mut App,
+        graphics: &mut Graphics,
+        plugins: &mut Plugins,
+        state: &mut S,
+    ) -> Result<(), String> {
         if let Some(mut to_update) = self.storage.try_load() {
             while let Some((id, data)) = to_update.pop() {
                 let ext = Path::new(&id)
@@ -50,7 +59,7 @@ impl AssetManager {
                     }
                 };
 
-                loader.exec(&id, data, &mut self.storage)?;
+                loader.exec(&id, data, &mut self.storage, app, graphics, plugins, state)?;
                 self.storage.clean_asset(&id)?;
             }
 

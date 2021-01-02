@@ -11,3 +11,4 @@ pub mod texture;
 pub mod prelude;
 
 pub use graphics::*;
+pub use texture::*;
