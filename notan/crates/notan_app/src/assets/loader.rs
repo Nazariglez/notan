@@ -1,6 +1,8 @@
 use super::manager::AssetManager;
 use super::storage::AssetStorage;
 use crate::app::App;
+use crate::graphics::Graphics;
+use crate::plugins::Plugins;
 use downcast_rs::{impl_downcast, Downcast};
 use std::any::TypeId;
 use std::rc::Rc;
@@ -74,6 +76,10 @@ pub enum LoaderCallback {
         Option<TypeId>,
         Rc<dyn Fn(&mut AssetStorage, &str, Vec<u8>) -> Result<(), String>>,
     ),
+    G(
+        Option<TypeId>,
+        Rc<dyn Fn(&mut AssetStorage, &str, Vec<u8>, &mut Graphics) -> Result<(), String>>,
+    ),
 }
 
 pub trait LoaderHandler<A, Params>
@@ -93,8 +99,8 @@ macro_rules! loader_handler {
 
         {
             fn callback(self) -> LoaderCallback {
-                $variant(None, Rc::new(move |storage, id, bytes| {
-                    let asset = self(id, bytes)?;
+                $variant(None, Rc::new(move |storage, id, bytes, $($param),*| {
+                    let asset = self(id, bytes, $($param),*)?;
                     storage.parse::<A>(id, asset)
                 }))
             }
@@ -103,17 +109,23 @@ macro_rules! loader_handler {
 }
 
 loader_handler!(LoaderCallback::Basic,);
+loader_handler!(LoaderCallback::G, Graphics);
 
 impl LoaderCallback {
-    pub(crate) fn exec(
+    pub(crate) fn exec<S>(
         &self,
         id: &str,
         data: Vec<u8>,
         storage: &mut AssetStorage,
+        app: &mut App,
+        graphics: &mut Graphics,
+        plugins: &mut Plugins,
+        state: &mut S,
     ) -> Result<(), String> {
         use LoaderCallback::*;
         match self {
             Basic(_, cb) => cb(storage, id, data),
+            G(_, cb) => cb(storage, id, data, graphics),
         }
     }
 
@@ -121,6 +133,7 @@ impl LoaderCallback {
         use LoaderCallback::*;
         let ty = match self {
             Basic(ref mut ty, _) => ty,
+            G(ref mut ty, _) => ty,
         };
 
         *ty = Some(type_id);
@@ -130,6 +143,7 @@ impl LoaderCallback {
         use LoaderCallback::*;
         match self {
             Basic(ty, _) => *ty,
+            G(ty, _) => *ty,
         }
     }
 }

@@ -4,6 +4,7 @@ use crate::graphics::Graphics;
 use crate::handlers::{
     AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler, SetupCallback,
 };
+use crate::parsers::*;
 use crate::plugins::*;
 use crate::{App, Backend, BackendSystem};
 use notan_log as log;
@@ -47,7 +48,7 @@ where
     where
         H: SetupHandler<S, Params>,
     {
-        AppBuilder {
+        let builder = AppBuilder {
             setup_callback: setup.callback(),
             backend,
             plugins: Default::default(),
@@ -57,7 +58,13 @@ where
             draw_callback: None,
             event_callback: None,
             window: Default::default(),
-        }
+        };
+
+        builder.default_loaders()
+    }
+
+    pub fn default_loaders(self) -> Self {
+        self.add_loader(create_texture_parser())
     }
 
     /// Applies a configuration
@@ -169,7 +176,7 @@ where
             }
 
             // assets.tick(&mut app);
-            assets.tick()?;
+            assets.tick(&mut app, &mut graphics, &mut plugins, &mut state)?;
             app.tick(); //todo delta here?
 
             // Manage each event

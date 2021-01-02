@@ -8,6 +8,7 @@ mod app;
 mod backend;
 mod builder;
 mod handlers;
+mod parsers;
 
 pub mod assets;
 mod events;
