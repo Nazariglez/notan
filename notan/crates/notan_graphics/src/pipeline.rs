@@ -17,18 +17,38 @@ impl Drop for PipelineId {
 pub struct Pipeline {
     id: Arc<PipelineId>,
     pub options: PipelineOptions,
+    stride: usize,
 }
 
 impl Pipeline {
-    pub(crate) fn new(id: i32, options: PipelineOptions, drop_manager: Arc<DropManager>) -> Self {
+    pub(crate) fn new(
+        id: i32,
+        stride: usize,
+        options: PipelineOptions,
+        drop_manager: Arc<DropManager>,
+    ) -> Self {
         let id = Arc::new(PipelineId { id, drop_manager });
 
-        Self { id, options }
+        Self {
+            id,
+            stride,
+            options,
+        }
     }
 
     #[inline(always)]
     pub fn id(&self) -> i32 {
         self.id.id
+    }
+
+    #[inline(always)]
+    pub fn stride(&self) -> usize {
+        self.stride
+    }
+
+    #[inline(always)]
+    pub fn offset(&self) -> usize {
+        self.stride / 4
     }
 }
 
