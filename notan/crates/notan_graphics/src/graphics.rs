@@ -107,13 +107,23 @@ impl Graphics {
         vertex_attrs: &[VertexAttr],
         options: PipelineOptions,
     ) -> Result<Pipeline, String> {
+        let stride = vertex_attrs
+            .iter()
+            .fold(0, |acc, data| acc + data.format.bytes()) as usize;
+
         let id = self.backend.create_pipeline(
             vertex_source,
             fragment_source,
             vertex_attrs,
             options.clone(),
         )?;
-        Ok(Pipeline::new(id, options, self.drop_manager.clone()))
+
+        Ok(Pipeline::new(
+            id,
+            stride,
+            options,
+            self.drop_manager.clone(),
+        ))
     }
 
     #[inline(always)]
