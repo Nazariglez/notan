@@ -1,6 +1,7 @@
 use crate::buffer::*;
 use crate::commands::*;
 use crate::pipeline::*;
+use crate::render_target::*;
 use crate::renderer::Renderer;
 use crate::shader::*;
 use crate::texture::*;
@@ -13,6 +14,7 @@ pub enum ResourceId {
     Buffer(i32),
     Texture(i32),
     Pipeline(i32),
+    RenderTarget(i32),
 }
 
 /// Represents a the implementation graphics backend like glow, wgpu or another
@@ -39,7 +41,7 @@ pub trait GraphicsBackend {
     fn create_uniform_buffer(&mut self, slot: u32) -> Result<i32, String>;
 
     /// Create a new renderer using the size of the graphics
-    fn render(&mut self, commands: &[Commands]);
+    fn render(&mut self, commands: &[Commands], target: Option<i32>);
 
     /// Clean all the dropped resources
     fn clean(&mut self, to_clean: &[ResourceId]);
@@ -49,6 +51,9 @@ pub trait GraphicsBackend {
 
     /// Create a new texture and returns the id
     fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String>;
+
+    /// Create a new render target and returns the id
+    fn create_render_target(&mut self, texture_id: i32) -> Result<i32, String>;
 }
 
 /// Helper to drop resources on the backend
@@ -184,9 +189,51 @@ impl Graphics {
         Ok(Texture::new(id, info, self.drop_manager.clone()))
     }
 
+    #[inline]
+    pub fn create_render_target(
+        &mut self,
+        depth_testing: bool,
+        info: TextureInfo,
+    ) -> Result<RenderTarget, String> {
+        let width = info.width;
+        let height = info.height;
+
+        let tex_id = self.backend.create_texture(&info)?;
+        let texture = Texture::new(tex_id, info, self.drop_manager.clone());
+
+        let depth_texture = if depth_testing {
+            let depth_info = TextureInfo {
+                width,
+                height,
+                format: TextureFormat::Depth,
+                internal_format: TextureFormat::Depth,
+                min_filter: TextureFilter::Linear,
+                mag_filter: TextureFilter::Linear,
+                ..Default::default()
+            };
+            let tex_id = self.backend.create_texture(&depth_info)?;
+            Some(Texture::new(tex_id, depth_info, self.drop_manager.clone()))
+        } else {
+            None
+        };
+
+        let id = self.backend.create_render_target(texture.id())?;
+        Ok(RenderTarget::new(
+            id,
+            texture,
+            depth_texture,
+            self.drop_manager.clone(),
+        ))
+    }
+
     #[inline(always)]
     pub fn render<'a>(&mut self, render: &'a ToCommandBuffer<'a>) {
-        self.backend.render(render.commands());
+        self.backend.render(render.commands(), None);
+    }
+
+    #[inline]
+    pub fn render_to<'a>(&mut self, target: &RenderTarget, render: &'a ToCommandBuffer<'a>) {
+        self.backend.render(render.commands(), Some(target.id()));
     }
 
     #[inline]

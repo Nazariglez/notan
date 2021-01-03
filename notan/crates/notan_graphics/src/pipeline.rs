@@ -249,6 +249,10 @@ impl ClearOptions {
             ..Default::default()
         }
     }
+
+    pub fn none() -> Self {
+        Self::default()
+    }
 }
 
 /// Represents the draw usage

@@ -5,6 +5,7 @@ use notan::app::{App, AppBuilder, Plugins};
 use notan::log;
 use notan::prelude::*;
 
+//language=glsl
 const VERT: ShaderSource = notan::vertex_shader! {
     r#"
     #version 450
@@ -20,6 +21,7 @@ const VERT: ShaderSource = notan::vertex_shader! {
     "#
 };
 
+//language=glsl
 const FRAG: ShaderSource = notan::fragment_shader! {
     r#"
     #version 450

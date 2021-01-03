@@ -1,6 +1,6 @@
 use crate::config::WindowConfig;
 use crate::graphics::prelude::*;
-use crate::graphics::{Graphics, GraphicsBackend};
+use crate::graphics::{Graphics, GraphicsBackend, RenderTarget};
 use crate::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 
 #[derive(Default)]
@@ -106,12 +106,17 @@ impl GraphicsBackend for EmptyGraphicsBackend {
         Ok(self.id_count)
     }
 
+    fn create_render_target(&mut self, _texture_id: i32) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
     fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }
 
-    fn render(&mut self, commands: &[Commands]) {
+    fn render(&mut self, commands: &[Commands], _target: Option<i32>) {
         commands
             .iter()
             .for_each(|cmd| notan_log::info!("{:?}", cmd));

@@ -4,6 +4,7 @@ pub use crate::commands::*;
 pub use crate::draw::*;
 pub use crate::graphics::*;
 pub use crate::pipeline::*;
+pub use crate::render_target::*;
 pub use crate::renderer::*;
 pub use crate::shader::*;
 pub use crate::texture::*;
