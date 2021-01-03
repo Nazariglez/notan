@@ -19,7 +19,6 @@ impl<'a> Renderer<'a> {
 
     pub fn begin(&mut self, options: &ClearOptions) {
         self.commands.push(Commands::Begin {
-            render_target: None,
             color: options.color,
             stencil: options.stencil,
             depth: options.depth,
@@ -104,6 +103,10 @@ impl<'a> Renderer<'a> {
             location,
             id: texture.id(),
         })
+    }
+
+    pub fn clear(&mut self) {
+        self.commands.clear();
     }
 }
 

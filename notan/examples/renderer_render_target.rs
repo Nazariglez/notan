@@ -48,6 +48,8 @@ struct State {
     index_buffer: Buffer,
     uniform_buffer: Buffer,
     texture: Texture,
+    render_target: RenderTarget,
+    render_target2: RenderTarget,
 }
 impl AppState for State {}
 
@@ -83,17 +85,30 @@ fn setup(gfx: &mut Graphics) -> State {
     let image = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
     let texture = gfx.create_texture(image).unwrap();
 
+    let render_target = gfx
+        .create_render_target(
+            false,
+            TextureInfo::render_target(texture.width() as _, texture.height() as _),
+        )
+        .unwrap();
+    let render_target2 = gfx
+        .create_render_target(
+            false,
+            TextureInfo::render_target(texture.width() as _, texture.height() as _),
+        )
+        .unwrap();
+
     #[rustfmt::skip]
-    let vertices = [
+        let vertices = [
         //pos               //coords
-        0.5,  0.5, 0.0,     1.0, 1.0,
-        0.5, -0.5, 0.0,     1.0, 0.0,
-        -0.5, -0.5, 0.0,    0.0, 0.0,
-        -0.5,  0.5, 0.0,    0.0, 1.0
+        0.9,  0.9, 0.0,     1.0, 1.0,
+        0.9, -0.9, 0.0,     1.0, 0.0,
+        -0.9, -0.9, 0.0,    0.0, 0.0,
+        -0.9,  0.9, 0.0,    0.0, 1.0
     ];
 
     #[rustfmt::skip]
-    let indices = [
+        let indices = [
         0, 1, 3,
         1, 2, 3,
     ];
@@ -107,21 +122,49 @@ fn setup(gfx: &mut Graphics) -> State {
         index_buffer,
         uniform_buffer,
         texture,
+        render_target,
+        render_target2,
     };
 
     state
 }
 
+// create an effect of infinite loop
 fn draw(gfx: &mut Graphics, state: &mut State) {
+    // draw the texture and the first render_target on the second render_target
+    let image_on_rt2 = render_texture(gfx, state, &state.texture, false);
+    gfx.render_to(&state.render_target2, &image_on_rt2);
+    let rt1_on_rt2 = render_texture(gfx, state, &state.render_target.texture, false);
+    gfx.render_to(&state.render_target2, &rt1_on_rt2);
+
+    let rt2_on_screen = render_texture(gfx, state, &state.render_target2.texture, false);
+    gfx.render(&rt2_on_screen);
+
+    // swap render target to draw on the next frame on a different rt
+    std::mem::swap(&mut state.render_target, &mut state.render_target2);
+}
+
+fn render_texture<'a>(
+    gfx: &mut Graphics,
+    state: &'a State,
+    texture: &Texture,
+    clear: bool,
+) -> Renderer<'a> {
+    let clear_options = if clear {
+        ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0))
+    } else {
+        ClearOptions::none()
+    };
+
     let mut renderer = gfx.create_renderer();
 
-    renderer.begin(&state.clear_options);
+    renderer.begin(&clear_options);
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_texture(0, &state.texture);
+    renderer.bind_texture(0, texture);
     renderer.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
     renderer.bind_index_buffer(&state.index_buffer, &state.indices);
     renderer.draw(0, state.indices.len() as _);
     renderer.end();
 
-    gfx.render(&renderer);
+    renderer
 }

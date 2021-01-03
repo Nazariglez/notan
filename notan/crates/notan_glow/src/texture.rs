@@ -2,16 +2,18 @@ use crate::to_glow::*;
 use glow::*;
 use notan_graphics::prelude::*;
 
-type TextureKey = <glow::Context as glow::HasContext>::Texture;
+pub type TextureKey = <glow::Context as glow::HasContext>::Texture;
 
 pub(crate) struct InnerTexture {
-    texture: TextureKey,
+    pub texture: TextureKey,
+    pub size: (i32, i32),
 }
 
 impl InnerTexture {
     pub fn new(gl: &Context, info: &TextureInfo) -> Result<Self, String> {
         let texture = unsafe { create_texture(gl, info)? };
-        Ok(Self { texture })
+        let size = (info.width, info.height);
+        Ok(Self { texture, size })
     }
 
     pub fn bind(&self, gl: &Context, slot: u32, location: &UniformLocation) {
@@ -19,6 +21,13 @@ impl InnerTexture {
             gl.active_texture(gl_slot(slot).unwrap());
             gl.bind_texture(glow::TEXTURE_2D, Some(self.texture));
             gl.uniform_1_i32(Some(location), slot as _);
+        }
+    }
+
+    #[inline(always)]
+    pub fn clean(self, gl: &Context) {
+        unsafe {
+            gl.delete_texture(self.texture);
         }
     }
 }
@@ -82,7 +91,7 @@ unsafe fn create_texture(gl: &Context, info: &TextureInfo) -> Result<TextureKey,
     );
 
     let depth = TextureFormat::Depth == info.format;
-    let mut data = Some(info.bytes.as_slice());
+    let mut data = info.bytes.as_ref().map(|bytes| bytes.as_slice());
     let mut typ = glow::UNSIGNED_BYTE;
     let mut format = info.format.to_glow();
     if depth {

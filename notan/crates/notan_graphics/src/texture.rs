@@ -12,7 +12,7 @@ pub struct TextureInfo {
     pub internal_format: TextureFormat,
     pub min_filter: TextureFilter,
     pub mag_filter: TextureFilter,
-    pub bytes: Vec<u8>,
+    pub bytes: Option<Vec<u8>>,
 }
 
 impl Default for TextureInfo {
@@ -24,12 +24,20 @@ impl Default for TextureInfo {
             min_filter: TextureFilter::Nearest,
             width: 1,
             height: 1,
-            bytes: vec![],
+            bytes: None,
         }
     }
 }
 
 impl TextureInfo {
+    pub fn render_target(width: i32, height: i32) -> Self {
+        Self {
+            width,
+            height,
+            ..Default::default()
+        }
+    }
+
     pub fn from_image(bytes: &[u8]) -> Result<Self, String> {
         Self::from_image_with_options(
             bytes,
@@ -54,7 +62,7 @@ impl TextureInfo {
         Ok(Self {
             width: data.width() as _,
             height: data.height() as _,
-            bytes: data.to_vec(),
+            bytes: Some(data.to_vec()),
             format,
             internal_format,
             mag_filter,
@@ -86,7 +94,7 @@ impl Drop for TextureId {
 #[derive(Debug, Clone)]
 pub struct Texture {
     id: Arc<TextureId>,
-    data: Arc<Vec<u8>>,
+    // data: Arc<Vec<u8>>,
     width: i32,
     height: i32,
     format: TextureFormat,
@@ -110,7 +118,7 @@ impl Texture {
             bytes,
         } = info;
 
-        let data = Arc::new(bytes);
+        // let data = Arc::new(bytes);
         let frame = Rect {
             x: 0.0,
             y: 0.0,
@@ -120,7 +128,7 @@ impl Texture {
 
         Self {
             id,
-            data,
+            // data,
             width,
             height,
             format,
@@ -134,10 +142,6 @@ impl Texture {
     #[inline(always)]
     pub fn id(&self) -> i32 {
         self.id.id
-    }
-
-    pub fn size(&self) -> (i32, i32) {
-        (self.width, self.height)
     }
 
     #[inline(always)]
@@ -160,10 +164,10 @@ impl Texture {
         &self.mag_filter
     }
 
-    #[inline(always)]
-    pub fn data(&self) -> &[u8] {
-        &self.data
-    }
+    // #[inline(always)]
+    // pub fn data(&self) -> &[u8] {
+    //     &self.data
+    // }
 
     #[inline(always)]
     pub fn frame(&self) -> &Rect {

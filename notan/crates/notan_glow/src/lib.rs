@@ -6,12 +6,14 @@ use std::rc::Rc;
 
 mod buffer;
 mod pipeline;
+mod render_target;
 mod texture;
 mod to_glow;
 mod utils;
 
 use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
+use render_target::InnerRenderTarget;
 use texture::InnerTexture;
 
 pub struct GlowBackend {
@@ -19,10 +21,12 @@ pub struct GlowBackend {
     buffer_count: i32,
     texture_count: i32,
     pipeline_count: i32,
+    render_target_count: i32,
     size: (i32, i32),
     pipelines: HashMap<i32, InnerPipeline>,
     buffers: HashMap<i32, InnerBuffer>,
     textures: HashMap<i32, InnerTexture>,
+    render_targets: HashMap<i32, InnerRenderTarget>,
     current_vertex_attrs: Option<VertexAttributes>,
     gl_index_type: u32,
     using_indices: bool,
@@ -51,12 +55,14 @@ impl GlowBackend {
             pipeline_count: 0,
             buffer_count: 0,
             texture_count: 0,
+            render_target_count: 0,
             gl,
             size: (0, 0),
             pipelines: HashMap::new(),
             current_vertex_attrs: None,
             buffers: HashMap::new(),
             textures: HashMap::new(),
+            render_targets: HashMap::new(),
             gl_index_type,
             using_indices: false,
             api_name: api.to_string(),
@@ -91,23 +97,30 @@ impl GlowBackend {
                 self.gl.clear_stencil(stencil);
             }
 
-            self.gl.clear(mask);
+            if mask != 0 {
+                self.gl.clear(mask);
+            }
         }
     }
 
     fn begin(
         &self,
-        target: &Option<i32>,
+        target: Option<i32>,
         color: &Option<Color>,
         depth: &Option<f32>,
         stencil: &Option<i32>,
     ) {
+        let render_target = match target {
+            Some(id) => self.render_targets.get(&id),
+            _ => None,
+        };
+
         unsafe {
-            let (width, height) = match &target {
-                Some(_) => {
-                    //Bind framebuffer to the target
-                    (0, 0)
-                } //TODO
+            let (width, height) = match render_target {
+                Some(rt) => {
+                    rt.bind(&self.gl);
+                    rt.size
+                }
                 None => {
                     self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
                     self.size
@@ -194,6 +207,18 @@ impl GlowBackend {
         }
     }
 
+    fn clean_texture(&mut self, id: i32) {
+        if let Some(texture) = self.textures.remove(&id) {
+            texture.clean(&self.gl);
+        }
+    }
+
+    fn clean_render_target(&mut self, id: i32) {
+        if let Some(rt) = self.render_targets.remove(&id) {
+            rt.clean(&self.gl);
+        }
+    }
+
     fn draw(&mut self, offset: i32, count: i32) {
         unsafe {
             if self.using_indices {
@@ -256,6 +281,19 @@ impl GraphicsBackend for GlowBackend {
         Ok(self.buffer_count)
     }
 
+    fn create_render_target(&mut self, texture_id: i32) -> Result<i32, String> {
+        let texture = self.textures.get(&texture_id).ok_or(format!(
+            "Error creating render target: texture id '{}' not found.",
+            texture_id
+        ))?;
+
+        let inner_rt = InnerRenderTarget::new(&self.gl, texture)?;
+        self.render_target_count += 1;
+        self.render_targets
+            .insert(self.render_target_count, inner_rt);
+        Ok(self.render_target_count)
+    }
+
     fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String> {
         let inner_texture = InnerTexture::new(&self.gl, info)?;
         //TODO bind?
@@ -264,18 +302,17 @@ impl GraphicsBackend for GlowBackend {
         Ok(self.texture_count)
     }
 
-    fn render(&mut self, commands: &[Commands]) {
+    fn render(&mut self, commands: &[Commands], target: Option<i32>) {
         commands.iter().for_each(|cmd| {
             use Commands::*;
             // notan_log::info!("{:?}", cmd);
 
             match cmd {
                 Begin {
-                    render_target,
                     color,
                     depth,
                     stencil,
-                } => self.begin(render_target, color, depth, stencil),
+                } => self.begin(target, color, depth, stencil),
                 End => self.end(),
                 Pipeline { id, options } => self.set_pipeline(*id, options),
                 BindBuffer {
@@ -296,6 +333,8 @@ impl GraphicsBackend for GlowBackend {
         to_clean.iter().for_each(|res| match &res {
             ResourceId::Pipeline(id) => self.clean_pipeline(*id),
             ResourceId::Buffer(id) => self.clean_buffer(*id),
+            ResourceId::Texture(id) => self.clean_texture(*id),
+            ResourceId::RenderTarget(id) => self.clean_render_target(*id),
             _ => {}
         })
     }

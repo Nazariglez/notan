@@ -18,7 +18,6 @@ pub enum Commands<'a> {
         height: f32,
     },
     Begin {
-        render_target: Option<i32>,
         color: Option<Color>,
         depth: Option<f32>,
         stencil: Option<i32>,
