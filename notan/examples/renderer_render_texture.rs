@@ -86,16 +86,18 @@ fn setup(gfx: &mut Graphics) -> State {
     let texture = gfx.create_texture(image).unwrap();
 
     let render_texture = gfx
-        .create_render_texture(
+        .create_render_texture(TextureInfo::render_texture(
             false,
-            TextureInfo::render_texture(texture.width() as _, texture.height() as _),
-        )
+            texture.width() as _,
+            texture.height() as _,
+        ))
         .unwrap();
     let render_texture2 = gfx
-        .create_render_texture(
+        .create_render_texture(TextureInfo::render_texture(
             false,
-            TextureInfo::render_texture(texture.width() as _, texture.height() as _),
-        )
+            texture.width() as _,
+            texture.height() as _,
+        ))
         .unwrap();
 
     #[rustfmt::skip]

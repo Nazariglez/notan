@@ -73,7 +73,7 @@ fn setup(gfx: &mut Graphics) -> State {
         1.0, 0.0,   0.1, 0.2, 1.0,
     ];
 
-    let vertex_buffer = gfx.create_vertex_buffer(DrawType::Static).unwrap();
+    let vertex_buffer = gfx.create_vertex_buffer().unwrap();
 
     let mut state = State {
         clear_options,
