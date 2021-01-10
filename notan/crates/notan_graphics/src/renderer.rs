@@ -3,7 +3,7 @@ use crate::commands::*;
 use crate::pipeline::*;
 use crate::texture::*;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Renderer<'a> {
     commands: Vec<Commands<'a>>,
     size: (i32, i32),

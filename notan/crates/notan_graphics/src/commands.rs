@@ -5,7 +5,7 @@ use crate::pipeline::*;
 struct TextureId(i32);
 
 #[allow(unused)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Commands<'a> {
     Size {
         width: i32,

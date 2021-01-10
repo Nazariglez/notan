@@ -1,3 +1,4 @@
+#[derive(Debug, Clone)]
 pub struct ShaderSource<'a> {
     pub sources: &'a [(&'a str, &'a [u8])],
 }

@@ -48,8 +48,8 @@ struct State {
     index_buffer: Buffer,
     uniform_buffer: Buffer,
     texture: Texture,
-    render_target: RenderTarget,
-    render_target2: RenderTarget,
+    render_texture: RenderTexture,
+    render_texture2: RenderTexture,
 }
 impl AppState for State {}
 
@@ -85,16 +85,16 @@ fn setup(gfx: &mut Graphics) -> State {
     let image = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
     let texture = gfx.create_texture(image).unwrap();
 
-    let render_target = gfx
-        .create_render_target(
+    let render_texture = gfx
+        .create_render_texture(
             false,
-            TextureInfo::render_target(texture.width() as _, texture.height() as _),
+            TextureInfo::render_texture(texture.width() as _, texture.height() as _),
         )
         .unwrap();
-    let render_target2 = gfx
-        .create_render_target(
+    let render_texture2 = gfx
+        .create_render_texture(
             false,
-            TextureInfo::render_target(texture.width() as _, texture.height() as _),
+            TextureInfo::render_texture(texture.width() as _, texture.height() as _),
         )
         .unwrap();
 
@@ -122,8 +122,8 @@ fn setup(gfx: &mut Graphics) -> State {
         index_buffer,
         uniform_buffer,
         texture,
-        render_target,
-        render_target2,
+        render_texture,
+        render_texture2,
     };
 
     state
@@ -131,17 +131,17 @@ fn setup(gfx: &mut Graphics) -> State {
 
 // create an effect of infinite loop
 fn draw(gfx: &mut Graphics, state: &mut State) {
-    // draw the texture and the first render_target on the second render_target
+    // draw the texture and the first render_texture on the second render_texture
     let image_on_rt2 = render_texture(gfx, state, &state.texture, false);
-    gfx.render_to(&state.render_target2, &image_on_rt2);
-    let rt1_on_rt2 = render_texture(gfx, state, &state.render_target.texture, false);
-    gfx.render_to(&state.render_target2, &rt1_on_rt2);
+    gfx.render_to(&state.render_texture2, &image_on_rt2);
+    let rt1_on_rt2 = render_texture(gfx, state, &state.render_texture, false);
+    gfx.render_to(&state.render_texture2, &rt1_on_rt2);
 
-    let rt2_on_screen = render_texture(gfx, state, &state.render_target2.texture, false);
+    let rt2_on_screen = render_texture(gfx, state, &state.render_texture2, false);
     gfx.render(&rt2_on_screen);
 
     // swap render target to draw on the next frame on a different rt
-    std::mem::swap(&mut state.render_target, &mut state.render_target2);
+    std::mem::swap(&mut state.render_texture, &mut state.render_texture2);
 }
 
 fn render_texture<'a>(

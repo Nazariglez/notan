@@ -13,7 +13,7 @@ mod utils;
 
 use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
-use render_target::InnerRenderTarget;
+use render_target::InnerRenderTexture;
 use texture::InnerTexture;
 
 pub struct GlowBackend {
@@ -26,7 +26,7 @@ pub struct GlowBackend {
     pipelines: HashMap<i32, InnerPipeline>,
     buffers: HashMap<i32, InnerBuffer>,
     textures: HashMap<i32, InnerTexture>,
-    render_targets: HashMap<i32, InnerRenderTarget>,
+    render_targets: HashMap<i32, InnerRenderTexture>,
     current_vertex_attrs: Option<VertexAttributes>,
     gl_index_type: u32,
     using_indices: bool,
@@ -166,7 +166,7 @@ impl GlowBackend {
     }
 
     fn bind_buffer(&mut self, id: i32, data: &[u8], usage: &BufferUsage, draw: &DrawType) {
-        if let Some(buffer) = self.buffers.get(&id) {
+        if let Some(buffer) = self.buffers.get_mut(&id) {
             match usage {
                 BufferUsage::Vertex => {
                     buffer.bind_as_vbo_with_data(&self.gl, &self.current_vertex_attrs, draw, data)
@@ -258,7 +258,7 @@ impl GraphicsBackend for GlowBackend {
     }
 
     fn create_vertex_buffer(&mut self) -> Result<i32, String> {
-        let inner_buffer = InnerBuffer::new(&self.gl)?;
+        let inner_buffer = InnerBuffer::new(&self.gl, false)?;
         inner_buffer.bind_as_vbo(&self.gl, &self.current_vertex_attrs);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
@@ -266,7 +266,7 @@ impl GraphicsBackend for GlowBackend {
     }
 
     fn create_index_buffer(&mut self) -> Result<i32, String> {
-        let inner_buffer = InnerBuffer::new(&self.gl)?;
+        let inner_buffer = InnerBuffer::new(&self.gl, false)?;
         inner_buffer.bind_as_ebo(&self.gl);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
@@ -274,20 +274,24 @@ impl GraphicsBackend for GlowBackend {
     }
 
     fn create_uniform_buffer(&mut self, slot: u32) -> Result<i32, String> {
-        let inner_buffer = InnerBuffer::new(&self.gl)?;
+        let inner_buffer = InnerBuffer::new(&self.gl, true)?;
         inner_buffer.bind_as_ubo(&self.gl, slot);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
     }
 
-    fn create_render_target(&mut self, texture_id: i32) -> Result<i32, String> {
+    fn create_render_texture(
+        &mut self,
+        texture_id: i32,
+        info: &TextureInfo,
+    ) -> Result<i32, String> {
         let texture = self.textures.get(&texture_id).ok_or(format!(
             "Error creating render target: texture id '{}' not found.",
             texture_id
         ))?;
 
-        let inner_rt = InnerRenderTarget::new(&self.gl, texture)?;
+        let inner_rt = InnerRenderTexture::new(&self.gl, texture, info)?;
         self.render_target_count += 1;
         self.render_targets
             .insert(self.render_target_count, inner_rt);
@@ -334,7 +338,7 @@ impl GraphicsBackend for GlowBackend {
             ResourceId::Pipeline(id) => self.clean_pipeline(*id),
             ResourceId::Buffer(id) => self.clean_buffer(*id),
             ResourceId::Texture(id) => self.clean_texture(*id),
-            ResourceId::RenderTarget(id) => self.clean_render_target(*id),
+            ResourceId::RenderTexture(id) => self.clean_render_target(*id),
             _ => {}
         })
     }

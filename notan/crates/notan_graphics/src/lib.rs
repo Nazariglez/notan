@@ -4,7 +4,7 @@ pub mod commands;
 pub mod draw;
 pub mod graphics;
 pub mod pipeline;
-mod render_target;
+mod render_texture;
 pub mod renderer;
 mod shader;
 pub mod texture;
@@ -12,5 +12,5 @@ pub mod texture;
 pub mod prelude;
 
 pub use graphics::*;
-pub use render_target::*;
+pub use render_texture::*;
 pub use texture::*;

@@ -46,7 +46,6 @@ struct State {
     indices: [u32; 6],
     vertex_buffer: Buffer,
     index_buffer: Buffer,
-    uniform_buffer: Buffer,
     texture: Texture,
 }
 impl AppState for State {}
@@ -78,7 +77,6 @@ fn setup(gfx: &mut Graphics) -> State {
 
     let vertex_buffer = gfx.create_vertex_buffer().unwrap();
     let index_buffer = gfx.create_index_buffer().unwrap();
-    let uniform_buffer = gfx.create_uniform_buffer(0).unwrap();
 
     let image = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
     let texture = gfx.create_texture(image).unwrap();
@@ -105,7 +103,6 @@ fn setup(gfx: &mut Graphics) -> State {
         indices,
         vertex_buffer,
         index_buffer,
-        uniform_buffer,
         texture,
     };
 
