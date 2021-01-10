@@ -13,6 +13,9 @@ pub struct TextureInfo {
     pub min_filter: TextureFilter,
     pub mag_filter: TextureFilter,
     pub bytes: Option<Vec<u8>>,
+
+    /// Used for render textures
+    pub depth: bool,
 }
 
 impl Default for TextureInfo {
@@ -25,15 +28,17 @@ impl Default for TextureInfo {
             width: 1,
             height: 1,
             bytes: None,
+            depth: false,
         }
     }
 }
 
 impl TextureInfo {
-    pub fn render_target(width: i32, height: i32) -> Self {
+    pub fn render_texture(depth: bool, width: i32, height: i32) -> Self {
         Self {
             width,
             height,
+            depth,
             ..Default::default()
         }
     }
@@ -67,6 +72,7 @@ impl TextureInfo {
             internal_format,
             mag_filter,
             min_filter,
+            depth: false,
         })
     }
 
@@ -116,6 +122,7 @@ impl Texture {
             min_filter,
             mag_filter,
             bytes,
+            depth,
         } = info;
 
         // let data = Arc::new(bytes);

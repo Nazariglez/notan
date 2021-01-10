@@ -56,4 +56,14 @@ pub trait WindowBackend: Send + Sync {
 
     /// Returns true if the window is in fullscreen mode
     fn is_fullscreen(&self) -> bool;
+
+    /// Window's width
+    fn width(&self) -> i32 {
+        self.size().0
+    }
+
+    /// Window's height
+    fn height(&self) -> i32 {
+        self.size().1
+    }
 }

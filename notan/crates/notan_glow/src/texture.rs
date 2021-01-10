@@ -47,7 +47,10 @@ fn gl_slot(slot: u32) -> Result<u32, String> {
     })
 }
 
-unsafe fn create_texture(gl: &Context, info: &TextureInfo) -> Result<TextureKey, String> {
+pub(crate) unsafe fn create_texture(
+    gl: &Context,
+    info: &TextureInfo,
+) -> Result<TextureKey, String> {
     let texture = gl.create_texture()?;
 
     let bytes_per_pixel = info.bytes_per_pixel();

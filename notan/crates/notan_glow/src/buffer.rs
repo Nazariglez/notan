@@ -9,13 +9,30 @@ use std::rc::Rc;
 
 pub(crate) struct InnerBuffer {
     buffer: glow::Buffer,
+
+    #[cfg(target_arch = "wasm32")]
+    global_ubo: Option<Vec<u8>>, //Hack, wasm doesn't use the offset for std140
 }
 
 impl InnerBuffer {
-    pub fn new(gl: &Context) -> Result<Self, String> {
+    pub fn new(gl: &Context, ubo: bool) -> Result<Self, String> {
         let buffer = unsafe { gl.create_buffer()? };
 
-        Ok(InnerBuffer { buffer })
+        #[cfg(target_arch = "wasm32")]
+        let global_ubo = if ubo {
+            let max = unsafe { gl.get_parameter_i32(glow::MAX_UNIFORM_BLOCK_SIZE) } as usize;
+
+            Some(vec![0; max])
+        } else {
+            None
+        };
+
+        Ok(InnerBuffer {
+            buffer,
+
+            #[cfg(target_arch = "wasm32")]
+            global_ubo,
+        })
     }
 
     #[inline(always)]
@@ -34,8 +51,24 @@ impl InnerBuffer {
     }
 
     #[inline(always)]
-    pub fn bind_as_ubo_with_data(&self, gl: &Context, slot: u32, draw: &DrawType, data: &[u8]) {
+    pub fn bind_as_ubo_with_data(&mut self, gl: &Context, slot: u32, draw: &DrawType, data: &[u8]) {
         self.bind_as_ubo(gl, slot);
+
+        #[cfg(target_arch = "wasm32")]
+        unsafe {
+            // Hack to avoid layout(std140) offset problem on webgl2
+            let ubo = self
+                .global_ubo
+                .as_mut()
+                .map(|mut ubo| {
+                    ubo[..data.len()].copy_from_slice(data);
+                    ubo.as_slice()
+                })
+                .unwrap_or_else(|| data);
+            gl.buffer_data_u8_slice(glow::UNIFORM_BUFFER, ubo, draw.to_glow());
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
         unsafe {
             //https://webgl2fundamentals.org/webgl/lessons/webgl2-whats-new.html#:~:text=A%20Uniform%20Buffer%20Object%20is,blocks%20defined%20in%20a%20shader.
             //https://stackoverflow.com/questions/44629165/bind-multiple-uniform-buffer-objects
