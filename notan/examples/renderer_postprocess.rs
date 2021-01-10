@@ -82,23 +82,6 @@ const PIXEL_INVERT_FRAGMENT: ShaderSource = notan::fragment_shader! {
     "#
 };
 
-//language=glsl
-const FRAG: ShaderSource = notan::fragment_shader! {
-    r#"
-    #version 450
-    precision mediump float;
-
-    layout(location = 0) in vec2 v_texcoord;
-
-    layout(location = 0) out vec4 outColor;
-
-    layout(set = 0, binding = 0) uniform sampler2D u_texture;
-    void main() {
-        outColor = texture(u_texture, v_texcoord);
-    }
-    "#
-};
-
 struct PostProcessTarget {
     render_texture: RenderTexture,
     pipeline: Pipeline,
