@@ -17,11 +17,16 @@ impl<'a> Renderer<'a> {
         }
     }
 
-    pub fn begin(&mut self, options: &ClearOptions) {
+    pub fn begin(&mut self, options: Option<&ClearOptions>) {
+        let (color, stencil, depth) = match options {
+            Some(opts) => (opts.color, opts.stencil, opts.depth),
+            _ => (None, None, None),
+        };
+
         self.commands.push(Commands::Begin {
-            color: options.color,
-            stencil: options.stencil,
-            depth: options.depth,
+            color,
+            stencil,
+            depth,
         });
     }
 
