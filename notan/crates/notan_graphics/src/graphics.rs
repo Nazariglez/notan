@@ -1,5 +1,6 @@
 use crate::buffer::*;
 use crate::commands::*;
+use crate::draw::*;
 use crate::pipeline::*;
 use crate::render_texture::*;
 use crate::renderer::Renderer;
@@ -78,15 +79,19 @@ pub struct Graphics {
     size: (i32, i32),
     backend: Box<GraphicsBackend>, //TODO generic?
     drop_manager: Arc<DropManager>,
+    draw_manager: DrawManager,
 }
 
 impl Graphics {
-    pub fn new(backend: Box<GraphicsBackend>) -> Self {
-        Self {
+    pub fn new(mut backend: Box<GraphicsBackend>) -> Result<Self, String> {
+        let draw_manager = DrawManager::new(&mut *backend)?;
+
+        Ok(Self {
             backend,
             size: (1, 1),
             drop_manager: Arc::new(Default::default()),
-        }
+            draw_manager,
+        })
     }
 
     #[inline(always)]
@@ -103,6 +108,19 @@ impl Graphics {
     #[inline(always)]
     pub fn create_renderer<'a>(&self) -> Renderer<'a> {
         Renderer::new(self.size.0, self.size.1)
+    }
+
+    #[inline(always)]
+    pub fn create_draw<'a>(&self) -> Draw<'a> {
+        Draw::new(self.size.0, self.size.1)
+    }
+
+    pub fn create_draw_pipeline_from_raw(
+        &mut self,
+        typ: DrawPipeline,
+        fragment: Option<&[u8]>,
+    ) -> Result<Pipeline, String> {
+        create_draw_pipeline_from_raw(self, typ, fragment)
     }
 
     #[inline(always)]

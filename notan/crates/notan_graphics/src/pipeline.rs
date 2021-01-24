@@ -14,6 +14,7 @@ impl Drop for PipelineId {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Pipeline {
     id: Arc<PipelineId>,
     pub options: PipelineOptions,

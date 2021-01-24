@@ -143,7 +143,7 @@ where
         // let load_file = backend.get_file_loader();
         let initialize = backend.initialize(window)?;
 
-        let mut graphics = Graphics::new(backend.get_graphics_backend());
+        let mut graphics = Graphics::new(backend.get_graphics_backend())?;
 
         let mut app = App::new(Box::new(backend));
 
