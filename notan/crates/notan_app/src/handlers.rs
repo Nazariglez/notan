@@ -1,7 +1,7 @@
 use crate::app::{App, AppState};
 use crate::assets::AssetManager;
 use crate::events::Event;
-use crate::graphics::Graphics;
+use crate::gfx::Graphics;
 use crate::plugins::Plugins;
 
 //TODO generate this enum should be easy to do with a proc_macro or something...

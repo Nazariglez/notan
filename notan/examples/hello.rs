@@ -5,6 +5,13 @@ use notan::app::{App, AppBuilder, Plugins};
 use notan::log;
 use notan::prelude::*;
 
+//TODO
+//
+// clone examples of https://tsherif.github.io/picogl.js/
+//
+//
+// TODO
+
 struct State {
     list: AssetList,
 }

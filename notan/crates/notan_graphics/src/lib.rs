@@ -1,7 +1,6 @@
 pub mod buffer;
 pub mod color;
 pub mod commands;
-pub mod draw;
 pub mod graphics;
 pub mod pipeline;
 mod render_texture;

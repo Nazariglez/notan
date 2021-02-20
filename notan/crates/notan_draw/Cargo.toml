@@ -1,5 +1,5 @@
 [package]
-name = "notan_graphics"
+name = "notan_draw"
 version = "0.1.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2018"
@@ -7,9 +7,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-glam = {version = "0.10", features = ["scalar-math"] }
-bytemuck = "1.4"
-parking_lot = "0.11"
-image = "0.23"
-notan_math = { path = "../notan_math" }
+notan_graphics = { path = "../notan_graphics" }
 notan_macro = { path = "../notan_macro" }
+glam = "0.12"
