@@ -1,4 +1,4 @@
-use crate::graphics::{DropManager, ResourceId};
+use crate::device::{DropManager, ResourceId};
 use crate::pipeline::*;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;

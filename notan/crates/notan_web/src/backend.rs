@@ -2,7 +2,7 @@ use crate::utils::request_animation_frame;
 use crate::window::WebWindowBackend;
 use notan_app::config::WindowConfig;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
-use notan_graphics::GraphicsBackend;
+use notan_graphics::DeviceBackend;
 use notan_log as log;
 use std::cell::RefCell;
 use std::panic;
@@ -77,7 +77,7 @@ impl BackendSystem for WebBackend {
         }))
     }
 
-    fn get_graphics_backend(&self) -> Box<GraphicsBackend> {
+    fn get_graphics_backend(&self) -> Box<DeviceBackend> {
         let backend = notan_glow::GlowBackend::new(&self.window.as_ref().unwrap().canvas).unwrap();
         Box::new(backend)
     }

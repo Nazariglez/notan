@@ -4,7 +4,7 @@ use super::loader::*;
 use super::storage::AssetStorage;
 use super::utils::DoneSignal;
 use crate::app::App;
-use crate::gfx::Graphics;
+use crate::graphics::Graphics;
 use crate::plugins::Plugins;
 use crate::AppState;
 use hashbrown::HashMap;

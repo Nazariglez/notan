@@ -1,14 +1,14 @@
 use notan_draw::Draw;
-use notan_graphics as ngfx;
+pub use notan_graphics::*;
 
 pub struct Graphics {
-    gfx: ngfx::Graphics,
+    gfx: Device,
     // draw: DrawManager,
 }
 
 impl Graphics {
-    pub fn new(backend: Box<ngfx::GraphicsBackend>) -> Result<Self, String> {
-        let gfx = ngfx::Graphics::new(backend)?;
+    pub fn new(backend: Box<DeviceBackend>) -> Result<Self, String> {
+        let gfx = Device::new(backend)?;
         Ok(Self { gfx })
     }
 
@@ -18,7 +18,7 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_renderer<'a>(&self) -> ngfx::renderer::Renderer<'a> {
+    pub fn create_renderer<'a>(&self) -> renderer::Renderer<'a> {
         self.gfx.create_renderer()
     }
 
@@ -38,7 +38,7 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_texture(&mut self, info: ngfx::TextureInfo) -> Result<ngfx::Texture, String> {
+    pub fn create_texture(&mut self, info: TextureInfo) -> Result<Texture, String> {
         self.gfx.create_texture(info)
     }
 }

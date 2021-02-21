@@ -7,7 +7,7 @@ pub mod prelude;
 mod app;
 mod backend;
 mod builder;
-mod gfx;
+pub mod graphics;
 mod handlers;
 mod parsers;
 
@@ -22,5 +22,4 @@ pub use events::*;
 pub use builder::*;
 pub use plugins::*;
 
-pub use gfx::*;
-pub use notan_graphics as graphics;
+pub use graphics::*;

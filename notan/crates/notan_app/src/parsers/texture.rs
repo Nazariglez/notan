@@ -1,5 +1,5 @@
 use crate::assets::Loader;
-use crate::gfx::Graphics;
+use crate::graphics::Graphics;
 use crate::graphics::{Texture, TextureInfo};
 
 pub fn create_texture_parser() -> Loader {

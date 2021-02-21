@@ -16,7 +16,7 @@ impl<'a> Draw<'a> {
 
 #[inline]
 pub fn create_draw_pipeline(
-    gfx: &mut Graphics,
+    gfx: &mut Device,
     typ: DrawPipeline,
     fragment: Option<&ShaderSource>,
 ) -> Result<Pipeline, String> {
@@ -28,7 +28,7 @@ pub fn create_draw_pipeline(
 
 #[inline]
 pub fn create_draw_pipeline_from_raw(
-    gfx: &mut Graphics,
+    gfx: &mut Device,
     typ: DrawPipeline,
     fragment: Option<&[u8]>,
 ) -> Result<Pipeline, String> {

@@ -1,5 +1,5 @@
 use crate::color::Color;
-use crate::graphics::{DropManager, ResourceId};
+use crate::device::{DropManager, ResourceId};
 use std::sync::Arc;
 
 #[derive(Debug)]

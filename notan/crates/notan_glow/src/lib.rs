@@ -1,7 +1,7 @@
 use glow::*;
 use hashbrown::HashMap;
 use notan_graphics::prelude::*;
-use notan_graphics::{Graphics, GraphicsBackend};
+use notan_graphics::{Device, DeviceBackend};
 use std::rc::Rc;
 
 mod buffer;
@@ -231,7 +231,7 @@ impl GlowBackend {
     }
 }
 
-impl GraphicsBackend for GlowBackend {
+impl DeviceBackend for GlowBackend {
     fn api_name(&self) -> &str {
         &self.api_name
     }

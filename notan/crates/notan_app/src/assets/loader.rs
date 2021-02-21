@@ -1,7 +1,7 @@
 use super::manager::AssetManager;
 use super::storage::AssetStorage;
 use crate::app::App;
-use crate::gfx::Graphics;
+use crate::graphics::Graphics;
 use crate::plugins::Plugins;
 use downcast_rs::{impl_downcast, Downcast};
 use std::any::TypeId;

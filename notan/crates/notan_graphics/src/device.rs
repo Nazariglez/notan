@@ -8,7 +8,7 @@ use crate::texture::*;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-/// Graphics resource ID, used to know which resource was dropped
+/// Device resource ID, used to know which resource was dropped
 #[derive(Debug)]
 pub enum ResourceId {
     Buffer(i32),
@@ -18,7 +18,7 @@ pub enum ResourceId {
 }
 
 /// Represents a the implementation graphics backend like glow, wgpu or another
-pub trait GraphicsBackend {
+pub trait DeviceBackend {
     /// Returns the name of the api used (like webgl, wgpu, etc...)
     fn api_name(&self) -> &str;
 
@@ -74,14 +74,14 @@ impl DropManager {
     }
 }
 
-pub struct Graphics {
+pub struct Device {
     size: (i32, i32),
-    backend: Box<GraphicsBackend>, //TODO generic?
+    backend: Box<DeviceBackend>, //TODO generic?
     drop_manager: Arc<DropManager>,
 }
 
-impl Graphics {
-    pub fn new(mut backend: Box<GraphicsBackend>) -> Result<Self, String> {
+impl Device {
+    pub fn new(mut backend: Box<DeviceBackend>) -> Result<Self, String> {
         Ok(Self {
             backend,
             size: (1, 1),

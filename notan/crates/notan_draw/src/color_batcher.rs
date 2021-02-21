@@ -34,7 +34,7 @@ const COLOR_FRAGMENT: ShaderSource = fragment_shader! {
 };
 
 pub(crate) fn create_color_pipeline(
-    gfx: &mut Graphics,
+    gfx: &mut Device,
     fragment: Option<&ShaderSource>,
 ) -> Result<Pipeline, String> {
     // let vertex = shader_to_bytes(gfx, &COLOR_VERTEX)?;
@@ -52,7 +52,7 @@ pub(crate) fn create_color_pipeline(
 }
 
 pub(crate) fn create_color_pipeline_from_raw(
-    gfx: &mut Graphics,
+    gfx: &mut Device,
     fragment: Option<&[u8]>,
 ) -> Result<Pipeline, String> {
     unimplemented!()
@@ -63,7 +63,7 @@ pub(crate) struct ColorBatcher {
 }
 
 impl ColorBatcher {
-    pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
+    pub fn new(gfx: &mut Device) -> Result<Self, String> {
         let pipeline = create_color_pipeline(gfx, None)?;
         Ok(Self { pipeline })
     }

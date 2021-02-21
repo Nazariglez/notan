@@ -7,7 +7,7 @@ pub(crate) struct DrawManager {
 }
 
 impl DrawManager {
-    pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
+    pub fn new(gfx: &mut Device) -> Result<Self, String> {
         let color_batcher = ColorBatcher::new(gfx)?;
 
         Ok(Self { color_batcher })
