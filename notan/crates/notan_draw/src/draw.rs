@@ -14,8 +14,6 @@ pub(crate) enum GraphicCommands {
 #[derive(Clone)]
 pub(crate) enum DrawCommands {
     Begin(Option<Color>),
-    SetColor(Color),
-    SetAlpha(f32),
     Triangle {
         vertices: [f32; 6],
         indices: [u32; 3],
@@ -23,7 +21,7 @@ pub(crate) enum DrawCommands {
     },
     Rect {
         vertices: [f32; 8],
-        indices: [u32; 4],
+        indices: [u32; 6],
         color: [f32; 4],
     },
 }
@@ -33,8 +31,8 @@ pub struct Draw {
     size: (i32, i32),
     pub(crate) commands: Vec<GraphicCommands>,
 
-    color: Color,
-    alpha: f32,
+    pub color: Color,
+    pub alpha: f32,
 }
 
 impl Draw {
@@ -73,28 +71,6 @@ impl Draw {
             }));
     }
 
-    pub fn set_color(&mut self, color: &Color) {
-        self.color = *color;
-
-        self.commands
-            .push(GraphicCommands::Draw(DrawCommands::SetColor(*color)));
-    }
-
-    pub fn color(&self) -> &Color {
-        &self.color
-    }
-
-    pub fn set_alpha(&mut self, alpha: f32) {
-        self.alpha = alpha;
-
-        self.commands
-            .push(GraphicCommands::Draw(DrawCommands::SetAlpha(alpha)));
-    }
-
-    pub fn alpha(&self) -> f32 {
-        self.alpha
-    }
-
     pub fn begin(&mut self, color: Option<&Color>) {
         self.commands
             .push(GraphicCommands::Draw(DrawCommands::Begin(
@@ -119,18 +95,23 @@ impl Draw {
         self.commands.push(GraphicCommands::Draw(triangle));
     }
 
-    // pub fn rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
-    //     #[rustfmt::skip]
-    //     let vertices = [
-    //         x, y,
-    //         x + width, y,
-    //         x, y + height,
-    //         x + width, y + width
-    //     ];
-    //
-    //     self.commands
-    //         .push(GraphicCommands::Draw(DrawCommands::Rect(vertices)))
-    // }
+    pub fn rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
+        let [r, g, b, a] = self.color.to_rgba();
+
+        #[rustfmt::skip]
+        let rect = DrawCommands::Rect {
+            vertices: [
+                x, y,
+                x + width, y,
+                x, y + height,
+                x + width, y + height
+            ],
+            indices: [0, 1, 2, 2, 1, 3],
+            color: [r, g, b, a * self.alpha],
+        };
+
+        self.commands.push(GraphicCommands::Draw(rect));
+    }
 
     pub fn end(&mut self) {
         self.commands.push(GraphicCommands::Render(Commands::End));
@@ -144,13 +125,15 @@ impl Draw {
 // // TODO cargo make
 
 pub trait DrawRenderer {
-    fn commands(&self, device: &mut Device, draw_manager: &mut DrawManager) -> &[Commands];
+    fn commands<'a>(
+        &self,
+        device: &mut Device,
+        draw_manager: &'a mut DrawManager,
+    ) -> &'a [Commands];
 }
 
 impl DrawRenderer for Draw {
-    fn commands(&self, _: &mut Device, draw_manager: &mut DrawManager) -> &[Commands] {
-        // draw_manager.process_batch(self);
-        // &draw_manager.commands
-        unimplemented!()
+    fn commands<'a>(&self, _: &mut Device, draw_manager: &'a mut DrawManager) -> &'a [Commands] {
+        draw_manager.process_batch(self)
     }
 }

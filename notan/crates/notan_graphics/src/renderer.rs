@@ -71,7 +71,6 @@ impl Renderer {
     pub fn bind_vertex_buffer(&mut self, buffer: &Buffer<f32>) {
         self.commands.push(Commands::BindBuffer {
             id: buffer.id(),
-            // ptr: bytemuck::cast_slice(&[]),
             data: BufferDataWrapper::Float32(buffer.data_ptr().clone()),
             usage: BufferUsage::Vertex,
             draw: buffer.draw.unwrap_or(DrawType::Dynamic),

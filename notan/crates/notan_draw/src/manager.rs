@@ -17,25 +17,10 @@ impl DrawManager {
         })
     }
 
-    // pub(crate) fn process_batch<: >(&mut self, draw: &Draw)/* -> &[Commands] */{
-    //     self.commands.clear();
-    //
-    //     draw.commands.iter().for_each(|graphics_cmd| {
-    //         match graphics_cmd {
-    //             GraphicCommands::Render(cmd) => self.commands.push(cmd.clone()),
-    //             _ => {}
-    //             // GraphicCommands::Draw(cmd) => match cmd {
-    //             //     DrawCommands::Begin(opt_color) => {
-    //             //         manager.commands.push(Commands::Begin {
-    //             //             color: *opt_color,
-    //             //             depth: None,
-    //             //             stencil: None,
-    //             //         })
-    //             //     }
-    //             // }
-    //         }
-    //     });
-    // }
+    pub(crate) fn process_batch(&mut self, draw: &Draw) -> &[Commands] {
+        process_batch(self, draw);
+        &self.commands
+    }
 
     pub fn create_draw(&self, width: i32, height: i32) -> Draw {
         Draw::new(width, height)
@@ -94,18 +79,62 @@ pub enum DrawMode {
 fn process_batch(manager: &mut DrawManager, draw: &Draw) {
     manager.commands.clear();
 
-    draw.commands.iter().for_each(|graphics_cmd| {
-        match graphics_cmd {
-            GraphicCommands::Render(cmd) => manager.commands.push(cmd.clone()),
-            _ => {} // GraphicCommands::Draw(cmd) => match cmd {
-                    //     DrawCommands::Begin(opt_color) => {
-                    //         manager.commands.push(Commands::Begin {
-                    //             color: *opt_color,
-                    //             depth: None,
-                    //             stencil: None,
-                    //         })
-                    //     }
-                    // }
+    draw.commands
+        .iter()
+        .for_each(|graphics_cmd| match graphics_cmd {
+            GraphicCommands::Render(cmd) => process_render_commands(manager, cmd.clone()),
+            GraphicCommands::Draw(cmd) => process_draw_commands(manager, cmd.clone()),
+        });
+}
+
+fn process_render_commands(manager: &mut DrawManager, cmd: Commands) {
+    use Commands::*;
+
+    match cmd {
+        End => {
+            manager.color_batcher.flush(None, &mut manager.commands);
         }
-    });
+        _ => {}
+    }
+
+    manager.commands.push(cmd);
+}
+
+fn process_draw_commands(manager: &mut DrawManager, cmd: DrawCommands) {
+    use DrawCommands::*;
+
+    match cmd {
+        Begin(opt_color) => manager.commands.push(Commands::Begin {
+            color: opt_color,
+            depth: None,
+            stencil: None,
+        }),
+        Triangle {
+            vertices,
+            indices,
+            color,
+        } => manager.color_batcher.push(
+            ColorData {
+                vertices: &vertices,
+                indices: &indices,
+                pipeline: None,
+                color: &color,
+            },
+            &mut manager.commands,
+        ),
+        Rect {
+            vertices,
+            indices,
+            color,
+        } => manager.color_batcher.push(
+            ColorData {
+                vertices: &vertices,
+                indices: &indices,
+                pipeline: None,
+                color: &color,
+            },
+            &mut manager.commands,
+        ),
+        _ => {}
+    };
 }

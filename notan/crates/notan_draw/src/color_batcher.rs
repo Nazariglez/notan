@@ -7,9 +7,9 @@ const COLOR_VERTEX: ShaderSource = vertex_shader! {
     r#"
     #version 450
     layout(location = 0) in vec2 a_pos;
-    layout(location = 1) in vec3 a_color;
+    layout(location = 1) in vec4 a_color;
 
-    layout(location = 0) out vec3 v_color;
+    layout(location = 0) out vec4 v_color;
 
     void main() {
         v_color = a_color;
@@ -24,11 +24,11 @@ const COLOR_FRAGMENT: ShaderSource = fragment_shader! {
     #version 450
     precision mediump float;
 
-    layout(location = 0) in vec3 v_color;
+    layout(location = 0) in vec4 v_color;
     layout(location = 0) out vec4 color;
 
     void main() {
-        color = vec4(v_color, 1.0);
+        color = v_color;
     }
     "#
 };
@@ -44,9 +44,12 @@ pub(crate) fn create_color_pipeline(
         fragment,
         &[
             VertexAttr::new(0, VertexFormat::Float2),
-            VertexAttr::new(1, VertexFormat::Float3),
+            VertexAttr::new(1, VertexFormat::Float4),
         ],
-        PipelineOptions::default(),
+        PipelineOptions {
+            color_blend: Some(BlendMode::NORMAL),
+            ..Default::default()
+        },
     )
 }
 //
@@ -61,7 +64,7 @@ pub(crate) struct ColorBatcher {
     vertices: Vec<f32>,
     indices: Vec<u32>,
     vbo: Buffer<f32>,
-    ibo: Buffer<u32>,
+    ebo: Buffer<u32>,
     pipeline: Pipeline,
     clear_options: ClearOptions,
     index: usize,
@@ -69,42 +72,86 @@ pub(crate) struct ColorBatcher {
 
 impl ColorBatcher {
     pub fn new(device: &mut Device) -> Result<Self, String> {
+        // TODO max batch size
         let pipeline = create_color_pipeline(device, None)?;
         Ok(Self {
             vertices: vec![],
             indices: vec![],
             vbo: device.create_vertex_buffer(vec![])?,
-            ibo: device.create_index_buffer(vec![])?,
+            ebo: device.create_index_buffer(vec![])?,
             pipeline,
             clear_options: ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0)),
             index: 0,
         })
     }
 
-    pub fn push<'a>(data: ColorData<'a>) {}
+    pub fn push(&mut self, data: ColorData, commands: &mut Vec<Commands>) {
+        //flush if needed
+
+        let vertex_offset = self.pipeline.offset();
+        let indices_len = data.indices.len();
+        let next_indices_len = self.index + indices_len;
+        if self.indices.len() < next_indices_len {
+            self.indices.resize(next_indices_len, 0);
+            self.vertices.resize(next_indices_len * vertex_offset, 0.0);
+        }
+
+        let index_offset = self.index as u32;
+        for i in 0..indices_len {
+            let ebo_index = self.index;
+            let vbo_index = self.index * vertex_offset;
+
+            self.indices[ebo_index] = data.indices[i] + index_offset;
+
+            self.vertices[vbo_index] = data.vertices[i];
+            self.vertices[vbo_index + 1] = data.vertices[i + 1];
+
+            self.vertices[vbo_index + 2] = data.color[0];
+            self.vertices[vbo_index + 3] = data.color[1];
+            self.vertices[vbo_index + 4] = data.color[2];
+            self.vertices[vbo_index + 5] = data.color[3];
+
+            self.index += 1;
+        }
+    }
+
+    pub fn flush(&mut self, pipeline: Option<&Pipeline>, commands: &mut Vec<Commands>) {
+        let pipeline = pipeline.unwrap_or_else(|| &self.pipeline);
+        commands.push(Commands::Pipeline {
+            id: pipeline.id(),
+            options: pipeline.options.clone(),
+        });
+
+        notan_log::info!("flush! v: {:?}, i: {:?}", self.vertices, self.indices);
+        panic!();
+
+        std::mem::swap(&mut self.vertices, &mut self.vbo.data_ptr().write());
+        commands.push(Commands::BindBuffer {
+            id: self.vbo.id(),
+            data: BufferDataWrapper::Float32(self.vbo.data_ptr().clone()),
+            usage: BufferUsage::Vertex,
+            draw: self.vbo.draw.unwrap_or(DrawType::Dynamic),
+        });
+
+        std::mem::swap(&mut self.indices, &mut self.ebo.data_ptr().write());
+        commands.push(Commands::BindBuffer {
+            id: self.ebo.id(),
+            data: BufferDataWrapper::Uint32(self.ebo.data_ptr().clone()),
+            usage: BufferUsage::Index,
+            draw: self.ebo.draw.unwrap_or(DrawType::Dynamic),
+        });
+
+        let offset = 0;
+        let count = self.index as _;
+        commands.push(Commands::Draw { offset, count });
+
+        self.index = 0;
+    }
 }
 
 pub struct ColorData<'a> {
-    vertices: &'a [f32],
-    indices: &'a [u32],
-    pipeline: Option<&'a Pipeline>,
+    pub vertices: &'a [f32],
+    pub indices: &'a [u32],
+    pub pipeline: Option<&'a Pipeline>,
+    pub color: &'a [f32; 4],
 }
-
-//
-// pub(crate) struct ColorBatcher {
-//     pipeline: Pipeline,
-//     // vertices: Vec<f32>,
-//     // indices: Vec<u32>,
-// }
-//
-// impl ColorBatcher {
-//     pub fn new(pipeline: Pipeline) -> Self {
-//         Self { pipeline }
-//     }
-// }
-//
-// impl Batcher for ColorBatcher {
-//     fn pipeline(&mut self) -> &mut Pipeline {
-//         &mut self.pipeline
-//     }
-// }
