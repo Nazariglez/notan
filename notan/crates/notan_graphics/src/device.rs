@@ -101,7 +101,7 @@ impl Device {
     }
 
     #[inline(always)]
-    pub fn create_renderer<'a>(&self) -> Renderer<'a> {
+    pub fn create_renderer(&self) -> Renderer {
         Renderer::new(self.size.0, self.size.1)
     }
 
@@ -151,10 +151,11 @@ impl Device {
     }
 
     #[inline(always)]
-    pub fn create_vertex_buffer(&mut self) -> Result<Buffer, String> {
+    pub fn create_vertex_buffer(&mut self, data: Vec<f32>) -> Result<Buffer<f32>, String> {
         let id = self.backend.create_vertex_buffer()?;
         Ok(Buffer::new(
             id,
+            data,
             BufferUsage::Vertex,
             None,
             self.drop_manager.clone(),
@@ -162,10 +163,11 @@ impl Device {
     }
 
     #[inline(always)]
-    pub fn create_index_buffer(&mut self) -> Result<Buffer, String> {
+    pub fn create_index_buffer(&mut self, data: Vec<u32>) -> Result<Buffer<u32>, String> {
         let id = self.backend.create_index_buffer()?;
         Ok(Buffer::new(
             id,
+            data,
             BufferUsage::Index,
             None,
             self.drop_manager.clone(),
@@ -173,11 +175,16 @@ impl Device {
     }
 
     #[inline(always)]
-    pub fn create_uniform_buffer(&mut self, slot: u32) -> Result<Buffer, String> {
+    pub fn create_uniform_buffer(
+        &mut self,
+        slot: u32,
+        data: Vec<f32>,
+    ) -> Result<Buffer<f32>, String> {
         //debug_assert!(current_pipeline.is_some()) //pipeline should be already binded
         let id = self.backend.create_uniform_buffer(slot)?;
         Ok(Buffer::new(
             id,
+            data,
             BufferUsage::Uniform(slot),
             None,
             self.drop_manager.clone(),
@@ -200,12 +207,12 @@ impl Device {
     }
 
     #[inline(always)]
-    pub fn render<'a>(&mut self, render: &'a [Commands<'a>]) {
+    pub fn render(&mut self, render: &[Commands]) {
         self.backend.render(render.commands(), None);
     }
 
     #[inline]
-    pub fn render_to<'a>(&mut self, target: &RenderTexture, render: &'a [Commands<'a>]) {
+    pub fn render_to(&mut self, target: &RenderTexture, render: &[Commands]) {
         self.backend.render(render.commands(), Some(target.id()));
     }
 
@@ -220,6 +227,6 @@ impl Device {
     }
 }
 
-pub trait DeviceRenderer<'a> {
-    fn commands_from(&'a self, device: &mut Device) -> &'a [Commands<'a>];
+pub trait DeviceRenderer {
+    fn commands_from(&self, device: &mut Device) -> &[Commands];
 }

@@ -1,12 +1,14 @@
 use crate::buffer::*;
 use crate::color::Color;
 use crate::pipeline::*;
+use parking_lot::RwLock;
+use std::sync::Arc;
 
 struct TextureId(i32);
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
-pub enum Commands<'a> {
+pub enum Commands {
     Size {
         width: i32,
         height: i32,
@@ -29,7 +31,8 @@ pub enum Commands<'a> {
     },
     BindBuffer {
         id: i32,
-        ptr: &'a [u8],
+        // ptr: &'a [u8],
+        data: BufferDataWrapper,
         usage: BufferUsage,
         draw: DrawType,
     },
@@ -44,12 +47,34 @@ pub enum Commands<'a> {
     },
 }
 
-pub trait ToCommandBuffer<'a> {
-    fn commands(&'a self) -> &'a [Commands<'a>];
+#[derive(Debug, Clone)]
+pub enum BufferDataWrapper {
+    Float32(Arc<RwLock<Vec<f32>>>),
+    Uint32(Arc<RwLock<Vec<u32>>>),
 }
 
-impl<'a> ToCommandBuffer<'a> for [Commands<'a>] {
-    fn commands(&'a self) -> &'a [Commands<'a>] {
+impl BufferDataWrapper {
+    pub fn unwrap_f32(self) -> Result<Arc<RwLock<Vec<f32>>>, String> {
+        match self {
+            BufferDataWrapper::Float32(d) => Ok(d),
+            _ => Err("Invalid data type".to_string()),
+        }
+    }
+
+    pub fn unwrap_u32(self) -> Result<Arc<RwLock<Vec<u32>>>, String> {
+        match self {
+            BufferDataWrapper::Uint32(d) => Ok(d),
+            _ => Err("Invalid data type".to_string()),
+        }
+    }
+}
+
+pub trait ToCommandBuffer {
+    fn commands(&self) -> &[Commands];
+}
+
+impl ToCommandBuffer for [Commands] {
+    fn commands(&self) -> &[Commands] {
         &self
     }
 }

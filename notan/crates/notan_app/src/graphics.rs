@@ -5,7 +5,7 @@ pub use notan_graphics::*;
 
 pub struct Graphics {
     device: Device,
-    draw: DrawManager<'static>,
+    draw: DrawManager,
 }
 
 impl Graphics {
@@ -21,12 +21,12 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_renderer<'a>(&self) -> renderer::Renderer<'a> {
+    pub fn create_renderer(&self) -> renderer::Renderer {
         self.device.create_renderer()
     }
 
     #[inline(always)]
-    pub fn create_draw<'a>(&self) -> Draw<'a> {
+    pub fn create_draw(&self) -> Draw {
         let (width, height) = self.device.size();
         self.draw.create_draw(width, height)
     }
@@ -47,17 +47,17 @@ impl Graphics {
     }
 
     // #[inline(always)]
-    // pub fn render_to<'a>(&mut self, target: &RenderTexture, render: &'a ToCommandBuffer<'a>) {
+    // pub fn render_to(&mut self, target: &RenderTexture, render: & ToCommandBuffer) {
     //     self.device.render_to(target, render)
     // }
     //
     // #[inline(always)]
-    // pub fn render<'a>(&mut self, render: &'a ToCommandBuffer<'a>) {
+    // pub fn render(&mut self, render: & ToCommandBuffer) {
     //     self.device.render(render)
     // }
 
     pub fn render_to<'a>(
-        &'a mut self,
+        &mut self,
         target: &RenderTexture,
         render: impl Into<GraphicsRenderer<'a>>,
     ) {
@@ -69,7 +69,7 @@ impl Graphics {
         self.device.render_to(target, commands);
     }
 
-    pub fn render<'a>(&'a mut self, render: impl Into<GraphicsRenderer<'a>>) {
+    pub fn render<'a>(&mut self, render: impl Into<GraphicsRenderer<'a>>) {
         let commands = match render.into() {
             GraphicsRenderer::Raw(r) => r,
             GraphicsRenderer::Device(r) => r.commands_from(&mut self.device),
@@ -84,18 +84,22 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_uniform_buffer(&mut self, slot: u32) -> Result<Buffer, String> {
-        self.device.create_uniform_buffer(slot)
+    pub fn create_uniform_buffer(
+        &mut self,
+        slot: u32,
+        data: Vec<f32>,
+    ) -> Result<Buffer<f32>, String> {
+        self.device.create_uniform_buffer(slot, data)
     }
 
     #[inline(always)]
-    pub fn create_index_buffer(&mut self) -> Result<Buffer, String> {
-        self.device.create_index_buffer()
+    pub fn create_index_buffer(&mut self, data: Vec<u32>) -> Result<Buffer<u32>, String> {
+        self.device.create_index_buffer(data)
     }
 
     #[inline(always)]
-    pub fn create_vertex_buffer(&mut self) -> Result<Buffer, String> {
-        self.device.create_vertex_buffer()
+    pub fn create_vertex_buffer(&mut self, data: Vec<f32>) -> Result<Buffer<f32>, String> {
+        self.device.create_vertex_buffer(data)
     }
 
     #[inline(always)]
@@ -142,38 +146,38 @@ impl Graphics {
             .create_pipeline_from_raw(&mut self.device, mode, Some(fragment))
     }
 }
-
-fn commands_from<'a>(
-    gfx: &'a mut Graphics,
-    render: impl Into<GraphicsRenderer<'a>>,
-) -> &'a [Commands<'a>] {
-    match render.into() {
-        GraphicsRenderer::Raw(r) => r,
-        GraphicsRenderer::Device(r) => r.commands_from(&mut gfx.device),
-        GraphicsRenderer::Draw(r) => r.commands(&mut gfx.device, &mut gfx.draw),
-    }
-}
+//
+// fn commands_from<'a>(
+//     gfx: & mut Graphics,
+//     render: impl Into<GraphicsRenderer<'a>>,
+// ) -> & [Commands] {
+//     match render.into() {
+//         GraphicsRenderer::Raw(r) => r,
+//         GraphicsRenderer::Device(r) => r.commands_from(&mut gfx.device),
+//         GraphicsRenderer::Draw(r) => r.commands(&mut gfx.device, &mut gfx.draw),
+//     }
+// }
 
 pub enum GraphicsRenderer<'a> {
-    Raw(&'a [Commands<'a>]),
-    Device(&'a DeviceRenderer<'a>),
-    Draw(&'a DrawRenderer<'a>),
+    Raw(&'a [Commands]),
+    Device(&'a DeviceRenderer),
+    Draw(&'a DrawRenderer),
 }
 
-impl<'a> From<&'a [Commands<'a>]> for GraphicsRenderer<'a> {
-    fn from(r: &'a [Commands<'a>]) -> GraphicsRenderer<'a> {
+impl<'a> From<&'a [Commands]> for GraphicsRenderer<'a> {
+    fn from(r: &'a [Commands]) -> GraphicsRenderer {
         GraphicsRenderer::Raw(r)
     }
 }
 
-impl<'a> From<&'a Renderer<'a>> for GraphicsRenderer<'a> {
-    fn from(r: &'a Renderer<'a>) -> GraphicsRenderer<'a> {
+impl<'a> From<&'a Renderer> for GraphicsRenderer<'a> {
+    fn from(r: &'a Renderer) -> GraphicsRenderer {
         GraphicsRenderer::Device(r)
     }
 }
 
-impl<'a> From<&'a Draw<'a>> for GraphicsRenderer<'a> {
-    fn from(r: &'a Draw<'a>) -> GraphicsRenderer<'a> {
+impl<'a> From<&'a Draw> for GraphicsRenderer<'a> {
+    fn from(r: &'a Draw) -> GraphicsRenderer {
         GraphicsRenderer::Draw(r)
     }
 }

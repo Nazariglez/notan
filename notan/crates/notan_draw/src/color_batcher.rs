@@ -60,8 +60,8 @@ pub(crate) fn create_color_pipeline_from_raw(
 pub(crate) struct ColorBatcher {
     vertices: Vec<f32>,
     indices: Vec<u32>,
-    vbo: Buffer,
-    ibo: Buffer,
+    vbo: Buffer<f32>,
+    ibo: Buffer<u32>,
     pipeline: Pipeline,
     clear_options: ClearOptions,
     index: usize,
@@ -73,8 +73,8 @@ impl ColorBatcher {
         Ok(Self {
             vertices: vec![],
             indices: vec![],
-            vbo: device.create_vertex_buffer()?,
-            ibo: device.create_index_buffer()?,
+            vbo: device.create_vertex_buffer(vec![])?,
+            ibo: device.create_index_buffer(vec![])?,
             pipeline,
             clear_options: ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0)),
             index: 0,

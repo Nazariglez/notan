@@ -1,7 +1,7 @@
 use notan::app::assets::*;
 use notan::app::config::WindowConfig;
 use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Plugins};
+use notan::app::{App, AppBuilder, Graphics, Plugins};
 use notan::log;
 use notan::prelude::*;
 
@@ -39,10 +39,8 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vertices: [f32; 20],
-    vertex_buffer: Buffer,
-    indices: [u32; 6],
-    index_buffer: Buffer,
+    vertex_buffer: Buffer<f32>,
+    index_buffer: Buffer<u32>,
 }
 impl AppState for State {}
 
@@ -69,25 +67,23 @@ fn setup(gfx: &mut Graphics) -> State {
         .unwrap();
 
     #[rustfmt::skip]
-    let vertices = [
+    let vertices = vec![
         0.0, 1.0,   1.0, 0.2, 0.3,
         0.0, 0.0,   0.1, 1.0, 0.3,
         1.0, 0.0,   0.1, 0.2, 1.0,
         1.0, 1.0,   1.0, 1.0, 0.1,
     ];
 
-    let indices = [0, 1, 2, 0, 2, 3];
+    let indices = vec![0, 1, 2, 0, 2, 3];
 
-    let vertex_buffer = gfx.create_vertex_buffer().unwrap();
-    let index_buffer = gfx.create_index_buffer().unwrap();
+    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
+    let index_buffer = gfx.create_index_buffer(indices).unwrap();
 
     let mut state = State {
         clear_options,
         pipeline,
-        vertices,
         vertex_buffer,
         index_buffer,
-        indices,
     };
 
     state
@@ -96,11 +92,11 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    renderer.begin(&state.clear_options);
+    renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
-    renderer.bind_index_buffer(&state.index_buffer, &state.indices);
-    renderer.draw(0, state.indices.len() as _);
+    renderer.bind_vertex_buffer(&state.vertex_buffer);
+    renderer.bind_index_buffer(&state.index_buffer);
+    renderer.draw(0, 6);
     renderer.end();
 
     gfx.render(&renderer);

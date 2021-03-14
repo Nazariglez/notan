@@ -165,18 +165,33 @@ impl GlowBackend {
         }
     }
 
-    fn bind_buffer(&mut self, id: i32, data: &[u8], usage: &BufferUsage, draw: &DrawType) {
+    fn bind_buffer(
+        &mut self,
+        id: i32,
+        data_wrapper: BufferDataWrapper,
+        usage: &BufferUsage,
+        draw: &DrawType,
+    ) {
         if let Some(buffer) = self.buffers.get_mut(&id) {
             match usage {
                 BufferUsage::Vertex => {
-                    buffer.bind_as_vbo_with_data(&self.gl, &self.current_vertex_attrs, draw, data)
+                    let inner_data = data_wrapper.unwrap_f32().unwrap();
+                    let data = inner_data.read();
+                    let ptr = bytemuck::cast_slice(&data);
+                    buffer.bind_as_vbo_with_data(&self.gl, &self.current_vertex_attrs, draw, ptr)
                 }
                 BufferUsage::Index => {
                     self.using_indices = true;
-                    buffer.bind_as_ebo_with_data(&self.gl, draw, data)
+                    let inner_data = data_wrapper.unwrap_u32().unwrap();
+                    let data = inner_data.read();
+                    let ptr = bytemuck::cast_slice(&data);
+                    buffer.bind_as_ebo_with_data(&self.gl, draw, ptr)
                 }
                 BufferUsage::Uniform(slot) => {
-                    buffer.bind_as_ubo_with_data(&self.gl, *slot, draw, data);
+                    let inner_data = data_wrapper.unwrap_f32().unwrap();
+                    let data = inner_data.read();
+                    let ptr = bytemuck::cast_slice(&data);
+                    buffer.bind_as_ubo_with_data(&self.gl, *slot, draw, ptr);
                 }
             }
         }
@@ -321,10 +336,10 @@ impl DeviceBackend for GlowBackend {
                 Pipeline { id, options } => self.set_pipeline(*id, options),
                 BindBuffer {
                     id,
-                    ptr,
+                    data,
                     usage,
                     draw,
-                } => self.bind_buffer(*id, ptr, usage, draw),
+                } => self.bind_buffer(*id, data.clone(), usage, draw),
                 Draw { offset, count } => self.draw(*offset, *count),
                 BindTexture { id, slot, location } => self.bind_texture(*id, *slot, *location),
                 _ => {}

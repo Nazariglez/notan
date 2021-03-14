@@ -3,12 +3,12 @@ use super::draw::{Draw, DrawCommands, GraphicCommands};
 use glam::Mat4;
 use notan_graphics::prelude::*;
 
-pub struct DrawManager<'b> {
-    pub(crate) commands: Vec<Commands<'b>>,
+pub struct DrawManager {
+    pub(crate) commands: Vec<Commands>,
     color_batcher: ColorBatcher,
 }
 
-impl<'b> DrawManager<'b> {
+impl DrawManager {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let color_batcher = ColorBatcher::new(device)?;
         Ok(Self {
@@ -17,7 +17,7 @@ impl<'b> DrawManager<'b> {
         })
     }
 
-    // pub(crate) fn process_batch<'a: 'b>(&mut self, draw: &Draw<'b>)/* -> &[Commands<'b>] */{
+    // pub(crate) fn process_batch<: >(&mut self, draw: &Draw)/* -> &[Commands] */{
     //     self.commands.clear();
     //
     //     draw.commands.iter().for_each(|graphics_cmd| {
@@ -37,7 +37,7 @@ impl<'b> DrawManager<'b> {
     //     });
     // }
 
-    pub fn create_draw<'a>(&self, width: i32, height: i32) -> Draw<'a> {
+    pub fn create_draw(&self, width: i32, height: i32) -> Draw {
         Draw::new(width, height)
     }
 
@@ -91,7 +91,7 @@ pub enum DrawMode {
     //Text,
 }
 
-fn process_batch<'b>(manager: &mut DrawManager<'b>, draw: &Draw<'b>) {
+fn process_batch(manager: &mut DrawManager, draw: &Draw) {
     manager.commands.clear();
 
     draw.commands.iter().for_each(|graphics_cmd| {

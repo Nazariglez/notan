@@ -7,6 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bytemuck = "1.5"
 glow = "0.6"
 notan_graphics = { path="../notan_graphics" }
 notan_log = { path="../notan_log" }

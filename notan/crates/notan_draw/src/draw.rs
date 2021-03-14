@@ -6,9 +6,9 @@ use notan_graphics::prelude::*;
 use std::cell::{Ref, RefCell};
 
 #[derive(Clone)]
-pub(crate) enum GraphicCommands<'a> {
+pub(crate) enum GraphicCommands {
     Draw(DrawCommands),
-    Render(Commands<'a>),
+    Render(Commands),
 }
 
 #[derive(Clone)]
@@ -29,15 +29,15 @@ pub(crate) enum DrawCommands {
 }
 
 #[derive(Clone)]
-pub struct Draw<'a> {
+pub struct Draw {
     size: (i32, i32),
-    pub(crate) commands: Vec<GraphicCommands<'a>>,
+    pub(crate) commands: Vec<GraphicCommands>,
 
     color: Color,
     alpha: f32,
 }
 
-impl<'a> Draw<'a> {
+impl Draw {
     pub fn new(width: i32, height: i32) -> Self {
         Self {
             size: (width, height),
@@ -143,17 +143,14 @@ impl<'a> Draw<'a> {
 
 // // TODO cargo make
 
-pub trait DrawRenderer<'a> {
-    fn commands(
-        &self,
-        device: &mut Device,
-        draw_manager: &'a mut DrawManager,
-    ) -> &'a [Commands<'a>];
+pub trait DrawRenderer {
+    fn commands(&self, device: &mut Device, draw_manager: &mut DrawManager) -> &[Commands];
 }
 
-impl<'a> DrawRenderer<'a> for Draw<'a> {
-    fn commands(&self, _: &mut Device, draw_manager: &'a mut DrawManager) -> &'a [Commands<'a>] {
+impl DrawRenderer for Draw {
+    fn commands(&self, _: &mut Device, draw_manager: &mut DrawManager) -> &[Commands] {
         // draw_manager.process_batch(self);
-        &draw_manager.commands
+        // &draw_manager.commands
+        unimplemented!()
     }
 }

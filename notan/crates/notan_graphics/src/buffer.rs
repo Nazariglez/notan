@@ -1,5 +1,8 @@
 use crate::device::{DropManager, ResourceId};
 use crate::pipeline::*;
+use parking_lot::{
+    MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
+};
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
@@ -16,27 +19,57 @@ impl Drop for BufferId {
 }
 
 #[derive(Debug, Clone)]
-pub struct Buffer {
+pub struct Buffer<T>
+where
+    T: BufferDataType,
+{
     id: Arc<BufferId>,
     pub(crate) usage: BufferUsage,
     pub draw: Option<DrawType>,
+    data: Arc<RwLock<Vec<T>>>,
 }
 
-impl Buffer {
+pub trait BufferDataType {}
+impl BufferDataType for f32 {}
+impl BufferDataType for u32 {}
+
+impl<T> Buffer<T>
+where
+    T: BufferDataType,
+{
     pub(crate) fn new(
         id: i32,
+        data: Vec<T>,
         usage: BufferUsage,
         draw: Option<DrawType>,
         drop_manager: Arc<DropManager>,
     ) -> Self {
         let id = Arc::new(BufferId { id, drop_manager });
+        let data = Arc::new(RwLock::new(data));
 
-        Self { id, usage, draw }
+        Self {
+            id,
+            usage,
+            draw,
+            data,
+        }
     }
 
     #[inline(always)]
     pub fn id(&self) -> i32 {
         self.id.id
+    }
+
+    pub fn data(&mut self) -> MappedRwLockReadGuard<'_, [T]> {
+        RwLockReadGuard::map(self.data.read(), |data| data.as_slice())
+    }
+
+    pub fn data_mut(&mut self) -> MappedRwLockWriteGuard<'_, [T]> {
+        RwLockWriteGuard::map(self.data.write(), |data| data.as_mut())
+    }
+
+    pub fn data_ptr(&self) -> &Arc<RwLock<Vec<T>>> {
+        &self.data
     }
 }
 

@@ -39,8 +39,7 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vertices: [f32; 15],
-    vertex_buffer: Buffer,
+    vertex_buffer: Buffer<f32>,
 }
 impl AppState for State {}
 
@@ -67,18 +66,17 @@ fn setup(gfx: &mut Graphics) -> State {
         .unwrap();
 
     #[rustfmt::skip]
-    let vertices = [
+    let vertices = vec![
         0.5, 1.0,   1.0, 0.2, 0.3,
         0.0, 0.0,   0.1, 1.0, 0.3,
         1.0, 0.0,   0.1, 0.2, 1.0,
     ];
 
-    let vertex_buffer = gfx.create_vertex_buffer().unwrap();
+    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
 
     let mut state = State {
         clear_options,
         pipeline,
-        vertices,
         vertex_buffer,
     };
 
@@ -90,7 +88,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
+    renderer.bind_vertex_buffer(&state.vertex_buffer);
     renderer.draw(0, 3);
     renderer.end();
 

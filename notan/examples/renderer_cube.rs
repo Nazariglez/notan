@@ -43,11 +43,9 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vertices: [f32; 168],
-    indices: [u32; 36],
-    vertex_buffer: Buffer,
-    index_buffer: Buffer,
-    uniform_buffer: Buffer,
+    vertex_buffer: Buffer<f32>,
+    index_buffer: Buffer<u32>,
+    uniform_buffer: Buffer<f32>,
     mvp: glam::Mat4,
     angle: f32,
 }
@@ -89,12 +87,8 @@ fn setup(gfx: &mut Graphics) -> State {
         )
         .unwrap();
 
-    let vertex_buffer = gfx.create_vertex_buffer().unwrap();
-    let index_buffer = gfx.create_index_buffer().unwrap();
-    let uniform_buffer = gfx.create_uniform_buffer(0).unwrap();
-
     #[rustfmt::skip]
-    let vertices = [
+    let vertices = vec![
         -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
         1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
         1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
@@ -127,7 +121,7 @@ fn setup(gfx: &mut Graphics) -> State {
     ];
 
     #[rustfmt::skip]
-    let indices = [
+    let indices = vec![
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
         8, 9, 10,  8, 10, 11,
@@ -144,11 +138,15 @@ fn setup(gfx: &mut Graphics) -> State {
     );
     let mvp = glam::Mat4::identity() * projection * view;
 
+    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
+    let index_buffer = gfx.create_index_buffer(indices).unwrap();
+    let uniform_buffer = gfx
+        .create_uniform_buffer(0, mvp.to_cols_array().to_vec())
+        .unwrap();
+
     let mut state = State {
         clear_options,
         pipeline,
-        vertices,
-        indices,
         vertex_buffer,
         index_buffer,
         uniform_buffer,
@@ -162,21 +160,22 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    let mvp = rotated_matrix(state.mvp, state.angle);
+    state
+        .uniform_buffer
+        .data_mut()
+        .copy_from_slice(&rotated_matrix(state.mvp, state.angle));
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_uniform_buffer(&state.uniform_buffer, &mvp);
-    renderer.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
-    renderer.bind_index_buffer(&state.index_buffer, &state.indices);
-    renderer.draw(0, state.indices.len() as i32);
+    renderer.bind_uniform_buffer(&state.uniform_buffer);
+    renderer.bind_vertex_buffer(&state.vertex_buffer);
+    renderer.bind_index_buffer(&state.index_buffer);
+    renderer.draw(0, 36);
     renderer.end();
 
     gfx.render(&renderer);
 
     state.angle += 0.01;
-
-    log::info!("test");
 }
 
 fn rotated_matrix(base: glam::Mat4, angle: f32) -> [f32; 16] {
