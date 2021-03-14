@@ -1,7 +1,7 @@
 use notan::app::assets::*;
 use notan::app::config::WindowConfig;
 use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Plugins};
+use notan::app::{App, AppBuilder, Graphics, Plugins};
 use notan::log;
 use notan::prelude::*;
 
@@ -55,7 +55,9 @@ impl AppState for State {}
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).draw(draw).build();
+    if let Err(e) = notan::init_with(setup).draw(draw).build() {
+        log::error!("{}", e);
+    }
 
     Ok(())
 }
@@ -162,7 +164,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
     let mvp = rotated_matrix(state.mvp, state.angle);
 
-    renderer.begin(&state.clear_options);
+    renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_uniform_buffer(&state.uniform_buffer, &mvp);
     renderer.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
@@ -173,6 +175,8 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     gfx.render(&renderer);
 
     state.angle += 0.01;
+
+    log::info!("test");
 }
 
 fn rotated_matrix(base: glam::Mat4, angle: f32) -> [f32; 16] {

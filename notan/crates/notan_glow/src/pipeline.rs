@@ -281,7 +281,17 @@ fn create_shader(gl: &Context, typ: u32, source: &str) -> Result<Shader, String>
 
         let err = gl.get_shader_info_log(shader);
         gl.delete_shader(shader);
-        Err(err)
+
+        let typ_name = match typ {
+            glow::VERTEX_SHADER => "vertex".to_string(),
+            glow::FRAGMENT_SHADER => "fragment".to_string(),
+            _ => format!("unknown type ({})", typ),
+        };
+
+        Err(format!(
+            "{} with {} shader: \n--\n{}\n--\n",
+            err, typ_name, source
+        ))
     }
 }
 

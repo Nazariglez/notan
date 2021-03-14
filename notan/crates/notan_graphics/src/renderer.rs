@@ -1,5 +1,6 @@
 use crate::buffer::*;
 use crate::commands::*;
+use crate::device::{Device, DeviceRenderer};
 use crate::pipeline::*;
 use crate::texture::*;
 
@@ -117,6 +118,12 @@ impl<'a> Renderer<'a> {
 
 impl<'a> ToCommandBuffer<'a> for Renderer<'a> {
     fn commands(&'a self) -> &'a [Commands<'a>] {
+        &self.commands
+    }
+}
+
+impl<'a> DeviceRenderer<'a> for Renderer<'a> {
+    fn commands_from(&'a self, _: &mut Device) -> &'a [Commands<'a>] {
         &self.commands
     }
 }

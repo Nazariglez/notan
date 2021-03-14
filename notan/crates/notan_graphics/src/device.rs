@@ -200,12 +200,12 @@ impl Device {
     }
 
     #[inline(always)]
-    pub fn render<'a>(&mut self, render: &'a ToCommandBuffer<'a>) {
+    pub fn render<'a>(&mut self, render: &'a [Commands<'a>]) {
         self.backend.render(render.commands(), None);
     }
 
     #[inline]
-    pub fn render_to<'a>(&mut self, target: &RenderTexture, render: &'a ToCommandBuffer<'a>) {
+    pub fn render_to<'a>(&mut self, target: &RenderTexture, render: &'a [Commands<'a>]) {
         self.backend.render(render.commands(), Some(target.id()));
     }
 
@@ -218,4 +218,8 @@ impl Device {
         self.backend.clean(&self.drop_manager.dropped.read());
         self.drop_manager.clean();
     }
+}
+
+pub trait DeviceRenderer<'a> {
+    fn commands_from(&'a self, device: &mut Device) -> &'a [Commands<'a>];
 }

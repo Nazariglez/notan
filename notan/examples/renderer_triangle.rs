@@ -1,7 +1,7 @@
 use notan::app::assets::*;
 use notan::app::config::WindowConfig;
 use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Plugins};
+use notan::app::{App, AppBuilder, Graphics, Plugins};
 use notan::log;
 use notan::prelude::*;
 
@@ -88,7 +88,7 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    renderer.begin(&state.clear_options);
+    renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
     renderer.draw(0, 3);

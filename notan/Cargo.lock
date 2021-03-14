@@ -1131,6 +1131,7 @@ dependencies = [
  "console_log",
  "log",
  "simple_logger",
+ "wasm-bindgen",
 ]
 
 [[package]]

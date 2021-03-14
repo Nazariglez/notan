@@ -47,3 +47,9 @@ pub enum Commands<'a> {
 pub trait ToCommandBuffer<'a> {
     fn commands(&'a self) -> &'a [Commands<'a>];
 }
+
+impl<'a> ToCommandBuffer<'a> for [Commands<'a>] {
+    fn commands(&'a self) -> &'a [Commands<'a>] {
+        &self
+    }
+}
