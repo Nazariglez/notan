@@ -93,26 +93,34 @@ impl ColorBatcher {
         let next_indices_len = self.index + indices_len;
         if self.indices.len() < next_indices_len {
             self.indices.resize(next_indices_len, 0);
-            self.vertices.resize(next_indices_len * vertex_offset, 0.0);
         }
 
-        let index_offset = self.index as u32;
+        let vertices_len = data.vertices.len() / 2;
+        let next_vertices_len = self.index * vertex_offset + vertices_len * vertex_offset;
+        if self.vertices.len() < next_vertices_len {
+            self.vertices.resize(next_vertices_len, 0.0);
+        }
+
         for i in 0..indices_len {
-            let ebo_index = self.index;
-            let vbo_index = self.index * vertex_offset;
-
-            self.indices[ebo_index] = data.indices[i] + index_offset;
-
-            self.vertices[vbo_index] = data.vertices[i];
-            self.vertices[vbo_index + 1] = data.vertices[i + 1];
-
-            self.vertices[vbo_index + 2] = data.color[0];
-            self.vertices[vbo_index + 3] = data.color[1];
-            self.vertices[vbo_index + 4] = data.color[2];
-            self.vertices[vbo_index + 5] = data.color[3];
-
-            self.index += 1;
+            self.indices[self.index + i] = data.indices[i] + self.index as u32;
         }
+
+        let vertex_len = vertices_len;
+        for i in 0..vertex_len {
+            let index = (self.index + i) * vertex_offset;
+            let n = i * 2;
+            self.vertices[index] = data.vertices[n];
+            self.vertices[index + 1] = data.vertices[n + 1];
+
+            self.vertices[index + 2] = data.color[0];
+            self.vertices[index + 3] = data.color[1];
+            self.vertices[index + 4] = data.color[2];
+            self.vertices[index + 5] = data.color[3];
+        }
+
+        self.index += indices_len;
+
+        // notan_log::info!("original_v: {:?}", data.vertices);
     }
 
     pub fn flush(&mut self, pipeline: Option<&Pipeline>, commands: &mut Vec<Commands>) {
@@ -121,9 +129,9 @@ impl ColorBatcher {
             id: pipeline.id(),
             options: pipeline.options.clone(),
         });
-
-        notan_log::info!("flush! v: {:?}, i: {:?}", self.vertices, self.indices);
-        panic!();
+        //
+        // notan_log::info!("{} flush! v: {:?}, i: {:?}", self.index, self.vertices, self.indices);
+        // panic!();
 
         std::mem::swap(&mut self.vertices, &mut self.vbo.data_ptr().write());
         commands.push(Commands::BindBuffer {
