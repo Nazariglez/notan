@@ -14,7 +14,7 @@ impl Renderer {
     pub fn new(width: i32, height: i32) -> Self {
         Self {
             size: (width, height),
-            commands: vec![],
+            commands: vec![Commands::Size { width, height }],
         }
     }
 
@@ -87,12 +87,7 @@ impl Renderer {
     }
 
     pub fn bind_uniform_buffer(&mut self, buffer: &Buffer<f32>) {
-        self.commands.push(Commands::BindBuffer {
-            id: buffer.id(),
-            data: BufferDataWrapper::Float32(buffer.data_ptr().clone()),
-            usage: buffer.usage,
-            draw: buffer.draw.unwrap_or(DrawType::Dynamic),
-        });
+        self.commands.push(buffer.into());
     }
 
     pub fn draw(&mut self, offset: i32, count: i32) {

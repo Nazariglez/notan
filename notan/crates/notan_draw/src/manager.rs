@@ -6,6 +6,7 @@ use notan_graphics::prelude::*;
 pub struct DrawManager {
     pub(crate) commands: Vec<Commands>,
     color_batcher: ColorBatcher,
+    current_projection: [f32; 16],
 }
 
 impl DrawManager {
@@ -14,6 +15,7 @@ impl DrawManager {
         Ok(Self {
             commands: vec![],
             color_batcher,
+            current_projection: [0.0; 16],
         })
     }
 
@@ -92,7 +94,11 @@ fn process_render_commands(manager: &mut DrawManager, cmd: Commands) {
 
     match cmd {
         End => {
-            manager.color_batcher.flush(None, &mut manager.commands);
+            manager.color_batcher.flush(
+                None,
+                &mut manager.current_projection,
+                &mut manager.commands,
+            );
         }
         _ => {}
     }
@@ -119,6 +125,7 @@ fn process_draw_commands(manager: &mut DrawManager, cmd: DrawCommands) {
                 indices: &indices,
                 pipeline: None,
                 color: &color,
+                projection: &manager.current_projection,
             },
             &mut manager.commands,
         ),
@@ -132,9 +139,11 @@ fn process_draw_commands(manager: &mut DrawManager, cmd: DrawCommands) {
                 indices: &indices,
                 pipeline: None,
                 color: &color,
+                projection: &manager.current_projection,
             },
             &mut manager.commands,
         ),
+        Projection(projecton) => manager.current_projection = projecton.to_cols_array(),
         _ => {}
     };
 }

@@ -1,6 +1,9 @@
 // // use crate::draw::{Batcher, Draw};
+use notan_graphics::buffer::*;
+use notan_graphics::commands::*;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
+
 //
 //language=glsl
 const COLOR_VERTEX: ShaderSource = vertex_shader! {
@@ -10,10 +13,14 @@ const COLOR_VERTEX: ShaderSource = vertex_shader! {
     layout(location = 1) in vec4 a_color;
 
     layout(location = 0) out vec4 v_color;
+    layout(set = 0, binding = 0) uniform Locals {
+        mat4 u_projection;
+    };
 
     void main() {
         v_color = a_color;
-        gl_Position = vec4(a_pos - 0.5, 0.0, 1.0);
+        // gl_Position = vec4(a_pos - 0.5, 0.0, 1.0);
+        gl_Position = u_projection * vec4(a_pos.x, a_pos.y, 0.0, 1.0);
     }
     "#
 };
@@ -65,6 +72,7 @@ pub(crate) struct ColorBatcher {
     indices: Vec<u32>,
     vbo: Buffer<f32>,
     ebo: Buffer<u32>,
+    ubo: Buffer<f32>,
     pipeline: Pipeline,
     clear_options: ClearOptions,
     index: usize,
@@ -79,6 +87,7 @@ impl ColorBatcher {
             indices: vec![],
             vbo: device.create_vertex_buffer(vec![])?,
             ebo: device.create_index_buffer(vec![])?,
+            ubo: device.create_uniform_buffer(0, vec![0.0; 16])?,
             pipeline,
             clear_options: ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0)),
             index: 0,
@@ -123,7 +132,12 @@ impl ColorBatcher {
         // notan_log::info!("original_v: {:?}", data.vertices);
     }
 
-    pub fn flush(&mut self, pipeline: Option<&Pipeline>, commands: &mut Vec<Commands>) {
+    pub fn flush(
+        &mut self,
+        pipeline: Option<&Pipeline>,
+        projection: &[f32; 16],
+        commands: &mut Vec<Commands>,
+    ) {
         let pipeline = pipeline.unwrap_or_else(|| &self.pipeline);
         commands.push(Commands::Pipeline {
             id: pipeline.id(),
@@ -134,20 +148,13 @@ impl ColorBatcher {
         // panic!();
 
         std::mem::swap(&mut self.vertices, &mut self.vbo.data_ptr().write());
-        commands.push(Commands::BindBuffer {
-            id: self.vbo.id(),
-            data: BufferDataWrapper::Float32(self.vbo.data_ptr().clone()),
-            usage: BufferUsage::Vertex,
-            draw: self.vbo.draw.unwrap_or(DrawType::Dynamic),
-        });
+        commands.push((&self.vbo).into());
 
         std::mem::swap(&mut self.indices, &mut self.ebo.data_ptr().write());
-        commands.push(Commands::BindBuffer {
-            id: self.ebo.id(),
-            data: BufferDataWrapper::Uint32(self.ebo.data_ptr().clone()),
-            usage: BufferUsage::Index,
-            draw: self.ebo.draw.unwrap_or(DrawType::Dynamic),
-        });
+        commands.push((&self.ebo).into());
+
+        self.ubo.data_mut().copy_from_slice(projection);
+        commands.push((&self.ubo).into());
 
         let offset = 0;
         let count = self.index as _;
@@ -162,4 +169,5 @@ pub struct ColorData<'a> {
     pub indices: &'a [u32],
     pub pipeline: Option<&'a Pipeline>,
     pub color: &'a [f32; 4],
+    pub projection: &'a [f32; 16],
 }

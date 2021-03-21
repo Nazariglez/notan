@@ -10,4 +10,4 @@ edition = "2018"
 notan_graphics = { path = "../notan_graphics" }
 notan_macro = { path = "../notan_macro" }
 notan_log = { path = "../notan_log" }
-glam = "0.12"
+glam = "0.13"
