@@ -195,7 +195,7 @@ fn compute_vertices(matrix: Mat3, vertices: &mut [f32]) {
         "Vertices len should be a pair number"
     );
     for i in (0..vertices.len()).step_by(2) {
-        let xyz = matrix * Vec3::new(vertices[i], vertices[i + 1], 0.0);
+        let xyz = matrix * Vec3::new(vertices[i], vertices[i + 1], 1.0);
         vertices[i] = xyz.x;
         vertices[i + 1] = xyz.y;
     }
