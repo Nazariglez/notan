@@ -1,7 +1,7 @@
 use super::color_batcher::*;
 use super::manager::DrawMode;
+use crate::geometry::*;
 use crate::manager::DrawManager;
-pub use crate::shapes::*;
 use glam::{Mat3, Mat4, Vec2, Vec3};
 use notan_graphics::prelude::*;
 use std::cell::{Ref, RefCell};
@@ -92,7 +92,6 @@ pub struct Draw {
 //  - draw.rect()
 //  - draw.circle()
 // - Advanced:
-//  - draw.path(Path::builder().move_to().line_to().build())
 //  - draw.geometry(Geometry::builder().whatever())
 
 impl Draw {
