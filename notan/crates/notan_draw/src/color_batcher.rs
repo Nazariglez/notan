@@ -96,6 +96,7 @@ impl ColorBatcher {
 
     pub fn push(&mut self, data: ColorData, commands: &mut Vec<Commands>) {
         //flush if needed
+        let external_color = data.color.is_some();
 
         let vertex_offset = self.pipeline.offset();
         let indices_len = data.indices.len();
@@ -104,7 +105,13 @@ impl ColorBatcher {
             self.indices.resize(next_indices_len, 0);
         }
 
-        let vertices_len = data.vertices.len() / 2;
+        let num_per_vertex = if external_color {
+            2 //vertices are like [[x, y]]
+        } else {
+            6 //vertices are like [[x, y, r, g, b, a]]
+        };
+
+        let vertices_len = data.vertices.len() / num_per_vertex;
         let next_vertices_len = self.index * vertex_offset + vertices_len * vertex_offset;
         if self.vertices.len() < next_vertices_len {
             self.vertices.resize(next_vertices_len, 0.0);
@@ -117,14 +124,24 @@ impl ColorBatcher {
         let vertex_len = vertices_len;
         for i in 0..vertex_len {
             let index = (self.index + i) * vertex_offset;
-            let n = i * 2;
+            let n = i * num_per_vertex;
             self.vertices[index] = data.vertices[n];
             self.vertices[index + 1] = data.vertices[n + 1];
 
-            self.vertices[index + 2] = data.color[0];
-            self.vertices[index + 3] = data.color[1];
-            self.vertices[index + 4] = data.color[2];
-            self.vertices[index + 5] = data.color[3];
+            let [r, g, b, a] = match data.color {
+                Some(c) => *c,
+                _ => [
+                    data.vertices[n + 2],
+                    data.vertices[n + 3],
+                    data.vertices[n + 4],
+                    data.vertices[n + 5],
+                ],
+            };
+
+            self.vertices[index + 2] = r;
+            self.vertices[index + 3] = g;
+            self.vertices[index + 4] = b;
+            self.vertices[index + 5] = a;
         }
 
         self.index += indices_len;
@@ -168,6 +185,6 @@ pub struct ColorData<'a> {
     pub vertices: &'a [f32],
     pub indices: &'a [u32],
     pub pipeline: Option<&'a Pipeline>,
-    pub color: &'a [f32; 4],
+    pub color: Option<&'a [f32; 4]>,
     pub projection: &'a [f32; 16],
 }

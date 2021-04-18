@@ -1,4 +1,4 @@
-use notan_draw::Draw;
+pub use notan_draw::*;
 use notan_draw::*;
 use notan_graphics::prelude::*;
 pub use notan_graphics::*;

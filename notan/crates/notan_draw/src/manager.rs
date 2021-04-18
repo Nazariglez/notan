@@ -124,7 +124,7 @@ fn process_draw_commands(manager: &mut DrawManager, cmd: DrawCommands) {
                 vertices: &vertices,
                 indices: &indices,
                 pipeline: None,
-                color: &color,
+                color: Some(&color),
                 projection: &manager.current_projection,
             },
             &mut manager.commands,
@@ -138,12 +138,22 @@ fn process_draw_commands(manager: &mut DrawManager, cmd: DrawCommands) {
                 vertices: &vertices,
                 indices: &indices,
                 pipeline: None,
-                color: &color,
+                color: Some(&color),
                 projection: &manager.current_projection,
             },
             &mut manager.commands,
         ),
         Projection(projecton) => manager.current_projection = projecton.to_cols_array(),
+        RawColor { vertices, indices } => manager.color_batcher.push(
+            ColorData {
+                vertices: &vertices,
+                indices: &indices,
+                pipeline: None,
+                color: None,
+                projection: &manager.current_projection,
+            },
+            &mut manager.commands,
+        ),
         _ => {}
     };
 }

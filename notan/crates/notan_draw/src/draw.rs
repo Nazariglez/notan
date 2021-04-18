@@ -1,6 +1,7 @@
 use super::color_batcher::*;
 use super::manager::DrawMode;
 use crate::manager::DrawManager;
+pub use crate::shapes::*;
 use glam::{Mat3, Mat4, Vec2, Vec3};
 use notan_graphics::prelude::*;
 use std::cell::{Ref, RefCell};
@@ -25,6 +26,50 @@ pub(crate) enum DrawCommands {
         indices: [u32; 6],
         color: [f32; 4],
     },
+    Line {
+        vertices: [f32; 12],
+        indices: [u32; 6],
+        color: [f32; 4],
+    },
+    RawColor {
+        vertices: Vec<f32>,
+        indices: Vec<u32>,
+    },
+}
+
+#[derive(Clone)]
+pub struct VertexColor {
+    pub x: f32,
+    pub y: f32,
+    pub color: Color,
+}
+
+impl VertexColor {
+    pub fn new(x: f32, y: f32, color: Color) -> Self {
+        Self { x, y, color }
+    }
+}
+
+impl Default for VertexColor {
+    fn default() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            color: Color::WHITE,
+        }
+    }
+}
+
+impl From<VertexColor> for [f32; 6] {
+    fn from(v: VertexColor) -> [f32; 6] {
+        [v.x, v.y, v.color.r, v.color.g, v.color.b, v.color.a]
+    }
+}
+
+impl From<&VertexColor> for [f32; 6] {
+    fn from(v: &VertexColor) -> [f32; 6] {
+        [v.x, v.y, v.color.r, v.color.g, v.color.b, v.color.a]
+    }
 }
 
 #[derive(Clone)]
@@ -39,6 +84,16 @@ pub struct Draw {
     matrix_identity: Mat3,
     matrix_stack: Vec<Mat3>,
 }
+
+// TODO
+// - primitives:
+//  - draw.line()
+//  - draw.triangle()
+//  - draw.rect()
+//  - draw.circle()
+// - Advanced:
+//  - draw.path(Path::builder().move_to().line_to().build())
+//  - draw.geometry(Geometry::builder().whatever())
 
 impl Draw {
     pub fn new(width: i32, height: i32) -> Self {
@@ -100,6 +155,28 @@ impl Draw {
             .push(DrawCommands::Begin(color.map(|c| *c)).into());
     }
 
+    pub fn vertex_color(
+        &mut self,
+        vertices: impl IntoIterator<Item = impl Into<[f32; 6]>>,
+        indices: &[u32],
+    ) {
+        let mut vertices = vertices
+            .into_iter()
+            .map(|v| v.into())
+            .collect::<Vec<[f32; 6]>>()
+            .concat();
+
+        compute_vertices(*self.matrix(), &mut vertices, Some(6));
+
+        self.commands.push(
+            DrawCommands::RawColor {
+                vertices,
+                indices: indices.to_vec(),
+            }
+            .into(),
+        );
+    }
+
     pub fn triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
         #[rustfmt::skip]
         let mut vertices = [
@@ -107,7 +184,7 @@ impl Draw {
             x2, y2,
             x3, y3
         ];
-        compute_vertices(*self.matrix(), &mut vertices);
+        compute_vertices(*self.matrix(), &mut vertices, None);
 
         #[rustfmt::skip]
         let triangle = DrawCommands::Triangle {
@@ -127,7 +204,7 @@ impl Draw {
             x, y + height,
             x + width, y + height
         ];
-        compute_vertices(*self.matrix(), &mut vertices);
+        compute_vertices(*self.matrix(), &mut vertices, None);
 
         #[rustfmt::skip]
         let rect = DrawCommands::Rect {
@@ -137,6 +214,20 @@ impl Draw {
         };
 
         self.commands.push(rect.into());
+    }
+
+    pub fn line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, width: f32) {}
+
+    pub fn path(&mut self, path: &Path) {
+        let vertices = (0..path.vertices.len())
+            .step_by(2)
+            .map(|i| VertexColor {
+                x: path.vertices[i],
+                y: path.vertices[i + 1],
+                color: self.color,
+            })
+            .collect::<Vec<_>>();
+        self.vertex_color(&vertices, &path.indices);
     }
 
     pub fn end(&mut self) {
@@ -189,12 +280,12 @@ impl Draw {
     }
 }
 
-fn compute_vertices(matrix: Mat3, vertices: &mut [f32]) {
+fn compute_vertices(matrix: Mat3, vertices: &mut [f32], offset: Option<usize>) {
     debug_assert!(
         vertices.len() % 2 == 0,
         "Vertices len should be a pair number"
     );
-    for i in (0..vertices.len()).step_by(2) {
+    for i in (0..vertices.len()).step_by(offset.unwrap_or(2)) {
         let xyz = matrix * Vec3::new(vertices[i], vertices[i + 1], 1.0);
         vertices[i] = xyz.x;
         vertices[i + 1] = xyz.y;
