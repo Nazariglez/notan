@@ -1,3 +1,4 @@
+use crate::draw::Draw;
 use lyon::math::{point, Point};
 use lyon::path::builder::*;
 use lyon::path::path::Builder;
@@ -12,6 +13,7 @@ thread_local! {
     static FILL_TESSELLATOR:RefCell<FillTessellator> = RefCell::new(FillTessellator::new());
 }
 
+#[derive(Clone)]
 pub enum PathLine {
     Straight {
         from: (f32, f32),
@@ -30,9 +32,11 @@ pub enum PathLine {
     },
 }
 
+#[derive(Clone)]
 pub struct PathBuilder {
     lines: Vec<PathLine>,
     initialized: bool,
+    finished: bool,
     closed: bool,
     first_point: (f32, f32),
     last_point: (f32, f32),
@@ -42,6 +46,7 @@ impl PathBuilder {
     pub fn new() -> Self {
         Self {
             initialized: false,
+            finished: false,
             lines: vec![],
             closed: false,
             last_point: (0.0, 0.0),
@@ -49,45 +54,56 @@ impl PathBuilder {
         }
     }
 
-    pub fn begin(&mut self, x: f32, y: f32) {
+    pub fn begin(&mut self, x: f32, y: f32) -> &mut Self {
         debug_assert!(!self.initialized, "path already initialed");
         self.initialized = true;
         self.first_point = (x, y);
         self.last_point = (x, y);
+        self
     }
 
-    pub fn end(&mut self, close: bool) {
+    pub fn end(&mut self, close: bool) -> &mut Self {
         debug_assert!(self.initialized, "path already closed");
-        self.initialized = false;
+        self.initialized = true;
+        self.finished = true;
         self.closed = close;
+        self
     }
 
-    pub fn line_to(&mut self, x: f32, y: f32) {
+    pub fn line_to(&mut self, x: f32, y: f32) -> &mut Self {
         debug_assert!(self.initialized, "path should be initialed");
         // self.lyon_builder.line_to(point(x, y));
         self.lines.push(PathLine::Straight {
             from: self.last_point,
             to: (x, y),
         });
+        self
     }
 
-    pub fn quadratic_bezier_to(&mut self, ctrl: (f32, f32), to: (f32, f32)) {
+    pub fn quadratic_bezier_to(&mut self, ctrl: (f32, f32), to: (f32, f32)) -> &mut Self {
         debug_assert!(self.initialized, "path should be initialed");
         self.lines.push(PathLine::Quadratic {
             from: self.last_point,
             ctrl,
             to,
-        })
+        });
+        self
     }
 
-    pub fn cubic_bezier_to(&mut self, ctrl1: (f32, f32), ctrl2: (f32, f32), to: (f32, f32)) {
+    pub fn cubic_bezier_to(
+        &mut self,
+        ctrl1: (f32, f32),
+        ctrl2: (f32, f32),
+        to: (f32, f32),
+    ) -> &mut Self {
         debug_assert!(self.initialized, "path should be initialed");
         self.lines.push(PathLine::Cubic {
             from: self.last_point,
             ctrl1,
             ctrl2,
             to,
-        })
+        });
+        self
     }
 
     pub fn stroke(self, line_width: f32) -> Path {
@@ -96,6 +112,7 @@ impl PathBuilder {
 
     pub fn stroke_with_options(self, options: StrokeOptions) -> Path {
         debug_assert!(!self.lines.is_empty(), "path without lines");
+        debug_assert!(self.finished, "end the path first");
         let (lyon_path, lines) = path_from_lines(self);
         let mut geometry: VertexBuffers<[f32; 2], u32> = VertexBuffers::new();
         {
@@ -127,6 +144,7 @@ impl PathBuilder {
 
     pub fn fill_with_options(self, options: FillOptions) -> Path {
         debug_assert!(!self.lines.is_empty(), "path without lines");
+        debug_assert!(self.finished, "end the path first");
         let (lyon_path, lines) = path_from_lines(self);
         let mut geometry: VertexBuffers<[f32; 2], u32> = VertexBuffers::new();
         {
@@ -181,6 +199,7 @@ fn path_from_lines(builder: PathBuilder) -> (LyonPath, Vec<PathLine>) {
     (path.build(), lines)
 }
 
+#[derive(Clone)]
 pub struct Path {
     pub vertices: Vec<f32>,
     pub indices: Vec<u32>,
@@ -194,5 +213,53 @@ impl Path {
 
     pub fn lines(&self) -> &[PathLine] {
         &self.lines
+    }
+}
+
+/// Wrapper to draw paths directly from the Draw object
+pub struct DrawPath<'a> {
+    pub(crate) builder: PathBuilder,
+    pub(crate) draw: &'a mut Draw,
+}
+
+impl<'a> DrawPath<'a> {
+    pub fn line_to(mut self, x: f32, y: f32) -> Self {
+        self.builder.line_to(x, y);
+        self
+    }
+
+    pub fn quadratic_bezier_to(mut self, ctrl: (f32, f32), to: (f32, f32)) -> Self {
+        self.builder.quadratic_bezier_to(ctrl, to);
+        self
+    }
+
+    pub fn cubic_bezier_to(mut self, ctrl1: (f32, f32), ctrl2: (f32, f32), to: (f32, f32)) -> Self {
+        self.builder.cubic_bezier_to(ctrl1, ctrl2, to);
+        self
+    }
+
+    pub fn end(mut self, close: bool) -> Self {
+        self.builder.end(close);
+        self
+    }
+
+    pub fn stroke(self, width: f32) {
+        let DrawPath { mut builder, draw } = self;
+        draw.path(&builder.stroke(width));
+    }
+
+    pub fn stroke_with_options(mut self, options: StrokeOptions) {
+        let DrawPath { mut builder, draw } = self;
+        draw.path(&builder.stroke_with_options(options));
+    }
+
+    pub fn fill(mut self) {
+        let DrawPath { mut builder, draw } = self;
+        draw.path(&builder.fill());
+    }
+
+    pub fn fill_with_options(mut self, options: FillOptions) {
+        let DrawPath { mut builder, draw } = self;
+        draw.path(&builder.fill_with_options(options));
     }
 }

@@ -1,10 +1,11 @@
 use super::color_batcher::*;
 use super::manager::DrawMode;
-use crate::geometry::*;
+use crate::geometry::{DrawPath, Path};
 use crate::manager::DrawManager;
 use glam::{Mat3, Mat4, Vec2, Vec3};
 use notan_graphics::prelude::*;
 use std::cell::{Ref, RefCell};
+use std::ops::{Deref, DerefMut};
 
 #[derive(Clone)]
 pub(crate) enum GraphicCommands {
@@ -23,11 +24,6 @@ pub(crate) enum DrawCommands {
     },
     Rect {
         vertices: [f32; 8],
-        indices: [u32; 6],
-        color: [f32; 4],
-    },
-    Line {
-        vertices: [f32; 12],
         indices: [u32; 6],
         color: [f32; 4],
     },
@@ -215,18 +211,35 @@ impl Draw {
         self.commands.push(rect.into());
     }
 
-    pub fn line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, width: f32) {}
+    pub fn line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, width: f32) {
+        self.path_begin(x1, y1)
+            .line_to(x2, y2)
+            .end(false)
+            .stroke(width);
+    }
 
     pub fn path(&mut self, path: &Path) {
+        //TODO process this directly without the vertex_color?
+        let color:Color = get_computed_color(self).into();
         let vertices = (0..path.vertices.len())
             .step_by(2)
             .map(|i| VertexColor {
                 x: path.vertices[i],
                 y: path.vertices[i + 1],
-                color: self.color,
+                color: color,
             })
             .collect::<Vec<_>>();
         self.vertex_color(&vertices, &path.indices);
+    }
+
+    pub fn path_begin(&mut self, x: f32, y: f32) -> DrawPath {
+        let mut builder = Path::builder();
+        builder.begin(x, y);
+
+        DrawPath {
+            builder,
+            draw: self,
+        }
     }
 
     pub fn end(&mut self) {
@@ -327,3 +340,4 @@ impl From<DrawCommands> for GraphicCommands {
         GraphicCommands::Draw(cmd)
     }
 }
+//http://www.independent-software.com/determining-coordinates-on-a-html-canvas-bezier-curve.html
