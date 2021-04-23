@@ -220,7 +220,7 @@ impl Draw {
 
     pub fn path(&mut self, path: &Path) {
         //TODO process this directly without the vertex_color?
-        let color:Color = get_computed_color(self).into();
+        let color: Color = get_computed_color(self).into();
         let vertices = (0..path.vertices.len())
             .step_by(2)
             .map(|i| VertexColor {
@@ -231,6 +231,10 @@ impl Draw {
             .collect::<Vec<_>>();
         self.vertex_color(&vertices, &path.indices);
     }
+
+    // pub fn test_color<'a>(&mut self, info: &DrawInfo<'a>) {
+    //     self.vertex_color(info.vertices, info.indices);
+    // }
 
     pub fn path_begin(&mut self, x: f32, y: f32) -> DrawPath {
         let mut builder = Path::builder();
@@ -314,6 +318,11 @@ fn get_computed_color(draw: &Draw) -> [f32; 4] {
 }
 
 // // TODO cargo make
+
+// pub struct DrawInfo<'a> {
+//     pub vertices: &'a [VertexColor],
+//     pub indices: &'a [u32],
+// }
 
 pub trait DrawRenderer {
     fn commands<'a>(

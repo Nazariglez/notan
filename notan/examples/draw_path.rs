@@ -26,14 +26,24 @@ fn draw(gfx: &mut Graphics) {
     draw.color = Color::YELLOW;
     draw.path(&path);
     draw.color = Color::GREEN;
-    draw.alpha = 0.1;
+    draw.alpha = 0.5;
     draw.path_begin(10.0, 10.0)
         .line_to(100.0, 100.0)
         .line_to(400.0, 500.0)
-        .quadratic_bezier_to((450.0, 450.0), (300.0, 200.0))
+        .quadratic_bezier_to((490.0, 490.0), (200.0, 200.0))
         .end(false)
         .stroke(10.0);
+    // .draw();
 
+    draw.color = Color::MAGENTA;
+    draw.alpha = 1.0;
+    draw.path_begin(100.0, 0.0)
+        .line_to(100.0, 200.0)
+        .end(false)
+        .begin(0.0, 100.0)
+        .line_to(200.0, 100.0)
+        .end(false)
+        .stroke(20.0);
     draw.color = Color::RED;
     draw.line(0.0, 300.0, 800.0, 300.0, 10.0);
     // draw.color = Color::RED;
