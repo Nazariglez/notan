@@ -1,5 +1,7 @@
 use super::color_batcher::*;
 use super::draw::{Draw, DrawCommands, GraphicCommands};
+use super::shapes::ShapePainter;
+use crate::draw2::{Draw2, DrawBatch};
 use glam::Mat4;
 use notan_graphics::prelude::*;
 
@@ -7,15 +9,21 @@ pub struct DrawManager {
     pub(crate) commands: Vec<Commands>,
     color_batcher: ColorBatcher,
     current_projection: [f32; 16],
+    shape_painter: ShapePainter,
+    renderer: Renderer,
 }
 
 impl DrawManager {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let color_batcher = ColorBatcher::new(device)?;
+        let shape_painter = ShapePainter::new(device)?;
+        let renderer = device.create_renderer();
         Ok(Self {
             commands: vec![],
             color_batcher,
             current_projection: [0.0; 16],
+            shape_painter,
+            renderer,
         })
     }
 
@@ -24,8 +32,18 @@ impl DrawManager {
         &self.commands
     }
 
+    pub(crate) fn process_draw2(&mut self, draw: &Draw2) -> &[Commands] {
+        self.renderer.clear();
+        process_draw2(self, draw);
+        &self.renderer.commands()
+    }
+
     pub fn create_draw(&self, width: i32, height: i32) -> Draw {
         Draw::new(width, height)
+    }
+
+    pub fn create_draw2(&self, width: i32, height: i32) -> Draw2 {
+        Draw2::new() //TODO width heigh
     }
 
     #[inline]
@@ -76,6 +94,28 @@ pub enum DrawMode {
     Color,
     //Image,
     //Text,
+}
+
+fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
+    manager.renderer.begin(Some(&ClearOptions {
+        color: draw.background.clone(),
+        ..Default::default()
+    }));
+    draw.batches.iter().for_each(|b| match b {
+        DrawBatch::Shape { .. } => {
+            manager.shape_painter.push(&mut manager.renderer, b);
+        }
+        _ => {}
+    });
+    match &draw.current_batch {
+        DrawBatch::Shape { .. } => {
+            manager
+                .shape_painter
+                .push(&mut manager.renderer, &draw.current_batch);
+        }
+        _ => {}
+    }
+    manager.renderer.end();
 }
 
 fn process_batch(manager: &mut DrawManager, draw: &Draw) {
