@@ -146,17 +146,6 @@ impl Graphics {
             .create_pipeline_from_raw(&mut self.device, mode, Some(fragment))
     }
 }
-//
-// fn commands_from<'a>(
-//     gfx: & mut Graphics,
-//     render: impl Into<GraphicsRenderer<'a>>,
-// ) -> & [Commands] {
-//     match render.into() {
-//         GraphicsRenderer::Raw(r) => r,
-//         GraphicsRenderer::Device(r) => r.commands_from(&mut gfx.device),
-//         GraphicsRenderer::Draw(r) => r.commands(&mut gfx.device, &mut gfx.draw),
-//     }
-// }
 
 pub enum GraphicsRenderer<'a> {
     Raw(&'a [Commands]),

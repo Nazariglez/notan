@@ -29,7 +29,21 @@
     </style>
 </head>
 <body>
+<script src="http://mrdoob.github.io/stats.js/build/stats.min.js"></script>
 <!--<script src="examplesssets/spirv_cross_wrapper_glsl.js"></script>-->
+<script>
+    var stats = new Stats();
+    stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+    document.body.appendChild( stats.dom );
+
+    function sb() {
+        stats.begin();
+    }
+
+    function se() {
+        stats.end();
+    }
+</script>
 <script src="./{{ EXAMPLE }}/{{ EXAMPLE }}.js"></script>
 <script>
       window.addEventListener("load", async () => {

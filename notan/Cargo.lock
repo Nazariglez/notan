@@ -1110,6 +1110,7 @@ dependencies = [
  "notan_default_backend",
  "notan_log",
  "notan_macro",
+ "wasm-bindgen",
 ]
 
 [[package]]
