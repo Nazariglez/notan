@@ -3,6 +3,8 @@ use std::ops::{Deref, DerefMut};
 
 pub trait DrawProcess {
     fn draw_process(self, draw: &mut Draw2);
+    //TODO add 'extract' method to cache the vertices and indices?
+    // fn extract<T>(self) -> T; where T is ie: impl Into<ShapeInfo>
 }
 
 pub struct DrawBuilder<'a, T>
@@ -49,7 +51,8 @@ where
     T: DrawProcess,
 {
     fn drop(&mut self) {
-        let mut inner = self.inner.take().unwrap();
-        inner.draw_process(&mut self.draw);
+        if let Some(mut inner) = self.inner.take() {
+            inner.draw_process(&mut self.draw);
+        }
     }
 }

@@ -1,18 +1,14 @@
+use super::path::Path;
+use super::tess::TessMode;
 use crate::builder::{DrawBuilder, DrawProcess};
 use crate::draw2::{Draw2, ShapeInfo};
-use crate::geometry::Path;
 use notan_graphics::color::Color;
-
-#[derive(Debug, Clone, Copy)]
-enum TriangleMode {
-    Fill,
-    Stroke(f32),
-}
 
 pub struct Triangle {
     colors: [Color; 3],
     points: [(f32, f32); 3],
-    mode: TriangleMode,
+    mode: TessMode,
+    stroke_width: f32,
 }
 
 impl Triangle {
@@ -20,7 +16,8 @@ impl Triangle {
         Self {
             colors: [Color::WHITE; 3],
             points: [a, b, c],
-            mode: TriangleMode::Fill,
+            mode: TessMode::Fill,
+            stroke_width: 1.0,
         }
     }
 
@@ -37,12 +34,13 @@ impl Triangle {
     }
 
     pub fn fill(&mut self) -> &mut Self {
-        self.mode = TriangleMode::Fill;
+        self.mode = TessMode::Fill;
         self
     }
 
     pub fn stroke(&mut self, width: f32) -> &mut Self {
-        self.mode = TriangleMode::Stroke(width);
+        self.mode = TessMode::Stroke;
+        self.stroke_width = width;
         self
     }
 }
@@ -50,46 +48,29 @@ impl Triangle {
 impl DrawProcess for Triangle {
     fn draw_process(self, draw: &mut Draw2) {
         match self.mode {
-            TriangleMode::Fill => fill(self, draw),
-            TriangleMode::Stroke(width) => stroke(self, width, draw),
+            TessMode::Fill => fill(self, draw),
+            TessMode::Stroke => stroke(self, draw),
         }
     }
 }
 
-fn stroke(triangle: Triangle, width: f32, draw: &mut Draw2) {
+fn stroke(triangle: Triangle, draw: &mut Draw2) {
     let Triangle {
-        colors: [ca, cb, cc],
+        colors: [ca, ..],
         points: [a, b, c],
-        mode,
+        stroke_width,
+        ..
     } = triangle;
 
-    let mut builder = Path::builder();
-    builder
-        .begin(a.0, a.1)
+    let mut path = Path::new();
+    path.move_to(a.0, a.1)
         .line_to(b.0, b.1)
         .line_to(c.0, c.1)
-        .end(true);
-    let path = builder.stroke(width);
+        .stroke(stroke_width)
+        .color(ca)
+        .close();
 
-    let vertices = {
-        let mut vertices = vec![];
-        for i in (0..path.vertices.len()).step_by(2) {
-            vertices.extend(&[
-                path.vertices[i],
-                path.vertices[i + 1],
-                ca.r,
-                ca.g,
-                ca.b,
-                ca.a,
-            ]);
-        }
-        vertices
-    };
-
-    draw.shape(&ShapeInfo {
-        vertices: &vertices,
-        indices: &path.indices,
-    });
+    path.draw_process(draw);
 }
 
 fn fill(triangle: Triangle, draw: &mut Draw2) {
@@ -97,6 +78,7 @@ fn fill(triangle: Triangle, draw: &mut Draw2) {
         colors: [ca, cb, cc],
         points: [a, b, c],
         mode,
+        ..
     } = triangle;
 
     let indices = [0, 1, 2];

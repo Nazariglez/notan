@@ -1,7 +1,6 @@
 use notan::app::assets::*;
 use notan::app::config::WindowConfig;
 use notan::app::graphics::prelude::*;
-use notan::app::graphics::Path;
 use notan::app::{App, AppBuilder, AppFlow, Graphics, Plugins, *};
 use notan::log;
 use notan::prelude::*;
@@ -28,6 +27,13 @@ fn draw(gfx: &mut Graphics) {
     draw.triangle((400.0, 100.0), (100.0, 500.0), (700.0, 500.0))
         .color(Color::RED)
         .stroke(10.0);
+    draw.path()
+        .move_to(10.0, 10.0)
+        .line_to(590.0, 590.0)
+        .move_to(10.0, 590.0)
+        .line_to(590.0, 10.0)
+        .color(Color::GREEN)
+        .stroke(5.0);
     gfx.render(&draw);
 }
 
