@@ -13,6 +13,7 @@ pub struct Path {
     initialized: bool,
     mode: TessMode,
     color: Color,
+    alpha: f32,
 }
 
 impl Path {
@@ -24,7 +25,13 @@ impl Path {
             initialized: false,
             mode: TessMode::Stroke,
             color: Color::WHITE,
+            alpha: 1.0,
         }
+    }
+
+    pub fn alpha(&mut self, alpha: f32) -> &mut Self {
+        self.alpha = alpha;
+        self
     }
 
     // Start the path on the point given
@@ -142,17 +149,20 @@ impl DrawProcess for Path {
             stroke_options,
             fill_options,
             color,
+            alpha,
             ..
         } = self;
 
-        let path = builder.build();
+        let color = color.with_alpha(color.a * alpha);
 
+        let path = builder.build();
         let (vertices, indices) = match self.mode {
             TessMode::Fill => fill_lyon_path(&path, color, &fill_options),
             TessMode::Stroke => stroke_lyon_path(&path, color, &stroke_options),
         };
 
         draw.shape(&ShapeInfo {
+            transform: None,
             vertices: &vertices,
             indices: &indices,
         });

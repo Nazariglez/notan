@@ -1,5 +1,7 @@
 use crate::manager::DrawManager;
+use crate::transform::Transform;
 use crate::DrawRenderer;
+use glam::{Mat3, Vec2};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 
@@ -36,6 +38,7 @@ pub struct Draw2 {
     pub(crate) alpha: f32,
     pub(crate) batches: Vec<DrawBatch>,
     pub(crate) current_batch: DrawBatch,
+    transform: Transform,
 }
 
 impl Draw2 {
@@ -47,7 +50,12 @@ impl Draw2 {
             background: None,
             batches: vec![],
             current_batch: DrawBatch::None,
+            transform: Transform::new(),
         }
+    }
+
+    pub fn transform(&mut self) -> &mut Transform {
+        &mut self.transform
     }
 
     pub fn background(&mut self, color: Color) {
@@ -70,6 +78,10 @@ impl Draw2 {
             }
         }
 
+        if let Some(matrix) = info.transform {
+            self.transform.push(*matrix);
+        }
+
         match &mut self.current_batch {
             DrawBatch::Shape {
                 vertices, indices, ..
@@ -81,11 +93,15 @@ impl Draw2 {
             }
             _ => {}
         }
+
+        if info.transform.is_some() {
+            self.transform.pop();
+        }
     }
 }
 
 pub struct ShapeInfo<'a> {
-    // transform: Option<&'a [f32; 16]>,
+    pub transform: Option<&'a Mat3>,
     pub vertices: &'a [f32],
     pub indices: &'a [u32],
 }
