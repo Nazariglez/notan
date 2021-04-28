@@ -88,7 +88,10 @@ fn stroke(triangle: Triangle, draw: &mut Draw2) {
         .stroke(stroke_width)
         .color(ca.with_alpha(ca.a * alpha))
         .close();
-    //add matrix to this
+
+    if let Some(m) = matrix {
+        path.transform(m);
+    }
 
     path.draw_process(draw);
 }

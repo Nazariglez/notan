@@ -1,6 +1,8 @@
 use super::tess::{fill_lyon_path, stroke_lyon_path, TessMode};
 use crate::builder::DrawProcess;
 use crate::draw2::{Draw2, ShapeInfo};
+use crate::transform::DrawTransform;
+use glam::Mat3;
 use lyon::math::point;
 use lyon::path::path::Builder;
 use lyon::tessellation::*;
@@ -14,6 +16,7 @@ pub struct Path {
     mode: TessMode,
     color: Color,
     alpha: f32,
+    matrix: Option<Mat3>,
 }
 
 impl Path {
@@ -26,6 +29,7 @@ impl Path {
             mode: TessMode::Stroke,
             color: Color::WHITE,
             alpha: 1.0,
+            matrix: None,
         }
     }
 
@@ -150,6 +154,7 @@ impl DrawProcess for Path {
             fill_options,
             color,
             alpha,
+            matrix,
             ..
         } = self;
 
@@ -162,9 +167,15 @@ impl DrawProcess for Path {
         };
 
         draw.shape(&ShapeInfo {
-            transform: None,
+            transform: matrix.as_ref(),
             vertices: &vertices,
             indices: &indices,
         });
+    }
+}
+
+impl DrawTransform for Path {
+    fn matrix(&mut self) -> &mut Option<Mat3> {
+        &mut self.matrix
     }
 }

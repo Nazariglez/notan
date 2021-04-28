@@ -1,7 +1,7 @@
 use crate::manager::DrawManager;
 use crate::transform::Transform;
 use crate::DrawRenderer;
-use glam::{Mat3, Vec2};
+use glam::{Mat3, Vec2, Vec3};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 
@@ -54,6 +54,14 @@ impl Draw2 {
         }
     }
 
+    pub fn set_alpha(&mut self, alpha: f32) {
+        self.alpha = alpha;
+    }
+
+    pub fn alpha(&self) -> f32 {
+        self.alpha
+    }
+
     pub fn transform(&mut self) -> &mut Transform {
         &mut self.transform
     }
@@ -78,26 +86,48 @@ impl Draw2 {
             }
         }
 
-        if let Some(matrix) = info.transform {
-            self.transform.push(*matrix);
-        }
+        let global_matrix = *self.transform.matrix();
+        let matrix = match info.transform {
+            Some(m) => *m * global_matrix,
+            _ => global_matrix,
+        };
 
         match &mut self.current_batch {
             DrawBatch::Shape {
                 vertices, indices, ..
             } => {
-                //multiply by matrix, alpha and color
-                let index = (vertices.len() as u32) / 6;
-                vertices.extend(info.vertices);
-                indices.extend(info.indices.iter().map(|i| i + index).collect::<Vec<_>>());
+                let last_index = (vertices.len() as u32) / 6;
+                add_indices(indices, info.indices, last_index);
+                add_vertices(vertices, info.vertices, matrix, self.alpha);
             }
             _ => {}
         }
-
-        if info.transform.is_some() {
-            self.transform.pop();
-        }
     }
+}
+
+#[inline]
+fn add_vertices(to: &mut Vec<f32>, from: &[f32], matrix: Mat3, alpha: f32) {
+    let computed = (0..from.len())
+        .step_by(6)
+        .map(|i| {
+            let xyz = matrix * Vec3::new(from[i], from[i + 1], 1.0);
+            [
+                xyz.x,
+                xyz.y,
+                from[i + 2],         //r
+                from[i + 3],         //g
+                from[i + 4],         //b
+                from[i + 5] * alpha, //a
+            ]
+        })
+        .collect::<Vec<_>>()
+        .concat();
+    to.extend(computed);
+}
+
+#[inline]
+fn add_indices(to: &mut Vec<u32>, from: &[u32], last_index: u32) {
+    to.extend(from.iter().map(|i| i + last_index).collect::<Vec<_>>());
 }
 
 pub struct ShapeInfo<'a> {

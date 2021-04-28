@@ -47,18 +47,18 @@ pub trait DrawTransform {
     }
 
     fn rotate_from(&mut self, point: (f32, f32), angle: f32) -> &mut Self {
-        todo!("to test");
         let old = self.matrix().unwrap_or_else(|| Mat3::identity());
-        let rotate = old * Mat3::from_angle(angle);
+        let translate = old * Mat3::from_translation(Vec2::new(point.0, point.1));
+        let rotate = translate * Mat3::from_angle(angle);
         let matrix = rotate * Mat3::from_translation(Vec2::new(-point.0, -point.1));
         *self.matrix() = Some(matrix);
         self
     }
 
     fn scale_from(&mut self, point: (f32, f32), scale: (f32, f32)) -> &mut Self {
-        todo!("to test");
         let old = self.matrix().unwrap_or_else(|| Mat3::identity());
-        let scale = old * Mat3::from_scale(Vec2::new(scale.0, scale.1));
+        let translate = old * Mat3::from_translation(Vec2::new(point.0, point.1));
+        let scale = translate * Mat3::from_scale(Vec2::new(scale.0, scale.1));
         let matrix = scale * Mat3::from_translation(Vec2::new(-point.0, -point.1));
         *self.matrix() = Some(matrix);
         self
