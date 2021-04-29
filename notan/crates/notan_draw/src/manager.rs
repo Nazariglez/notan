@@ -1,5 +1,6 @@
 use super::color_batcher::*;
 use super::draw::{Draw, DrawCommands, GraphicCommands};
+use super::images::ImagePainter;
 use super::shapes::ShapePainter;
 use crate::draw2::{Draw2, DrawBatch};
 use glam::Mat4;
@@ -10,6 +11,7 @@ pub struct DrawManager {
     color_batcher: ColorBatcher,
     current_projection: [f32; 16],
     shape_painter: ShapePainter,
+    image_painter: ImagePainter,
     renderer: Renderer,
 }
 
@@ -17,12 +19,14 @@ impl DrawManager {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let color_batcher = ColorBatcher::new(device)?;
         let shape_painter = ShapePainter::new(device)?;
+        let image_painter = ImagePainter::new(device)?;
         let renderer = device.create_renderer();
         Ok(Self {
             commands: vec![],
             color_batcher,
             current_projection: [0.0; 16],
             shape_painter,
+            image_painter,
             renderer,
         })
     }
@@ -101,9 +105,13 @@ fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
         color: draw.background.clone(),
         ..Default::default()
     }));
+    //TODO, if this last batch type was different we should end and begin the pass again
     draw.batches.iter().for_each(|b| match b {
         DrawBatch::Shape { .. } => {
             manager.shape_painter.push(&mut manager.renderer, b);
+        }
+        DrawBatch::Image { .. } => {
+            manager.image_painter.push(&mut manager.renderer, b);
         }
         _ => {}
     });
@@ -111,6 +119,11 @@ fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
         DrawBatch::Shape { .. } => {
             manager
                 .shape_painter
+                .push(&mut manager.renderer, &draw.current_batch);
+        }
+        DrawBatch::Image { .. } => {
+            manager
+                .image_painter
                 .push(&mut manager.renderer, &draw.current_batch);
         }
         _ => {}

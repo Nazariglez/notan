@@ -114,7 +114,7 @@ fn fill(triangle: Triangle, draw: &mut Draw2) {
         c.0, c.1, cc.r, cc.g, cc.b, cc.a * alpha,
     ];
 
-    draw.shape(&ShapeInfo {
+    draw.add_shape(&ShapeInfo {
         transform: matrix.as_ref(),
         vertices: &vertices,
         indices: &indices,

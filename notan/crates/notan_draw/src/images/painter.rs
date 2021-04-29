@@ -3,40 +3,47 @@ use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 
 //language=glsl
-const SHAPES_VERTEX: ShaderSource = vertex_shader! {
+const IMAGE_VERTEX: ShaderSource = vertex_shader! {
     r#"
     #version 450
     layout(location = 0) in vec2 a_pos;
-    layout(location = 1) in vec4 a_color;
+    layout(location = 1) in vec2 a_uvs;
+    layout(location = 2) in vec4 a_color;
 
     layout(location = 0) out vec4 v_color;
+    layout(location = 1) out vec2 v_uvs;
     layout(set = 0, binding = 0) uniform Locals {
         mat4 u_projection;
     };
 
     void main() {
         v_color = a_color;
+        v_uvs = a_uvs;
         gl_Position = u_projection * vec4(a_pos, 0.0, 1.0);
     }
     "#
 };
 
 //language=glsl
-const SHAPES_FRAGMENT: ShaderSource = fragment_shader! {
+const IMAGE_FRAGMENT: ShaderSource = fragment_shader! {
     r#"
     #version 450
     precision mediump float;
 
-    layout(location = 0) in vec4 v_color;
+    layout(location = 0) in vec2 v_uvs;
+    layout(location = 1) in vec4 v_color;
+
+    layout(set = 0, binding = 0) uniform sampler2D u_texture;
+
     layout(location = 0) out vec4 color;
 
     void main() {
-        color = v_color;
+        color = texture(u_texture, v_uvs) * v_color;
     }
     "#
 };
 
-pub(crate) struct ShapePainter {
+pub(crate) struct ImagePainter {
     vbo: Buffer<f32>,
     ebo: Buffer<u32>,
     ubo: Buffer<f32>,
@@ -44,14 +51,15 @@ pub(crate) struct ShapePainter {
     clear_options: ClearOptions,
 }
 
-impl ShapePainter {
+impl ImagePainter {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let pipeline = device.create_pipeline(
-            &SHAPES_VERTEX,
-            &SHAPES_FRAGMENT,
+            &IMAGE_VERTEX,
+            &IMAGE_FRAGMENT,
             &[
                 VertexAttr::new(0, VertexFormat::Float2),
-                VertexAttr::new(1, VertexFormat::Float4),
+                VertexAttr::new(1, VertexFormat::Float2),
+                VertexAttr::new(2, VertexFormat::Float4),
             ],
             PipelineOptions {
                 color_blend: Some(BlendMode::NORMAL),
@@ -70,12 +78,14 @@ impl ShapePainter {
 
     pub fn push(&mut self, renderer: &mut Renderer, batch: &DrawBatch) {
         match batch {
-            DrawBatch::Shape {
+            DrawBatch::Image {
+                texture,
                 pipeline,
                 vertices,
                 indices,
             } => {
                 renderer.set_pipeline(&self.pipeline);
+
                 {
                     let mut data = self.vbo.data_ptr().write();
                     data.clear();
@@ -93,6 +103,7 @@ impl ShapePainter {
                     );
                 }
 
+                renderer.bind_texture(0, texture);
                 renderer.bind_vertex_buffer(&self.vbo);
                 renderer.bind_index_buffer(&self.ebo);
                 renderer.bind_uniform_buffer(&self.ubo);

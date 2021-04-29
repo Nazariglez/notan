@@ -13,6 +13,12 @@ pub(crate) enum DrawBatch {
         vertices: Vec<f32>,
         indices: Vec<u32>,
     },
+    Image {
+        pipeline: Option<Pipeline>,
+        vertices: Vec<f32>,
+        indices: Vec<u32>,
+        texture: Texture,
+    },
 }
 
 impl DrawBatch {
@@ -26,6 +32,13 @@ impl DrawBatch {
     pub fn is_shape(&self) -> bool {
         match self {
             Self::Shape { .. } => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_image(&self) -> bool {
+        match self {
+            Self::Image { .. } => true,
             _ => false,
         }
     }
@@ -70,7 +83,45 @@ impl Draw2 {
         self.background = Some(color);
     }
 
-    pub fn shape<'a>(&mut self, info: &ShapeInfo<'a>) {
+    pub fn add_image<'a>(&mut self, info: &ImageInfo<'a>) {
+        if !self.current_batch.is_image() {
+            //TODO check different image
+            let old = std::mem::replace(
+                &mut self.current_batch,
+                DrawBatch::Image {
+                    pipeline: None,
+                    vertices: vec![],
+                    indices: vec![],
+                    texture: info.texture.clone(),
+                },
+            );
+            if !old.is_none() {
+                self.batches.push(old);
+            }
+        }
+
+        let global_matrix = *self.transform.matrix();
+        let matrix = match info.transform {
+            Some(m) => *m * global_matrix,
+            _ => global_matrix,
+        };
+
+        match &mut self.current_batch {
+            DrawBatch::Image {
+                texture,
+                vertices,
+                indices,
+                ..
+            } => {
+                let last_index = (vertices.len() as u32) / 8;
+                add_indices(indices, info.indices, last_index);
+                add_image_vertices(vertices, info.vertices, matrix, self.alpha);
+            }
+            _ => {}
+        }
+    }
+
+    pub fn add_shape<'a>(&mut self, info: &ShapeInfo<'a>) {
         //new batch if pipelines changes, otherwise add to the current one the vertices
         if !self.current_batch.is_shape() {
             let old = std::mem::replace(
@@ -96,9 +147,9 @@ impl Draw2 {
             DrawBatch::Shape {
                 vertices, indices, ..
             } => {
-                let last_index = (vertices.len() as u32) / 6;
+                let last_index = (vertices.len() as u32) / 8;
                 add_indices(indices, info.indices, last_index);
-                add_vertices(vertices, info.vertices, matrix, self.alpha);
+                add_shape_vertices(vertices, info.vertices, matrix, self.alpha);
             }
             _ => {}
         }
@@ -106,7 +157,29 @@ impl Draw2 {
 }
 
 #[inline]
-fn add_vertices(to: &mut Vec<f32>, from: &[f32], matrix: Mat3, alpha: f32) {
+fn add_image_vertices(to: &mut Vec<f32>, from: &[f32], matrix: Mat3, alpha: f32) {
+    let computed = (0..from.len())
+        .step_by(8)
+        .map(|i| {
+            let xyz = matrix * Vec3::new(from[i], from[i + 1], 1.0);
+            [
+                xyz.x,
+                xyz.y,
+                from[i + 2],         //uv1
+                from[i + 3],         //uv2
+                from[i + 4],         //r
+                from[i + 5],         //g
+                from[i + 6],         //b
+                from[i + 7] * alpha, //a
+            ]
+        })
+        .collect::<Vec<_>>()
+        .concat();
+    to.extend(computed);
+}
+
+#[inline]
+fn add_shape_vertices(to: &mut Vec<f32>, from: &[f32], matrix: Mat3, alpha: f32) {
     let computed = (0..from.len())
         .step_by(6)
         .map(|i| {
@@ -128,6 +201,13 @@ fn add_vertices(to: &mut Vec<f32>, from: &[f32], matrix: Mat3, alpha: f32) {
 #[inline]
 fn add_indices(to: &mut Vec<u32>, from: &[u32], last_index: u32) {
     to.extend(from.iter().map(|i| i + last_index).collect::<Vec<_>>());
+}
+
+pub struct ImageInfo<'a> {
+    pub texture: &'a Texture,
+    pub transform: Option<&'a Mat3>,
+    pub vertices: &'a [f32],
+    pub indices: &'a [u32],
 }
 
 pub struct ShapeInfo<'a> {

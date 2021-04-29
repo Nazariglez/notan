@@ -166,7 +166,7 @@ impl DrawProcess for Path {
             TessMode::Stroke => stroke_lyon_path(&path, color, &stroke_options),
         };
 
-        draw.shape(&ShapeInfo {
+        draw.add_shape(&ShapeInfo {
             transform: matrix.as_ref(),
             vertices: &vertices,
             indices: &indices,
