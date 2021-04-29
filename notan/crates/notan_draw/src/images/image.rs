@@ -4,11 +4,14 @@ use crate::transform::{DrawTransform, Transform};
 use glam::Mat3;
 use notan_graphics::color::Color;
 use notan_graphics::Texture;
+use notan_math::Rect;
 
 pub struct Image<'a> {
     matrix: Option<Mat3>,
     texture: &'a Texture,
     pos: (f32, f32),
+    size: Option<(f32, f32)>,
+    crop: Option<Rect>,
     color: Color,
     alpha: f32,
 }
@@ -17,16 +20,34 @@ impl<'a> Image<'a> {
     pub fn new(texture: &'a Texture) -> Self {
         Self {
             matrix: None,
-            texture: texture,
+            texture,
             pos: (0.0, 0.0),
             color: Color::WHITE,
             alpha: 1.0,
+            size: None,
+            crop: None,
         }
     }
 
-    //todo origin?
     pub fn position(&mut self, x: f32, y: f32) -> &mut Self {
         self.pos = (x, y);
+        self
+    }
+
+    pub fn size(&mut self, width: f32, height: f32) -> &mut Self {
+        self.size = Some((width, height));
+        self
+    }
+
+    pub fn crop(&mut self, xy: (f32, f32), size: (f32, f32)) -> &mut Self {
+        let (x, y) = xy;
+        let (width, height) = size;
+        self.crop = Some(Rect {
+            x,
+            y,
+            width,
+            height,
+        });
         self
     }
 
@@ -55,23 +76,48 @@ impl DrawProcess for Image<'_> {
             color,
             matrix,
             alpha,
+            size,
+            crop,
             ..
         } = self;
 
         let c = color.with_alpha(color.a * alpha);
+        let frame = texture.frame();
 
-        let ww = texture.base_width();
-        let hh = texture.base_height();
-
+        let (ww, hh) = size.unwrap_or_else(|| (frame.width, frame.height));
         let x2 = x1 + ww;
         let y2 = y1 + hh;
 
+        let Rect {
+            x: sx,
+            y: sy,
+            width: sw,
+            height: sh,
+        } = crop.map_or_else(
+            || *frame,
+            |mut r| {
+                r.x += frame.x;
+                r.y += frame.y;
+                r
+            },
+        );
+
+        let (u1, v1, u2, v2) = {
+            let base_width = texture.base_width();
+            let base_height = texture.base_height();
+            let u1 = sx / base_width;
+            let v1 = sy / base_height;
+            let u2 = (sx + sw) / base_width;
+            let v2 = (sy + sh) / base_height;
+            (u1, v1, u2, v2)
+        };
+
         #[rustfmt::skip]
         let vertices = [
-            x1, y1, 0.0, 0.0, c.r, c.g, c.b, c.a,
-            x2, y1, 1.0, 0.0, c.r, c.g, c.b, c.a,
-            x1, y2, 0.0, 1.0, c.r, c.g, c.b, c.a,
-            x2, y2, 1.0, 1.0, c.r, c.g, c.b, c.a,
+            x1, y1, u1, v1, c.r, c.g, c.b, c.a,
+            x2, y1, u2, v1, c.r, c.g, c.b, c.a,
+            x1, y2, u1, v2, c.r, c.g, c.b, c.a,
+            x2, y2, u2, v2, c.r, c.g, c.b, c.a,
         ];
 
         draw.add_image(&ImageInfo {

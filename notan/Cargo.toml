@@ -11,6 +11,7 @@ glam = "0.13"
 notan_log = { path = "./crates/notan_log" }
 notan_app = { path = "./crates/notan_app" }
 notan_macro = { path = "crates/notan_macro" }
+notan_math = { path = "./crates/notan_math" }
 notan_default_backend = { path = "./crates/notan_default_backend", optional = true }
 
 [workspace]

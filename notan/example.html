@@ -30,7 +30,6 @@
 </head>
 <body>
 <script src="http://mrdoob.github.io/stats.js/build/stats.min.js"></script>
-<!--<script src="examplesssets/spirv_cross_wrapper_glsl.js"></script>-->
 <script>
     var stats = new Stats();
     stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -43,6 +42,10 @@
     function se() {
         stats.end();
     }
+
+    function bunnies(num) {
+        window.document.querySelector("#bunnies").innerHTML = num;
+    }
 </script>
 <script src="./{{ EXAMPLE }}/{{ EXAMPLE }}.js"></script>
 <script>
@@ -52,6 +55,9 @@
 </script>
 <div id="container">
     <canvas id="notan_canvas"></canvas>
+    <div>
+        <div>Bunnies:</div> <div id="bunnies">0</div>
+    </div>
 </div>
 </body>
 </html>

@@ -30,6 +30,11 @@ pub trait DrawTransform {
         self
     }
 
+    #[inline]
+    fn rotate_degree(&mut self, deg: f32) -> &mut Self {
+        self.rotate(deg * notan_math::DEG_TO_RAD)
+    }
+
     fn skew(&mut self, x: f32, y: f32) -> &mut Self {
         let old = self.matrix().unwrap_or_else(|| Mat3::identity());
 
@@ -53,6 +58,10 @@ pub trait DrawTransform {
         let matrix = rotate * Mat3::from_translation(Vec2::new(-point.0, -point.1));
         *self.matrix() = Some(matrix);
         self
+    }
+
+    fn rotate_degree_from(&mut self, point: (f32, f32), deg: f32) -> &mut Self {
+        self.rotate_from(point, deg * notan_math::DEG_TO_RAD)
     }
 
     fn scale_from(&mut self, point: (f32, f32), scale: (f32, f32)) -> &mut Self {
