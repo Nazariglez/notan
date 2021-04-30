@@ -3,9 +3,8 @@ use notan::app::config::WindowConfig;
 use notan::app::graphics::prelude::*;
 use notan::app::{App, AppBuilder, AppFlow, Graphics, Plugins, *};
 use notan::log;
-use notan::app::mouse::MouseButton;
+use notan::math::Random;
 use notan::prelude::*;
-use notan::math::*;
 use notan::{fragment_shader, vertex_shader};
 use wasm_bindgen::prelude::*;
 
@@ -43,17 +42,19 @@ impl State {
         Self {
             texture,
             rng: Random::default(),
-            bunnies: vec![]
+            bunnies: vec![],
         }
     }
 
     fn spawn(&mut self, n: i32) {
-        (0..n).for_each(|_| self.bunnies.push(Bunny {
-            x: 0.0,
-            y: 0.0,
-            speed_x: self.rng.gen_range(0.0, 10.0),
-            speed_y: self.rng.gen_range(-5.0, 5.0),
-        }));
+        (0..n).for_each(|_| {
+            self.bunnies.push(Bunny {
+                x: 0.0,
+                y: 0.0,
+                speed_x: self.rng.gen_range(0.0, 10.0),
+                speed_y: self.rng.gen_range(-5.0, 5.0),
+            })
+        });
 
         bunnies(self.bunnies.len());
     }
@@ -66,8 +67,8 @@ fn init(gfx: &mut Graphics) -> State {
 }
 
 fn update(app: &mut App, state: &mut State) {
-    if app.mouse.is_down(MouseButton::Left) {
-       state.spawn(50);
+    if app.mouse.left_is_down() {
+        state.spawn(50);
     }
 
     for b in &mut state.bunnies {
@@ -99,11 +100,9 @@ fn update(app: &mut App, state: &mut State) {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw2();
     draw.background(Color::new(0.1, 0.2, 0.3, 1.0));
-    state.bunnies
-        .iter()
-        .for_each(|b| {
-            draw.image(&state.texture).translate(b.x, b.y);
-        });
+    state.bunnies.iter().for_each(|b| {
+        draw.image(&state.texture).position(b.x, b.y);
+    });
 
     gfx.render(&draw);
 }
@@ -116,7 +115,6 @@ fn main() -> Result<(), String> {
         .draw(draw)
         .build()
 }
-
 
 struct StatsPlugin;
 impl Plugin for StatsPlugin {

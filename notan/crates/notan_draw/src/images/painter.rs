@@ -1,4 +1,5 @@
 use crate::draw2::DrawBatch;
+use glam::Mat4;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 
@@ -76,7 +77,7 @@ impl ImagePainter {
         })
     }
 
-    pub fn push(&mut self, renderer: &mut Renderer, batch: &DrawBatch) {
+    pub fn push(&mut self, renderer: &mut Renderer, batch: &DrawBatch, projection: &Mat4) {
         match batch {
             DrawBatch::Image {
                 texture,
@@ -97,10 +98,9 @@ impl ImagePainter {
                     data.extend(indices);
                 }
                 {
-                    self.ubo.data_mut().copy_from_slice(
-                        &glam::Mat4::orthographic_lh(0.0, 800.0, 600.0, 0.0, -1.0, 1.0)
-                            .to_cols_array(),
-                    );
+                    self.ubo
+                        .data_mut()
+                        .copy_from_slice(&projection.to_cols_array());
                 }
 
                 renderer.bind_texture(0, texture);

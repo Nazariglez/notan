@@ -68,7 +68,7 @@ impl ShapePainter {
         })
     }
 
-    pub fn push(&mut self, renderer: &mut Renderer, batch: &DrawBatch) {
+    pub fn push(&mut self, renderer: &mut Renderer, batch: &DrawBatch, projection: &glam::Mat4) {
         match batch {
             DrawBatch::Shape {
                 pipeline,
@@ -87,10 +87,9 @@ impl ShapePainter {
                     data.extend(indices);
                 }
                 {
-                    self.ubo.data_mut().copy_from_slice(
-                        &glam::Mat4::orthographic_lh(0.0, 800.0, 600.0, 0.0, -1.0, 1.0)
-                            .to_cols_array(),
-                    );
+                    self.ubo
+                        .data_mut()
+                        .copy_from_slice(&projection.to_cols_array());
                 }
 
                 renderer.bind_vertex_buffer(&self.vbo);

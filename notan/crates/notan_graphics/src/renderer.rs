@@ -94,6 +94,10 @@ impl Renderer {
         self.commands.push(Commands::Draw { offset, count })
     }
 
+    /*pub fn draw_instanced(&mut self) {
+
+    }*/
+
     pub fn bind_texture(&mut self, location: u32, texture: &Texture) {
         self.bind_texture_slot(0, location, texture);
     }

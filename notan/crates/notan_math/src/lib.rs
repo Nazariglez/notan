@@ -1,9 +1,13 @@
 mod constants;
-mod rect;
 mod random;
+mod rect;
 
-pub use random::*;
 pub use constants::*;
-pub use rect::*;
 pub use rand;
 pub use rand_pcg;
+pub use random::*;
+pub use rect::*;
+
+pub mod prelude {
+    pub use super::random::*;
+}

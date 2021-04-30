@@ -1,7 +1,7 @@
 use crate::manager::DrawManager;
 use crate::transform::Transform;
 use crate::DrawRenderer;
-use glam::{Mat3, Vec2, Vec3};
+use glam::{Mat3, Mat4, Vec2, Vec3};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 
@@ -52,10 +52,13 @@ pub struct Draw2 {
     pub(crate) batches: Vec<DrawBatch>,
     pub(crate) current_batch: DrawBatch,
     transform: Transform,
+    base_projection: Mat4,
+    projection: Option<Mat4>,
+    size: (f32, f32),
 }
 
 impl Draw2 {
-    pub fn new() -> Self {
+    pub fn new(width: i32, height: i32) -> Self {
         Draw2 {
             initialized: false,
             color: Color::WHITE,
@@ -64,7 +67,42 @@ impl Draw2 {
             batches: vec![],
             current_batch: DrawBatch::None,
             transform: Transform::new(),
+            base_projection: glam::Mat4::orthographic_lh(
+                0.0,
+                width as _,
+                height as _,
+                0.0,
+                -1.0,
+                1.0,
+            ),
+            projection: None,
+            size: (width as _, height as _),
         }
+    }
+
+    pub fn set_size(&mut self, width: f32, height: f32) {
+        self.size = (width, height);
+        self.base_projection = glam::Mat4::orthographic_lh(0.0, width, height, 0.0, -1.0, 1.0);
+    }
+
+    pub fn size(&self) -> (f32, f32) {
+        self.size
+    }
+
+    pub fn width(&self) -> f32 {
+        self.size.0
+    }
+
+    pub fn height(&self) -> f32 {
+        self.size.1
+    }
+
+    pub fn set_projection(&mut self, matrix: Option<Mat4>) {
+        self.projection = matrix;
+    }
+
+    pub fn projection(&self) -> Mat4 {
+        self.projection.unwrap_or_else(|| self.base_projection)
     }
 
     pub fn set_alpha(&mut self, alpha: f32) {
@@ -154,6 +192,12 @@ impl Draw2 {
             _ => {}
         }
     }
+
+    /*
+    pub fn add_instanced<'a>(&mut self, info: &InstancedInfo<'a>) {
+        //provide a way to draw images with draw_instanced
+    }
+     */
 }
 
 #[inline]

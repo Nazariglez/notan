@@ -1,17 +1,17 @@
 use rand;
-use rand_pcg::Pcg32;
-use rand::{SeedableRng};
-use std::ops::{Deref, DerefMut};
 pub use rand::Rng;
+use rand::SeedableRng;
+use rand_pcg::Pcg32;
+use std::ops::{Deref, DerefMut};
 
 pub struct Random {
-    rng: Pcg32
+    rng: Pcg32,
 }
 
 impl Random {
     pub fn new(seed: u64) -> Self {
         Self {
-            rng: Pcg32::seed_from_u64(seed)
+            rng: Pcg32::seed_from_u64(seed),
         }
     }
 

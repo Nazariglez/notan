@@ -47,7 +47,7 @@ impl DrawManager {
     }
 
     pub fn create_draw2(&self, width: i32, height: i32) -> Draw2 {
-        Draw2::new() //TODO width heigh
+        Draw2::new(width, height)
     }
 
     #[inline]
@@ -106,12 +106,17 @@ fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
         ..Default::default()
     }));
     //TODO, if this last batch type was different we should end and begin the pass again
+    let projection = draw.projection();
     draw.batches.iter().for_each(|b| match b {
         DrawBatch::Shape { .. } => {
-            manager.shape_painter.push(&mut manager.renderer, b);
+            manager
+                .shape_painter
+                .push(&mut manager.renderer, b, &projection);
         }
         DrawBatch::Image { .. } => {
-            manager.image_painter.push(&mut manager.renderer, b);
+            manager
+                .image_painter
+                .push(&mut manager.renderer, b, &projection);
         }
         _ => {}
     });
@@ -119,12 +124,12 @@ fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
         DrawBatch::Shape { .. } => {
             manager
                 .shape_painter
-                .push(&mut manager.renderer, &draw.current_batch);
+                .push(&mut manager.renderer, &draw.current_batch, &projection);
         }
         DrawBatch::Image { .. } => {
             manager
                 .image_painter
-                .push(&mut manager.renderer, &draw.current_batch);
+                .push(&mut manager.renderer, &draw.current_batch, &projection);
         }
         _ => {}
     }
