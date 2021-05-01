@@ -1,6 +1,7 @@
 use super::color_batcher::*;
 use super::draw::{Draw, DrawCommands, GraphicCommands};
 use super::images::ImagePainter;
+use super::patterns::PatternPainter;
 use super::shapes::ShapePainter;
 use crate::draw2::{Draw2, DrawBatch};
 use glam::Mat4;
@@ -12,6 +13,7 @@ pub struct DrawManager {
     current_projection: [f32; 16],
     shape_painter: ShapePainter,
     image_painter: ImagePainter,
+    pattern_painter: PatternPainter,
     renderer: Renderer,
 }
 
@@ -20,6 +22,7 @@ impl DrawManager {
         let color_batcher = ColorBatcher::new(device)?;
         let shape_painter = ShapePainter::new(device)?;
         let image_painter = ImagePainter::new(device)?;
+        let pattern_painter = PatternPainter::new(device)?;
         let renderer = device.create_renderer();
         Ok(Self {
             commands: vec![],
@@ -27,6 +30,7 @@ impl DrawManager {
             current_projection: [0.0; 16],
             shape_painter,
             image_painter,
+            pattern_painter,
             renderer,
         })
     }
@@ -103,6 +107,7 @@ pub enum DrawMode {
 fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
     manager.image_painter.clear();
     manager.shape_painter.clear();
+    manager.pattern_painter.clear();
 
     manager.renderer.begin(Some(&ClearOptions {
         color: draw.background.clone(),
@@ -121,6 +126,11 @@ fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
                 .image_painter
                 .push(&mut manager.renderer, b, &projection);
         }
+        DrawBatch::Pattern { .. } => {
+            manager
+                .pattern_painter
+                .push(&mut manager.renderer, b, &projection);
+        }
         _ => {}
     });
     match &draw.current_batch {
@@ -132,6 +142,11 @@ fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
         DrawBatch::Image { .. } => {
             manager
                 .image_painter
+                .push(&mut manager.renderer, &draw.current_batch, &projection);
+        }
+        DrawBatch::Pattern { .. } => {
+            manager
+                .pattern_painter
                 .push(&mut manager.renderer, &draw.current_batch, &projection);
         }
         _ => {}

@@ -5,6 +5,7 @@ mod draw2;
 mod geometry;
 mod images;
 mod manager;
+mod patterns;
 mod shapes;
 mod transform;
 
@@ -13,5 +14,6 @@ pub use draw::*;
 pub use geometry::*;
 pub use images::*;
 pub use manager::*;
+pub use patterns::*;
 pub use shapes::*;
 pub use transform::*;

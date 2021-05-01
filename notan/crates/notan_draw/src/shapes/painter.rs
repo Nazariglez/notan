@@ -103,7 +103,7 @@ impl ShapePainter {
                 renderer.bind_vertex_buffer(&self.vbo);
                 renderer.bind_index_buffer(&self.ebo);
                 renderer.bind_uniform_buffer(&self.ubo);
-                renderer.draw(0, indices.len() as i32);
+                renderer.draw(offset as _, indices.len() as _);
             }
             _ => {}
         }

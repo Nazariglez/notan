@@ -10,17 +10,21 @@ const PATTERN_VERTEX: ShaderSource = vertex_shader! {
     #version 450
     layout(location = 0) in vec2 a_pos;
     layout(location = 1) in vec2 a_uvs;
-    layout(location = 2) in vec4 a_color;
+    layout(location = 2) in vec4 a_frame;
+    layout(location = 3) in vec4 a_color;
 
-    layout(location = 0) out vec4 v_color;
-    layout(location = 1) out vec2 v_uvs;
+    layout(location = 0) out vec2 v_uvs;
+    layout(location = 1) out vec4 v_frame;
+    layout(location = 2) out vec4 v_color;
+
     layout(set = 0, binding = 0) uniform Locals {
         mat4 u_projection;
     };
 
     void main() {
-        v_color = a_color;
         v_uvs = a_uvs;
+        v_frame = a_frame;
+        v_color = a_color;
         gl_Position = u_projection * vec4(a_pos, 0.0, 1.0);
     }
     "#
@@ -33,14 +37,16 @@ const PATTER_FRAGMENT: ShaderSource = fragment_shader! {
     precision mediump float;
 
     layout(location = 0) in vec2 v_uvs;
-    layout(location = 1) in vec4 v_color;
+    layout(location = 1) in vec4 v_frame;
+    layout(location = 2) in vec4 v_color;
 
     layout(set = 0, binding = 0) uniform sampler2D u_texture;
 
     layout(location = 0) out vec4 color;
 
     void main() {
-        color = texture(u_texture, v_uvs) * v_color;
+        vec2 coords = v_frame.xy + fract(v_uvs) * v_frame.zw;
+        color = texture(u_texture, coords) * v_color;
     }
     "#
 };
@@ -50,7 +56,8 @@ pub(crate) struct PatternPainter {
     ebo: Buffer<u32>,
     ubo: Buffer<f32>,
     pipeline: Pipeline,
-    clear_options: ClearOptions,
+    count_vertices: usize,
+    count_indices: usize,
 }
 
 impl PatternPainter {
@@ -62,6 +69,7 @@ impl PatternPainter {
                 VertexAttr::new(0, VertexFormat::Float2),
                 VertexAttr::new(1, VertexFormat::Float2),
                 VertexAttr::new(2, VertexFormat::Float4),
+                VertexAttr::new(3, VertexFormat::Float4),
             ],
             PipelineOptions {
                 color_blend: Some(BlendMode::NORMAL),
@@ -74,13 +82,14 @@ impl PatternPainter {
             ebo: device.create_index_buffer(vec![])?,
             ubo: device.create_uniform_buffer(0, vec![0.0; 16])?,
             pipeline,
-            clear_options: ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0)),
+            count_indices: 0,
+            count_vertices: 0,
         })
     }
 
     pub fn push(&mut self, renderer: &mut Renderer, batch: &DrawBatch, projection: &Mat4) {
         match batch {
-            DrawBatch::Image {
+            DrawBatch::Pattern {
                 texture,
                 pipeline,
                 vertices,
@@ -88,16 +97,21 @@ impl PatternPainter {
             } => {
                 renderer.set_pipeline(&self.pipeline);
 
-                {
-                    let mut data = self.vbo.data_ptr().write();
-                    data.clear();
-                    data.extend(vertices);
-                }
+                let len = (self.count_vertices / self.pipeline.offset()) as u32;
+                let offset = self.count_indices;
+
                 {
                     let mut data = self.ebo.data_ptr().write();
-                    data.clear();
-                    data.extend(indices);
+                    data.extend(indices.iter().map(|i| i + len));
+                    self.count_indices = data.len();
                 }
+
+                {
+                    let mut data = self.vbo.data_ptr().write();
+                    data.extend(vertices);
+                    self.count_vertices = data.len();
+                }
+
                 {
                     self.ubo
                         .data_mut()
@@ -108,9 +122,16 @@ impl PatternPainter {
                 renderer.bind_vertex_buffer(&self.vbo);
                 renderer.bind_index_buffer(&self.ebo);
                 renderer.bind_uniform_buffer(&self.ubo);
-                renderer.draw(0, indices.len() as i32);
+                renderer.draw(offset as _, indices.len() as i32);
             }
             _ => {}
         }
+    }
+
+    pub fn clear(&mut self) {
+        self.count_vertices = 0;
+        self.count_indices = 0;
+        self.vbo.data_ptr().write().clear();
+        self.ebo.data_ptr().write().clear();
     }
 }

@@ -76,56 +76,53 @@ impl DrawProcess for Pattern<'_> {
             color,
             matrix,
             alpha,
-            size,
-            scale,
-            offset,
+            size: (width, height),
+            scale: (sx, sy),
+            offset: (ox, oy),
             ..
         } = self;
-        //
-        // let c = color.with_alpha(color.a * alpha);
-        // let frame = texture.frame();
-        //
-        // let (ww, hh) = size.unwrap_or_else(|| (frame.width, frame.height));
-        // let x2 = x1 + ww;
-        // let y2 = y1 + hh;
-        //
-        // let Rect {
-        //     x: sx,
-        //     y: sy,
-        //     width: sw,
-        //     height: sh,
-        // } = crop.map_or_else(
-        //     || *frame,
-        //     |mut r| {
-        //         r.x += frame.x;
-        //         r.y += frame.y;
-        //         r
-        //     },
-        // );
-        //
-        // let (u1, v1, u2, v2) = {
-        //     let base_width = texture.base_width();
-        //     let base_height = texture.base_height();
-        //     let u1 = sx / base_width;
-        //     let v1 = sy / base_height;
-        //     let u2 = (sx + sw) / base_width;
-        //     let v2 = (sy + sh) / base_height;
-        //     (u1, v1, u2, v2)
-        // };
-        //
-        // #[rustfmt::skip]
-        //     let vertices = [
-        //     x1, y1, u1, v1, c.r, c.g, c.b, c.a,
-        //     x2, y1, u2, v1, c.r, c.g, c.b, c.a,
-        //     x1, y2, u1, v2, c.r, c.g, c.b, c.a,
-        //     x2, y2, u2, v2, c.r, c.g, c.b, c.a,
-        // ];
-        //
-        // draw.add_image(&ImageInfo {
-        //     texture: self.texture,
-        //     transform: self.matrix.as_ref(),
-        //     vertices: &vertices,
-        //     indices: &[0, 1, 2, 2, 1, 3],
-        // });
+
+        let c = color.with_alpha(color.a * alpha);
+        let frame = texture.frame();
+
+        let x2 = x1 + width;
+        let y2 = y1 + height;
+
+        let sw = frame.width * sx;
+        let sh = frame.height * sy;
+
+        let ox = ((ox * sx) / sw).fract();
+        let oy = ((oy * sy) / sh).fract();
+
+        let uv_w = width / sw;
+        let uv_h = height / sh;
+
+        let u1 = ox;
+        let v1 = oy;
+        let u2 = uv_w + ox;
+        let v2 = uv_h + oy;
+
+        let base_width = texture.base_width();
+        let base_height = texture.base_height();
+
+        let fx = frame.x / base_width;
+        let fy = frame.y / base_height;
+        let fw = frame.width / base_width;
+        let fh = frame.height / base_height;
+
+        #[rustfmt::skip]
+        let vertices = [
+            x1, y1, u1, v1, fx, fy, fw, fh, c.r, c.g, c.b, c.a,
+            x2, y1, u2, v1, fx, fy, fw, fh, c.r, c.g, c.b, c.a,
+            x1, y2, u1, v2, fx, fy, fw, fh, c.r, c.g, c.b, c.a,
+            x2, y2, u2, v2, fx, fy, fw, fh, c.r, c.g, c.b, c.a,
+        ];
+
+        draw.add_pattern(&ImageInfo {
+            texture: self.texture,
+            transform: self.matrix.as_ref(),
+            vertices: &vertices,
+            indices: &[0, 1, 2, 2, 1, 3],
+        });
     }
 }

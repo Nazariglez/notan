@@ -19,6 +19,12 @@ pub(crate) enum DrawBatch {
         indices: Vec<u32>,
         texture: Texture,
     },
+    Pattern {
+        pipeline: Option<Pipeline>,
+        vertices: Vec<f32>,
+        indices: Vec<u32>,
+        texture: Texture,
+    },
 }
 
 impl DrawBatch {
@@ -127,8 +133,6 @@ impl Draw2 {
             _ => true,
         };
 
-        // notan_log::info!("{} {:?}",info.texture.id(), needs_new_batch);
-
         if needs_new_batch {
             let old = std::mem::replace(
                 &mut self.current_batch,
@@ -191,9 +195,51 @@ impl Draw2 {
             DrawBatch::Shape {
                 vertices, indices, ..
             } => {
-                let last_index = (vertices.len() as u32) / 8;
+                let last_index = (vertices.len() as u32) / 6;
                 add_indices(indices, info.indices, last_index);
                 add_shape_vertices(vertices, info.vertices, matrix, self.alpha);
+            }
+            _ => {}
+        }
+    }
+
+    pub fn add_pattern<'a>(&mut self, info: &ImageInfo<'a>) {
+        let needs_new_batch = match &self.current_batch {
+            DrawBatch::Pattern { texture, .. } => texture != info.texture,
+            _ => true,
+        };
+
+        if needs_new_batch {
+            let old = std::mem::replace(
+                &mut self.current_batch,
+                DrawBatch::Pattern {
+                    pipeline: None,
+                    vertices: vec![],
+                    indices: vec![],
+                    texture: info.texture.clone(),
+                },
+            );
+            if !old.is_none() {
+                self.batches.push(old);
+            }
+        }
+
+        let global_matrix = *self.transform.matrix();
+        let matrix = match info.transform {
+            Some(m) => *m * global_matrix,
+            _ => global_matrix,
+        };
+
+        match &mut self.current_batch {
+            DrawBatch::Pattern {
+                texture,
+                vertices,
+                indices,
+                ..
+            } => {
+                let last_index = (vertices.len() as u32) / 12;
+                add_indices(indices, info.indices, last_index);
+                add_pattern_vertices(vertices, info.vertices, matrix, self.alpha);
             }
             _ => {}
         }
@@ -204,6 +250,32 @@ impl Draw2 {
         //provide a way to draw images with draw_instanced
     }
      */
+}
+
+#[inline]
+fn add_pattern_vertices(to: &mut Vec<f32>, from: &[f32], matrix: Mat3, alpha: f32) {
+    let computed = (0..from.len())
+        .step_by(12)
+        .map(|i| {
+            let xyz = matrix * Vec3::new(from[i], from[i + 1], 1.0);
+            [
+                xyz.x,
+                xyz.y,
+                from[i + 2],          //uv1
+                from[i + 3],          //uv2
+                from[i + 4],          //fx
+                from[i + 5],          //fy
+                from[i + 6],          //fw
+                from[i + 7],          //fh
+                from[i + 8],          //r
+                from[i + 9],          //g
+                from[i + 10],         //b
+                from[i + 11] * alpha, //a
+            ]
+        })
+        .collect::<Vec<_>>()
+        .concat();
+    to.extend(computed);
 }
 
 #[inline]
