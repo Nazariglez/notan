@@ -41,7 +41,8 @@ pub(crate) struct ShapePainter {
     ebo: Buffer<u32>,
     ubo: Buffer<f32>,
     pipeline: Pipeline,
-    clear_options: ClearOptions,
+    count_vertices: usize,
+    count_indices: usize,
 }
 
 impl ShapePainter {
@@ -64,7 +65,8 @@ impl ShapePainter {
             ebo: device.create_index_buffer(vec![])?,
             ubo: device.create_uniform_buffer(0, vec![0.0; 16])?,
             pipeline,
-            clear_options: ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0)),
+            count_indices: 0,
+            count_vertices: 0,
         })
     }
 
@@ -76,16 +78,22 @@ impl ShapePainter {
                 indices,
             } => {
                 renderer.set_pipeline(&self.pipeline);
-                {
-                    let mut data = self.vbo.data_ptr().write();
-                    data.clear();
-                    data.extend(vertices);
-                }
+
+                let len = (self.count_vertices / self.pipeline.offset()) as u32;
+                let offset = self.count_indices;
+
                 {
                     let mut data = self.ebo.data_ptr().write();
-                    data.clear();
-                    data.extend(indices);
+                    data.extend(indices.iter().map(|i| i + len));
+                    self.count_indices = data.len();
                 }
+
+                {
+                    let mut data = self.vbo.data_ptr().write();
+                    data.extend(vertices);
+                    self.count_vertices = data.len();
+                }
+
                 {
                     self.ubo
                         .data_mut()
@@ -99,5 +107,12 @@ impl ShapePainter {
             }
             _ => {}
         }
+    }
+
+    pub fn clear(&mut self) {
+        self.count_vertices = 0;
+        self.count_indices = 0;
+        self.vbo.data_ptr().write().clear();
+        self.ebo.data_ptr().write().clear();
     }
 }

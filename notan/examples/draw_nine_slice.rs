@@ -1,7 +1,7 @@
 use notan::app::assets::*;
 use notan::app::config::WindowConfig;
 use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, DrawImages, Graphics, Plugins};
+use notan::app::{App, AppBuilder, DrawImages, DrawShapes, Graphics, Plugins};
 use notan::log;
 use notan::prelude::*;
 
@@ -56,6 +56,8 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
         state.img2.width() + state.count,
         state.img2.height() + state.count,
     );
+
+    draw.triangle((100.0, 100.0), (200.0, 100.0), (150.0, 200.0));
 
     gfx.render(&draw);
 }

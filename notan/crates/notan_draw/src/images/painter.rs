@@ -87,7 +87,6 @@ impl ImagePainter {
                 vertices,
                 indices,
             } => {
-                // renderer.begin(None);
                 renderer.set_pipeline(&self.pipeline);
 
                 let len = (self.count_vertices / self.pipeline.offset()) as u32;
