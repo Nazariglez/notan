@@ -1,0 +1,131 @@
+use crate::builder::DrawProcess;
+use crate::draw2::{Draw2, ImageInfo};
+use crate::transform::{DrawTransform, Transform};
+use glam::Mat3;
+use notan_graphics::color::Color;
+use notan_graphics::Texture;
+use notan_math::Rect;
+
+pub struct Pattern<'a> {
+    matrix: Option<Mat3>,
+    texture: &'a Texture,
+    pos: (f32, f32),
+    size: (f32, f32),
+    offset: (f32, f32),
+    scale: (f32, f32),
+    color: Color,
+    alpha: f32,
+}
+
+impl<'a> Pattern<'a> {
+    pub fn new(texture: &'a Texture) -> Self {
+        Self {
+            matrix: None,
+            texture,
+            pos: (0.0, 0.0),
+            color: Color::WHITE,
+            alpha: 1.0,
+            size: (texture.width(), texture.height()),
+            offset: (0.0, 0.0),
+            scale: (1.0, 1.0),
+        }
+    }
+
+    pub fn position(&mut self, x: f32, y: f32) -> &mut Self {
+        self.pos = (x, y);
+        self
+    }
+
+    pub fn size(&mut self, width: f32, height: f32) -> &mut Self {
+        self.size = (width, height);
+        self
+    }
+
+    pub fn image_scale(&mut self, x: f32, y: f32) -> &mut Self {
+        self.scale = (x, y);
+        self
+    }
+
+    pub fn image_offset(&mut self, x: f32, y: f32) -> &mut Self {
+        self.offset = (x, y);
+        self
+    }
+
+    pub fn color(&mut self, color: Color) -> &mut Self {
+        self.color = color;
+        self
+    }
+
+    pub fn alpha(&mut self, alpha: f32) -> &mut Self {
+        self.alpha = alpha;
+        self
+    }
+}
+
+impl DrawTransform for Pattern<'_> {
+    fn matrix(&mut self) -> &mut Option<Mat3> {
+        &mut self.matrix
+    }
+}
+
+impl DrawProcess for Pattern<'_> {
+    fn draw_process(self, draw: &mut Draw2) {
+        let Self {
+            pos: (x1, y1),
+            texture,
+            color,
+            matrix,
+            alpha,
+            size,
+            scale,
+            offset,
+            ..
+        } = self;
+        //
+        // let c = color.with_alpha(color.a * alpha);
+        // let frame = texture.frame();
+        //
+        // let (ww, hh) = size.unwrap_or_else(|| (frame.width, frame.height));
+        // let x2 = x1 + ww;
+        // let y2 = y1 + hh;
+        //
+        // let Rect {
+        //     x: sx,
+        //     y: sy,
+        //     width: sw,
+        //     height: sh,
+        // } = crop.map_or_else(
+        //     || *frame,
+        //     |mut r| {
+        //         r.x += frame.x;
+        //         r.y += frame.y;
+        //         r
+        //     },
+        // );
+        //
+        // let (u1, v1, u2, v2) = {
+        //     let base_width = texture.base_width();
+        //     let base_height = texture.base_height();
+        //     let u1 = sx / base_width;
+        //     let v1 = sy / base_height;
+        //     let u2 = (sx + sw) / base_width;
+        //     let v2 = (sy + sh) / base_height;
+        //     (u1, v1, u2, v2)
+        // };
+        //
+        // #[rustfmt::skip]
+        //     let vertices = [
+        //     x1, y1, u1, v1, c.r, c.g, c.b, c.a,
+        //     x2, y1, u2, v1, c.r, c.g, c.b, c.a,
+        //     x1, y2, u1, v2, c.r, c.g, c.b, c.a,
+        //     x2, y2, u2, v2, c.r, c.g, c.b, c.a,
+        // ];
+        //
+        // draw.add_image(&ImageInfo {
+        //     texture: self.texture,
+        //     transform: self.matrix.as_ref(),
+        //     vertices: &vertices,
+        //     indices: &[0, 1, 2, 2, 1, 3],
+        // });
+    }
+}

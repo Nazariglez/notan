@@ -216,6 +216,12 @@ impl Texture {
     }
 }
 
+impl std::cmp::PartialEq for Texture {
+    fn eq(&self, other: &Self) -> bool {
+        self.id() == other.id() && self.frame() == other.frame()
+    }
+}
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TextureFormat {
     Rgba,

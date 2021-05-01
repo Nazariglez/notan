@@ -122,8 +122,14 @@ impl Draw2 {
     }
 
     pub fn add_image<'a>(&mut self, info: &ImageInfo<'a>) {
-        if !self.current_batch.is_image() {
-            //TODO check different image
+        let needs_new_batch = match &self.current_batch {
+            DrawBatch::Image { texture, .. } => texture != info.texture,
+            _ => true,
+        };
+
+        // notan_log::info!("{} {:?}",info.texture.id(), needs_new_batch);
+
+        if needs_new_batch {
             let old = std::mem::replace(
                 &mut self.current_batch,
                 DrawBatch::Image {

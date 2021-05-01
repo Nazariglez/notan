@@ -16,24 +16,46 @@ extern "C" {
     fn se();
 }
 
-#[notan::main]
-fn main() -> Result<(), String> {
-    notan::init().set_plugin(StatsPlugin).draw(draw).build()
+struct State {
+    texture: Texture,
 }
 
-fn draw(gfx: &mut Graphics) {
+impl AppState for State {}
+
+#[notan::main]
+fn main() -> Result<(), String> {
+    notan::init_with(init)
+        .set_plugin(StatsPlugin)
+        .draw(draw)
+        .build()
+}
+
+fn init(gfx: &mut Graphics) -> State {
+    let image = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
+    State {
+        texture: gfx.create_texture(image).unwrap(),
+    }
+}
+
+fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw2();
-    draw.triangle((400.0, 100.0), (100.0, 500.0), (700.0, 500.0));
-    draw.triangle((400.0, 100.0), (100.0, 500.0), (700.0, 500.0))
-        .color(Color::RED)
-        .stroke(10.0);
-    draw.path()
-        .move_to(10.0, 10.0)
-        .line_to(590.0, 590.0)
-        .move_to(10.0, 590.0)
-        .line_to(590.0, 10.0)
+
+    draw.background(Color::new(0.1, 0.2, 0.3, 1.0));
+
+    draw.image(&state.texture)
         .color(Color::GREEN)
-        .stroke(5.0);
+        .crop(
+            (0.0, 0.0),
+            (state.texture.width() * 0.5, state.texture.height() * 0.5),
+        )
+        // .alpha(0.5)
+        .size(800.0, 600.0);
+
+    draw.image(&state.texture)
+        .color(Color::RED)
+        // .alpha(0.5)
+        .position(100.0, 100.0);
+
     gfx.render(&draw);
 }
 

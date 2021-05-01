@@ -1,10 +1,11 @@
+use super::pattern::Pattern;
 use crate::draw2::DrawBatch;
 use glam::Mat4;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 
 //language=glsl
-const IMAGE_VERTEX: ShaderSource = vertex_shader! {
+const PATTERN_VERTEX: ShaderSource = vertex_shader! {
     r#"
     #version 450
     layout(location = 0) in vec2 a_pos;
@@ -26,7 +27,7 @@ const IMAGE_VERTEX: ShaderSource = vertex_shader! {
 };
 
 //language=glsl
-const IMAGE_FRAGMENT: ShaderSource = fragment_shader! {
+const PATTER_FRAGMENT: ShaderSource = fragment_shader! {
     r#"
     #version 450
     precision mediump float;
@@ -44,20 +45,19 @@ const IMAGE_FRAGMENT: ShaderSource = fragment_shader! {
     "#
 };
 
-pub(crate) struct ImagePainter {
+pub(crate) struct PatternPainter {
     vbo: Buffer<f32>,
     ebo: Buffer<u32>,
     ubo: Buffer<f32>,
     pipeline: Pipeline,
-    count_vertices: usize,
-    count_indices: usize,
+    clear_options: ClearOptions,
 }
 
-impl ImagePainter {
+impl PatternPainter {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let pipeline = device.create_pipeline(
-            &IMAGE_VERTEX,
-            &IMAGE_FRAGMENT,
+            &PATTERN_VERTEX,
+            &PATTER_FRAGMENT,
             &[
                 VertexAttr::new(0, VertexFormat::Float2),
                 VertexAttr::new(1, VertexFormat::Float2),
@@ -74,8 +74,7 @@ impl ImagePainter {
             ebo: device.create_index_buffer(vec![])?,
             ubo: device.create_uniform_buffer(0, vec![0.0; 16])?,
             pipeline,
-            count_indices: 0,
-            count_vertices: 0,
+            clear_options: ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0)),
         })
     }
 
@@ -87,24 +86,18 @@ impl ImagePainter {
                 vertices,
                 indices,
             } => {
-                // renderer.begin(None);
                 renderer.set_pipeline(&self.pipeline);
-
-                let len = (self.count_vertices / self.pipeline.offset()) as u32;
-                let offset = self.count_indices;
-
-                {
-                    let mut data = self.ebo.data_ptr().write();
-                    data.extend(indices.iter().map(|i| i + len));
-                    self.count_indices = data.len();
-                }
 
                 {
                     let mut data = self.vbo.data_ptr().write();
+                    data.clear();
                     data.extend(vertices);
-                    self.count_vertices = data.len();
                 }
-
+                {
+                    let mut data = self.ebo.data_ptr().write();
+                    data.clear();
+                    data.extend(indices);
+                }
                 {
                     self.ubo
                         .data_mut()
@@ -115,17 +108,9 @@ impl ImagePainter {
                 renderer.bind_vertex_buffer(&self.vbo);
                 renderer.bind_index_buffer(&self.ebo);
                 renderer.bind_uniform_buffer(&self.ubo);
-                renderer.draw(offset as _, indices.len() as _);
+                renderer.draw(0, indices.len() as i32);
             }
             _ => {}
         }
-    }
-
-    pub fn clear(&mut self) {
-        self.count_vertices = 0;
-        self.count_indices = 0;
-        self.vbo.data_ptr().write().clear();
-        self.ebo.data_ptr().write().clear();
-        // self.ubo.data_mut().clear(); //this maybe is not necessary because it's replaced all the time
     }
 }

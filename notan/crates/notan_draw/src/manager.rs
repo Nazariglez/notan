@@ -101,6 +101,9 @@ pub enum DrawMode {
 }
 
 fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
+    manager.image_painter.clear();
+    //manager.shape_painter.clear();
+
     manager.renderer.begin(Some(&ClearOptions {
         color: draw.background.clone(),
         ..Default::default()

@@ -1180,6 +1180,7 @@ dependencies = [
  "bytemuck",
  "glam 0.10.2",
  "image",
+ "notan_log",
  "notan_macro",
  "notan_math",
  "parking_lot",
