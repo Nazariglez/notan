@@ -2,7 +2,8 @@ use notan::app::assets::*;
 use notan::app::config::WindowConfig;
 use notan::app::graphics::prelude::*;
 use notan::app::{
-    App, AppBuilder, DrawImages, DrawPattern, DrawShapes, DrawTransform, Graphics, Plugins,
+    App, AppBuilder, DrawCustomPipeline, DrawImages, DrawPattern, DrawShapes, DrawTransform,
+    Graphics, Plugins,
 };
 use notan::log;
 use notan::prelude::*;
@@ -120,7 +121,13 @@ fn update(state: &mut State) {
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw2();
-    draw.set_image_pipeline(&state.pipeline, &[&state.uniforms]);
+
+    //Set the custom pipelines for images
+    draw.image_pipeline()
+        .pipeline(&state.pipeline)
+        .uniform_buffer(&state.uniforms);
+
     draw.image(&state.img).position(100.0, 100.0);
+
     gfx.render(&draw);
 }

@@ -1,3 +1,4 @@
+pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::manager::DrawManager;
 use crate::transform::Transform;
 use crate::DrawRenderer;
@@ -9,18 +10,18 @@ use notan_graphics::prelude::*;
 pub(crate) enum DrawBatch {
     None,
     Shape {
-        pipeline: Option<CustomDrawPipeline>,
+        pipeline: Option<CustomPipeline>,
         vertices: Vec<f32>,
         indices: Vec<u32>,
     },
     Image {
-        pipeline: Option<CustomDrawPipeline>,
+        pipeline: Option<CustomPipeline>,
         vertices: Vec<f32>,
         indices: Vec<u32>,
         texture: Texture,
     },
     Pattern {
-        pipeline: Option<CustomDrawPipeline>,
+        pipeline: Option<CustomPipeline>,
         vertices: Vec<f32>,
         indices: Vec<u32>,
         texture: Texture,
@@ -50,18 +51,6 @@ impl DrawBatch {
     }
 }
 
-#[derive(Clone, Debug)]
-pub(crate) struct CustomDrawPipeline {
-    pub pipeline: Pipeline,
-    pub uniforms: Option<Vec<Buffer<f32>>>,
-}
-
-impl std::cmp::PartialEq for CustomDrawPipeline {
-    fn eq(&self, other: &Self) -> bool {
-        self.pipeline == other.pipeline && self.uniforms == other.uniforms
-    }
-}
-
 pub struct Draw2 {
     pub(crate) background: Option<Color>,
     pub(crate) initialized: bool,
@@ -73,10 +62,10 @@ pub struct Draw2 {
     base_projection: Mat4,
     projection: Option<Mat4>,
     size: (f32, f32),
-    pub(crate) shape_pipeline: Option<CustomDrawPipeline>,
-    pub(crate) image_pipeline: Option<CustomDrawPipeline>,
-    pub(crate) pattern_pipeline: Option<CustomDrawPipeline>,
-    pub(crate) text_pipeline: Option<CustomDrawPipeline>,
+    pub(crate) shape_pipeline: Option<CustomPipeline>,
+    pub(crate) image_pipeline: Option<CustomPipeline>,
+    pub(crate) pattern_pipeline: Option<CustomPipeline>,
+    pub(crate) text_pipeline: Option<CustomPipeline>,
 }
 
 impl Draw2 {
