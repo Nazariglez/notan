@@ -21,6 +21,12 @@ pub struct Pipeline {
     stride: usize,
 }
 
+impl std::cmp::PartialEq for Pipeline {
+    fn eq(&self, other: &Self) -> bool {
+        self.id() == other.id() && self.options == other.options
+    }
+}
+
 impl Pipeline {
     pub(crate) fn new(
         id: i32,

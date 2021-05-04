@@ -87,7 +87,7 @@ impl ColorBatcher {
             indices: vec![],
             vbo: device.create_vertex_buffer(vec![])?,
             ebo: device.create_index_buffer(vec![])?,
-            ubo: device.create_uniform_buffer(0, vec![0.0; 16])?,
+            ubo: device.create_uniform_buffer(0, "Locals", vec![0.0; 16])?,
             pipeline,
             clear_options: ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0)),
             index: 0,

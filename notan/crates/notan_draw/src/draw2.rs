@@ -9,18 +9,18 @@ use notan_graphics::prelude::*;
 pub(crate) enum DrawBatch {
     None,
     Shape {
-        pipeline: Option<Pipeline>,
+        pipeline: Option<CustomDrawPipeline>,
         vertices: Vec<f32>,
         indices: Vec<u32>,
     },
     Image {
-        pipeline: Option<Pipeline>,
+        pipeline: Option<CustomDrawPipeline>,
         vertices: Vec<f32>,
         indices: Vec<u32>,
         texture: Texture,
     },
     Pattern {
-        pipeline: Option<Pipeline>,
+        pipeline: Option<CustomDrawPipeline>,
         vertices: Vec<f32>,
         indices: Vec<u32>,
         texture: Texture,
@@ -50,6 +50,18 @@ impl DrawBatch {
     }
 }
 
+#[derive(Clone, Debug)]
+pub(crate) struct CustomDrawPipeline {
+    pub pipeline: Pipeline,
+    pub uniforms: Option<Vec<Buffer<f32>>>,
+}
+
+impl std::cmp::PartialEq for CustomDrawPipeline {
+    fn eq(&self, other: &Self) -> bool {
+        self.pipeline == other.pipeline && self.uniforms == other.uniforms
+    }
+}
+
 pub struct Draw2 {
     pub(crate) background: Option<Color>,
     pub(crate) initialized: bool,
@@ -61,6 +73,10 @@ pub struct Draw2 {
     base_projection: Mat4,
     projection: Option<Mat4>,
     size: (f32, f32),
+    pub(crate) shape_pipeline: Option<CustomDrawPipeline>,
+    pub(crate) image_pipeline: Option<CustomDrawPipeline>,
+    pub(crate) pattern_pipeline: Option<CustomDrawPipeline>,
+    pub(crate) text_pipeline: Option<CustomDrawPipeline>,
 }
 
 impl Draw2 {
@@ -83,6 +99,10 @@ impl Draw2 {
             ),
             projection: None,
             size: (width as _, height as _),
+            shape_pipeline: None,
+            image_pipeline: None,
+            pattern_pipeline: None,
+            text_pipeline: None,
         }
     }
 
@@ -129,15 +149,23 @@ impl Draw2 {
 
     pub fn add_image<'a>(&mut self, info: &ImageInfo<'a>) {
         let needs_new_batch = match &self.current_batch {
-            DrawBatch::Image { texture, .. } => texture != info.texture,
+            DrawBatch::Image {
+                texture, pipeline, ..
+            } => {
+                let new_texture = texture != info.texture;
+                let new_pipeline = pipeline.as_ref() != self.image_pipeline.as_ref();
+
+                new_texture || new_pipeline
+            }
             _ => true,
         };
 
         if needs_new_batch {
+            // notan_log::info!("needs_new_batch");
             let old = std::mem::replace(
                 &mut self.current_batch,
                 DrawBatch::Image {
-                    pipeline: None,
+                    pipeline: self.image_pipeline.clone(),
                     vertices: vec![],
                     indices: vec![],
                     texture: info.texture.clone(),

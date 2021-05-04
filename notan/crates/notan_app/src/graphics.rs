@@ -52,16 +52,6 @@ impl Graphics {
         self.device.create_texture(info)
     }
 
-    // #[inline(always)]
-    // pub fn render_to(&mut self, target: &RenderTexture, render: & ToCommandBuffer) {
-    //     self.device.render_to(target, render)
-    // }
-    //
-    // #[inline(always)]
-    // pub fn render(&mut self, render: & ToCommandBuffer) {
-    //     self.device.render(render)
-    // }
-
     pub fn render_to<'a>(
         &mut self,
         target: &RenderTexture,
@@ -93,9 +83,10 @@ impl Graphics {
     pub fn create_uniform_buffer(
         &mut self,
         slot: u32,
+        name: &str,
         data: Vec<f32>,
     ) -> Result<Buffer<f32>, String> {
-        self.device.create_uniform_buffer(slot, data)
+        self.device.create_uniform_buffer(slot, name, data)
     }
 
     #[inline(always)]

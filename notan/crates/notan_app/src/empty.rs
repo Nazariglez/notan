@@ -101,7 +101,7 @@ impl DeviceBackend for EmptyDeviceBackend {
         Ok(self.id_count)
     }
 
-    fn create_uniform_buffer(&mut self, _slot: u32) -> Result<i32, String> {
+    fn create_uniform_buffer(&mut self, _slot: u32, name: &str) -> Result<i32, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }

@@ -72,7 +72,7 @@ impl ImagePainter {
         Ok(Self {
             vbo: device.create_vertex_buffer(vec![])?,
             ebo: device.create_index_buffer(vec![])?,
-            ubo: device.create_uniform_buffer(0, vec![0.0; 16])?,
+            ubo: device.create_uniform_buffer(0, "Locals", vec![0.0; 16])?,
             pipeline,
             count_indices: 0,
             count_vertices: 0,
@@ -87,7 +87,19 @@ impl ImagePainter {
                 vertices,
                 indices,
             } => {
-                renderer.set_pipeline(&self.pipeline);
+                match pipeline {
+                    Some(c) => {
+                        renderer.set_pipeline(&c.pipeline);
+                        if let Some(uniforms) = &c.uniforms {
+                            uniforms
+                                .iter()
+                                .for_each(|u| renderer.bind_uniform_buffer(u));
+                        }
+                    }
+                    _ => {
+                        renderer.set_pipeline(&self.pipeline);
+                    }
+                }
 
                 let len = (self.count_vertices / self.pipeline.offset()) as u32;
                 let offset = self.count_indices;
