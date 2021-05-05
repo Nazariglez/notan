@@ -4,7 +4,7 @@ use super::fonts::*;
 use super::images::*;
 use super::patterns::*;
 use super::shapes::*;
-use crate::draw2::{Draw2, DrawBatch};
+use crate::draw2::*;
 use glam::Mat4;
 use notan_graphics::prelude::*;
 
@@ -137,6 +137,21 @@ pub enum DrawMode {
     //Text,
 }
 
+fn paint_batch(manager: &mut DrawManager, b: &Batch, projection: &Mat4) {
+    match &b.typ {
+        BatchType::Image { .. } => manager
+            .image_painter
+            .push(&mut manager.renderer, b, projection),
+        // BatchType::Shape => manager.shape_painter.push(&mut manager.renderer, b, projection),
+        BatchType::Pattern { .. } => {
+            manager
+                .pattern_painter
+                .push(&mut manager.renderer, b, projection)
+        }
+        _ => {} //TODO text
+    }
+}
+
 fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
     manager.image_painter.clear();
     manager.shape_painter.clear();
@@ -146,44 +161,15 @@ fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
         color: draw.background.clone(),
         ..Default::default()
     }));
-    //TODO, if this last batch type was different we should end and begin the pass again
+
     let projection = draw.projection();
-    draw.batches.iter().for_each(|b| match b {
-        DrawBatch::Shape { .. } => {
-            manager
-                .shape_painter
-                .push(&mut manager.renderer, b, &projection);
-        }
-        DrawBatch::Image { .. } => {
-            manager
-                .image_painter
-                .push(&mut manager.renderer, b, &projection);
-        }
-        DrawBatch::Pattern { .. } => {
-            manager
-                .pattern_painter
-                .push(&mut manager.renderer, b, &projection);
-        }
-        _ => {}
-    });
-    match &draw.current_batch {
-        DrawBatch::Shape { .. } => {
-            manager
-                .shape_painter
-                .push(&mut manager.renderer, &draw.current_batch, &projection);
-        }
-        DrawBatch::Image { .. } => {
-            manager
-                .image_painter
-                .push(&mut manager.renderer, &draw.current_batch, &projection);
-        }
-        DrawBatch::Pattern { .. } => {
-            manager
-                .pattern_painter
-                .push(&mut manager.renderer, &draw.current_batch, &projection);
-        }
-        _ => {}
+    draw.batches
+        .iter()
+        .for_each(|b| paint_batch(manager, b, &projection));
+    if let Some(current) = &draw.current_batch {
+        paint_batch(manager, current, &projection);
     }
+
     manager.renderer.end();
 }
 

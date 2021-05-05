@@ -1,10 +1,17 @@
 use crate::draw2::Draw2;
 use notan_graphics::prelude::*;
 
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 pub(crate) struct CustomPipeline {
-    pub pipeline: Pipeline,
+    pub pipeline: Option<Pipeline>,
     pub uniforms: Option<Vec<Buffer<f32>>>,
+}
+
+impl CustomPipeline {
+    fn clear(&mut self) {
+        self.pipeline = None;
+        self.uniforms = None;
+    }
 }
 
 impl std::cmp::PartialEq for CustomPipeline {
@@ -93,30 +100,33 @@ impl Drop for CustomPipelineBuilder<'_> {
 }
 
 fn process_pipeline(builder: &mut CustomPipelineBuilder, typ: CustomPipelineType) {
-    if let Some(pip) = builder.pipeline {
-        let needs_update = match get_custom_pipeline(builder.draw, typ) {
-            Some(custom) => *pip != custom.pipeline,
-            _ => true,
-        };
+    let pip = match builder.pipeline.take() {
+        Some(pip) => pip,
+        _ => return,
+    };
 
-        if needs_update {
-            *get_custom_pipeline(builder.draw, typ) = Some(CustomPipeline {
-                pipeline: pip.clone(),
-                uniforms: builder
-                    .uniforms
-                    .take()
-                    .map(|u| u.into_iter().cloned().collect::<Vec<_>>()),
-            })
-        }
+    let custom = get_custom_pipeline(builder.draw, typ);
+    let needs_update = match &custom.pipeline {
+        Some(c_pip) => *c_pip != *pip,
+        _ => true,
+    };
+
+    if !needs_update {
+        return;
     }
+
+    custom.pipeline = Some(pip.clone());
+    custom.uniforms = builder
+        .uniforms
+        .take()
+        .map(|u| u.into_iter().cloned().collect::<Vec<_>>());
 }
 
 fn remove_pipeline(draw: &mut Draw2, typ: CustomPipelineType) {
-    let custom = get_custom_pipeline(draw, typ);
-    *custom = None;
+    get_custom_pipeline(draw, typ).clear();
 }
 
-fn get_custom_pipeline(draw: &mut Draw2, typ: CustomPipelineType) -> &mut Option<CustomPipeline> {
+fn get_custom_pipeline(draw: &mut Draw2, typ: CustomPipelineType) -> &mut CustomPipeline {
     match typ {
         CustomPipelineType::Image => &mut draw.image_pipeline,
         CustomPipelineType::Shape => &mut draw.shape_pipeline,

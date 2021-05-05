@@ -83,12 +83,15 @@ fn update(state: &mut State) {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw2();
 
-    //Set the custom pipelines for images
+    // Image without a custom shader
+    draw.image(&state.img).position(50.0, 200.0);
+
+    //Set the custom pipeline for images
     draw.image_pipeline()
         .pipeline(&state.pipeline)
         .uniform_buffer(&state.uniforms);
 
-    draw.image(&state.img).position(100.0, 100.0);
+    draw.image(&state.img).position(400.0, 200.0);
 
     gfx.render(&draw);
 }

@@ -1,4 +1,4 @@
-use crate::draw2::DrawBatch;
+use crate::draw2::*;
 use glam::Mat4;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
@@ -44,15 +44,6 @@ const IMAGE_FRAGMENT: ShaderSource = fragment_shader! {
     "#
 };
 
-pub(crate) struct ImagePainter {
-    vbo: Buffer<f32>,
-    ebo: Buffer<u32>,
-    ubo: Buffer<f32>,
-    pipeline: Pipeline,
-    count_vertices: usize,
-    count_indices: usize,
-}
-
 pub fn create_image_pipeline(
     device: &mut Device,
     fragment: Option<&ShaderSource>,
@@ -73,6 +64,15 @@ pub fn create_image_pipeline(
     )
 }
 
+pub(crate) struct ImagePainter {
+    vbo: Buffer<f32>,
+    ebo: Buffer<u32>,
+    ubo: Buffer<f32>,
+    pipeline: Pipeline,
+    count_vertices: usize,
+    count_indices: usize,
+}
+
 impl ImagePainter {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let pipeline = create_image_pipeline(device, None)?;
@@ -87,56 +87,46 @@ impl ImagePainter {
         })
     }
 
-    pub fn push(&mut self, renderer: &mut Renderer, batch: &DrawBatch, projection: &Mat4) {
-        match batch {
-            DrawBatch::Image {
-                texture,
-                pipeline,
-                vertices,
-                indices,
-            } => {
-                match pipeline {
-                    Some(c) => {
-                        renderer.set_pipeline(&c.pipeline);
-                        if let Some(uniforms) = &c.uniforms {
-                            uniforms
-                                .iter()
-                                .for_each(|u| renderer.bind_uniform_buffer(u));
-                        }
-                    }
-                    _ => {
-                        renderer.set_pipeline(&self.pipeline);
+    pub fn push(&mut self, renderer: &mut Renderer, batch: &Batch, projection: &Mat4) {
+        if let BatchType::Image { texture } = &batch.typ {
+            match &batch.pipeline {
+                Some(pip) => {
+                    renderer.set_pipeline(&pip);
+                    if let Some(buffers) = &batch.uniform_buffers {
+                        buffers.iter().for_each(|u| renderer.bind_uniform_buffer(u));
                     }
                 }
-
-                let len = (self.count_vertices / self.pipeline.offset()) as u32;
-                let offset = self.count_indices;
-
-                {
-                    let mut data = self.ebo.data_ptr().write();
-                    data.extend(indices.iter().map(|i| i + len));
-                    self.count_indices = data.len();
+                _ => {
+                    renderer.set_pipeline(&self.pipeline);
                 }
-
-                {
-                    let mut data = self.vbo.data_ptr().write();
-                    data.extend(vertices);
-                    self.count_vertices = data.len();
-                }
-
-                {
-                    self.ubo
-                        .data_mut()
-                        .copy_from_slice(&projection.to_cols_array());
-                }
-
-                renderer.bind_texture(0, texture);
-                renderer.bind_vertex_buffer(&self.vbo);
-                renderer.bind_index_buffer(&self.ebo);
-                renderer.bind_uniform_buffer(&self.ubo);
-                renderer.draw(offset as _, indices.len() as _);
             }
-            _ => {}
+
+            let len = (self.count_vertices / self.pipeline.offset()) as u32;
+            let offset = self.count_indices;
+
+            {
+                let mut data = self.ebo.data_ptr().write();
+                data.extend(batch.indices.iter().map(|i| i + len));
+                self.count_indices = data.len();
+            }
+
+            {
+                let mut data = self.vbo.data_ptr().write();
+                data.extend(&batch.vertices);
+                self.count_vertices = data.len();
+            }
+
+            {
+                self.ubo
+                    .data_mut()
+                    .copy_from_slice(&projection.to_cols_array());
+            }
+
+            renderer.bind_texture(0, texture);
+            renderer.bind_vertex_buffer(&self.vbo);
+            renderer.bind_index_buffer(&self.ebo);
+            renderer.bind_uniform_buffer(&self.ubo);
+            renderer.draw(offset as _, batch.indices.len() as _);
         }
     }
 
@@ -145,6 +135,5 @@ impl ImagePainter {
         self.count_indices = 0;
         self.vbo.data_ptr().write().clear();
         self.ebo.data_ptr().write().clear();
-        // self.ubo.data_mut().clear(); //this maybe is not necessary because it's replaced all the time
     }
 }
