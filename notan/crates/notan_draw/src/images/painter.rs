@@ -53,21 +53,29 @@ pub(crate) struct ImagePainter {
     count_indices: usize,
 }
 
+pub fn create_image_pipeline(
+    device: &mut Device,
+    fragment: Option<&ShaderSource>,
+) -> Result<Pipeline, String> {
+    let fragment = fragment.unwrap_or_else(|| &IMAGE_FRAGMENT);
+    device.create_pipeline(
+        &IMAGE_VERTEX,
+        fragment,
+        &[
+            VertexAttr::new(0, VertexFormat::Float2),
+            VertexAttr::new(1, VertexFormat::Float2),
+            VertexAttr::new(2, VertexFormat::Float4),
+        ],
+        PipelineOptions {
+            color_blend: Some(BlendMode::NORMAL),
+            ..Default::default()
+        },
+    )
+}
+
 impl ImagePainter {
     pub fn new(device: &mut Device) -> Result<Self, String> {
-        let pipeline = device.create_pipeline(
-            &IMAGE_VERTEX,
-            &IMAGE_FRAGMENT,
-            &[
-                VertexAttr::new(0, VertexFormat::Float2),
-                VertexAttr::new(1, VertexFormat::Float2),
-                VertexAttr::new(2, VertexFormat::Float4),
-            ],
-            PipelineOptions {
-                color_blend: Some(BlendMode::NORMAL),
-                ..Default::default()
-            },
-        )?;
+        let pipeline = create_image_pipeline(device, None)?;
 
         Ok(Self {
             vbo: device.create_vertex_buffer(vec![])?,

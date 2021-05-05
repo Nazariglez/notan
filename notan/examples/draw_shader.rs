@@ -9,28 +9,6 @@ use notan::log;
 use notan::prelude::*;
 
 //language=glsl
-const VERTEX: ShaderSource = notan::vertex_shader! {
-    r#"
-    #version 450
-    layout(location = 0) in vec2 a_pos;
-    layout(location = 1) in vec2 a_uvs;
-    layout(location = 2) in vec4 a_color;
-
-    layout(location = 0) out vec4 v_color;
-    layout(location = 1) out vec2 v_uvs;
-    layout(set = 0, binding = 0) uniform Locals {
-        mat4 u_projection;
-    };
-
-    void main() {
-        v_color = a_color;
-        v_uvs = a_uvs;
-        gl_Position = u_projection * vec4(a_pos, 0.0, 1.0);
-    }
-    "#
-};
-
-//language=glsl
 const FRAGMENT: ShaderSource = notan::fragment_shader! {
     r#"
     #version 450
@@ -64,23 +42,6 @@ struct State {
     multi: f32,
 }
 
-fn create_pipeline(gfx: &mut Graphics) -> Pipeline {
-    gfx.create_pipeline(
-        &VERTEX,
-        &FRAGMENT,
-        &[
-            VertexAttr::new(0, VertexFormat::Float2),
-            VertexAttr::new(1, VertexFormat::Float2),
-            VertexAttr::new(2, VertexFormat::Float4),
-        ],
-        PipelineOptions {
-            color_blend: Some(BlendMode::NORMAL),
-            ..Default::default()
-        },
-    )
-    .unwrap()
-}
-
 #[notan::main]
 fn main() -> Result<(), String> {
     notan::init_with(init).update(update).draw(draw).build()
@@ -91,7 +52,7 @@ fn init(gfx: &mut Graphics) -> State {
     let texture = gfx.create_texture(img).unwrap();
     State {
         img: texture,
-        pipeline: create_pipeline(gfx),
+        pipeline: gfx.create_draw_image_pipeline(Some(&FRAGMENT)).unwrap(),
         uniforms: gfx
             .create_uniform_buffer(1, "TextureInfo", vec![0.0; 4])
             .unwrap(),

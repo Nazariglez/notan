@@ -1,6 +1,6 @@
 use super::color_batcher::*;
 use super::draw::{Draw, DrawCommands, GraphicCommands};
-use super::images::ImagePainter;
+use super::images::{create_image_pipeline, ImagePainter};
 use super::patterns::PatternPainter;
 use super::shapes::ShapePainter;
 use crate::draw2::{Draw2, DrawBatch};
@@ -52,6 +52,14 @@ impl DrawManager {
 
     pub fn create_draw2(&self, width: i32, height: i32) -> Draw2 {
         Draw2::new(width, height)
+    }
+
+    pub fn create_image_pipeline(
+        &self,
+        device: &mut Device,
+        fragment: Option<&ShaderSource>,
+    ) -> Result<Pipeline, String> {
+        create_image_pipeline(device, fragment)
     }
 
     #[inline]

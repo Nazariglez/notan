@@ -102,7 +102,7 @@ impl Draw {
             ],
             color: Color::WHITE,
             alpha: 1.0,
-            matrix_identity: Mat3::identity(),
+            matrix_identity: Mat3::IDENTITY,
             matrix_stack: vec![],
             projection,
         }

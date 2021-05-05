@@ -10,7 +10,7 @@ pub use image::*;
 pub use nine_slice::*;
 use notan_graphics::prelude::*;
 use notan_graphics::Texture;
-pub(crate) use painter::ImagePainter;
+pub(crate) use painter::*;
 
 pub trait DrawImages {
     fn image<'a>(&mut self, texture: &'a Texture) -> DrawBuilder<Image<'a>>;

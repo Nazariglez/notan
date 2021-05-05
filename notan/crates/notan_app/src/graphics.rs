@@ -124,23 +124,11 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_draw_pipeline(
+    pub fn create_draw_image_pipeline(
         &mut self,
-        mode: DrawMode,
-        fragment: &ShaderSource,
+        fragment: Option<&ShaderSource>,
     ) -> Result<Pipeline, String> {
-        self.draw
-            .create_pipeline(&mut self.device, mode, Some(fragment))
-    }
-
-    #[inline(always)]
-    pub fn create_draw_pipeline_from_raw(
-        &mut self,
-        mode: DrawMode,
-        fragment: &[u8],
-    ) -> Result<Pipeline, String> {
-        self.draw
-            .create_pipeline_from_raw(&mut self.device, mode, Some(fragment))
+        self.draw.create_image_pipeline(&mut self.device, fragment)
     }
 }
 

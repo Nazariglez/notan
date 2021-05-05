@@ -10,21 +10,21 @@ pub trait DrawTransform {
     }
 
     fn translate(&mut self, x: f32, y: f32) -> &mut Self {
-        let old = self.matrix().unwrap_or_else(|| Mat3::identity());
+        let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
         let matrix = old * Mat3::from_translation(Vec2::new(x, y));
         *self.matrix() = Some(matrix);
         self
     }
 
     fn scale(&mut self, x: f32, y: f32) -> &mut Self {
-        let old = self.matrix().unwrap_or_else(|| Mat3::identity());
+        let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
         let matrix = old * Mat3::from_scale(Vec2::new(x, y));
         *self.matrix() = Some(matrix);
         self
     }
 
     fn rotate(&mut self, angle: f32) -> &mut Self {
-        let old = self.matrix().unwrap_or_else(|| Mat3::identity());
+        let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
         let matrix = old * Mat3::from_angle(angle);
         *self.matrix() = Some(matrix);
         self
@@ -36,7 +36,7 @@ pub trait DrawTransform {
     }
 
     fn skew(&mut self, x: f32, y: f32) -> &mut Self {
-        let old = self.matrix().unwrap_or_else(|| Mat3::identity());
+        let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
 
         let xt = x.tan();
         let yt = y.tan();
@@ -52,7 +52,7 @@ pub trait DrawTransform {
     }
 
     fn rotate_from(&mut self, point: (f32, f32), angle: f32) -> &mut Self {
-        let old = self.matrix().unwrap_or_else(|| Mat3::identity());
+        let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
         let translate = old * Mat3::from_translation(Vec2::new(point.0, point.1));
         let rotate = translate * Mat3::from_angle(angle);
         let matrix = rotate * Mat3::from_translation(Vec2::new(-point.0, -point.1));
@@ -65,7 +65,7 @@ pub trait DrawTransform {
     }
 
     fn scale_from(&mut self, point: (f32, f32), scale: (f32, f32)) -> &mut Self {
-        let old = self.matrix().unwrap_or_else(|| Mat3::identity());
+        let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
         let translate = old * Mat3::from_translation(Vec2::new(point.0, point.1));
         let scale = translate * Mat3::from_scale(Vec2::new(scale.0, scale.1));
         let matrix = scale * Mat3::from_translation(Vec2::new(-point.0, -point.1));
@@ -82,7 +82,7 @@ pub struct Transform {
 impl Transform {
     pub fn new() -> Self {
         Self {
-            identity: Mat3::identity(),
+            identity: Mat3::IDENTITY,
             stack: vec![],
         }
     }
@@ -111,7 +111,7 @@ impl Transform {
     }
 
     pub fn reset(&mut self) -> &mut Self {
-        self.identity = Mat3::identity();
+        self.identity = Mat3::IDENTITY;
         self.stack.clear();
         self
     }
