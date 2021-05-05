@@ -9,7 +9,7 @@ mod triangle;
 
 pub use crate::builder::DrawBuilder;
 pub use crate::draw2::Draw2;
-pub(crate) use painter::ShapePainter;
+pub(crate) use painter::*;
 pub use path::Path;
 pub use triangle::Triangle;
 

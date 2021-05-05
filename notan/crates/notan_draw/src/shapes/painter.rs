@@ -36,6 +36,25 @@ const SHAPES_FRAGMENT: ShaderSource = fragment_shader! {
     "#
 };
 
+pub fn create_shape_pipeline(
+    device: &mut Device,
+    fragment: Option<&ShaderSource>,
+) -> Result<Pipeline, String> {
+    let fragment = fragment.unwrap_or_else(|| &SHAPES_FRAGMENT);
+    device.create_pipeline(
+        &SHAPES_VERTEX,
+        fragment,
+        &[
+            VertexAttr::new(0, VertexFormat::Float2),
+            VertexAttr::new(1, VertexFormat::Float4),
+        ],
+        PipelineOptions {
+            color_blend: Some(BlendMode::NORMAL),
+            ..Default::default()
+        },
+    )
+}
+
 pub(crate) struct ShapePainter {
     vbo: Buffer<f32>,
     ebo: Buffer<u32>,
@@ -47,18 +66,7 @@ pub(crate) struct ShapePainter {
 
 impl ShapePainter {
     pub fn new(device: &mut Device) -> Result<Self, String> {
-        let pipeline = device.create_pipeline(
-            &SHAPES_VERTEX,
-            &SHAPES_FRAGMENT,
-            &[
-                VertexAttr::new(0, VertexFormat::Float2),
-                VertexAttr::new(1, VertexFormat::Float4),
-            ],
-            PipelineOptions {
-                color_blend: Some(BlendMode::NORMAL),
-                ..Default::default()
-            },
-        )?;
+        let pipeline = create_shape_pipeline(device, None)?;
 
         Ok(Self {
             vbo: device.create_vertex_buffer(vec![])?,

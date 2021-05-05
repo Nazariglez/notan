@@ -130,6 +130,31 @@ impl Graphics {
     ) -> Result<Pipeline, String> {
         self.draw.create_image_pipeline(&mut self.device, fragment)
     }
+
+    #[inline(always)]
+    pub fn create_draw_pattern_pipeline(
+        &mut self,
+        fragment: Option<&ShaderSource>,
+    ) -> Result<Pipeline, String> {
+        self.draw
+            .create_pattern_pipeline(&mut self.device, fragment)
+    }
+
+    #[inline(always)]
+    pub fn create_draw_shape_pipeline(
+        &mut self,
+        fragment: Option<&ShaderSource>,
+    ) -> Result<Pipeline, String> {
+        self.draw.create_shape_pipeline(&mut self.device, fragment)
+    }
+
+    #[inline(always)]
+    pub fn create_draw_text_pipeline(
+        &mut self,
+        fragment: Option<&ShaderSource>,
+    ) -> Result<Pipeline, String> {
+        self.draw.create_text_pipeline(&mut self.device, fragment)
+    }
 }
 
 pub enum GraphicsRenderer<'a> {

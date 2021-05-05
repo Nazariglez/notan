@@ -1,8 +1,9 @@
 use super::color_batcher::*;
 use super::draw::{Draw, DrawCommands, GraphicCommands};
-use super::images::{create_image_pipeline, ImagePainter};
-use super::patterns::PatternPainter;
-use super::shapes::ShapePainter;
+use super::fonts::*;
+use super::images::*;
+use super::patterns::*;
+use super::shapes::*;
 use crate::draw2::{Draw2, DrawBatch};
 use glam::Mat4;
 use notan_graphics::prelude::*;
@@ -60,6 +61,30 @@ impl DrawManager {
         fragment: Option<&ShaderSource>,
     ) -> Result<Pipeline, String> {
         create_image_pipeline(device, fragment)
+    }
+
+    pub fn create_pattern_pipeline(
+        &self,
+        device: &mut Device,
+        fragment: Option<&ShaderSource>,
+    ) -> Result<Pipeline, String> {
+        create_pattern_pipeline(device, fragment)
+    }
+
+    pub fn create_shape_pipeline(
+        &self,
+        device: &mut Device,
+        fragment: Option<&ShaderSource>,
+    ) -> Result<Pipeline, String> {
+        create_shape_pipeline(device, fragment)
+    }
+
+    pub fn create_text_pipeline(
+        &self,
+        device: &mut Device,
+        fragment: Option<&ShaderSource>,
+    ) -> Result<Pipeline, String> {
+        create_text_pipeline(device, fragment)
     }
 
     #[inline]

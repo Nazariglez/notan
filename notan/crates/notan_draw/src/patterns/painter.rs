@@ -31,7 +31,7 @@ const PATTERN_VERTEX: ShaderSource = vertex_shader! {
 };
 
 //language=glsl
-const PATTER_FRAGMENT: ShaderSource = fragment_shader! {
+const PATTERN_FRAGMENT: ShaderSource = fragment_shader! {
     r#"
     #version 450
     precision mediump float;
@@ -51,6 +51,27 @@ const PATTER_FRAGMENT: ShaderSource = fragment_shader! {
     "#
 };
 
+pub fn create_pattern_pipeline(
+    device: &mut Device,
+    fragment: Option<&ShaderSource>,
+) -> Result<Pipeline, String> {
+    let fragment = fragment.unwrap_or_else(|| &PATTERN_FRAGMENT);
+    device.create_pipeline(
+        &PATTERN_VERTEX,
+        fragment,
+        &[
+            VertexAttr::new(0, VertexFormat::Float2),
+            VertexAttr::new(1, VertexFormat::Float2),
+            VertexAttr::new(2, VertexFormat::Float4),
+            VertexAttr::new(3, VertexFormat::Float4),
+        ],
+        PipelineOptions {
+            color_blend: Some(BlendMode::NORMAL),
+            ..Default::default()
+        },
+    )
+}
+
 pub(crate) struct PatternPainter {
     vbo: Buffer<f32>,
     ebo: Buffer<u32>,
@@ -62,20 +83,7 @@ pub(crate) struct PatternPainter {
 
 impl PatternPainter {
     pub fn new(device: &mut Device) -> Result<Self, String> {
-        let pipeline = device.create_pipeline(
-            &PATTERN_VERTEX,
-            &PATTER_FRAGMENT,
-            &[
-                VertexAttr::new(0, VertexFormat::Float2),
-                VertexAttr::new(1, VertexFormat::Float2),
-                VertexAttr::new(2, VertexFormat::Float4),
-                VertexAttr::new(3, VertexFormat::Float4),
-            ],
-            PipelineOptions {
-                color_blend: Some(BlendMode::NORMAL),
-                ..Default::default()
-            },
-        )?;
+        let pipeline = create_pattern_pipeline(device, None)?;
 
         Ok(Self {
             vbo: device.create_vertex_buffer(vec![])?,
