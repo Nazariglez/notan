@@ -142,7 +142,9 @@ fn paint_batch(manager: &mut DrawManager, b: &Batch, projection: &Mat4) {
         BatchType::Image { .. } => manager
             .image_painter
             .push(&mut manager.renderer, b, projection),
-        // BatchType::Shape => manager.shape_painter.push(&mut manager.renderer, b, projection),
+        BatchType::Shape => manager
+            .shape_painter
+            .push(&mut manager.renderer, b, projection),
         BatchType::Pattern { .. } => {
             manager
                 .pattern_painter

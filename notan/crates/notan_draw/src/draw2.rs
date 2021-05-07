@@ -280,38 +280,10 @@ impl Draw2 {
     }
 
     pub fn add_shape<'a>(&mut self, info: &ShapeInfo<'a>) {
-        unimplemented!();
-        // //new batch if pipelines changes, otherwise add to the current one the vertices
-        // if !self.current_batch.is_shape() {
-        //     let old = std::mem::replace(
-        //         &mut self.current_batch,
-        //         DrawBatch::Shape {
-        //             pipeline: None,
-        //             vertices: vec![],
-        //             indices: vec![],
-        //         },
-        //     );
-        //     if !old.is_none() {
-        //         self.batches.push(old);
-        //     }
-        // }
-        //
-        // let global_matrix = *self.transform.matrix();
-        // let matrix = match info.transform {
-        //     Some(m) => *m * global_matrix,
-        //     _ => global_matrix,
-        // };
-        //
-        // match &mut self.current_batch {
-        //     DrawBatch::Shape {
-        //         vertices, indices, ..
-        //     } => {
-        //         let last_index = (vertices.len() as u32) / 6;
-        //         add_indices(indices, info.indices, last_index);
-        //         add_shape_vertices(vertices, info.vertices, matrix, self.alpha);
-        //     }
-        //     _ => {}
-        // }
+        let check_type = |b: &Batch, _: &ShapeInfo| !b.is_shape();
+        let create_type = |_: &ShapeInfo| BatchType::Shape;
+
+        self.add_batch(info, check_type, create_type);
     }
 
     pub fn add_pattern<'a>(&mut self, info: &ImageInfo<'a>) {
@@ -330,46 +302,6 @@ impl Draw2 {
         };
 
         self.add_batch(info, check_type, create_type);
-        // unimplemented!();
-        //     let needs_new_batch = match &self.current_batch {
-        //         DrawBatch::Pattern { texture, .. } => texture != info.texture,
-        //         _ => true,
-        //     };
-        //
-        //     if needs_new_batch {
-        //         let old = std::mem::replace(
-        //             &mut self.current_batch,
-        //             DrawBatch::Pattern {
-        //                 pipeline: None,
-        //                 vertices: vec![],
-        //                 indices: vec![],
-        //                 texture: info.texture.clone(),
-        //             },
-        //         );
-        //         if !old.is_none() {
-        //             self.batches.push(old);
-        //         }
-        //     }
-        //
-        //     let global_matrix = *self.transform.matrix();
-        //     let matrix = match info.transform {
-        //         Some(m) => *m * global_matrix,
-        //         _ => global_matrix,
-        //     };
-        //
-        //     match &mut self.current_batch {
-        //         DrawBatch::Pattern {
-        //             texture,
-        //             vertices,
-        //             indices,
-        //             ..
-        //         } => {
-        //             let last_index = (vertices.len() as u32) / 12;
-        //             add_indices(indices, info.indices, last_index);
-        //             add_pattern_vertices(vertices, info.vertices, matrix, self.alpha);
-        //         }
-        //         _ => {}
-        //     }
     }
     //
     // /*

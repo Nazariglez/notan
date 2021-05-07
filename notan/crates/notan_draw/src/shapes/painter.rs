@@ -1,4 +1,4 @@
-use crate::draw2::DrawBatch;
+use crate::draw2::*;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 
@@ -78,42 +78,45 @@ impl ShapePainter {
         })
     }
 
-    pub fn push(&mut self, renderer: &mut Renderer, batch: &DrawBatch, projection: &glam::Mat4) {
-        match batch {
-            DrawBatch::Shape {
-                pipeline,
-                vertices,
-                indices,
-            } => {
-                renderer.set_pipeline(&self.pipeline);
-
-                let len = (self.count_vertices / self.pipeline.offset()) as u32;
-                let offset = self.count_indices;
-
-                {
-                    let mut data = self.ebo.data_ptr().write();
-                    data.extend(indices.iter().map(|i| i + len));
-                    self.count_indices = data.len();
+    pub fn push(&mut self, renderer: &mut Renderer, batch: &Batch, projection: &glam::Mat4) {
+        if let BatchType::Shape = &batch.typ {
+            match &batch.pipeline {
+                Some(pip) => {
+                    renderer.set_pipeline(&pip);
+                    if let Some(buffers) = &batch.uniform_buffers {
+                        buffers.iter().for_each(|u| renderer.bind_uniform_buffer(u));
+                    }
                 }
-
-                {
-                    let mut data = self.vbo.data_ptr().write();
-                    data.extend(vertices);
-                    self.count_vertices = data.len();
+                _ => {
+                    renderer.set_pipeline(&self.pipeline);
                 }
-
-                {
-                    self.ubo
-                        .data_mut()
-                        .copy_from_slice(&projection.to_cols_array());
-                }
-
-                renderer.bind_vertex_buffer(&self.vbo);
-                renderer.bind_index_buffer(&self.ebo);
-                renderer.bind_uniform_buffer(&self.ubo);
-                renderer.draw(offset as _, indices.len() as _);
             }
-            _ => {}
+
+            let len = (self.count_vertices / self.pipeline.offset()) as u32;
+            let offset = self.count_indices;
+
+            {
+                let mut data = self.ebo.data_ptr().write();
+                data.extend(batch.indices.iter().map(|i| i + len));
+                self.count_indices = data.len();
+            }
+
+            {
+                let mut data = self.vbo.data_ptr().write();
+                data.extend(&batch.vertices);
+                self.count_vertices = data.len();
+            }
+
+            {
+                self.ubo
+                    .data_mut()
+                    .copy_from_slice(&projection.to_cols_array());
+            }
+
+            renderer.bind_vertex_buffer(&self.vbo);
+            renderer.bind_index_buffer(&self.ebo);
+            renderer.bind_uniform_buffer(&self.ubo);
+            renderer.draw(offset as _, batch.indices.len() as _);
         }
     }
 
