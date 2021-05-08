@@ -85,6 +85,7 @@ pub trait DrawTransform {
     }
 }
 
+#[derive(Clone, Debug)]
 /// This struct represents a stack of matrices
 pub struct Transform {
     identity: Mat3,

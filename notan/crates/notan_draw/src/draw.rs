@@ -6,28 +6,28 @@ use glam::{Mat3, Mat4, Vec2, Vec3};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 
+#[derive(Debug, Clone)]
 pub struct Draw {
     pub(crate) background: Option<Color>,
-    pub(crate) initialized: bool,
-    pub(crate) color: Color,
-    pub(crate) alpha: f32,
-    pub(crate) batches: Vec<Batch>,
-    pub(crate) current_batch: Option<Batch>,
+    initialized: bool,
+    alpha: f32,
     transform: Transform,
     base_projection: Mat4,
     projection: Option<Mat4>,
     size: (f32, f32),
+    pub(crate) batches: Vec<Batch>,
+    pub(crate) current_batch: Option<Batch>,
     pub(crate) shape_pipeline: CustomPipeline,
     pub(crate) image_pipeline: CustomPipeline,
     pub(crate) pattern_pipeline: CustomPipeline,
     pub(crate) text_pipeline: CustomPipeline,
+    masking: bool,
 }
 
 impl Draw {
     pub fn new(width: i32, height: i32) -> Self {
         Draw {
             initialized: false,
-            color: Color::WHITE,
             alpha: 1.0,
             background: None,
             batches: vec![],
@@ -47,6 +47,43 @@ impl Draw {
             image_pipeline: Default::default(),
             pattern_pipeline: Default::default(),
             text_pipeline: Default::default(),
+            masking: false,
+        }
+    }
+
+    pub fn mask(&mut self, mask: Option<&Self>) {
+        debug_assert!(!(self.masking && mask.is_some()), "Already using mask.");
+
+        match mask {
+            Some(m) => {
+                self.masking = true;
+
+                //Move the current batch to the queue
+                if let Some(b) = self.current_batch.take() {
+                    self.batches.push(b);
+                }
+
+                //Reserve the space for the mask batches
+                let new_capacity = self.batches.len() + m.batches.len() + 1;
+                self.batches.reserve(new_capacity);
+                self.batches.extend(m.batches.iter().map(|batch| {
+                    let mut b = batch.clone();
+                    b.is_mask = true;
+                    b
+                }));
+
+                if let Some(mut b) = m.current_batch.clone() {
+                    b.is_mask = true;
+                    self.batches.push(b);
+                }
+            }
+            _ => {
+                self.masking = false;
+                //Move the current batch to the queue
+                if let Some(b) = self.current_batch.take() {
+                    self.batches.push(b);
+                }
+            }
         }
     }
 
@@ -120,6 +157,8 @@ impl Draw {
                 pipeline: custom.pipeline.clone(),
                 uniform_buffers: custom.uniforms.clone(),
                 blend_mode: None, //todo blend_mode
+                is_mask: false,
+                masking: self.masking,
             });
         }
 

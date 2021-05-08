@@ -14,6 +14,8 @@ pub struct DrawManager {
     image_painter: ImagePainter,
     pattern_painter: PatternPainter,
     renderer: Renderer,
+    drawing_mask: bool,
+    masking: bool,
 }
 
 impl DrawManager {
@@ -28,6 +30,8 @@ impl DrawManager {
             image_painter,
             pattern_painter,
             renderer,
+            drawing_mask: false,
+            masking: false,
         })
     }
 
@@ -75,6 +79,14 @@ impl DrawManager {
 }
 
 fn paint_batch(manager: &mut DrawManager, b: &Batch, projection: &Mat4) {
+    if b.is_mask && !manager.drawing_mask {
+        manager.renderer.end();
+        manager.drawing_mask = true;
+    } else if !b.is_mask && manager.drawing_mask {
+        manager.drawing_mask = false;
+        manager.renderer.begin(Some(&Default::default()));
+    }
+
     match &b.typ {
         BatchType::Image { .. } => manager
             .image_painter

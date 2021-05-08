@@ -11,6 +11,7 @@ pub(crate) enum BatchType {
     // }
 }
 
+#[derive(Clone, Debug)]
 pub(crate) struct Batch {
     pub typ: BatchType,
     pub vertices: Vec<f32>,
@@ -18,6 +19,8 @@ pub(crate) struct Batch {
     pub pipeline: Option<Pipeline>,
     pub uniform_buffers: Option<Vec<Buffer<f32>>>,
     pub blend_mode: Option<BlendMode>,
+    pub is_mask: bool,
+    pub masking: bool,
 }
 
 impl Batch {
@@ -29,6 +32,8 @@ impl Batch {
             pipeline: None,
             uniform_buffers: None,
             blend_mode: None,
+            is_mask: false,
+            masking: false,
         }
     }
 

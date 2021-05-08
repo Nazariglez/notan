@@ -83,13 +83,20 @@ impl ShapePainter {
         if let BatchType::Shape = &batch.typ {
             match &batch.pipeline {
                 Some(pip) => {
-                    renderer.set_pipeline(&pip);
+                    match apply_mask(pip, batch.is_mask, batch.masking) {
+                        Some(pip) => renderer.set_pipeline(&pip),
+                        _ => renderer.set_pipeline(pip),
+                    };
+
                     if let Some(buffers) = &batch.uniform_buffers {
                         buffers.iter().for_each(|u| renderer.bind_uniform_buffer(u));
                     }
                 }
                 _ => {
-                    renderer.set_pipeline(&self.pipeline);
+                    match apply_mask(&self.pipeline, batch.is_mask, batch.masking) {
+                        Some(pip) => renderer.set_pipeline(&pip),
+                        _ => renderer.set_pipeline(&self.pipeline),
+                    };
                 }
             }
 
@@ -127,4 +134,40 @@ impl ShapePainter {
         self.vbo.data_ptr().write().clear();
         self.ebo.data_ptr().write().clear();
     }
+}
+
+fn apply_mask(pipeline: &Pipeline, is_mask: bool, masking: bool) -> Option<Pipeline> {
+    if is_mask {
+        let mut pip = pipeline.clone();
+        pip.options.stencil = Some(StencilOptions {
+            stencil_fail: StencilAction::Keep,
+            depth_fail: StencilAction::Keep,
+            pass: StencilAction::Replace,
+            compare: CompareMode::Always,
+            read_mask: 0xff,
+            write_mask: 0xff,
+            reference: 1,
+        });
+        pip.options.depth_stencil.write = false;
+        pip.options.color_mask = ColorMask::NONE;
+        return Some(pip);
+    }
+
+    if masking {
+        let mut pip = pipeline.clone();
+        pip.options.stencil = Some(StencilOptions {
+            stencil_fail: StencilAction::Keep,
+            depth_fail: StencilAction::Keep,
+            pass: StencilAction::Replace,
+            compare: CompareMode::Equal,
+            read_mask: 0xff,
+            write_mask: 0x00,
+            reference: 1,
+        });
+        pip.options.depth_stencil.write = true;
+        pip.options.color_mask = ColorMask::ALL;
+        return Some(pip);
+    }
+
+    None
 }
