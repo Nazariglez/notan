@@ -1,5 +1,4 @@
 pub use notan_draw::*;
-use notan_draw::*;
 use notan_graphics::prelude::*;
 pub use notan_graphics::*;
 
@@ -23,12 +22,6 @@ impl Graphics {
     #[inline(always)]
     pub fn create_renderer(&self) -> renderer::Renderer {
         self.device.create_renderer()
-    }
-
-    #[inline(always)]
-    pub fn create_draw(&self) -> Draw {
-        let (width, height) = self.device.size();
-        self.draw.create_draw(width, height)
     }
 
     #[inline(always)]
@@ -172,12 +165,6 @@ impl<'a> From<&'a [Commands]> for GraphicsRenderer<'a> {
 impl<'a> From<&'a Renderer> for GraphicsRenderer<'a> {
     fn from(r: &'a Renderer) -> GraphicsRenderer {
         GraphicsRenderer::Device(r)
-    }
-}
-
-impl<'a> From<&'a Draw> for GraphicsRenderer<'a> {
-    fn from(r: &'a Draw) -> GraphicsRenderer {
-        GraphicsRenderer::Draw(r)
     }
 }
 

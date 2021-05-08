@@ -1,7 +1,7 @@
 pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::manager::DrawManager;
 use crate::transform::Transform;
-use crate::DrawRenderer;
+// use crate::DrawRenderer;
 use glam::{Mat3, Mat4, Vec2, Vec3};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
@@ -84,51 +84,6 @@ impl Batch {
             BatchType::Pattern { .. } => 12,
             BatchType::Shape => 6,
             _ => 0, //todo text
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub(crate) enum DrawBatch {
-    None,
-    Shape {
-        pipeline: Option<CustomPipeline>,
-        vertices: Vec<f32>,
-        indices: Vec<u32>,
-    },
-    Image {
-        pipeline: Option<CustomPipeline>,
-        vertices: Vec<f32>,
-        indices: Vec<u32>,
-        texture: Texture,
-    },
-    Pattern {
-        pipeline: Option<CustomPipeline>,
-        vertices: Vec<f32>,
-        indices: Vec<u32>,
-        texture: Texture,
-    },
-}
-
-impl DrawBatch {
-    pub fn is_none(&self) -> bool {
-        match self {
-            Self::None => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_shape(&self) -> bool {
-        match self {
-            Self::Shape { .. } => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_image(&self) -> bool {
-        match self {
-            Self::Image { .. } => true,
-            _ => false,
         }
     }
 }
@@ -331,79 +286,6 @@ fn needs_new_batch<I: DrawInfo, F: Fn(&Batch, &I) -> bool>(
     }
 }
 
-#[inline]
-fn add_pattern_vertices(to: &mut Vec<f32>, from: &[f32], matrix: Mat3, alpha: f32) {
-    let computed = (0..from.len())
-        .step_by(12)
-        .map(|i| {
-            let xyz = matrix * Vec3::new(from[i], from[i + 1], 1.0);
-            [
-                xyz.x,
-                xyz.y,
-                from[i + 2],          //uv1
-                from[i + 3],          //uv2
-                from[i + 4],          //fx
-                from[i + 5],          //fy
-                from[i + 6],          //fw
-                from[i + 7],          //fh
-                from[i + 8],          //r
-                from[i + 9],          //g
-                from[i + 10],         //b
-                from[i + 11] * alpha, //a
-            ]
-        })
-        .collect::<Vec<_>>()
-        .concat();
-    to.extend(computed);
-}
-
-#[inline]
-fn add_image_vertices(to: &mut Vec<f32>, from: &[f32], matrix: Mat3, alpha: f32) {
-    let computed = (0..from.len())
-        .step_by(8)
-        .map(|i| {
-            let xyz = matrix * Vec3::new(from[i], from[i + 1], 1.0);
-            [
-                xyz.x,
-                xyz.y,
-                from[i + 2],         //uv1
-                from[i + 3],         //uv2
-                from[i + 4],         //r
-                from[i + 5],         //g
-                from[i + 6],         //b
-                from[i + 7] * alpha, //a
-            ]
-        })
-        .collect::<Vec<_>>()
-        .concat();
-    to.extend(computed);
-}
-
-#[inline]
-fn add_shape_vertices(to: &mut Vec<f32>, from: &[f32], matrix: Mat3, alpha: f32) {
-    let computed = (0..from.len())
-        .step_by(6)
-        .map(|i| {
-            let xyz = matrix * Vec3::new(from[i], from[i + 1], 1.0);
-            [
-                xyz.x,
-                xyz.y,
-                from[i + 2],         //r
-                from[i + 3],         //g
-                from[i + 4],         //b
-                from[i + 5] * alpha, //a
-            ]
-        })
-        .collect::<Vec<_>>()
-        .concat();
-    to.extend(computed);
-}
-
-#[inline]
-fn add_indices(to: &mut Vec<u32>, from: &[u32], last_index: u32) {
-    to.extend(from.iter().map(|i| i + last_index).collect::<Vec<_>>());
-}
-
 trait DrawInfo {
     fn transform(&self) -> &Option<&Mat3>;
     fn vertices(&self) -> &[f32];
@@ -449,6 +331,14 @@ impl DrawInfo for ShapeInfo<'_> {
     fn indices(&self) -> &[u32] {
         &self.indices
     }
+}
+
+pub trait DrawRenderer {
+    fn commands<'a>(
+        &self,
+        device: &mut Device,
+        draw_manager: &'a mut DrawManager,
+    ) -> &'a [Commands];
 }
 
 impl DrawRenderer for Draw2 {
