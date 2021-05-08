@@ -1,5 +1,4 @@
 pub use notan_draw::*;
-use notan_draw::*;
 use notan_graphics::prelude::*;
 pub use notan_graphics::*;
 
@@ -46,16 +45,6 @@ impl Graphics {
         self.device.create_texture(info)
     }
 
-    // #[inline(always)]
-    // pub fn render_to(&mut self, target: &RenderTexture, render: & ToCommandBuffer) {
-    //     self.device.render_to(target, render)
-    // }
-    //
-    // #[inline(always)]
-    // pub fn render(&mut self, render: & ToCommandBuffer) {
-    //     self.device.render(render)
-    // }
-
     pub fn render_to<'a>(
         &mut self,
         target: &RenderTexture,
@@ -87,9 +76,10 @@ impl Graphics {
     pub fn create_uniform_buffer(
         &mut self,
         slot: u32,
+        name: &str,
         data: Vec<f32>,
     ) -> Result<Buffer<f32>, String> {
-        self.device.create_uniform_buffer(slot, data)
+        self.device.create_uniform_buffer(slot, name, data)
     }
 
     #[inline(always)]
@@ -127,36 +117,38 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_draw_pipeline(
+    pub fn create_draw_image_pipeline(
         &mut self,
-        mode: DrawMode,
-        fragment: &ShaderSource,
+        fragment: Option<&ShaderSource>,
     ) -> Result<Pipeline, String> {
-        self.draw
-            .create_pipeline(&mut self.device, mode, Some(fragment))
+        self.draw.create_image_pipeline(&mut self.device, fragment)
     }
 
     #[inline(always)]
-    pub fn create_draw_pipeline_from_raw(
+    pub fn create_draw_pattern_pipeline(
         &mut self,
-        mode: DrawMode,
-        fragment: &[u8],
+        fragment: Option<&ShaderSource>,
     ) -> Result<Pipeline, String> {
         self.draw
-            .create_pipeline_from_raw(&mut self.device, mode, Some(fragment))
+            .create_pattern_pipeline(&mut self.device, fragment)
+    }
+
+    #[inline(always)]
+    pub fn create_draw_shape_pipeline(
+        &mut self,
+        fragment: Option<&ShaderSource>,
+    ) -> Result<Pipeline, String> {
+        self.draw.create_shape_pipeline(&mut self.device, fragment)
+    }
+
+    #[inline(always)]
+    pub fn create_draw_text_pipeline(
+        &mut self,
+        fragment: Option<&ShaderSource>,
+    ) -> Result<Pipeline, String> {
+        self.draw.create_text_pipeline(&mut self.device, fragment)
     }
 }
-//
-// fn commands_from<'a>(
-//     gfx: & mut Graphics,
-//     render: impl Into<GraphicsRenderer<'a>>,
-// ) -> & [Commands] {
-//     match render.into() {
-//         GraphicsRenderer::Raw(r) => r,
-//         GraphicsRenderer::Device(r) => r.commands_from(&mut gfx.device),
-//         GraphicsRenderer::Draw(r) => r.commands(&mut gfx.device, &mut gfx.draw),
-//     }
-// }
 
 pub enum GraphicsRenderer<'a> {
     Raw(&'a [Commands]),

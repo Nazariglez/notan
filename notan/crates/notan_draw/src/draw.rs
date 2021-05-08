@@ -1,328 +1,237 @@
-use super::color_batcher::*;
-use super::manager::DrawMode;
-use crate::geometry::{DrawPath, Path};
+use crate::batch::*;
+pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::manager::DrawManager;
+use crate::transform::Transform;
 use glam::{Mat3, Mat4, Vec2, Vec3};
+use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
-use std::cell::{Ref, RefCell};
-use std::ops::{Deref, DerefMut};
 
-#[derive(Clone)]
-pub(crate) enum GraphicCommands {
-    Draw(DrawCommands),
-    Render(Commands),
-}
-
-#[derive(Clone)]
-pub(crate) enum DrawCommands {
-    Begin(Option<Color>),
-    Projection(Mat4),
-    Triangle {
-        vertices: [f32; 6],
-        indices: [u32; 3],
-        color: [f32; 4],
-    },
-    Rect {
-        vertices: [f32; 8],
-        indices: [u32; 6],
-        color: [f32; 4],
-    },
-    RawColor {
-        vertices: Vec<f32>,
-        indices: Vec<u32>,
-    },
-}
-
-#[derive(Clone)]
-pub struct VertexColor {
-    pub x: f32,
-    pub y: f32,
-    pub color: Color,
-}
-
-impl VertexColor {
-    pub fn new(x: f32, y: f32, color: Color) -> Self {
-        Self { x, y, color }
-    }
-}
-
-impl Default for VertexColor {
-    fn default() -> Self {
-        Self {
-            x: 0.0,
-            y: 0.0,
-            color: Color::WHITE,
-        }
-    }
-}
-
-impl From<VertexColor> for [f32; 6] {
-    fn from(v: VertexColor) -> [f32; 6] {
-        [v.x, v.y, v.color.r, v.color.g, v.color.b, v.color.a]
-    }
-}
-
-impl From<&VertexColor> for [f32; 6] {
-    fn from(v: &VertexColor) -> [f32; 6] {
-        [v.x, v.y, v.color.r, v.color.g, v.color.b, v.color.a]
-    }
-}
-
-#[derive(Clone)]
 pub struct Draw {
-    size: (i32, i32),
-    pub(crate) commands: Vec<GraphicCommands>,
-
-    pub color: Color,
-    pub alpha: f32,
-
-    projection: Mat4,
-    matrix_identity: Mat3,
-    matrix_stack: Vec<Mat3>,
+    pub(crate) background: Option<Color>,
+    pub(crate) initialized: bool,
+    pub(crate) color: Color,
+    pub(crate) alpha: f32,
+    pub(crate) batches: Vec<Batch>,
+    pub(crate) current_batch: Option<Batch>,
+    transform: Transform,
+    base_projection: Mat4,
+    projection: Option<Mat4>,
+    size: (f32, f32),
+    pub(crate) shape_pipeline: CustomPipeline,
+    pub(crate) image_pipeline: CustomPipeline,
+    pub(crate) pattern_pipeline: CustomPipeline,
+    pub(crate) text_pipeline: CustomPipeline,
 }
-
-// TODO
-// - primitives:
-//  - draw.line()
-//  - draw.triangle()
-//  - draw.rect()
-//  - draw.circle()
-// - Advanced:
-//  - draw.geometry(Geometry::builder().whatever())
 
 impl Draw {
     pub fn new(width: i32, height: i32) -> Self {
-        let projection = Mat4::orthographic_lh(0.0, width as f32, height as f32, 0.0, -1.0, 1.0);
-
-        Self {
-            size: (width, height),
-            commands: vec![
-                Commands::Size { width, height }.into(),
-                DrawCommands::Projection(projection.clone()).into(),
-            ],
+        Draw {
+            initialized: false,
             color: Color::WHITE,
             alpha: 1.0,
-            matrix_identity: Mat3::identity(),
-            matrix_stack: vec![],
-            projection,
+            background: None,
+            batches: vec![],
+            current_batch: None,
+            transform: Transform::new(),
+            base_projection: glam::Mat4::orthographic_lh(
+                0.0,
+                width as _,
+                height as _,
+                0.0,
+                -1.0,
+                1.0,
+            ),
+            projection: None,
+            size: (width as _, height as _),
+            shape_pipeline: Default::default(),
+            image_pipeline: Default::default(),
+            pattern_pipeline: Default::default(),
+            text_pipeline: Default::default(),
         }
     }
 
-    pub fn set_projection(&mut self, projection: Mat4) {
-        self.projection = projection;
-        self.commands
-            .push(DrawCommands::Projection(self.projection.clone()).into());
-    }
-
-    pub fn projection(&self) -> &Mat4 {
-        &self.projection
-    }
-
-    pub fn set_size(&mut self, width: i32, height: i32) {
+    pub fn set_size(&mut self, width: f32, height: f32) {
         self.size = (width, height);
-        self.commands.push(Commands::Size { width, height }.into());
+        self.base_projection = glam::Mat4::orthographic_lh(0.0, width, height, 0.0, -1.0, 1.0);
     }
 
-    pub fn size(&self) -> (i32, i32) {
+    pub fn size(&self) -> (f32, f32) {
         self.size
     }
 
-    pub fn width(&self) -> i32 {
+    pub fn width(&self) -> f32 {
         self.size.0
     }
 
-    pub fn height(&self) -> i32 {
+    pub fn height(&self) -> f32 {
         self.size.1
     }
 
-    pub fn set_pipeline(&mut self, pipeline: &Pipeline) {
-        self.commands.push(
-            Commands::Pipeline {
-                id: pipeline.id(),
-                options: pipeline.options.clone(),
+    pub fn set_projection(&mut self, matrix: Option<Mat4>) {
+        self.projection = matrix;
+    }
+
+    pub fn projection(&self) -> Mat4 {
+        self.projection.unwrap_or_else(|| self.base_projection)
+    }
+
+    pub fn set_alpha(&mut self, alpha: f32) {
+        self.alpha = alpha;
+    }
+
+    pub fn alpha(&self) -> f32 {
+        self.alpha
+    }
+
+    pub fn transform(&mut self) -> &mut Transform {
+        &mut self.transform
+    }
+
+    pub fn background(&mut self, color: Color) {
+        self.background = Some(color);
+    }
+
+    fn add_batch<I, F1, F2>(&mut self, info: &I, check_type: F1, create_type: F2)
+    where
+        I: DrawInfo,
+        F1: Fn(&Batch, &I) -> bool,
+        F2: Fn(&I) -> BatchType,
+    {
+        let needs_new_batch =
+            needs_new_batch(info, &self.current_batch, &self.image_pipeline, check_type);
+
+        if needs_new_batch {
+            if let Some(old) = self.current_batch.take() {
+                self.batches.push(old);
             }
-            .into(),
-        );
-    }
 
-    pub fn begin(&mut self, color: Option<&Color>) {
-        self.commands
-            .push(DrawCommands::Begin(color.map(|c| *c)).into());
-    }
+            let typ = create_type(info);
+            let custom = match typ {
+                BatchType::Image { .. } => &self.image_pipeline,
+                BatchType::Pattern { .. } => &self.pattern_pipeline,
+                BatchType::Shape => &self.shape_pipeline,
+                //TODO text
+            };
 
-    pub fn vertex_color(
-        &mut self,
-        vertices: impl IntoIterator<Item = impl Into<[f32; 6]>>,
-        indices: &[u32],
-    ) {
-        let mut vertices = vertices
-            .into_iter()
-            .map(|v| v.into())
-            .collect::<Vec<[f32; 6]>>()
-            .concat();
+            self.current_batch = Some(Batch {
+                typ: create_type(info),
+                vertices: vec![],
+                indices: vec![],
+                pipeline: custom.pipeline.clone(),
+                uniform_buffers: custom.uniforms.clone(),
+                blend_mode: None, //todo blend_mode
+            });
+        }
 
-        compute_vertices(*self.matrix(), &mut vertices, Some(6));
-
-        self.commands.push(
-            DrawCommands::RawColor {
-                vertices,
-                indices: indices.to_vec(),
-            }
-            .into(),
-        );
-    }
-
-    pub fn triangle(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
-        #[rustfmt::skip]
-        let mut vertices = [
-            x1, y1,
-            x2, y2,
-            x3, y3
-        ];
-        compute_vertices(*self.matrix(), &mut vertices, None);
-
-        #[rustfmt::skip]
-        let triangle = DrawCommands::Triangle {
-            vertices,
-            indices: [0, 1, 2],
-            color: get_computed_color(self)
+        let global_matrix = *self.transform.matrix();
+        let matrix = match *info.transform() {
+            Some(m) => *m * global_matrix,
+            _ => global_matrix,
         };
 
-        self.commands.push(triangle.into());
+        if let Some(b) = &mut self.current_batch {
+            b.add(info.indices(), info.vertices(), matrix, self.alpha);
+        }
     }
 
-    pub fn rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
-        #[rustfmt::skip]
-        let mut vertices = [
-            x, y,
-            x + width, y,
-            x, y + height,
-            x + width, y + height
-        ];
-        compute_vertices(*self.matrix(), &mut vertices, None);
+    pub fn add_image<'a>(&mut self, info: &ImageInfo<'a>) {
+        let check_type = |b: &Batch, i: &ImageInfo| {
+            match &b.typ {
+                //different texture
+                BatchType::Image { texture } => texture != i.texture,
 
-        #[rustfmt::skip]
-        let rect = DrawCommands::Rect {
-            vertices,
-            indices: [0, 1, 2, 2, 1, 3],
-            color:get_computed_color(self),
+                //different batch type
+                _ => true,
+            }
         };
 
-        self.commands.push(rect.into());
+        let create_type = |i: &ImageInfo| BatchType::Image {
+            texture: i.texture.clone(),
+        };
+
+        self.add_batch(info, check_type, create_type);
     }
 
-    pub fn line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, width: f32) {
-        self.path_begin(x1, y1)
-            .line_to(x2, y2)
-            .end(false)
-            .stroke(width);
+    pub fn add_shape<'a>(&mut self, info: &ShapeInfo<'a>) {
+        let check_type = |b: &Batch, _: &ShapeInfo| !b.is_shape();
+        let create_type = |_: &ShapeInfo| BatchType::Shape;
+
+        self.add_batch(info, check_type, create_type);
     }
 
-    pub fn path(&mut self, path: &Path) {
-        //TODO process this directly without the vertex_color?
-        let color: Color = get_computed_color(self).into();
-        let vertices = (0..path.vertices.len())
-            .step_by(2)
-            .map(|i| VertexColor {
-                x: path.vertices[i],
-                y: path.vertices[i + 1],
-                color: color,
-            })
-            .collect::<Vec<_>>();
-        self.vertex_color(&vertices, &path.indices);
-    }
+    pub fn add_pattern<'a>(&mut self, info: &ImageInfo<'a>) {
+        let check_type = |b: &Batch, i: &ImageInfo| {
+            match &b.typ {
+                //different texture
+                BatchType::Pattern { texture } => texture != i.texture,
 
-    // pub fn test_color<'a>(&mut self, info: &DrawInfo<'a>) {
-    //     self.vertex_color(info.vertices, info.indices);
+                //different batch type
+                _ => true,
+            }
+        };
+
+        let create_type = |i: &ImageInfo| BatchType::Pattern {
+            texture: i.texture.clone(),
+        };
+
+        self.add_batch(info, check_type, create_type);
+    }
+    //
+    // /*
+    // pub fn add_instanced<'a>(&mut self, info: &InstancedInfo<'a>) {
+    //     //provide a way to draw images with draw_instanced
     // }
+    //  */
+}
 
-    pub fn path_begin(&mut self, x: f32, y: f32) -> DrawPath {
-        let mut builder = Path::builder();
-        builder.begin(x, y);
+trait DrawInfo {
+    fn transform(&self) -> &Option<&Mat3>;
+    fn vertices(&self) -> &[f32];
+    fn indices(&self) -> &[u32];
+}
 
-        DrawPath {
-            builder,
-            draw: self,
-        }
+/// Information to render the image or pattern
+pub struct ImageInfo<'a> {
+    pub texture: &'a Texture,
+    pub transform: Option<&'a Mat3>,
+    pub vertices: &'a [f32],
+    pub indices: &'a [u32],
+}
+
+impl DrawInfo for ImageInfo<'_> {
+    fn transform(&self) -> &Option<&Mat3> {
+        &self.transform
     }
 
-    pub fn end(&mut self) {
-        self.commands.push(GraphicCommands::Render(Commands::End));
+    fn vertices(&self) -> &[f32] {
+        &self.vertices
     }
 
-    pub fn clear(&mut self) {
-        self.commands.clear();
-    }
-
-    pub fn push(&mut self, matrix: Mat3) {
-        let last_matrix = *self.matrix();
-        let next_matrix = matrix * last_matrix;
-        self.matrix_stack.push(next_matrix);
-    }
-
-    pub fn pop(&mut self) -> Option<Mat3> {
-        self.matrix_stack.pop()
-    }
-
-    pub fn push_scale(&mut self, x: f32, y: f32) {
-        self.push(Mat3::from_scale(Vec2::new(x, y)));
-    }
-
-    pub fn push_translation(&mut self, x: f32, y: f32) {
-        self.push(Mat3::from_translation(Vec2::new(x, y)));
-    }
-
-    pub fn push_rotation(&mut self, angle: f32) {
-        self.push(Mat3::from_angle(angle));
-    }
-
-    pub fn push_skew(&mut self, x: f32, y: f32) {
-        let xt = x.tan();
-        let yt = y.tan();
-
-        self.push(Mat3::from_cols(
-            Vec3::new(1.0, xt, 0.0),
-            Vec3::new(yt, 1.0, 0.0),
-            Vec3::new(0.0, 0.0, 1.0),
-        ));
-    }
-
-    #[inline]
-    pub fn matrix(&mut self) -> &Mat3 {
-        match self.matrix_stack.last().as_ref() {
-            Some(m) => m,
-            _ => &self.matrix_identity,
-        }
+    fn indices(&self) -> &[u32] {
+        &self.indices
     }
 }
 
-fn compute_vertices(matrix: Mat3, vertices: &mut [f32], offset: Option<usize>) {
-    debug_assert!(
-        vertices.len() % 2 == 0,
-        "Vertices len should be a pair number"
-    );
-    for i in (0..vertices.len()).step_by(offset.unwrap_or(2)) {
-        let xyz = matrix * Vec3::new(vertices[i], vertices[i + 1], 1.0);
-        vertices[i] = xyz.x;
-        vertices[i + 1] = xyz.y;
+/// Information to render the shape
+pub struct ShapeInfo<'a> {
+    pub transform: Option<&'a Mat3>,
+    pub vertices: &'a [f32],
+    pub indices: &'a [u32],
+}
+
+impl DrawInfo for ShapeInfo<'_> {
+    fn transform(&self) -> &Option<&Mat3> {
+        &self.transform
+    }
+
+    fn vertices(&self) -> &[f32] {
+        &self.vertices
+    }
+
+    fn indices(&self) -> &[u32] {
+        &self.indices
     }
 }
-
-fn get_computed_color(draw: &Draw) -> [f32; 4] {
-    [
-        draw.color.r,
-        draw.color.g,
-        draw.color.b,
-        draw.color.a * draw.alpha,
-    ]
-}
-
-// // TODO cargo make
-
-// pub struct DrawInfo<'a> {
-//     pub vertices: &'a [VertexColor],
-//     pub indices: &'a [u32],
-// }
 
 pub trait DrawRenderer {
     fn commands<'a>(
@@ -334,19 +243,26 @@ pub trait DrawRenderer {
 
 impl DrawRenderer for Draw {
     fn commands<'a>(&self, _: &mut Device, draw_manager: &'a mut DrawManager) -> &'a [Commands] {
-        draw_manager.process_batch(self)
+        draw_manager.process_draw(self)
     }
 }
 
-impl From<Commands> for GraphicCommands {
-    fn from(cmd: Commands) -> GraphicCommands {
-        GraphicCommands::Render(cmd)
-    }
-}
+fn needs_new_batch<I: DrawInfo, F: Fn(&Batch, &I) -> bool>(
+    info: &I,
+    current: &Option<Batch>,
+    custom: &CustomPipeline,
+    check_type: F,
+) -> bool {
+    match current {
+        Some(b) => {
+            if b.pipeline.as_ref() != custom.pipeline.as_ref() {
+                return true; // different pipeline
+            }
 
-impl From<DrawCommands> for GraphicCommands {
-    fn from(cmd: DrawCommands) -> GraphicCommands {
-        GraphicCommands::Draw(cmd)
+            //TODO check blend mode here
+
+            return check_type(b, info);
+        }
+        _ => true, // no previous batch
     }
 }
-//http://www.independent-software.com/determining-coordinates-on-a-html-canvas-bezier-curve.html

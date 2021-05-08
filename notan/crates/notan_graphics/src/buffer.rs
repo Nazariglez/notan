@@ -71,6 +71,19 @@ where
     pub fn data_ptr(&self) -> &Arc<RwLock<Vec<T>>> {
         &self.data
     }
+
+    pub fn len(&self) -> usize {
+        self.data.read().len()
+    }
+}
+
+impl<T> std::cmp::PartialEq for Buffer<T>
+where
+    T: BufferDataType,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.id() == other.id()
+    }
 }
 
 #[derive(Clone, Copy, Debug)]

@@ -1,9 +1,19 @@
-mod color_batcher;
+mod batch;
+mod builder;
+mod custom_pipeline;
 mod draw;
-mod geometry;
+mod fonts;
+mod images;
 mod manager;
+mod patterns;
+mod shapes;
+mod transform;
 
-pub use color_batcher::*;
+pub use custom_pipeline::*;
 pub use draw::*;
-pub use geometry::*;
+pub use fonts::*;
+pub use images::*;
 pub use manager::*;
+pub use patterns::*;
+pub use shapes::*;
+pub use transform::*;

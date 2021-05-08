@@ -42,10 +42,46 @@ impl Mouse {
         self.released.contains(&btn)
     }
 
+    #[inline(always)]
+    /// Returns true if the left button was released on the last frame
+    pub fn left_was_released(&self) -> bool {
+        self.was_released(MouseButton::Left)
+    }
+
+    #[inline(always)]
+    /// Returns true if the middle button was released on the last frame
+    pub fn middle_was_released(&self) -> bool {
+        self.was_released(MouseButton::Middle)
+    }
+
+    #[inline(always)]
+    /// Returns true if the right button was released on the last frame
+    pub fn right_was_released(&self) -> bool {
+        self.was_released(MouseButton::Right)
+    }
+
     #[inline]
     /// Returns true if the button is still down
     pub fn is_down(&self, btn: MouseButton) -> bool {
         self.down.contains_key(&btn)
+    }
+
+    #[inline(always)]
+    /// Returns true if the left button is still down
+    pub fn left_is_down(&self) -> bool {
+        self.is_down(MouseButton::Left)
+    }
+
+    #[inline(always)]
+    /// Returns true if the middle button is still down
+    pub fn middle_is_down(&self) -> bool {
+        self.is_down(MouseButton::Middle)
+    }
+
+    #[inline(always)]
+    /// Returns true if the right button is still down
+    pub fn right_is_down(&self) -> bool {
+        self.is_down(MouseButton::Right)
     }
 
     #[inline]
@@ -55,9 +91,27 @@ impl Mouse {
     }
 
     #[inline]
-    /// Returns true if the button was pressed on the last feame
+    /// Returns true if the button was pressed on the last frame
     pub fn was_pressed(&self, btn: MouseButton) -> bool {
         self.pressed.contains(&btn)
+    }
+
+    #[inline(always)]
+    /// Returns true if the left button was pressed on the last frame
+    pub fn left_was_pressed(&self) -> bool {
+        self.was_pressed(MouseButton::Left)
+    }
+
+    #[inline(always)]
+    /// Returns true if the middle button was pressed on the last frame
+    pub fn middle_was_pressed(&self) -> bool {
+        self.was_pressed(MouseButton::Middle)
+    }
+
+    #[inline(always)]
+    /// Returns true if the right button was pressed on the last frame
+    pub fn right_was_pressed(&self) -> bool {
+        self.was_pressed(MouseButton::Right)
     }
 
     #[inline]

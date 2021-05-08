@@ -38,7 +38,7 @@ pub trait DeviceBackend {
     fn create_index_buffer(&mut self) -> Result<i32, String>;
 
     /// Create a new uniform buffer and returns the id
-    fn create_uniform_buffer(&mut self, slot: u32) -> Result<i32, String>;
+    fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<i32, String>;
 
     /// Create a new renderer using the size of the graphics
     fn render(&mut self, commands: &[Commands], target: Option<i32>);
@@ -178,10 +178,11 @@ impl Device {
     pub fn create_uniform_buffer(
         &mut self,
         slot: u32,
+        name: &str,
         data: Vec<f32>,
     ) -> Result<Buffer<f32>, String> {
         //debug_assert!(current_pipeline.is_some()) //pipeline should be already binded
-        let id = self.backend.create_uniform_buffer(slot)?;
+        let id = self.backend.create_uniform_buffer(slot, name)?;
         Ok(Buffer::new(
             id,
             data,

@@ -650,6 +650,7 @@ dependencies = [
  "cfg-if 0.1.10",
  "libc",
  "wasi 0.9.0+wasi-snapshot-preview1",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1110,6 +1111,8 @@ dependencies = [
  "notan_default_backend",
  "notan_log",
  "notan_macro",
+ "notan_math",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1153,6 +1156,7 @@ dependencies = [
  "notan_graphics",
  "notan_log",
  "notan_macro",
+ "notan_math",
 ]
 
 [[package]]
@@ -1176,6 +1180,7 @@ dependencies = [
  "bytemuck",
  "glam 0.10.2",
  "image",
+ "notan_log",
  "notan_macro",
  "notan_math",
  "parking_lot",
@@ -1206,6 +1211,10 @@ dependencies = [
 [[package]]
 name = "notan_math"
 version = "0.1.0"
+dependencies = [
+ "rand",
+ "rand_pcg",
+]
 
 [[package]]
 name = "notan_web"
@@ -1498,6 +1507,15 @@ name = "rand_hc"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca3129af7b92a17112d59ad498c6f81eaf463253766b90396d39ea7a39d6613c"
+dependencies = [
+ "rand_core",
+]
+
+[[package]]
+name = "rand_pcg"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16abd0c1b639e9eb4d7c50c0b8100b0d0f849be2349829c740fe8e6eb4816429"
 dependencies = [
  "rand_core",
 ]
