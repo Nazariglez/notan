@@ -12,10 +12,12 @@ pub use crate::draw::Draw;
 pub(crate) use painter::*;
 pub use path::Path;
 pub use triangle::Triangle;
+pub use rect::Rectangle;
 
 pub trait DrawShapes {
     fn triangle(&mut self, a: (f32, f32), b: (f32, f32), c: (f32, f32)) -> DrawBuilder<Triangle>;
     fn path(&mut self) -> DrawBuilder<Path>;
+    fn rect(&mut self, position: (f32, f32), size: (f32, f32)) -> DrawBuilder<Rectangle>;
 }
 
 impl DrawShapes for Draw {
@@ -25,5 +27,9 @@ impl DrawShapes for Draw {
 
     fn path(&mut self) -> DrawBuilder<Path> {
         DrawBuilder::new(self, Path::new())
+    }
+
+    fn rect(&mut self, position: (f32, f32), size: (f32, f32)) -> DrawBuilder<Rectangle> {
+        DrawBuilder::new(self, Rectangle::new(position, size))
     }
 }
