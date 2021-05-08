@@ -3,7 +3,8 @@ use super::fonts::*;
 use super::images::*;
 use super::patterns::*;
 use super::shapes::*;
-use crate::draw2::*;
+use crate::batch::*;
+use crate::draw::*;
 use glam::Mat4;
 use notan_graphics::prelude::*;
 
@@ -30,14 +31,14 @@ impl DrawManager {
         })
     }
 
-    pub(crate) fn process_draw2(&mut self, draw: &Draw2) -> &[Commands] {
+    pub(crate) fn process_draw(&mut self, draw: &Draw) -> &[Commands] {
         self.renderer.clear();
-        process_draw2(self, draw);
+        process_draw(self, draw);
         &self.renderer.commands()
     }
 
-    pub fn create_draw2(&self, width: i32, height: i32) -> Draw2 {
-        Draw2::new(width, height)
+    pub fn create_draw(&self, width: i32, height: i32) -> Draw {
+        Draw::new(width, height)
     }
 
     pub fn create_image_pipeline(
@@ -90,7 +91,7 @@ fn paint_batch(manager: &mut DrawManager, b: &Batch, projection: &Mat4) {
     }
 }
 
-fn process_draw2(manager: &mut DrawManager, draw: &Draw2) {
+fn process_draw(manager: &mut DrawManager, draw: &Draw) {
     manager.image_painter.clear();
     manager.shape_painter.clear();
     manager.pattern_painter.clear();

@@ -1,4 +1,5 @@
-use crate::draw2::*;
+use crate::batch::*;
+use crate::draw::*;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 

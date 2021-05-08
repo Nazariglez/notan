@@ -1,5 +1,5 @@
 use crate::builder::DrawProcess;
-use crate::draw2::{Draw2, ImageInfo};
+use crate::draw::{Draw, ImageInfo};
 use crate::transform::{DrawTransform, Transform};
 use glam::Mat3;
 use notan_graphics::color::Color;
@@ -69,7 +69,7 @@ impl DrawTransform for Pattern<'_> {
 }
 
 impl DrawProcess for Pattern<'_> {
-    fn draw_process(self, draw: &mut Draw2) {
+    fn draw_process(self, draw: &mut Draw) {
         let Self {
             pos: (x1, y1),
             texture,

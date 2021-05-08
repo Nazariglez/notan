@@ -25,9 +25,9 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_draw2(&self) -> Draw2 {
+    pub fn create_draw(&self) -> Draw {
         let (width, height) = self.device.size();
-        self.draw.create_draw2(width, height)
+        self.draw.create_draw(width, height)
     }
 
     #[inline(always)]
@@ -168,8 +168,8 @@ impl<'a> From<&'a Renderer> for GraphicsRenderer<'a> {
     }
 }
 
-impl<'a> From<&'a Draw2> for GraphicsRenderer<'a> {
-    fn from(r: &'a Draw2) -> GraphicsRenderer {
+impl<'a> From<&'a Draw> for GraphicsRenderer<'a> {
+    fn from(r: &'a Draw) -> GraphicsRenderer {
         GraphicsRenderer::Draw(r)
     }
 }

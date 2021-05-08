@@ -1,6 +1,6 @@
 use super::tess::{fill_lyon_path, stroke_lyon_path, TessMode};
 use crate::builder::DrawProcess;
-use crate::draw2::{Draw2, ShapeInfo};
+use crate::draw::{Draw, ShapeInfo};
 use crate::transform::DrawTransform;
 use glam::Mat3;
 use lyon::math::point;
@@ -143,7 +143,7 @@ impl Path {
 }
 
 impl DrawProcess for Path {
-    fn draw_process(mut self, draw: &mut Draw2) {
+    fn draw_process(mut self, draw: &mut Draw) {
         if self.initialized {
             self.builder.end(false);
         }

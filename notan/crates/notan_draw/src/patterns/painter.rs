@@ -1,5 +1,6 @@
 use super::pattern::Pattern;
-use crate::draw2::*;
+use crate::batch::*;
+use crate::draw::*;
 use glam::Mat4;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};

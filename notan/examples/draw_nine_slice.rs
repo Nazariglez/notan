@@ -45,7 +45,7 @@ fn init(gfx: &mut Graphics) -> State {
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
-    let mut draw = gfx.create_draw2();
+    let mut draw = gfx.create_draw();
 
     draw.nine_slice(&state.img1).position(50.0, 50.0).size(
         state.img1.width() + state.count,

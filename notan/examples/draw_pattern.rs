@@ -41,7 +41,7 @@ fn init(gfx: &mut Graphics) -> State {
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
-    let mut draw = gfx.create_draw2();
+    let mut draw = gfx.create_draw();
 
     draw.pattern(&state.img)
         .size(800.0, 600.0)

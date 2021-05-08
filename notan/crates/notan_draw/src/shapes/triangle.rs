@@ -1,7 +1,7 @@
 use super::path::Path;
 use super::tess::TessMode;
 use crate::builder::{DrawBuilder, DrawProcess};
-use crate::draw2::{Draw2, ShapeInfo};
+use crate::draw::{Draw, ShapeInfo};
 use crate::transform::DrawTransform;
 use glam::Mat3;
 use notan_graphics::color::Color;
@@ -63,7 +63,7 @@ impl DrawTransform for Triangle {
 }
 
 impl DrawProcess for Triangle {
-    fn draw_process(self, draw: &mut Draw2) {
+    fn draw_process(self, draw: &mut Draw) {
         match self.mode {
             TessMode::Fill => fill(self, draw),
             TessMode::Stroke => stroke(self, draw),
@@ -71,7 +71,7 @@ impl DrawProcess for Triangle {
     }
 }
 
-fn stroke(triangle: Triangle, draw: &mut Draw2) {
+fn stroke(triangle: Triangle, draw: &mut Draw) {
     let Triangle {
         colors: [ca, ..],
         points: [a, b, c],
@@ -96,7 +96,7 @@ fn stroke(triangle: Triangle, draw: &mut Draw2) {
     path.draw_process(draw);
 }
 
-fn fill(triangle: Triangle, draw: &mut Draw2) {
+fn fill(triangle: Triangle, draw: &mut Draw) {
     let Triangle {
         colors: [ca, cb, cc],
         points: [a, b, c],

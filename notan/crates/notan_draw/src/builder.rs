@@ -1,8 +1,8 @@
-use crate::draw2::Draw2;
+use crate::draw::Draw;
 use std::ops::{Deref, DerefMut};
 
 pub trait DrawProcess {
-    fn draw_process(self, draw: &mut Draw2);
+    fn draw_process(self, draw: &mut Draw);
     //TODO add 'extract' method to cache the vertices and indices?
     // fn extract<T>(self) -> T; where T is ie: impl Into<ShapeInfo>
 }
@@ -12,14 +12,14 @@ where
     T: DrawProcess,
 {
     inner: Option<T>,
-    draw: &'a mut Draw2,
+    draw: &'a mut Draw,
 }
 
 impl<'a, T> DrawBuilder<'a, T>
 where
     T: DrawProcess,
 {
-    pub fn new(draw: &'a mut Draw2, item: T) -> Self {
+    pub fn new(draw: &'a mut Draw, item: T) -> Self {
         Self {
             inner: Some(item),
             draw,

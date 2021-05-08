@@ -81,7 +81,7 @@ fn update(state: &mut State) {
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
-    let mut draw = gfx.create_draw2();
+    let mut draw = gfx.create_draw();
 
     // Image without a custom shader
     draw.image(&state.img).position(50.0, 200.0);

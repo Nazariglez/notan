@@ -1,4 +1,4 @@
-use crate::draw2::Draw2;
+use crate::draw::Draw;
 use notan_graphics::prelude::*;
 
 #[derive(Default, Clone, Debug)]
@@ -27,7 +27,7 @@ pub trait DrawCustomPipeline {
     fn text_pipeline(&mut self) -> CustomPipelineBuilder;
 }
 
-impl DrawCustomPipeline for Draw2 {
+impl DrawCustomPipeline for Draw {
     fn image_pipeline(&mut self) -> CustomPipelineBuilder {
         CustomPipelineBuilder::new(self, CustomPipelineType::Image)
     }
@@ -54,7 +54,7 @@ enum CustomPipelineType {
 }
 
 pub struct CustomPipelineBuilder<'a> {
-    draw: &'a mut Draw2,
+    draw: &'a mut Draw,
     typ: CustomPipelineType,
     pipeline: Option<&'a Pipeline>,
     uniforms: Option<Vec<&'a Buffer<f32>>>,
@@ -62,7 +62,7 @@ pub struct CustomPipelineBuilder<'a> {
 }
 
 impl<'a> CustomPipelineBuilder<'a> {
-    fn new(draw: &'a mut Draw2, typ: CustomPipelineType) -> Self {
+    fn new(draw: &'a mut Draw, typ: CustomPipelineType) -> Self {
         CustomPipelineBuilder {
             draw,
             typ,
@@ -122,11 +122,11 @@ fn process_pipeline(builder: &mut CustomPipelineBuilder, typ: CustomPipelineType
         .map(|u| u.into_iter().cloned().collect::<Vec<_>>());
 }
 
-fn remove_pipeline(draw: &mut Draw2, typ: CustomPipelineType) {
+fn remove_pipeline(draw: &mut Draw, typ: CustomPipelineType) {
     get_custom_pipeline(draw, typ).clear();
 }
 
-fn get_custom_pipeline(draw: &mut Draw2, typ: CustomPipelineType) -> &mut CustomPipeline {
+fn get_custom_pipeline(draw: &mut Draw, typ: CustomPipelineType) -> &mut CustomPipeline {
     match typ {
         CustomPipelineType::Image => &mut draw.image_pipeline,
         CustomPipelineType::Shape => &mut draw.shape_pipeline,

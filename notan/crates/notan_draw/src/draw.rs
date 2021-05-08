@@ -1,94 +1,12 @@
+use crate::batch::*;
 pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::manager::DrawManager;
 use crate::transform::Transform;
-// use crate::DrawRenderer;
 use glam::{Mat3, Mat4, Vec2, Vec3};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 
-#[derive(Clone, Debug)]
-pub(crate) enum BatchType {
-    Image { texture: Texture },
-    Pattern { texture: Texture },
-    Shape,
-    // Text {
-    //     font: Font
-    // }
-}
-
-pub(crate) struct Batch {
-    pub typ: BatchType,
-    pub vertices: Vec<f32>,
-    pub indices: Vec<u32>,
-    pub pipeline: Option<Pipeline>,
-    pub uniform_buffers: Option<Vec<Buffer<f32>>>,
-    pub blend_mode: Option<BlendMode>,
-}
-
-impl Batch {
-    fn new(typ: BatchType) -> Self {
-        Self {
-            typ,
-            vertices: vec![],
-            indices: vec![],
-            pipeline: None,
-            uniform_buffers: None,
-            blend_mode: None,
-        }
-    }
-
-    fn is_shape(&self) -> bool {
-        match &self.typ {
-            BatchType::Shape => true,
-            _ => false,
-        }
-    }
-
-    fn is_image(&self) -> bool {
-        match &self.typ {
-            BatchType::Image { .. } => true,
-            _ => false,
-        }
-    }
-
-    fn is_pattern(&self) -> bool {
-        match &self.typ {
-            BatchType::Pattern { .. } => true,
-            _ => false,
-        }
-    }
-
-    fn add(&mut self, indices: &[u32], vertices: &[f32], matrix: Mat3, alpha: f32) {
-        let offset = self.offset();
-
-        //compute indices
-        let last_index = (self.vertices.len() / offset) as u32;
-        self.indices.reserve(self.indices.len() + indices.len());
-        self.indices.extend(indices.iter().map(|i| i + last_index));
-
-        //compute vertices
-        self.vertices.reserve(self.vertices.len() + vertices.len());
-        (0..vertices.len()).step_by(offset).for_each(|i| {
-            let start = i + 2;
-            let end = i + offset - 1;
-            let xyz = matrix * Vec3::new(vertices[i], vertices[i + 1], 1.0);
-            self.vertices.extend(&[xyz.x, xyz.y]); //pos
-            self.vertices.extend(&vertices[start..end]); //pipeline attrs and rgb
-            self.vertices.push(vertices[i + offset - 1] * alpha); //alpha
-        });
-    }
-
-    fn offset(&self) -> usize {
-        match &self.typ {
-            BatchType::Image { .. } => 8,
-            BatchType::Pattern { .. } => 12,
-            BatchType::Shape => 6,
-            _ => 0, //todo text
-        }
-    }
-}
-
-pub struct Draw2 {
+pub struct Draw {
     pub(crate) background: Option<Color>,
     pub(crate) initialized: bool,
     pub(crate) color: Color,
@@ -105,9 +23,9 @@ pub struct Draw2 {
     pub(crate) text_pipeline: CustomPipeline,
 }
 
-impl Draw2 {
+impl Draw {
     pub fn new(width: i32, height: i32) -> Self {
-        Draw2 {
+        Draw {
             initialized: false,
             color: Color::WHITE,
             alpha: 1.0,
@@ -266,32 +184,13 @@ impl Draw2 {
     //  */
 }
 
-fn needs_new_batch<I: DrawInfo, F: Fn(&Batch, &I) -> bool>(
-    info: &I,
-    current: &Option<Batch>,
-    custom: &CustomPipeline,
-    check_type: F,
-) -> bool {
-    match current {
-        Some(b) => {
-            if b.pipeline.as_ref() != custom.pipeline.as_ref() {
-                return true; // different pipeline
-            }
-
-            //TODO check blend mode here
-
-            return check_type(b, info);
-        }
-        _ => true, // no previous batch
-    }
-}
-
 trait DrawInfo {
     fn transform(&self) -> &Option<&Mat3>;
     fn vertices(&self) -> &[f32];
     fn indices(&self) -> &[u32];
 }
 
+/// Information to render the image or pattern
 pub struct ImageInfo<'a> {
     pub texture: &'a Texture,
     pub transform: Option<&'a Mat3>,
@@ -313,6 +212,7 @@ impl DrawInfo for ImageInfo<'_> {
     }
 }
 
+/// Information to render the shape
 pub struct ShapeInfo<'a> {
     pub transform: Option<&'a Mat3>,
     pub vertices: &'a [f32],
@@ -341,8 +241,28 @@ pub trait DrawRenderer {
     ) -> &'a [Commands];
 }
 
-impl DrawRenderer for Draw2 {
+impl DrawRenderer for Draw {
     fn commands<'a>(&self, _: &mut Device, draw_manager: &'a mut DrawManager) -> &'a [Commands] {
-        draw_manager.process_draw2(self)
+        draw_manager.process_draw(self)
+    }
+}
+
+fn needs_new_batch<I: DrawInfo, F: Fn(&Batch, &I) -> bool>(
+    info: &I,
+    current: &Option<Batch>,
+    custom: &CustomPipeline,
+    check_type: F,
+) -> bool {
+    match current {
+        Some(b) => {
+            if b.pipeline.as_ref() != custom.pipeline.as_ref() {
+                return true; // different pipeline
+            }
+
+            //TODO check blend mode here
+
+            return check_type(b, info);
+        }
+        _ => true, // no previous batch
     }
 }

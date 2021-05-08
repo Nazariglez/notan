@@ -1,6 +1,6 @@
 use super::image::Image;
 use crate::builder::{DrawBuilder, DrawProcess};
-use crate::draw2::Draw2;
+use crate::draw::Draw;
 use crate::transform::{DrawTransform, Transform};
 use glam::Mat3;
 use notan_graphics::color::Color;
@@ -83,7 +83,7 @@ impl DrawTransform for NineSlice<'_> {
 }
 
 impl DrawProcess for NineSlice<'_> {
-    fn draw_process(self, draw: &mut Draw2) {
+    fn draw_process(self, draw: &mut Draw) {
         let Self {
             texture,
             color,
@@ -191,6 +191,6 @@ impl DrawProcess for NineSlice<'_> {
 }
 
 #[inline(always)]
-fn img<'a>(draw: &'a mut Draw2, tex: &'a Texture) -> DrawBuilder<'a, Image<'a>> {
+fn img<'a>(draw: &'a mut Draw, tex: &'a Texture) -> DrawBuilder<'a, Image<'a>> {
     DrawBuilder::new(draw, Image::new(tex))
 }

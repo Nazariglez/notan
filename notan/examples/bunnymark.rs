@@ -98,7 +98,7 @@ fn update(app: &mut App, state: &mut State) {
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
-    let mut draw = gfx.create_draw2();
+    let mut draw = gfx.create_draw();
     draw.background(Color::new(0.1, 0.2, 0.3, 1.0));
     state.bunnies.iter().for_each(|b| {
         draw.image(&state.texture).position(b.x, b.y);

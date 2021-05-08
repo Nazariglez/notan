@@ -5,7 +5,7 @@ mod painter;
 
 //pub use instanced::*;
 use crate::builder::DrawBuilder;
-use crate::draw2::{CustomPipeline, Draw2};
+use crate::draw::{CustomPipeline, Draw};
 pub use image::*;
 pub use nine_slice::*;
 use notan_graphics::prelude::*;
@@ -18,7 +18,7 @@ pub trait DrawImages {
     //fn instanced_image<'a>(&mut self, texture: &'a Texture) -> DrawBuilder<InstancedImage<'a>>;
 }
 
-impl DrawImages for Draw2 {
+impl DrawImages for Draw {
     fn image<'a>(&mut self, texture: &'a Texture) -> DrawBuilder<Image<'a>> {
         DrawBuilder::new(self, Image::new(texture))
     }
