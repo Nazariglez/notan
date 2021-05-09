@@ -8,7 +8,7 @@ use notan_graphics::prelude::*;
 
 #[derive(Debug, Clone)]
 pub struct Draw {
-    pub(crate) background: Option<Color>,
+    pub(crate) clear_color: Option<Color>,
     initialized: bool,
     alpha: f32,
     transform: Transform,
@@ -29,7 +29,7 @@ impl Draw {
         Draw {
             initialized: false,
             alpha: 1.0,
-            background: None,
+            clear_color: None,
             batches: vec![],
             current_batch: None,
             transform: Transform::new(),
@@ -124,8 +124,8 @@ impl Draw {
         &mut self.transform
     }
 
-    pub fn background(&mut self, color: Color) {
-        self.background = Some(color);
+    pub fn clear(&mut self, color: Color) {
+        self.clear_color = Some(color);
     }
 
     fn add_batch<I, F1, F2>(&mut self, info: &I, check_type: F1, create_type: F2)

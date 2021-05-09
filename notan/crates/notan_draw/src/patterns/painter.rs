@@ -1,6 +1,7 @@
 use super::pattern::Pattern;
 use crate::batch::*;
 use crate::draw::*;
+use crate::manager::process_pipeline;
 use glam::Mat4;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
@@ -98,17 +99,7 @@ impl PatternPainter {
 
     pub fn push(&mut self, renderer: &mut Renderer, batch: &Batch, projection: &Mat4) {
         if let BatchType::Pattern { texture } = &batch.typ {
-            match &batch.pipeline {
-                Some(pip) => {
-                    renderer.set_pipeline(&pip);
-                    if let Some(buffers) = &batch.uniform_buffers {
-                        buffers.iter().for_each(|u| renderer.bind_uniform_buffer(u));
-                    }
-                }
-                _ => {
-                    renderer.set_pipeline(&self.pipeline);
-                }
-            }
+            process_pipeline(renderer, batch, &self.pipeline);
 
             let len = (self.count_vertices / self.pipeline.offset()) as u32;
             let offset = self.count_indices;

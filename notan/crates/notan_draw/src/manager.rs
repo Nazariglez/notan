@@ -109,7 +109,7 @@ fn process_draw(manager: &mut DrawManager, draw: &Draw) {
     manager.pattern_painter.clear();
 
     manager.renderer.begin(Some(&ClearOptions {
-        color: draw.background.clone(),
+        color: draw.clear_color.clone(),
         ..Default::default()
     }));
 
@@ -122,4 +122,69 @@ fn process_draw(manager: &mut DrawManager, draw: &Draw) {
     }
 
     manager.renderer.end();
+}
+
+fn override_pipeline_options(
+    pipeline: &Pipeline,
+    is_mask: bool,
+    masking: bool,
+) -> Option<Pipeline> {
+    if is_mask {
+        let mut pip = pipeline.clone();
+        pip.options.stencil = Some(StencilOptions {
+            stencil_fail: StencilAction::Keep,
+            depth_fail: StencilAction::Keep,
+            pass: StencilAction::Replace,
+            compare: CompareMode::Always,
+            read_mask: 0xff,
+            write_mask: 0xff,
+            reference: 1,
+        });
+        pip.options.depth_stencil.write = false;
+        pip.options.color_mask = ColorMask::NONE;
+        return Some(pip);
+    }
+
+    if masking {
+        let mut pip = pipeline.clone();
+        pip.options.stencil = Some(StencilOptions {
+            stencil_fail: StencilAction::Keep,
+            depth_fail: StencilAction::Keep,
+            pass: StencilAction::Replace,
+            compare: CompareMode::Equal,
+            read_mask: 0xff,
+            write_mask: 0x00,
+            reference: 1,
+        });
+        pip.options.depth_stencil.write = true;
+        pip.options.color_mask = ColorMask::ALL;
+        return Some(pip);
+    }
+
+    None
+}
+
+pub(crate) fn process_pipeline(
+    renderer: &mut Renderer,
+    batch: &Batch,
+    default_pipeline: &Pipeline,
+) {
+    match &batch.pipeline {
+        Some(pip) => {
+            match override_pipeline_options(pip, batch.is_mask, batch.masking) {
+                Some(pip) => renderer.set_pipeline(&pip),
+                _ => renderer.set_pipeline(pip),
+            };
+
+            if let Some(buffers) = &batch.uniform_buffers {
+                buffers.iter().for_each(|u| renderer.bind_uniform_buffer(u));
+            }
+        }
+        _ => {
+            match override_pipeline_options(default_pipeline, batch.is_mask, batch.masking) {
+                Some(pip) => renderer.set_pipeline(&pip),
+                _ => renderer.set_pipeline(default_pipeline),
+            };
+        }
+    }
 }
