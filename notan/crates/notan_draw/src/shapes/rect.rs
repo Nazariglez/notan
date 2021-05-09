@@ -1,9 +1,12 @@
+use super::geometry;
 use super::path::Path;
 use super::tess::TessMode;
+use super::tess::*;
 use crate::builder::{DrawBuilder, DrawProcess};
 use crate::draw::{Draw, ShapeInfo};
 use crate::transform::DrawTransform;
 use glam::Mat3;
+use lyon::tessellation::*;
 use notan_graphics::color::Color;
 
 pub struct Rectangle {
@@ -85,20 +88,17 @@ fn stroke(quad: Rectangle, draw: &mut Draw) {
         ..
     } = quad;
 
-    let mut path = Path::new();
-    path.move_to(x, y)
-        .line_to(x, y + height)
-        .line_to(x + width, y + height)
-        .line_to(x + width, y)
-        .stroke(stroke_width)
-        .color(ca.with_alpha(ca.a * alpha))
-        .close();
+    let stroke_options = StrokeOptions::default().with_line_width(stroke_width);
+    let color = ca.with_alpha(ca.a * alpha);
 
-    if let Some(m) = matrix {
-        path.transform(m);
-    }
+    let path = geometry::rectangle(x, y, width, height);
+    let (vertices, indices) = stroke_lyon_path(&path, color, &stroke_options);
 
-    path.draw_process(draw);
+    draw.add_shape(&ShapeInfo {
+        transform: matrix.as_ref(),
+        vertices: &vertices,
+        indices: &indices,
+    });
 }
 
 fn fill(quad: Rectangle, draw: &mut Draw) {
