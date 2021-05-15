@@ -51,6 +51,10 @@ impl Draw {
         }
     }
 
+    pub fn round_pixels(&mut self, round: bool) {
+        //TODO round pixels to draw "2d pixel games"
+    }
+
     pub fn mask(&mut self, mask: Option<&Self>) {
         debug_assert!(!(self.masking && mask.is_some()), "Already using mask.");
 

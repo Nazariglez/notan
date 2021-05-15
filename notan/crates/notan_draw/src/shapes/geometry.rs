@@ -54,6 +54,13 @@ pub(super) fn rounded_rect(
     builder.build()
 }
 
-pub fn ellipse() -> Path {
-    todo!()
+pub fn ellipse(x: f32, y: f32, width: f32, height: f32, rotation: f32) -> Path {
+    let mut builder = Path::builder();
+    builder.add_ellipse(
+        point(x, y),
+        vector(width, height),
+        Angle::radians(rotation),
+        Winding::Positive,
+    );
+    builder.build()
 }

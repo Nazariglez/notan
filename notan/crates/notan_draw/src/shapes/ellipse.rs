@@ -9,10 +9,11 @@ use glam::Mat3;
 use lyon::tessellation::*;
 use notan_graphics::color::Color;
 
-pub struct Circle {
+pub struct Ellipse {
     color: Color,
     pos: (f32, f32),
-    radius: f32,
+    size: (f32, f32),
+    rotation: f32,
     mode: TessMode,
     stroke_width: f32,
     alpha: f32,
@@ -20,22 +21,28 @@ pub struct Circle {
     tolerance: f32,
 }
 
-impl Circle {
-    pub fn new(radius: f32) -> Self {
+impl Ellipse {
+    pub fn new(pos: (f32, f32), size: (f32, f32)) -> Self {
         Self {
             color: Color::WHITE,
-            pos: (0.0, 0.0),
-            radius,
+            pos,
+            size,
             mode: TessMode::Fill,
             stroke_width: 1.0,
             alpha: 1.0,
             matrix: None,
             tolerance: StrokeOptions::DEFAULT_TOLERANCE,
+            rotation: 0.0,
         }
     }
 
-    pub fn position(&mut self, x: f32, y: f32) -> &mut Self {
-        self.pos = (x, y);
+    pub fn rotate(&mut self, radians: f32) -> &mut Self {
+        self.rotation = radians;
+        self
+    }
+
+    pub fn rotate_degrees(&mut self, deg: f32) -> &mut Self {
+        self.rotation = deg * notan_math::DEG_TO_RAD;
         self
     }
 
@@ -66,13 +73,13 @@ impl Circle {
     }
 }
 
-impl DrawTransform for Circle {
+impl DrawTransform for Ellipse {
     fn matrix(&mut self) -> &mut Option<Mat3> {
         &mut self.matrix
     }
 }
 
-impl DrawProcess for Circle {
+impl DrawProcess for Ellipse {
     fn draw_process(self, draw: &mut Draw) {
         match self.mode {
             TessMode::Fill => fill(self, draw),
@@ -81,24 +88,25 @@ impl DrawProcess for Circle {
     }
 }
 
-fn stroke(circle: Circle, draw: &mut Draw) {
-    let Circle {
+fn stroke(ellipse: Ellipse, draw: &mut Draw) {
+    let Ellipse {
         color,
         pos: (x, y),
-        radius,
+        size: (width, height),
+        rotation,
         stroke_width,
         alpha,
         matrix,
         tolerance,
         ..
-    } = circle;
+    } = ellipse;
 
     let stroke_options = StrokeOptions::default()
         .with_line_width(stroke_width)
         .with_tolerance(tolerance);
     let color = color.with_alpha(color.a * alpha);
 
-    let path = geometry::circle(x, y, radius);
+    let path = geometry::ellipse(x, y, width, height, rotation);
     let (vertices, indices) = stroke_lyon_path(&path, color, &stroke_options);
 
     draw.add_shape(&ShapeInfo {
@@ -108,22 +116,23 @@ fn stroke(circle: Circle, draw: &mut Draw) {
     });
 }
 
-fn fill(circle: Circle, draw: &mut Draw) {
-    let Circle {
+fn fill(ellipse: Ellipse, draw: &mut Draw) {
+    let Ellipse {
         color,
         pos: (x, y),
-        radius,
+        size: (width, height),
+        rotation,
         mode,
         alpha,
         matrix,
         tolerance,
         ..
-    } = circle;
+    } = ellipse;
 
     let fill_options = FillOptions::default().with_tolerance(tolerance);
     let color = color.with_alpha(color.a * alpha);
 
-    let path = geometry::circle(x, y, radius);
+    let path = geometry::ellipse(x, y, width, height, rotation);
     let (vertices, indices) = fill_lyon_path(&path, color, &fill_options);
 
     draw.add_shape(&ShapeInfo {
