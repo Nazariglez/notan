@@ -5,10 +5,9 @@ mod painter;
 
 //pub use instanced::*;
 use crate::builder::DrawBuilder;
-use crate::draw::{CustomPipeline, Draw};
+use crate::draw::Draw;
 pub use image::*;
 pub use nine_slice::*;
-use notan_graphics::prelude::*;
 use notan_graphics::Texture;
 pub(crate) use painter::*;
 

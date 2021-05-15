@@ -1,8 +1,7 @@
 use super::geometry;
-use super::path::Path;
 use super::tess::TessMode;
 use super::tess::*;
-use crate::builder::{DrawBuilder, DrawProcess};
+use crate::builder::DrawProcess;
 use crate::draw::{Draw, ShapeInfo};
 use crate::transform::DrawTransform;
 use glam::Mat3;
@@ -122,7 +121,6 @@ fn fill(ellipse: Ellipse, draw: &mut Draw) {
         pos: (x, y),
         size: (width, height),
         rotation,
-        mode,
         alpha,
         matrix,
         tolerance,

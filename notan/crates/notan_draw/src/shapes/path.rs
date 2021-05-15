@@ -19,6 +19,12 @@ pub struct Path {
     matrix: Option<Mat3>,
 }
 
+impl Default for Path {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Path {
     pub fn new() -> Self {
         Self {

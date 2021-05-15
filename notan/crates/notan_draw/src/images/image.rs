@@ -1,6 +1,6 @@
 use crate::builder::DrawProcess;
 use crate::draw::{Draw, ImageInfo};
-use crate::transform::{DrawTransform, Transform};
+use crate::transform::DrawTransform;
 use glam::Mat3;
 use notan_graphics::color::Color;
 use notan_graphics::Texture;
@@ -84,7 +84,7 @@ impl DrawProcess for Image<'_> {
         let c = color.with_alpha(color.a * alpha);
         let frame = texture.frame();
 
-        let (ww, hh) = size.unwrap_or_else(|| (frame.width, frame.height));
+        let (ww, hh) = size.unwrap_or((frame.width, frame.height));
         let x2 = x1 + ww;
         let y2 = y1 + hh;
 
@@ -121,8 +121,8 @@ impl DrawProcess for Image<'_> {
         ];
 
         draw.add_image(&ImageInfo {
-            texture: self.texture,
-            transform: self.matrix.as_ref(),
+            texture,
+            transform: matrix.as_ref(),
             vertices: &vertices,
             indices: &[0, 1, 2, 2, 1, 3],
         });

@@ -1,8 +1,7 @@
 use super::geometry;
-use super::path::Path;
 use super::tess::TessMode;
 use super::tess::*;
-use crate::builder::{DrawBuilder, DrawProcess};
+use crate::builder::DrawProcess;
 use crate::draw::{Draw, ShapeInfo};
 use crate::transform::DrawTransform;
 use glam::Mat3;
@@ -134,7 +133,7 @@ fn stroke(quad: Rectangle, draw: &mut Draw) {
     let color = ca.with_alpha(ca.a * alpha);
 
     let path = match rounded_corners {
-        Some([tl, tr, bl, br]) => geometry::rounded_rect(x, y, width, height, tl, tr, bl, br),
+        Some([tl, tr, bl, br]) => geometry::rounded_rect(x, y, width, height, (tl, tr, bl, br)),
         _ => geometry::rectangle(x, y, width, height),
     };
 
@@ -152,7 +151,6 @@ fn fill(quad: Rectangle, draw: &mut Draw) {
         colors: [ca, cb, cc, cd],
         pos: (x1, y1),
         size: (width, height),
-        mode,
         alpha,
         matrix,
         rounded_corners,
@@ -170,7 +168,7 @@ fn fill(quad: Rectangle, draw: &mut Draw) {
 
     match rounded_corners {
         Some([tl, tr, bl, br]) => {
-            let path = geometry::rounded_rect(x1, y1, width, height, tl, tr, bl, br);
+            let path = geometry::rounded_rect(x1, y1, width, height, (tl, tr, bl, br));
             let options = FillOptions::default().with_tolerance(corner_tolerance);
             let (vertices, indices) = fill_lyon_path(&path, ca.with_alpha(ca.a * alpha), &options);
 

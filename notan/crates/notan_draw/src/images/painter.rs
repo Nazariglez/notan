@@ -1,5 +1,4 @@
 use crate::batch::*;
-use crate::draw::*;
 use crate::manager::process_pipeline;
 use glam::Mat4;
 use notan_graphics::prelude::*;
@@ -50,7 +49,7 @@ pub fn create_image_pipeline(
     device: &mut Device,
     fragment: Option<&ShaderSource>,
 ) -> Result<Pipeline, String> {
-    let fragment = fragment.unwrap_or_else(|| &IMAGE_FRAGMENT);
+    let fragment = fragment.unwrap_or(&IMAGE_FRAGMENT);
     device.create_pipeline(
         &IMAGE_VERTEX,
         fragment,

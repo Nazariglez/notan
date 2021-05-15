@@ -51,7 +51,7 @@ where
     T: DrawProcess,
 {
     fn drop(&mut self) {
-        if let Some(mut inner) = self.inner.take() {
+        if let Some(inner) = self.inner.take() {
             inner.draw_process(&mut self.draw);
         }
     }

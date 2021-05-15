@@ -1,5 +1,4 @@
 use crate::batch::*;
-use crate::draw::*;
 use crate::manager::process_pipeline;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
@@ -42,7 +41,7 @@ pub fn create_shape_pipeline(
     device: &mut Device,
     fragment: Option<&ShaderSource>,
 ) -> Result<Pipeline, String> {
-    let fragment = fragment.unwrap_or_else(|| &SHAPES_FRAGMENT);
+    let fragment = fragment.unwrap_or(&SHAPES_FRAGMENT);
     device.create_pipeline(
         &SHAPES_VERTEX,
         fragment,

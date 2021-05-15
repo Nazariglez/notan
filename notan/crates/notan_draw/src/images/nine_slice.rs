@@ -1,7 +1,7 @@
 use super::image::Image;
 use crate::builder::{DrawBuilder, DrawProcess};
 use crate::draw::Draw;
-use crate::transform::{DrawTransform, Transform};
+use crate::transform::DrawTransform;
 use glam::Mat3;
 use notan_graphics::color::Color;
 use notan_graphics::Texture;
@@ -22,7 +22,7 @@ pub struct NineSlice<'a> {
 impl<'a> NineSlice<'a> {
     pub fn new(texture: &'a Texture) -> Self {
         Self {
-            texture: texture,
+            texture,
             color: Color::WHITE,
             alpha: 1.0,
             pos: (0.0, 0.0),
@@ -100,7 +100,7 @@ impl DrawProcess for NineSlice<'_> {
         let img_ww = texture.width();
         let img_hh = texture.height();
 
-        let (width, height) = size.unwrap_or_else(|| (img_ww, img_hh));
+        let (width, height) = size.unwrap_or((img_ww, img_hh));
         let left = left.unwrap_or_else(|| img_ww / 3.0);
         let right = right.unwrap_or_else(|| img_ww / 3.0);
         let top = top.unwrap_or_else(|| img_hh / 3.0);

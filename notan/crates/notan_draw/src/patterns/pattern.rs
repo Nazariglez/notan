@@ -1,10 +1,9 @@
 use crate::builder::DrawProcess;
 use crate::draw::{Draw, ImageInfo};
-use crate::transform::{DrawTransform, Transform};
+use crate::transform::DrawTransform;
 use glam::Mat3;
 use notan_graphics::color::Color;
 use notan_graphics::Texture;
-use notan_math::Rect;
 
 pub struct Pattern<'a> {
     matrix: Option<Mat3>,
@@ -119,8 +118,8 @@ impl DrawProcess for Pattern<'_> {
         ];
 
         draw.add_pattern(&ImageInfo {
-            texture: self.texture,
-            transform: self.matrix.as_ref(),
+            texture,
+            transform: matrix.as_ref(),
             vertices: &vertices,
             indices: &[0, 1, 2, 2, 1, 3],
         });

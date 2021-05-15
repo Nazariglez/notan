@@ -24,38 +24,8 @@ pub(crate) struct Batch {
 }
 
 impl Batch {
-    fn new(typ: BatchType) -> Self {
-        Self {
-            typ,
-            vertices: vec![],
-            indices: vec![],
-            pipeline: None,
-            uniform_buffers: None,
-            blend_mode: None,
-            is_mask: false,
-            masking: false,
-        }
-    }
-
     pub fn is_shape(&self) -> bool {
-        match &self.typ {
-            BatchType::Shape => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_image(&self) -> bool {
-        match &self.typ {
-            BatchType::Image { .. } => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_pattern(&self) -> bool {
-        match &self.typ {
-            BatchType::Pattern { .. } => true,
-            _ => false,
-        }
+        matches!(self.typ, BatchType::Shape)
     }
 
     pub fn add(&mut self, indices: &[u32], vertices: &[f32], matrix: Mat3, alpha: f32) {
@@ -83,7 +53,6 @@ impl Batch {
             BatchType::Image { .. } => 8,
             BatchType::Pattern { .. } => 12,
             BatchType::Shape => 6,
-            _ => 0, //todo text
         }
     }
 }

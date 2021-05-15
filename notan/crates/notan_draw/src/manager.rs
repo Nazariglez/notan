@@ -1,5 +1,3 @@
-// use super::draw::{Draw, DrawCommands, GraphicCommands};
-use super::fonts::*;
 use super::images::*;
 use super::patterns::*;
 use super::shapes::*;
@@ -9,13 +7,11 @@ use glam::Mat4;
 use notan_graphics::prelude::*;
 
 pub struct DrawManager {
-    pub(crate) commands: Vec<Commands>,
     shape_painter: ShapePainter,
     image_painter: ImagePainter,
     pattern_painter: PatternPainter,
     renderer: Renderer,
     drawing_mask: bool,
-    masking: bool,
 }
 
 impl DrawManager {
@@ -25,13 +21,11 @@ impl DrawManager {
         let pattern_painter = PatternPainter::new(device)?;
         let renderer = device.create_renderer();
         Ok(Self {
-            commands: vec![],
             shape_painter,
             image_painter,
             pattern_painter,
             renderer,
             drawing_mask: false,
-            masking: false,
         })
     }
 
@@ -71,10 +65,10 @@ impl DrawManager {
 
     pub fn create_text_pipeline(
         &self,
-        device: &mut Device,
-        fragment: Option<&ShaderSource>,
+        _device: &mut Device,
+        _fragment: Option<&ShaderSource>,
     ) -> Result<Pipeline, String> {
-        create_text_pipeline(device, fragment)
+        unimplemented!()
     }
 }
 
@@ -99,7 +93,6 @@ fn paint_batch(manager: &mut DrawManager, b: &Batch, projection: &Mat4) {
                 .pattern_painter
                 .push(&mut manager.renderer, b, projection)
         }
-        _ => {} //TODO text
     }
 }
 
@@ -109,7 +102,7 @@ fn process_draw(manager: &mut DrawManager, draw: &Draw) {
     manager.pattern_painter.clear();
 
     manager.renderer.begin(Some(&ClearOptions {
-        color: draw.clear_color.clone(),
+        color: draw.clear_color,
         ..Default::default()
     }));
 

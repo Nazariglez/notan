@@ -1,6 +1,6 @@
 use super::path::Path;
 use super::tess::TessMode;
-use crate::builder::{DrawBuilder, DrawProcess};
+use crate::builder::DrawProcess;
 use crate::draw::{Draw, ShapeInfo};
 use crate::transform::DrawTransform;
 use glam::Mat3;
@@ -100,7 +100,6 @@ fn fill(triangle: Triangle, draw: &mut Draw) {
     let Triangle {
         colors: [ca, cb, cc],
         points: [a, b, c],
-        mode,
         alpha,
         matrix,
         ..

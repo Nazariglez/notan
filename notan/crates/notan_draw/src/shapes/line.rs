@@ -1,10 +1,9 @@
 use super::path::Path;
-use crate::builder::{DrawBuilder, DrawProcess};
-use crate::draw::{Draw, ShapeInfo};
+use crate::builder::DrawProcess;
+use crate::draw::Draw;
 use crate::transform::DrawTransform;
 use glam::Mat3;
 use notan_graphics::color::Color;
-use notan_graphics::prelude::*;
 
 pub struct Line {
     p1: (f32, f32),

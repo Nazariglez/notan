@@ -2,7 +2,7 @@ use crate::batch::*;
 pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::manager::DrawManager;
 use crate::transform::Transform;
-use glam::{Mat3, Mat4, Vec2, Vec3};
+use glam::{Mat3, Mat4};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 
@@ -51,8 +51,9 @@ impl Draw {
         }
     }
 
-    pub fn round_pixels(&mut self, round: bool) {
+    pub fn round_pixels(&mut self, _round: bool) {
         //TODO round pixels to draw "2d pixel games"
+        todo!("round pixels");
     }
 
     pub fn mask(&mut self, mask: Option<&Self>) {
@@ -113,7 +114,7 @@ impl Draw {
     }
 
     pub fn projection(&self) -> Mat4 {
-        self.projection.unwrap_or_else(|| self.base_projection)
+        self.projection.unwrap_or(self.base_projection)
     }
 
     pub fn set_alpha(&mut self, alpha: f32) {
@@ -304,7 +305,7 @@ fn needs_new_batch<I: DrawInfo, F: Fn(&Batch, &I) -> bool>(
 
             //TODO check blend mode here
 
-            return check_type(b, info);
+            check_type(b, info)
         }
         _ => true, // no previous batch
     }

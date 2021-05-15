@@ -1,5 +1,5 @@
 use glam::{Mat3, Vec2, Vec3};
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 
 /// Helper methods to do matrix transformations
 pub trait DrawTransform {
@@ -85,7 +85,7 @@ pub trait DrawTransform {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 /// This struct represents a stack of matrices
 pub struct Transform {
     identity: Mat3,

@@ -8,6 +8,7 @@ thread_local! {
     static FILL_TESSELLATOR:RefCell<FillTessellator> = RefCell::new(FillTessellator::new());
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum TessMode {
     Fill,
     Stroke,
