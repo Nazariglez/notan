@@ -76,12 +76,12 @@ impl DropManager {
 
 pub struct Device {
     size: (i32, i32),
-    backend: Box<DeviceBackend>, //TODO generic?
+    backend: Box<dyn DeviceBackend>, //TODO generic?
     drop_manager: Arc<DropManager>,
 }
 
 impl Device {
-    pub fn new(mut backend: Box<DeviceBackend>) -> Result<Self, String> {
+    pub fn new(backend: Box<dyn DeviceBackend>) -> Result<Self, String> {
         Ok(Self {
             backend,
             size: (1, 1),
@@ -194,7 +194,7 @@ impl Device {
 
     #[inline(always)]
     pub fn create_texture(&mut self, info: TextureInfo) -> Result<Texture, String> {
-        let (id) = self.backend.create_texture(&info)?;
+        let id = self.backend.create_texture(&info)?;
         Ok(Texture::new(id, info, self.drop_manager.clone()))
     }
 

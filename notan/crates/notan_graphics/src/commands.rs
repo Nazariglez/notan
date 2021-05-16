@@ -4,8 +4,6 @@ use crate::pipeline::*;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-struct TextureId(i32);
-
 #[allow(unused)]
 #[derive(Debug, Clone)]
 pub enum Commands {

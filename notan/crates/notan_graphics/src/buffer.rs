@@ -3,7 +3,6 @@ use crate::pipeline::*;
 use parking_lot::{
     MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
 };
-use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -75,6 +74,10 @@ where
     pub fn len(&self) -> usize {
         self.data.read().len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl<T> std::cmp::PartialEq for Buffer<T>
@@ -102,7 +105,7 @@ pub struct VertexAttr {
 impl VertexAttr {
     pub fn new(location: u32, vertex_data: VertexFormat) -> Self {
         Self {
-            location: location,
+            location,
             format: vertex_data,
         }
     }
@@ -131,9 +134,6 @@ impl VertexFormat {
     }
 
     pub fn normalized(&self) -> bool {
-        use VertexFormat::*;
-        match self {
-            _ => false,
-        }
+        false //check type
     }
 }
