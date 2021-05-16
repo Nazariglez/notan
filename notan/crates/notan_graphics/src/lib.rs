@@ -1,8 +1,7 @@
 pub mod buffer;
 pub mod color;
 pub mod commands;
-pub mod draw;
-pub mod graphics;
+pub mod device;
 pub mod pipeline;
 mod render_texture;
 pub mod renderer;
@@ -11,6 +10,6 @@ pub mod texture;
 
 pub mod prelude;
 
-pub use graphics::*;
+pub use device::*;
 pub use render_texture::*;
 pub use texture::*;

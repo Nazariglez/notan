@@ -5,6 +5,7 @@ use syn::{parse_macro_input, LitStr};
 use syn::{ItemFn, ItemStruct};
 
 mod shaders;
+mod state;
 
 #[proc_macro_attribute]
 pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -24,6 +25,12 @@ fn handle_main_func(input: ItemFn) -> TokenStream {
     };
 
     expand.into()
+}
+
+#[proc_macro_derive(AppState)]
+pub fn state_derive(input: TokenStream) -> TokenStream {
+    let ast = syn::parse(input).unwrap();
+    state::impl_state_derive(&ast)
 }
 
 #[proc_macro]

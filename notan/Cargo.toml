@@ -7,10 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-glam = "0.11"
+glam = "0.13"
 notan_log = { path = "./crates/notan_log" }
 notan_app = { path = "./crates/notan_app" }
 notan_macro = { path = "crates/notan_macro" }
+notan_math = { path = "./crates/notan_math" }
 notan_default_backend = { path = "./crates/notan_default_backend", optional = true }
 
 [workspace]
@@ -20,3 +21,6 @@ members = ["crates/*"]
 default = ["default_backend", "log_enabled"]
 log_enabled = []
 default_backend = ["notan_default_backend"]
+
+[dev-dependencies]
+wasm-bindgen = "0.2"

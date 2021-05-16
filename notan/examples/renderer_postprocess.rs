@@ -1,7 +1,7 @@
 use notan::app::assets::*;
 use notan::app::config::WindowConfig;
 use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Plugins};
+use notan::app::{App, AppBuilder, Graphics, Plugins};
 use notan::log;
 use notan::prelude::*;
 
@@ -85,12 +85,9 @@ const PIXEL_INVERT_FRAGMENT: ShaderSource = notan::fragment_shader! {
 struct PostProcessTarget {
     render_texture: RenderTexture,
     pipeline: Pipeline,
-    vertex_buffer: Buffer,
-    index_buffer: Buffer,
-    uniform_buffer: Buffer,
-    uniforms: [f32; 3],
-    vertices: [f32; 20],
-    indices: [u32; 6],
+    vertex_buffer: Buffer<f32>,
+    index_buffer: Buffer<u32>,
+    uniform_buffer: Buffer<f32>,
     value: f32,
 }
 
@@ -114,12 +111,8 @@ impl PostProcessTarget {
             )
             .unwrap();
 
-        let vertex_buffer = gfx.create_vertex_buffer().unwrap();
-        let index_buffer = gfx.create_index_buffer().unwrap();
-        let uniform_buffer = gfx.create_uniform_buffer(0).unwrap();
-
         #[rustfmt::skip]
-        let vertices = [
+        let vertices = vec![
             //pos               //coords
             1.0,  1.0, 0.0,     1.0, 1.0,
             1.0, -1.0, 0.0,     1.0, 0.0,
@@ -128,39 +121,40 @@ impl PostProcessTarget {
         ];
 
         #[rustfmt::skip]
-        let indices = [
+        let indices = vec![
             0, 1, 3,
             1, 2, 3,
         ];
 
-        let uniforms = [800.0, 600.0, 0.0];
+        let uniforms = vec![800.0, 600.0, 0.0];
+
+        let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
+        let index_buffer = gfx.create_index_buffer(indices).unwrap();
+        let uniform_buffer = gfx.create_uniform_buffer(0, uniforms).unwrap();
 
         Self {
             render_texture,
             pipeline,
             value: 0.0,
-            vertices,
-            indices,
             vertex_buffer,
             index_buffer,
             uniform_buffer,
-            uniforms,
         }
     }
 
-    fn create_renderer<'a>(&'a mut self, gfx: &mut Graphics) -> Renderer<'a> {
-        self.uniforms[2] = 5.5 + self.value.sin();
+    fn create_renderer(&mut self, gfx: &mut Graphics) -> Renderer {
+        (*self.uniform_buffer.data_mut())[2] = 5.5 + self.value.sin();
         self.value += 0.005;
 
         let mut renderer = gfx.create_renderer();
 
-        renderer.begin(&ClearOptions::none());
+        renderer.begin(Some(&ClearOptions::none()));
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_texture(0, &self.render_texture);
-        renderer.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
-        renderer.bind_index_buffer(&self.index_buffer, &self.indices);
-        renderer.bind_uniform_buffer(&self.uniform_buffer, &self.uniforms);
-        renderer.draw(0, self.indices.len() as _);
+        renderer.bind_vertex_buffer(&self.vertex_buffer);
+        renderer.bind_index_buffer(&self.index_buffer);
+        renderer.bind_uniform_buffer(&self.uniform_buffer);
+        renderer.draw(0, 6);
         renderer.end();
 
         renderer
@@ -206,14 +200,11 @@ const COLOR_FRAGMENT: ShaderSource = notan::fragment_shader! {
 
 struct Cube {
     pipeline: Pipeline,
-    vertices: [f32; 168],
-    indices: [u32; 36],
-    vertex_buffer: Buffer,
-    index_buffer: Buffer,
-    uniform_buffer: Buffer,
+    vertex_buffer: Buffer<f32>,
+    index_buffer: Buffer<u32>,
+    uniform_buffer: Buffer<f32>,
     mvp: glam::Mat4,
     angle: f32,
-    matrix: [f32; 16],
 }
 
 impl Cube {
@@ -236,12 +227,8 @@ impl Cube {
             )
             .unwrap();
 
-        let vertex_buffer = gfx.create_vertex_buffer().unwrap();
-        let index_buffer = gfx.create_index_buffer().unwrap();
-        let uniform_buffer = gfx.create_uniform_buffer(0).unwrap();
-
         #[rustfmt::skip]
-            let vertices = [
+        let vertices = vec![
             -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
             1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
             1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
@@ -274,7 +261,7 @@ impl Cube {
         ];
 
         #[rustfmt::skip]
-            let indices = [
+        let indices = vec![
             0, 1, 2,  0, 2, 3,
             6, 5, 4,  7, 6, 4,
             8, 9, 10,  8, 10, 11,
@@ -291,33 +278,39 @@ impl Cube {
         );
         let mvp = glam::Mat4::identity() * projection * view;
 
+        let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
+        let index_buffer = gfx.create_index_buffer(indices).unwrap();
+        let uniform_buffer = gfx
+            .create_uniform_buffer(0, mvp.to_cols_array().to_vec())
+            .unwrap();
+
         Self {
             pipeline,
-            vertices,
-            indices,
             vertex_buffer,
             index_buffer,
             uniform_buffer,
             mvp,
             angle: 0.0,
-            matrix: [0.0; 16],
         }
     }
 
-    fn create_renderer<'a>(&'a mut self, gfx: &mut Graphics) -> Renderer<'a> {
-        self.matrix = rotated_matrix(self.mvp, self.angle);
+    fn create_renderer(&mut self, gfx: &mut Graphics) -> Renderer {
+        self.uniform_buffer
+            .data_mut()
+            .copy_from_slice(&rotated_matrix(self.mvp, self.angle));
 
         let mut renderer = gfx.create_renderer();
-        renderer.begin(&ClearOptions {
+        renderer.begin(Some(&ClearOptions {
             color: Some(Color::new(0.1, 0.2, 0.3, 1.0)),
             depth: Some(1.0),
             ..Default::default()
-        });
+        }));
+
         renderer.set_pipeline(&self.pipeline);
-        renderer.bind_uniform_buffer(&self.uniform_buffer, &self.matrix);
-        renderer.bind_vertex_buffer(&self.vertex_buffer, &self.vertices);
-        renderer.bind_index_buffer(&self.index_buffer, &self.indices);
-        renderer.draw(0, self.indices.len() as _);
+        renderer.bind_uniform_buffer(&self.uniform_buffer);
+        renderer.bind_vertex_buffer(&self.vertex_buffer);
+        renderer.bind_index_buffer(&self.index_buffer);
+        renderer.draw(0, 36);
         renderer.end();
 
         self.angle += 0.01;

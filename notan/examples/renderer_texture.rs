@@ -1,7 +1,7 @@
 use notan::app::assets::*;
 use notan::app::config::WindowConfig;
 use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Plugins};
+use notan::app::{App, AppBuilder, Graphics, Plugins};
 use notan::log;
 use notan::prelude::*;
 
@@ -42,10 +42,8 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vertices: [f32; 20],
-    indices: [u32; 6],
-    vertex_buffer: Buffer,
-    index_buffer: Buffer,
+    vertex_buffer: Buffer<f32>,
+    index_buffer: Buffer<u32>,
     texture: Texture,
 }
 impl AppState for State {}
@@ -75,14 +73,11 @@ fn setup(gfx: &mut Graphics) -> State {
         )
         .unwrap();
 
-    let vertex_buffer = gfx.create_vertex_buffer().unwrap();
-    let index_buffer = gfx.create_index_buffer().unwrap();
-
     let image = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
     let texture = gfx.create_texture(image).unwrap();
 
     #[rustfmt::skip]
-    let vertices = [
+    let vertices = vec![
         //pos               //coords
         0.5,  0.5, 0.0,     1.0, 1.0,
         0.5, -0.5, 0.0,     1.0, 0.0,
@@ -91,16 +86,17 @@ fn setup(gfx: &mut Graphics) -> State {
     ];
 
     #[rustfmt::skip]
-    let indices = [
+    let indices = vec![
         0, 1, 3,
         1, 2, 3,
     ];
 
+    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
+    let index_buffer = gfx.create_index_buffer(indices).unwrap();
+
     let mut state = State {
         clear_options,
         pipeline,
-        vertices,
-        indices,
         vertex_buffer,
         index_buffer,
         texture,
@@ -112,12 +108,12 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    renderer.begin(&state.clear_options);
+    renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_texture(0, &state.texture);
-    renderer.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
-    renderer.bind_index_buffer(&state.index_buffer, &state.indices);
-    renderer.draw(0, state.indices.len() as _);
+    renderer.bind_vertex_buffer(&state.vertex_buffer);
+    renderer.bind_index_buffer(&state.index_buffer);
+    renderer.draw(0, 6);
     renderer.end();
 
     gfx.render(&renderer);

@@ -1,6 +1,6 @@
 use crate::config::WindowConfig;
 use crate::graphics::prelude::*;
-use crate::graphics::{Graphics, GraphicsBackend, RenderTexture};
+use crate::graphics::{Device, DeviceBackend, RenderTexture};
 use crate::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 
 #[derive(Default)]
@@ -65,17 +65,17 @@ impl BackendSystem for EmptyBackend {
         }))
     }
 
-    fn get_graphics_backend(&self) -> Box<GraphicsBackend> {
-        Box::new(EmptyGraphicsBackend::default())
+    fn get_graphics_backend(&self) -> Box<DeviceBackend> {
+        Box::new(EmptyDeviceBackend::default())
     }
 }
 
 #[derive(Default)]
-struct EmptyGraphicsBackend {
+struct EmptyDeviceBackend {
     id_count: i32,
 }
 
-impl GraphicsBackend for EmptyGraphicsBackend {
+impl DeviceBackend for EmptyDeviceBackend {
     fn api_name(&self) -> &str {
         ""
     }
@@ -101,7 +101,7 @@ impl GraphicsBackend for EmptyGraphicsBackend {
         Ok(self.id_count)
     }
 
-    fn create_uniform_buffer(&mut self, _slot: u32) -> Result<i32, String> {
+    fn create_uniform_buffer(&mut self, _slot: u32, name: &str) -> Result<i32, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }
