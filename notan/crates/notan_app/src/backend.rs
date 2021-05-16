@@ -1,5 +1,5 @@
 use crate::config::WindowConfig;
-use crate::graphics::GraphicsBackend;
+use crate::graphics::DeviceBackend;
 use crate::{App, EventIterator};
 use downcast_rs::{impl_downcast, Downcast};
 use futures::prelude::*;
@@ -40,7 +40,7 @@ pub trait BackendSystem: Backend {
     }
 
     /// Returns the graphics backend implementation
-    fn get_graphics_backend(&self) -> Box<GraphicsBackend>;
+    fn get_graphics_backend(&self) -> Box<DeviceBackend>;
 }
 
 /// Represents a window

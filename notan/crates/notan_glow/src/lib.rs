@@ -1,7 +1,7 @@
 use glow::*;
 use hashbrown::HashMap;
 use notan_graphics::prelude::*;
-use notan_graphics::{Graphics, GraphicsBackend};
+use notan_graphics::{Device, DeviceBackend};
 use std::rc::Rc;
 
 mod buffer;
@@ -31,6 +31,7 @@ pub struct GlowBackend {
     gl_index_type: u32,
     using_indices: bool,
     api_name: String,
+    current_pipeline: i32,
 
     #[cfg(target_arch = "wasm32")]
     current_uniforms: Vec<UniformLocation>,
@@ -66,6 +67,7 @@ impl GlowBackend {
             gl_index_type,
             using_indices: false,
             api_name: api.to_string(),
+            current_pipeline: 0,
 
             #[cfg(target_arch = "wasm32")]
             current_uniforms: vec![],
@@ -157,6 +159,7 @@ impl GlowBackend {
             pip.bind(&self.gl, options);
             self.current_vertex_attrs = Some(pip.attrs.clone());
             self.using_indices = false;
+            self.current_pipeline = id;
 
             #[cfg(target_arch = "wasm32")]
             {
@@ -165,18 +168,41 @@ impl GlowBackend {
         }
     }
 
-    fn bind_buffer(&mut self, id: i32, data: &[u8], usage: &BufferUsage, draw: &DrawType) {
+    fn bind_buffer(
+        &mut self,
+        id: i32,
+        data_wrapper: BufferDataWrapper,
+        usage: &BufferUsage,
+        draw: &DrawType,
+    ) {
         if let Some(buffer) = self.buffers.get_mut(&id) {
             match usage {
                 BufferUsage::Vertex => {
-                    buffer.bind_as_vbo_with_data(&self.gl, &self.current_vertex_attrs, draw, data)
+                    let inner_data = data_wrapper.unwrap_f32().unwrap();
+                    let data = inner_data.read();
+                    let ptr = bytemuck::cast_slice(&data);
+                    buffer.bind_as_vbo_with_data(&self.gl, &self.current_vertex_attrs, draw, ptr)
                 }
                 BufferUsage::Index => {
                     self.using_indices = true;
-                    buffer.bind_as_ebo_with_data(&self.gl, draw, data)
+                    let inner_data = data_wrapper.unwrap_u32().unwrap();
+                    let data = inner_data.read();
+                    let ptr = bytemuck::cast_slice(&data);
+                    buffer.bind_as_ebo_with_data(&self.gl, draw, ptr)
                 }
                 BufferUsage::Uniform(slot) => {
-                    buffer.bind_as_ubo_with_data(&self.gl, *slot, draw, data);
+                    if !buffer.block_binded {
+                        buffer.bind_block(
+                            &self.gl,
+                            self.pipelines.get(&self.current_pipeline).as_ref().unwrap(),
+                            *slot,
+                        );
+                    }
+
+                    let inner_data = data_wrapper.unwrap_f32().unwrap();
+                    let data = inner_data.read();
+                    let ptr = bytemuck::cast_slice(&data);
+                    buffer.bind_as_ubo_with_data(&self.gl, *slot, draw, ptr);
                 }
             }
         }
@@ -231,7 +257,7 @@ impl GlowBackend {
     }
 }
 
-impl GraphicsBackend for GlowBackend {
+impl DeviceBackend for GlowBackend {
     fn api_name(&self) -> &str {
         &self.api_name
     }
@@ -273,9 +299,9 @@ impl GraphicsBackend for GlowBackend {
         Ok(self.buffer_count)
     }
 
-    fn create_uniform_buffer(&mut self, slot: u32) -> Result<i32, String> {
-        let inner_buffer = InnerBuffer::new(&self.gl, true)?;
-        inner_buffer.bind_as_ubo(&self.gl, slot);
+    fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<i32, String> {
+        let mut inner_buffer = InnerBuffer::new(&self.gl, true)?;
+        inner_buffer.setup_as_ubo(&self.gl, slot, name);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
@@ -321,10 +347,10 @@ impl GraphicsBackend for GlowBackend {
                 Pipeline { id, options } => self.set_pipeline(*id, options),
                 BindBuffer {
                     id,
-                    ptr,
+                    data,
                     usage,
                     draw,
-                } => self.bind_buffer(*id, ptr, usage, draw),
+                } => self.bind_buffer(*id, data.clone(), usage, draw),
                 Draw { offset, count } => self.draw(*offset, *count),
                 BindTexture { id, slot, location } => self.bind_texture(*id, *slot, *location),
                 _ => {}

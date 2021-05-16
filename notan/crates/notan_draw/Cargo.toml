@@ -1,0 +1,15 @@
+[package]
+name = "notan_draw"
+version = "0.1.0"
+authors = ["Nazarí González <nazari.nz@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+notan_graphics = { path = "../notan_graphics" }
+notan_macro = { path = "../notan_macro" }
+notan_log = { path = "../notan_log" }
+notan_math = { path = "../notan_math" }
+glam = "0.13"
+lyon = "0.17"

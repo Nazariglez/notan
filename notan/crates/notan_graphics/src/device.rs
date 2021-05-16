@@ -1,6 +1,5 @@
 use crate::buffer::*;
 use crate::commands::*;
-use crate::draw::*;
 use crate::pipeline::*;
 use crate::render_texture::*;
 use crate::renderer::Renderer;
@@ -9,7 +8,7 @@ use crate::texture::*;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-/// Graphics resource ID, used to know which resource was dropped
+/// Device resource ID, used to know which resource was dropped
 #[derive(Debug)]
 pub enum ResourceId {
     Buffer(i32),
@@ -19,7 +18,7 @@ pub enum ResourceId {
 }
 
 /// Represents a the implementation graphics backend like glow, wgpu or another
-pub trait GraphicsBackend {
+pub trait DeviceBackend {
     /// Returns the name of the api used (like webgl, wgpu, etc...)
     fn api_name(&self) -> &str;
 
@@ -39,7 +38,7 @@ pub trait GraphicsBackend {
     fn create_index_buffer(&mut self) -> Result<i32, String>;
 
     /// Create a new uniform buffer and returns the id
-    fn create_uniform_buffer(&mut self, slot: u32) -> Result<i32, String>;
+    fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<i32, String>;
 
     /// Create a new renderer using the size of the graphics
     fn render(&mut self, commands: &[Commands], target: Option<i32>);
@@ -75,22 +74,18 @@ impl DropManager {
     }
 }
 
-pub struct Graphics {
+pub struct Device {
     size: (i32, i32),
-    backend: Box<GraphicsBackend>, //TODO generic?
+    backend: Box<dyn DeviceBackend>, //TODO generic?
     drop_manager: Arc<DropManager>,
-    draw_manager: DrawManager,
 }
 
-impl Graphics {
-    pub fn new(mut backend: Box<GraphicsBackend>) -> Result<Self, String> {
-        let draw_manager = DrawManager::new(&mut *backend)?;
-
+impl Device {
+    pub fn new(backend: Box<dyn DeviceBackend>) -> Result<Self, String> {
         Ok(Self {
             backend,
             size: (1, 1),
             drop_manager: Arc::new(Default::default()),
-            draw_manager,
         })
     }
 
@@ -106,21 +101,8 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_renderer<'a>(&self) -> Renderer<'a> {
+    pub fn create_renderer(&self) -> Renderer {
         Renderer::new(self.size.0, self.size.1)
-    }
-
-    #[inline(always)]
-    pub fn create_draw<'a>(&self) -> Draw<'a> {
-        Draw::new(self.size.0, self.size.1)
-    }
-
-    pub fn create_draw_pipeline_from_raw(
-        &mut self,
-        typ: DrawPipeline,
-        fragment: Option<&[u8]>,
-    ) -> Result<Pipeline, String> {
-        create_draw_pipeline_from_raw(self, typ, fragment)
     }
 
     #[inline(always)]
@@ -169,10 +151,11 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_vertex_buffer(&mut self) -> Result<Buffer, String> {
+    pub fn create_vertex_buffer(&mut self, data: Vec<f32>) -> Result<Buffer<f32>, String> {
         let id = self.backend.create_vertex_buffer()?;
         Ok(Buffer::new(
             id,
+            data,
             BufferUsage::Vertex,
             None,
             self.drop_manager.clone(),
@@ -180,10 +163,11 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_index_buffer(&mut self) -> Result<Buffer, String> {
+    pub fn create_index_buffer(&mut self, data: Vec<u32>) -> Result<Buffer<u32>, String> {
         let id = self.backend.create_index_buffer()?;
         Ok(Buffer::new(
             id,
+            data,
             BufferUsage::Index,
             None,
             self.drop_manager.clone(),
@@ -191,11 +175,17 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn create_uniform_buffer(&mut self, slot: u32) -> Result<Buffer, String> {
+    pub fn create_uniform_buffer(
+        &mut self,
+        slot: u32,
+        name: &str,
+        data: Vec<f32>,
+    ) -> Result<Buffer<f32>, String> {
         //debug_assert!(current_pipeline.is_some()) //pipeline should be already binded
-        let id = self.backend.create_uniform_buffer(slot)?;
+        let id = self.backend.create_uniform_buffer(slot, name)?;
         Ok(Buffer::new(
             id,
+            data,
             BufferUsage::Uniform(slot),
             None,
             self.drop_manager.clone(),
@@ -204,7 +194,7 @@ impl Graphics {
 
     #[inline(always)]
     pub fn create_texture(&mut self, info: TextureInfo) -> Result<Texture, String> {
-        let (id) = self.backend.create_texture(&info)?;
+        let id = self.backend.create_texture(&info)?;
         Ok(Texture::new(id, info, self.drop_manager.clone()))
     }
 
@@ -218,12 +208,12 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn render<'a>(&mut self, render: &'a ToCommandBuffer<'a>) {
+    pub fn render(&mut self, render: &[Commands]) {
         self.backend.render(render.commands(), None);
     }
 
     #[inline]
-    pub fn render_to<'a>(&mut self, target: &RenderTexture, render: &'a ToCommandBuffer<'a>) {
+    pub fn render_to(&mut self, target: &RenderTexture, render: &[Commands]) {
         self.backend.render(render.commands(), Some(target.id()));
     }
 
@@ -236,4 +226,8 @@ impl Graphics {
         self.backend.clean(&self.drop_manager.dropped.read());
         self.drop_manager.clean();
     }
+}
+
+pub trait DeviceRenderer {
+    fn commands_from(&self, device: &mut Device) -> &[Commands];
 }

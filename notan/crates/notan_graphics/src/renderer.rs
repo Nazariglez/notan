@@ -1,19 +1,20 @@
 use crate::buffer::*;
 use crate::commands::*;
+use crate::device::{Device, DeviceRenderer};
 use crate::pipeline::*;
 use crate::texture::*;
 
 #[derive(Default, Clone)]
-pub struct Renderer<'a> {
-    commands: Vec<Commands<'a>>,
+pub struct Renderer {
+    commands: Vec<Commands>,
     size: (i32, i32),
 }
 
-impl<'a> Renderer<'a> {
+impl Renderer {
     pub fn new(width: i32, height: i32) -> Self {
         Self {
             size: (width, height),
-            commands: vec![],
+            commands: vec![Commands::Size { width, height }],
         }
     }
 
@@ -67,36 +68,35 @@ impl<'a> Renderer<'a> {
         });
     }
 
-    pub fn bind_vertex_buffer(&mut self, buffer: &Buffer, data: &'a [f32]) {
+    pub fn bind_vertex_buffer(&mut self, buffer: &Buffer<f32>) {
         self.commands.push(Commands::BindBuffer {
             id: buffer.id(),
-            ptr: bytemuck::cast_slice(data),
+            data: BufferDataWrapper::Float32(buffer.data_ptr().clone()),
             usage: BufferUsage::Vertex,
             draw: buffer.draw.unwrap_or(DrawType::Dynamic),
         });
     }
 
-    pub fn bind_index_buffer(&mut self, buffer: &Buffer, data: &'a [u32]) {
+    pub fn bind_index_buffer(&mut self, buffer: &Buffer<u32>) {
         self.commands.push(Commands::BindBuffer {
             id: buffer.id(),
-            ptr: bytemuck::cast_slice(data),
+            data: BufferDataWrapper::Uint32(buffer.data_ptr().clone()),
             usage: BufferUsage::Index,
             draw: buffer.draw.unwrap_or(DrawType::Dynamic),
         });
     }
 
-    pub fn bind_uniform_buffer(&mut self, buffer: &Buffer, data: &'a [f32]) {
-        self.commands.push(Commands::BindBuffer {
-            id: buffer.id(),
-            ptr: bytemuck::cast_slice(data),
-            usage: buffer.usage,
-            draw: buffer.draw.unwrap_or(DrawType::Dynamic),
-        });
+    pub fn bind_uniform_buffer(&mut self, buffer: &Buffer<f32>) {
+        self.commands.push(buffer.into());
     }
 
     pub fn draw(&mut self, offset: i32, count: i32) {
         self.commands.push(Commands::Draw { offset, count })
     }
+
+    /*pub fn draw_instanced(&mut self) {
+
+    }*/
 
     pub fn bind_texture(&mut self, location: u32, texture: &Texture) {
         self.bind_texture_slot(0, location, texture);
@@ -115,8 +115,14 @@ impl<'a> Renderer<'a> {
     }
 }
 
-impl<'a> ToCommandBuffer<'a> for Renderer<'a> {
-    fn commands(&'a self) -> &'a [Commands<'a>] {
+impl ToCommandBuffer for Renderer {
+    fn commands(&self) -> &[Commands] {
+        &self.commands
+    }
+}
+
+impl DeviceRenderer for Renderer {
+    fn commands_from(&self, _: &mut Device) -> &[Commands] {
         &self.commands
     }
 }

@@ -14,3 +14,4 @@ simple_logger = "1.11"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_log = "0.2"
+wasm-bindgen = "0.2"

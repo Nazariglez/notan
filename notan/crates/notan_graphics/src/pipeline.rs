@@ -1,5 +1,5 @@
 use crate::color::Color;
-use crate::graphics::{DropManager, ResourceId};
+use crate::device::{DropManager, ResourceId};
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -19,6 +19,12 @@ pub struct Pipeline {
     id: Arc<PipelineId>,
     pub options: PipelineOptions,
     stride: usize,
+}
+
+impl std::cmp::PartialEq for Pipeline {
+    fn eq(&self, other: &Self) -> bool {
+        self.id() == other.id() && self.options == other.options
+    }
 }
 
 impl Pipeline {

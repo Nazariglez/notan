@@ -1,7 +1,5 @@
-use crate::graphics::{DropManager, ResourceId};
-use crate::pipeline::*;
+use crate::device::{DropManager, ResourceId};
 use notan_math::Rect;
-use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
@@ -62,7 +60,7 @@ impl TextureInfo {
     ) -> Result<Self, String> {
         let data = image::load_from_memory(bytes)
             .map_err(|e| e.to_string())?
-            .to_rgba();
+            .to_rgba8();
 
         Ok(Self {
             width: data.width() as _,
@@ -121,8 +119,7 @@ impl Texture {
             internal_format,
             min_filter,
             mag_filter,
-            bytes,
-            depth,
+            ..
         } = info;
 
         // let data = Arc::new(bytes);
@@ -213,6 +210,12 @@ impl Texture {
     #[inline(always)]
     pub fn base_height(&self) -> f32 {
         self.height as _
+    }
+}
+
+impl std::cmp::PartialEq for Texture {
+    fn eq(&self, other: &Self) -> bool {
+        self.id() == other.id() && self.frame() == other.frame()
     }
 }
 

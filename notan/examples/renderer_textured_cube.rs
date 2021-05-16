@@ -2,7 +2,7 @@ use notan::app::assets::*;
 use notan::app::config::WindowConfig;
 use notan::app::graphics::pipeline::*;
 use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Plugins};
+use notan::app::{App, AppBuilder, Graphics, Plugins};
 use notan::log;
 use notan::prelude::*;
 
@@ -47,9 +47,8 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vertices: [f32; 180],
-    vertex_buffer: Buffer,
-    uniform_buffer: Buffer,
+    vertex_buffer: Buffer<f32>,
+    uniform_buffer: Buffer<f32>,
     mvp: glam::Mat4,
     angle: f32,
     texture: Texture,
@@ -88,14 +87,11 @@ fn setup(gfx: &mut Graphics) -> State {
         )
         .unwrap();
 
-    let vertex_buffer = gfx.create_vertex_buffer().unwrap();
-    let uniform_buffer = gfx.create_uniform_buffer(0).unwrap();
-
     let image = TextureInfo::from_image(include_bytes!("assets/cube.png")).unwrap();
     let texture = gfx.create_texture(image).unwrap();
 
     #[rustfmt::skip]
-    let vertices = [
+    let vertices = vec![
         -1.0,-1.0,-1.0,     0.000059,0.000004,
         -1.0,-1.0,1.0,      0.000103,0.336048,
         -1.0,1.0,1.0,       0.335973,0.335903,
@@ -142,10 +138,14 @@ fn setup(gfx: &mut Graphics) -> State {
     );
     let mvp = glam::Mat4::identity() * projection * view;
 
+    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
+    let uniform_buffer = gfx
+        .create_uniform_buffer(0, mvp.to_cols_array().to_vec())
+        .unwrap();
+
     let mut state = State {
         clear_options,
         pipeline,
-        vertices,
         vertex_buffer,
         uniform_buffer,
         texture,
@@ -159,13 +159,16 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    let mvp = rotated_matrix(state.mvp, state.angle);
-    let count = state.vertices.len() / state.pipeline.offset();
+    let count = state.vertex_buffer.data().len() / state.pipeline.offset();
+    state
+        .uniform_buffer
+        .data_mut()
+        .copy_from_slice(&rotated_matrix(state.mvp, state.angle));
 
-    renderer.begin(&state.clear_options);
+    renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_uniform_buffer(&state.uniform_buffer, &mvp);
-    renderer.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
+    renderer.bind_uniform_buffer(&state.uniform_buffer);
+    renderer.bind_vertex_buffer(&state.vertex_buffer);
     renderer.bind_texture(0, &state.texture);
     renderer.draw(0, count as _);
     renderer.end();

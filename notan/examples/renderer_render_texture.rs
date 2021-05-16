@@ -1,7 +1,7 @@
 use notan::app::assets::*;
 use notan::app::config::WindowConfig;
 use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Plugins};
+use notan::app::{App, AppBuilder, Graphics, Plugins};
 use notan::log;
 use notan::prelude::*;
 
@@ -42,11 +42,8 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vertices: [f32; 20],
-    indices: [u32; 6],
-    vertex_buffer: Buffer,
-    index_buffer: Buffer,
-    uniform_buffer: Buffer,
+    vertex_buffer: Buffer<f32>,
+    index_buffer: Buffer<u32>,
     texture: Texture,
     render_texture: RenderTexture,
     render_texture2: RenderTexture,
@@ -78,10 +75,6 @@ fn setup(gfx: &mut Graphics) -> State {
         )
         .unwrap();
 
-    let vertex_buffer = gfx.create_vertex_buffer().unwrap();
-    let index_buffer = gfx.create_index_buffer().unwrap();
-    let uniform_buffer = gfx.create_uniform_buffer(0).unwrap();
-
     let image = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
     let texture = gfx.create_texture(image).unwrap();
 
@@ -101,7 +94,7 @@ fn setup(gfx: &mut Graphics) -> State {
         .unwrap();
 
     #[rustfmt::skip]
-        let vertices = [
+        let vertices = vec![
         //pos               //coords
         0.9,  0.9, 0.0,     1.0, 1.0,
         0.9, -0.9, 0.0,     1.0, 0.0,
@@ -110,25 +103,23 @@ fn setup(gfx: &mut Graphics) -> State {
     ];
 
     #[rustfmt::skip]
-        let indices = [
+        let indices = vec![
         0, 1, 3,
         1, 2, 3,
     ];
 
-    let mut state = State {
+    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
+    let index_buffer = gfx.create_index_buffer(indices).unwrap();
+
+    State {
         clear_options,
         pipeline,
-        vertices,
-        indices,
         vertex_buffer,
         index_buffer,
-        uniform_buffer,
         texture,
         render_texture,
         render_texture2,
-    };
-
-    state
+    }
 }
 
 // create an effect of infinite loop
@@ -146,12 +137,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     std::mem::swap(&mut state.render_texture, &mut state.render_texture2);
 }
 
-fn render_texture<'a>(
-    gfx: &mut Graphics,
-    state: &'a State,
-    texture: &Texture,
-    clear: bool,
-) -> Renderer<'a> {
+fn render_texture(gfx: &mut Graphics, state: &State, texture: &Texture, clear: bool) -> Renderer {
     let clear_options = if clear {
         ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0))
     } else {
@@ -160,12 +146,12 @@ fn render_texture<'a>(
 
     let mut renderer = gfx.create_renderer();
 
-    renderer.begin(&clear_options);
+    renderer.begin(Some(&clear_options));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_texture(0, texture);
-    renderer.bind_vertex_buffer(&state.vertex_buffer, &state.vertices);
-    renderer.bind_index_buffer(&state.index_buffer, &state.indices);
-    renderer.draw(0, state.indices.len() as _);
+    renderer.bind_vertex_buffer(&state.vertex_buffer);
+    renderer.bind_index_buffer(&state.index_buffer);
+    renderer.draw(0, 6);
     renderer.end();
 
     renderer
