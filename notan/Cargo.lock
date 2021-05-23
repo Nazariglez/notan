@@ -1111,6 +1111,7 @@ dependencies = [
  "glam 0.13.0",
  "notan_app",
  "notan_default_backend",
+ "notan_glyph",
  "notan_log",
  "notan_macro",
  "notan_math",
@@ -1175,6 +1176,10 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
 ]
+
+[[package]]
+name = "notan_glyph"
+version = "0.1.0"
 
 [[package]]
 name = "notan_graphics"
