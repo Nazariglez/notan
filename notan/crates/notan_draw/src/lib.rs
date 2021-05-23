@@ -8,6 +8,8 @@ mod patterns;
 mod shapes;
 mod transform;
 
+pub mod prelude;
+
 pub use custom_pipeline::*;
 pub use draw::*;
 pub use images::*;

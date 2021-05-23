@@ -250,4 +250,3 @@ fn enum_callback_generics(g: &[Vec<String>], list: &[String]) -> String {
         .collect::<Vec<_>>()
         .join(",")
 }
-
