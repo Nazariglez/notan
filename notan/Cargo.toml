@@ -13,6 +13,8 @@ notan_app = { path = "./crates/notan_app" }
 notan_macro = { path = "crates/notan_macro" }
 notan_math = { path = "./crates/notan_math" }
 notan_glyph = { path = "./crates/notan_glyph" }
+notan_graphics = { path = "./crates/notan_graphics" }
+notan_draw = { path = "./crates/notan_draw" }
 notan_default_backend = { path = "./crates/notan_default_backend", optional = true }
 
 [workspace]

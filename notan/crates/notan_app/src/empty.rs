@@ -1,7 +1,7 @@
 use crate::config::WindowConfig;
-use crate::graphics::prelude::*;
 use crate::graphics::{Device, DeviceBackend, RenderTexture};
 use crate::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
+use notan_graphics::prelude::*;
 
 #[derive(Default)]
 pub struct EmptyWindowBackend {
