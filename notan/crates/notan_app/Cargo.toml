@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 hashbrown = "0.9"
+notan_macro = { path = "../notan_macro" }
 notan_log = { path = "../notan_log" }
 notan_graphics = { path = "../notan_graphics" }
 notan_draw = { path = "../notan_draw" }
