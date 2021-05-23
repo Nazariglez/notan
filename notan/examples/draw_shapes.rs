@@ -5,6 +5,33 @@ use notan::app::{App, AppBuilder, DrawImages, DrawPattern, DrawShapes, Graphics,
 use notan::log;
 use notan::prelude::*;
 
+// notan::handler!(Stuff u32 i32 f32 f64 S ());
+// pub trait AH<S, Params> {
+//     fn callback(self);
+// }
+//
+// macro_rules! app_handler {
+//     ($variant:expr, $($param:ident),*) => {
+//         #[allow(unused_parens)]
+//         impl<F, S> AH<S, ($(&mut $param),*)> for F
+//         where
+//             F: Fn($(&mut $param),*) + 'static,
+//             S: AppState
+//         {
+//             fn callback(self) {
+//                 //$variant(Box::new(self))
+//             }
+//         }
+//     }
+// }
+//
+// app_handler!(i32, i32, u32, f32);
+// app_handler!(i32, f64, u32, f32);
+
+//notan__handler!(Stuff<i32, u32, f32, f64, u64> -> S);
+notan::handler!(Stuff);
+
+
 #[notan::main]
 fn main() -> Result<(), String> {
     notan::init().draw(draw).build()
