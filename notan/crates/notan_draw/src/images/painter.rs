@@ -66,9 +66,9 @@ pub fn create_image_pipeline(
 }
 
 pub(crate) struct ImagePainter {
-    vbo: Buffer<f32>,
-    ebo: Buffer<u32>,
-    ubo: Buffer<f32>,
+    vbo: VertexBuffer,
+    ebo: IndexBuffer,
+    ubo: UniformBuffer,
     pipeline: Pipeline,
     count_vertices: usize,
     count_indices: usize,
