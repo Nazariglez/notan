@@ -5,6 +5,10 @@ use parking_lot::{
 };
 use std::sync::Arc;
 
+pub type VertexBuffer = Buffer<f32>;
+pub type IndexBuffer = Buffer<u32>;
+pub type UniformBuffer = Buffer<f32>;
+
 #[derive(Debug)]
 struct BufferId {
     id: i32,

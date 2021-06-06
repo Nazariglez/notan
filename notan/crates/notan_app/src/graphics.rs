@@ -15,34 +15,9 @@ impl Graphics {
     }
 
     #[inline(always)]
-    pub fn set_size(&mut self, width: i32, height: i32) {
-        self.device.set_size(width, height)
-    }
-
-    #[inline(always)]
-    pub fn create_renderer(&self) -> renderer::Renderer {
-        self.device.create_renderer()
-    }
-
-    #[inline(always)]
     pub fn create_draw(&self) -> Draw {
         let (width, height) = self.device.size();
         self.draw.create_draw(width, height)
-    }
-
-    #[inline(always)]
-    pub fn clean(&mut self) {
-        self.device.clean()
-    }
-
-    #[inline(always)]
-    pub fn size(&self) -> (i32, i32) {
-        self.device.size()
-    }
-
-    #[inline(always)]
-    pub fn create_texture(&mut self, info: TextureInfo) -> Result<Texture, String> {
-        self.device.create_texture(info)
     }
 
     pub fn render_to<'a>(
@@ -65,55 +40,6 @@ impl Graphics {
             GraphicsRenderer::Draw(r) => r.commands(&mut self.device, &mut self.draw),
         };
         self.device.render(commands);
-    }
-
-    #[inline(always)]
-    pub fn create_render_texture(&mut self, info: TextureInfo) -> Result<RenderTexture, String> {
-        self.device.create_render_texture(info)
-    }
-
-    #[inline(always)]
-    pub fn create_uniform_buffer(
-        &mut self,
-        slot: u32,
-        name: &str,
-        data: Vec<f32>,
-    ) -> Result<Buffer<f32>, String> {
-        self.device.create_uniform_buffer(slot, name, data)
-    }
-
-    #[inline(always)]
-    pub fn create_index_buffer(&mut self, data: Vec<u32>) -> Result<Buffer<u32>, String> {
-        self.device.create_index_buffer(data)
-    }
-
-    #[inline(always)]
-    pub fn create_vertex_buffer(&mut self, data: Vec<f32>) -> Result<Buffer<f32>, String> {
-        self.device.create_vertex_buffer(data)
-    }
-
-    #[inline(always)]
-    pub fn create_pipeline(
-        &mut self,
-        vertex_source: &ShaderSource,
-        fragment_source: &ShaderSource,
-        vertex_attrs: &[VertexAttr],
-        options: PipelineOptions,
-    ) -> Result<Pipeline, String> {
-        self.device
-            .create_pipeline(vertex_source, fragment_source, vertex_attrs, options)
-    }
-
-    #[inline(always)]
-    pub fn create_pipeline_from_raw(
-        &mut self,
-        vertex_source: &[u8],
-        fragment_source: &[u8],
-        vertex_attrs: &[VertexAttr],
-        options: PipelineOptions,
-    ) -> Result<Pipeline, String> {
-        self.device
-            .create_pipeline_from_raw(vertex_source, fragment_source, vertex_attrs, options)
     }
 
     #[inline(always)]
@@ -147,6 +73,20 @@ impl Graphics {
         fragment: Option<&ShaderSource>,
     ) -> Result<Pipeline, String> {
         self.draw.create_text_pipeline(&mut self.device, fragment)
+    }
+}
+
+impl std::ops::Deref for Graphics {
+    type Target = Device;
+
+    fn deref(&self) -> &Self::Target {
+        &self.device
+    }
+}
+
+impl std::ops::DerefMut for Graphics {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.device
     }
 }
 

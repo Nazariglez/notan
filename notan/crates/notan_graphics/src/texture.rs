@@ -74,6 +74,39 @@ impl TextureInfo {
         })
     }
 
+    pub fn from_bytes(bytes: &[u8], width: i32, height: i32) -> Result<Self, String> {
+        Self::from_bytes_with_options(
+            bytes,
+            width,
+            height,
+            TextureFormat::Rgba,
+            TextureFormat::Rgba,
+            TextureFilter::Nearest,
+            TextureFilter::Nearest,
+        )
+    }
+
+    pub fn from_bytes_with_options(
+        bytes: &[u8],
+        width: i32,
+        height: i32,
+        format: TextureFormat,
+        internal_format: TextureFormat,
+        mag_filter: TextureFilter,
+        min_filter: TextureFilter,
+    ) -> Result<Self, String> {
+        Ok(Self {
+            width,
+            height,
+            bytes: Some(bytes.to_vec()),
+            format,
+            internal_format,
+            mag_filter,
+            min_filter,
+            depth: false,
+        })
+    }
+
     pub fn bytes_per_pixel(&self) -> usize {
         use TextureFormat::*;
         match (self.format, self.internal_format) {
@@ -210,6 +243,14 @@ impl Texture {
     #[inline(always)]
     pub fn base_height(&self) -> f32 {
         self.height as _
+    }
+
+    pub fn size(&self) -> (f32, f32) {
+        (self.frame.width, self.frame.height)
+    }
+
+    pub fn base_size(&self) -> (f32, f32) {
+        (self.width as _, self.height as _)
     }
 }
 
