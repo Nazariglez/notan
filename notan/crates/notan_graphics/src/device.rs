@@ -55,6 +55,9 @@ pub trait DeviceBackend {
     /// Create a new render target and returns the id
     fn create_render_texture(&mut self, texture_id: i32, info: &TextureInfo)
         -> Result<i32, String>;
+
+    /// Update texture data
+    fn update_texture(&mut self, texture: i32, opts: &TextureUpdate) -> Result<(), String>;
 }
 
 /// Helper to drop resources on the backend
@@ -215,6 +218,14 @@ impl Device {
     #[inline]
     pub fn render_to(&mut self, target: &RenderTexture, render: &[Commands]) {
         self.backend.render(render.commands(), Some(target.id()));
+    }
+
+    pub fn update_texture(
+        &mut self,
+        texture: &Texture,
+        opts: &TextureUpdate,
+    ) -> Result<(), String> {
+        self.backend.update_texture(texture.id(), opts)
     }
 
     #[inline]

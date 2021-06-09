@@ -2,6 +2,16 @@ use crate::device::{DropManager, ResourceId};
 use notan_math::Rect;
 use std::sync::Arc;
 
+#[derive(Debug, Clone)]
+pub struct TextureUpdate {
+    pub x_offset: i32,
+    pub y_offset: i32,
+    pub width: i32,
+    pub height: i32,
+    pub format: TextureFormat,
+    pub bytes: Vec<u8>,
+}
+
 #[derive(Clone, Debug)]
 pub struct TextureInfo {
     pub width: i32,

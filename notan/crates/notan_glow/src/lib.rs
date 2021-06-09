@@ -1,3 +1,4 @@
+use crate::to_glow::ToGlow;
 use glow::*;
 use hashbrown::HashMap;
 use notan_graphics::prelude::*;
@@ -371,5 +372,30 @@ impl DeviceBackend for GlowBackend {
 
     fn set_size(&mut self, width: i32, height: i32) {
         self.size = (width, height);
+    }
+
+    fn update_texture(&mut self, id: i32, opts: &TextureUpdate) -> Result<(), String> {
+        match self.textures.get(&id) {
+            Some(texture) => {
+                unsafe {
+                    self.gl
+                        .bind_texture(glow::TEXTURE_2D, Some(texture.texture));
+                    self.gl.tex_sub_image_2d(
+                        glow::TEXTURE_2D,
+                        0,
+                        opts.x_offset,
+                        opts.y_offset,
+                        opts.width,
+                        opts.height,
+                        opts.format.to_glow(), // 3d texture needs another value?
+                        glow::UNSIGNED_BYTE,   // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
+                        PixelUnpackData::Slice(&opts.bytes),
+                    );
+                    // todo unbind texture?
+                    Ok(())
+                }
+            }
+            _ => Err("Invalid texture id".to_string()),
+        }
     }
 }
