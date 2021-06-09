@@ -131,4 +131,8 @@ impl DeviceBackend for EmptyDeviceBackend {
     }
 
     fn set_size(&mut self, width: i32, height: i32) {}
+
+    fn update_texture(&mut self, texture: i32, opts: &TextureUpdate) -> Result<(), String> {
+        Ok(())
+    }
 }
