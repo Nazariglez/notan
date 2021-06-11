@@ -2,7 +2,7 @@ use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 
 pub trait FontRender {
-    fn render(&mut self, texture: &mut Texture, vertices: &[f32], renderer: &mut Renderer);
+    fn render(&mut self, texture: &mut Texture, vertices: &[[f32; 13]], renderer: &mut Renderer);
 }
 
 //language=glsl
@@ -74,7 +74,7 @@ impl DefaultFontRenderer {
 }
 
 impl FontRender for DefaultFontRenderer {
-    fn render(&mut self, texture: &mut Texture, vertices: &[f32], renderer: &mut Renderer) {
+    fn render(&mut self, texture: &mut Texture, vertices: &[[f32; 13]], renderer: &mut Renderer) {
         // todo
     }
 }

@@ -1,5 +1,6 @@
 use crate::buffer::*;
 use crate::commands::*;
+use crate::limits::Limits;
 use crate::pipeline::*;
 use crate::render_texture::*;
 use crate::renderer::Renderer;
@@ -21,6 +22,11 @@ pub enum ResourceId {
 pub trait DeviceBackend {
     /// Returns the name of the api used (like webgl, wgpu, etc...)
     fn api_name(&self) -> &str;
+
+    /// Return the device limits
+    fn limits(&self) -> Limits {
+        Default::default()
+    }
 
     /// Create a new pipeline and returns the id
     fn create_pipeline(
@@ -90,6 +96,11 @@ impl Device {
             size: (1, 1),
             drop_manager: Arc::new(Default::default()),
         })
+    }
+
+    #[inline(always)]
+    pub fn limits(&self) -> Limits {
+        self.backend.limits()
     }
 
     #[inline(always)]
@@ -222,7 +233,7 @@ impl Device {
 
     pub fn update_texture(
         &mut self,
-        texture: &Texture,
+        texture: &mut Texture,
         opts: &TextureUpdate,
     ) -> Result<(), String> {
         self.backend.update_texture(texture.id(), opts)
