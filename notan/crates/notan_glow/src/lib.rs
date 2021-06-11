@@ -33,6 +33,7 @@ pub struct GlowBackend {
     using_indices: bool,
     api_name: String,
     current_pipeline: i32,
+    limits: Limits,
 
     #[cfg(target_arch = "wasm32")]
     current_uniforms: Vec<UniformLocation>,
@@ -53,6 +54,12 @@ impl GlowBackend {
             _ => glow::UNSIGNED_INT,
         };
 
+        let limits = unsafe {
+            let mut limits = Limits::default();
+            limits.max_texture_size = gl.get_parameter_i32(glow::MAX_TEXTURE_SIZE) as _;
+            limits
+        };
+
         Ok(Self {
             pipeline_count: 0,
             buffer_count: 0,
@@ -69,6 +76,7 @@ impl GlowBackend {
             using_indices: false,
             api_name: api.to_string(),
             current_pipeline: 0,
+            limits,
 
             #[cfg(target_arch = "wasm32")]
             current_uniforms: vec![],
@@ -261,6 +269,10 @@ impl GlowBackend {
 impl DeviceBackend for GlowBackend {
     fn api_name(&self) -> &str {
         &self.api_name
+    }
+
+    fn limits(&self) -> Limits {
+        self.limits
     }
 
     fn create_pipeline(

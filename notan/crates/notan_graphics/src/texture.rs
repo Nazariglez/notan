@@ -3,13 +3,13 @@ use notan_math::Rect;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub struct TextureUpdate {
+pub struct TextureUpdate<'a> {
     pub x_offset: i32,
     pub y_offset: i32,
     pub width: i32,
     pub height: i32,
     pub format: TextureFormat,
-    pub bytes: Vec<u8>,
+    pub bytes: &'a [u8],
 }
 
 #[derive(Clone, Debug)]
