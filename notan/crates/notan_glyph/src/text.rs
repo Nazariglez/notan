@@ -70,6 +70,11 @@ impl<'a> Text<'a> {
         self.v_align = VerticalAlign::Bottom;
         self
     }
+
+    pub fn size(mut self, value: f32) -> Self {
+        self.size = value;
+        self
+    }
 }
 
 pub(crate) fn section_from_text<'a>(font: &Font, from: &Text<'a>) -> Section<'a> {

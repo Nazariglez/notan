@@ -1,4 +1,5 @@
 use crate::font::Font;
+use crate::font_vertex::*;
 use crate::render::{DefaultFontRenderer, FontRender};
 use crate::text::{section_from_text, Text};
 use glyph_brush::{ab_glyph::*, *};
@@ -10,10 +11,9 @@ pub struct FontManager<R>
 where
     R: FontRender,
 {
-    pub cache: GlyphBrush<[f32; 13], Extra, FontRef<'static>>,
+    pub cache: GlyphBrush<FontVertex, Extra, FontRef<'static>>,
     pub texture: Texture,
     pub render: R,
-    pub vertices: Vec<[f32; 13]>,
 }
 
 impl FontManager<DefaultFontRenderer> {
@@ -28,13 +28,11 @@ impl<R: FontRender> FontManager<R> {
         let cache = GlyphBrushBuilder::using_fonts::<FontRef>(vec![]).build();
         let (ww, hh) = cache.texture_dimensions();
         let texture = create_texture(device, ww, hh)?;
-        let vertices = vec![];
 
         Ok(Self {
             cache,
             texture,
             render,
-            vertices,
         })
     }
 
@@ -46,16 +44,15 @@ impl<R: FontRender> FontManager<R> {
         })
     }
 
-    pub fn process(&mut self, font: &Font, text: &Text) {
+    pub fn add_text(&mut self, font: &Font, text: &Text) {
         self.cache.queue(section_from_text(font, text));
     }
 
     pub fn render(&mut self, renderer: &mut Renderer) {
-        self.render
-            .render(&mut self.texture, &self.vertices, renderer);
+        self.render.render(&mut self.texture, renderer);
     }
 
-    pub fn update_texture(&mut self, device: &mut Device) -> Result<(), String> {
+    pub fn update(&mut self, device: &mut Device) -> Result<(), String> {
         let action = loop {
             let mut result: Result<(), String> = Ok(());
 
@@ -103,55 +100,25 @@ impl<R: FontRender> FontManager<R> {
                         suggested
                     };
 
+                    notan_log::info!(
+                        "resize from: {:?} to {:?}, max: {}",
+                        texture.size(),
+                        (new_width, new_height),
+                        max_texture_size
+                    );
                     *texture = create_texture(device, new_width, new_height)?;
                     self.cache.resize_texture(new_width, new_height);
                 }
             }
         };
 
-        if let BrushAction::Draw(data) = action {
-            self.vertices = data;
-        }
+        match action {
+            BrushAction::Draw(data) => self.render.update(device, Some(&data)),
+            _ => self.render.update(device, None),
+        };
 
         Ok(())
     }
-}
-
-#[inline]
-pub fn to_vertex(
-    GlyphVertex {
-        mut tex_coords,
-        pixel_coords,
-        bounds,
-        extra,
-    }: GlyphVertex,
-) -> [f32; 13] {
-    let gl_bounds = bounds;
-
-    let mut pixel_coords = Rect {
-        min: point(pixel_coords.min.x as f32, pixel_coords.min.y as f32),
-        max: point(pixel_coords.max.x as f32, pixel_coords.max.y as f32),
-    };
-
-    let x = pixel_coords.min.x;
-    let y = pixel_coords.min.y;
-    let z = extra.z;
-    let width = pixel_coords.max.x - x;
-    let height = pixel_coords.max.y - y;
-    let [r, g, b, a] = extra.color;
-
-    #[rustfmt::skip]
-   let vertices = [
-        x, y, z,
-        width, height,
-        tex_coords.min.x,
-        tex_coords.min.y,
-        tex_coords.max.x,
-        tex_coords.max.y,
-        r, g, b, a,
-    ];
-
-    vertices
 }
 
 fn create_texture(device: &mut Device, ww: u32, hh: u32) -> Result<Texture, String> {
