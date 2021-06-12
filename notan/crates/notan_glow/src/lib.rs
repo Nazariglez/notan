@@ -372,7 +372,7 @@ impl DeviceBackend for GlowBackend {
     }
 
     fn clean(&mut self, to_clean: &[ResourceId]) {
-        notan_log::info!("{:?}", to_clean);
+        notan_log::info!("to_clean {:?}", to_clean);
         to_clean.iter().for_each(|res| match &res {
             ResourceId::Pipeline(id) => self.clean_pipeline(*id),
             ResourceId::Buffer(id) => self.clean_buffer(*id),
