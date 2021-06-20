@@ -93,6 +93,9 @@ fn paint_batch(manager: &mut DrawManager, b: &Batch, projection: &Mat4) {
                 .pattern_painter
                 .push(&mut manager.renderer, b, projection)
         }
+        BatchType::Text { .. } => {
+            unimplemented!()
+        }
     }
 }
 

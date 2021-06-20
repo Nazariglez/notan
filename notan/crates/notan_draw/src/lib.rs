@@ -6,6 +6,7 @@ mod images;
 mod manager;
 mod patterns;
 mod shapes;
+mod texts;
 mod transform;
 
 pub mod prelude;

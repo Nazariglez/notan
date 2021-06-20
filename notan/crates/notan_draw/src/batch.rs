@@ -1,4 +1,5 @@
 use glam::{Mat3, Vec3};
+use notan_glyph::{Font, Text};
 use notan_graphics::prelude::*;
 
 #[derive(Clone, Debug)]
@@ -6,9 +7,7 @@ pub(crate) enum BatchType {
     Image { texture: Texture },
     Pattern { texture: Texture },
     Shape,
-    // Text {
-    //     font: Font
-    // }
+    Text { font: Font },
 }
 
 #[derive(Clone, Debug)]
@@ -53,6 +52,7 @@ impl Batch {
             BatchType::Image { .. } => 8,
             BatchType::Pattern { .. } => 12,
             BatchType::Shape => 6,
+            BatchType::Text { .. } => 8, //TODO check offset
         }
     }
 }
