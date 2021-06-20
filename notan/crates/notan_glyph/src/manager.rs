@@ -1,6 +1,6 @@
 use crate::font::Font;
 use crate::font_vertex::*;
-use crate::render::{DefaultFontRenderer, FontRender};
+use crate::render::*;
 use crate::text::{section_from_text, Text};
 use glyph_brush::{ab_glyph::*, *};
 use notan_graphics::prelude::*;
@@ -16,6 +16,7 @@ where
     pub render: R,
 }
 
+#[cfg(feature = "default_render")]
 impl FontManager<DefaultFontRenderer> {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let render = DefaultFontRenderer::new(device)?;
@@ -38,9 +39,11 @@ impl<R: FontRender> FontManager<R> {
 
     pub fn load_font(&mut self, data: &'static [u8]) -> Result<Font, String> {
         let font = FontRef::try_from_slice(data).map_err(|e| e.to_string())?;
+        let glyphs = GlyphCalculatorBuilder::using_font(font.clone()).build();
 
         Ok(Font {
             id: self.cache.add_font(font),
+            glyphs: Arc::new(glyphs),
         })
     }
 
