@@ -1,7 +1,5 @@
 pub mod prelude;
 
-pub use glyph_brush;
-
 mod font;
 mod font_vertex;
 mod manager;

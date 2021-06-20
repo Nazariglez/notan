@@ -2,8 +2,13 @@ use crate::font_vertex::FontVertex;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 
+/// Used to manage and render the vertices glyphs
 pub trait FontRender {
+    /// In charge of update the vertices if they change, projections, etc...
+    /// Should be called always before the render method
     fn update(&mut self, device: &mut Device, vertices: Option<&[FontVertex]>);
+
+    /// Uses a Renderer passed in to add the instructions to render the glyphs
     fn render(&mut self, texture: &Texture, renderer: &mut Renderer);
 }
 
@@ -63,7 +68,7 @@ pub struct DefaultFontRenderer {
     pub ubo: UniformBuffer,
 
     ebo_len: usize,
-    cachedSize: (i32, i32),
+    cached_size: (i32, i32),
 }
 
 #[cfg(feature = "default_render")]
@@ -80,7 +85,7 @@ impl DefaultFontRenderer {
             ebo,
             ebo_len: 0,
             ubo,
-            cachedSize: (0, 0),
+            cached_size: (0, 0),
         })
     }
 }
@@ -89,12 +94,12 @@ impl DefaultFontRenderer {
 impl FontRender for DefaultFontRenderer {
     fn update(&mut self, device: &mut Device, vertices: Option<&[FontVertex]>) {
         let size = device.size();
-        if self.cachedSize.0 != size.0 || self.cachedSize.1 != size.1 {
+        if self.cached_size.0 != size.0 || self.cached_size.1 != size.1 {
             let ubo_data =
                 glam::Mat4::orthographic_lh(0.0, size.0 as _, size.1 as _, 0.0, -1.0, 1.0)
                     .to_cols_array();
             self.ubo.copy(&ubo_data);
-            self.cachedSize = size;
+            self.cached_size = size;
         }
 
         if let Some(vert) = vertices {
@@ -124,7 +129,7 @@ impl FontRender for DefaultFontRenderer {
 
                     #[rustfmt::skip]
                     let indices:[u32; 6] = [
-                        n + 0, n + 1, n + 2,
+                        n    , n + 1, n + 2,
                         n + 2, n + 1, n + 3
                     ];
 

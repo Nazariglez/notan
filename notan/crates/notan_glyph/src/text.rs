@@ -3,6 +3,7 @@ use glyph_brush::Text as GlyphText;
 use glyph_brush::{ab_glyph::*, *};
 use notan_graphics::color::Color;
 
+/// Represents a Text object with options
 pub struct Text<'a> {
     text: &'a str,
     size: f32,
@@ -14,6 +15,7 @@ pub struct Text<'a> {
 }
 
 impl<'a> Text<'a> {
+    /// Create a new Text object with the string passed in
     pub fn new(text: &'a str) -> Self {
         Self {
             text,
@@ -26,51 +28,61 @@ impl<'a> Text<'a> {
         }
     }
 
+    /// Sets the text's color
     pub fn color(mut self, color: Color) -> Self {
         self.color = color;
         self
     }
 
+    /// Sets the text's position on screen
     pub fn position(mut self, x: f32, y: f32, z: f32) -> Self {
         self.xyz = [x, y, z];
         self
     }
 
+    /// Sets the max widht used to render the text. Any text outside this will be move to a new line
     pub fn max_width(mut self, width: f32) -> Self {
         self.width = Some(width);
         self
     }
 
+    /// Sets the horizontal align to left
     pub fn h_align_left(mut self) -> Self {
         self.h_align = HorizontalAlign::Left;
         self
     }
 
+    /// Sets the horizontal align to the center
     pub fn h_align_center(mut self) -> Self {
         self.h_align = HorizontalAlign::Center;
         self
     }
 
+    /// Sets the horizontal align to rigth
     pub fn h_align_right(mut self) -> Self {
         self.h_align = HorizontalAlign::Right;
         self
     }
 
+    /// Sets the vertical align to the top
     pub fn v_align_top(mut self) -> Self {
         self.v_align = VerticalAlign::Top;
         self
     }
 
+    /// Sets the vertical align to the middle
     pub fn v_align_middle(mut self) -> Self {
         self.v_align = VerticalAlign::Center;
         self
     }
 
+    /// Sets the vertical align to the bottom
     pub fn v_align_bottom(mut self) -> Self {
         self.v_align = VerticalAlign::Bottom;
         self
     }
 
+    /// Sets the text font's size
     pub fn size(mut self, value: f32) -> Self {
         self.size = value;
         self
