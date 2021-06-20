@@ -3,6 +3,7 @@ pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::manager::DrawManager;
 use crate::transform::Transform;
 use glam::{Mat3, Mat4};
+use notan_glyph::{Font, Text};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 
@@ -50,11 +51,11 @@ impl Draw {
             masking: false,
         }
     }
-
-    pub fn round_pixels(&mut self, _round: bool) {
-        //TODO round pixels to draw "2d pixel games"
-        todo!("round pixels");
-    }
+    //
+    // pub fn round_pixels(&mut self, _round: bool) {
+    //     //TODO round pixels to draw "2d pixel games"
+    //     todo!("round pixels");
+    // }
 
     pub fn mask(&mut self, mask: Option<&Self>) {
         debug_assert!(!(self.masking && mask.is_some()), "Already using mask.");
@@ -152,7 +153,7 @@ impl Draw {
                 BatchType::Image { .. } => &self.image_pipeline,
                 BatchType::Pattern { .. } => &self.pattern_pipeline,
                 BatchType::Shape => &self.shape_pipeline,
-                //TODO text
+                BatchType::Text { .. } => &self.text_pipeline,
             };
 
             self.current_batch = Some(Batch {
@@ -220,6 +221,12 @@ impl Draw {
 
         self.add_batch(info, check_type, create_type);
     }
+
+    pub fn add_text<'a>(&mut self, info: &TextInfo<'a>) {
+        // TODO manage text to batch?
+        // self.add_batch(info, check_type, create_type);
+    }
+
     //
     // /*
     // pub fn add_instanced<'a>(&mut self, info: &InstancedInfo<'a>) {
@@ -275,6 +282,12 @@ impl DrawInfo for ShapeInfo<'_> {
     fn indices(&self) -> &[u32] {
         &self.indices
     }
+}
+
+pub struct TextInfo<'a> {
+    pub transform: Option<&'a Mat3>,
+    pub text: &'a Text<'a>,
+    pub font: &'a Font,
 }
 
 pub trait DrawRenderer {

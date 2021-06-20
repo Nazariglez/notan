@@ -4,6 +4,7 @@ use glyph_brush::{ab_glyph::*, *};
 use notan_graphics::color::Color;
 
 /// Represents a Text object with options
+#[derive(Debug, Clone)]
 pub struct Text<'a> {
     text: &'a str,
     size: f32,
@@ -12,6 +13,7 @@ pub struct Text<'a> {
     v_align: VerticalAlign,
     xyz: [f32; 3],
     color: Color,
+    alpha: f32,
 }
 
 impl<'a> Text<'a> {
@@ -25,6 +27,7 @@ impl<'a> Text<'a> {
             v_align: VerticalAlign::Top,
             xyz: [0.0; 3],
             color: Color::WHITE,
+            alpha: 1.0,
         }
     }
 
@@ -37,6 +40,12 @@ impl<'a> Text<'a> {
     /// Sets the text's position on screen
     pub fn position(mut self, x: f32, y: f32, z: f32) -> Self {
         self.xyz = [x, y, z];
+        self
+    }
+
+    /// Sets the text's alpha
+    pub fn alpha(mut self, alpha: f32) -> Self {
+        self.alpha = alpha;
         self
     }
 
@@ -93,11 +102,13 @@ pub(crate) fn section_from_text<'a>(font: &Font, from: &Text<'a>) -> Section<'a>
     let [x, y, z] = from.xyz;
     let width = from.width.unwrap_or(std::f32::INFINITY);
 
+    let color = from.color.with_alpha(from.color.a * from.alpha);
+
     let glyph_text = GlyphText::new(from.text)
         .with_scale(PxScale::from(from.size))
         .with_font_id(font.id)
         .with_z(z)
-        .with_color(from.color.to_rgba());
+        .with_color(color.to_rgba());
 
     Section::default()
         .add_text(glyph_text)

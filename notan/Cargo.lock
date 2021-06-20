@@ -1229,6 +1229,7 @@ version = "0.1.0"
 dependencies = [
  "glam 0.13.0",
  "lyon",
+ "notan_glyph",
  "notan_graphics",
  "notan_log",
  "notan_macro",
