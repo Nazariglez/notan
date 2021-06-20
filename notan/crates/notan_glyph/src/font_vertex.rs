@@ -1,6 +1,7 @@
 use glyph_brush::GlyphVertex;
 use notan_graphics::prelude::*;
 
+/// Represents a vertex used to draw a glyph
 #[derive(Debug, Clone)]
 pub struct FontVertex {
     pub pos: (f32, f32, f32),
@@ -12,9 +13,9 @@ pub struct FontVertex {
 #[inline]
 pub(crate) fn to_vertex(
     GlyphVertex {
-        mut tex_coords,
+        tex_coords,
         pixel_coords,
-        bounds,
+        bounds: _,
         extra,
     }: GlyphVertex,
 ) -> FontVertex {

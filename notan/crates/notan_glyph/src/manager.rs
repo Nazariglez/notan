@@ -4,8 +4,9 @@ use crate::render::*;
 use crate::text::{section_from_text, Text};
 use glyph_brush::{ab_glyph::*, *};
 use notan_graphics::prelude::*;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
+/// The FontManager take care of process the text and prepare them to renderer it on an inner texture
 #[derive(Debug)]
 pub struct FontManager<R>
 where
@@ -18,6 +19,7 @@ where
 
 #[cfg(feature = "default_render")]
 impl FontManager<DefaultFontRenderer> {
+    /// Creates a new manager using the default Render
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let render = DefaultFontRenderer::new(device)?;
         Self::with_render(device, render)
@@ -25,6 +27,7 @@ impl FontManager<DefaultFontRenderer> {
 }
 
 impl<R: FontRender> FontManager<R> {
+    /// Creates a new manager using a custom Render
     pub fn with_render(device: &mut Device, render: R) -> Result<Self, String> {
         let cache = GlyphBrushBuilder::using_fonts::<FontRef>(vec![]).build();
         let (ww, hh) = cache.texture_dimensions();
@@ -37,6 +40,7 @@ impl<R: FontRender> FontManager<R> {
         })
     }
 
+    /// Loads a fonts into the manager and returns the Font object to be used on Text objects
     pub fn load_font(&mut self, data: &'static [u8]) -> Result<Font, String> {
         let font = FontRef::try_from_slice(data).map_err(|e| e.to_string())?;
         let glyphs = GlyphCalculatorBuilder::using_font(font.clone()).build();
@@ -47,20 +51,23 @@ impl<R: FontRender> FontManager<R> {
         })
     }
 
+    /// Add a Text object to the process queue to be prepared to render
     pub fn add_text(&mut self, font: &Font, text: &Text) {
         self.cache.queue(section_from_text(font, text));
     }
 
+    /// Render the processed texts using the given Renderer
     pub fn render(&mut self, renderer: &mut Renderer) {
-        self.render.render(&mut self.texture, renderer);
+        self.render.render(&self.texture, renderer);
     }
 
+    /// Process and prepare the inner texture with the glyph necessary to render the text
     pub fn update(&mut self, device: &mut Device) -> Result<(), String> {
         let action = loop {
             let mut result: Result<(), String> = Ok(());
 
             let max_texture_size = device.limits().max_texture_size;
-            let mut texture = &mut self.texture;
+            let texture = &mut self.texture;
 
             let brush_action = self.cache.process_queued(
                 |rect, data| {
@@ -103,12 +110,6 @@ impl<R: FontRender> FontManager<R> {
                         suggested
                     };
 
-                    notan_log::info!(
-                        "resize from: {:?} to {:?}, max: {}",
-                        texture.size(),
-                        (new_width, new_height),
-                        max_texture_size
-                    );
                     *texture = create_texture(device, new_width, new_height)?;
                     self.cache.resize_texture(new_width, new_height);
                 }
