@@ -7,6 +7,7 @@ pub trait FontRender {
     fn render(&mut self, texture: &Texture, renderer: &mut Renderer);
 }
 
+#[cfg(feature = "default_render")]
 //language=glsl
 const TEXT_VERTEX: ShaderSource = vertex_shader! {
     r#"
@@ -29,6 +30,7 @@ const TEXT_VERTEX: ShaderSource = vertex_shader! {
     "#
 };
 
+#[cfg(feature = "default_render")]
 //language=glsl
 const TEXT_FRAGMENT: ShaderSource = fragment_shader! {
     r#"
@@ -53,6 +55,7 @@ const TEXT_FRAGMENT: ShaderSource = fragment_shader! {
     "#
 };
 
+#[cfg(feature = "default_render")]
 pub struct DefaultFontRenderer {
     pub pipeline: Pipeline,
     pub vbo: VertexBuffer,
@@ -63,6 +66,7 @@ pub struct DefaultFontRenderer {
     cachedSize: (i32, i32),
 }
 
+#[cfg(feature = "default_render")]
 impl DefaultFontRenderer {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let pipeline = create_font_pipeline(device, None)?;
@@ -81,6 +85,7 @@ impl DefaultFontRenderer {
     }
 }
 
+#[cfg(feature = "default_render")]
 impl FontRender for DefaultFontRenderer {
     fn update(&mut self, device: &mut Device, vertices: Option<&[FontVertex]>) {
         let size = device.size();
@@ -145,6 +150,7 @@ impl FontRender for DefaultFontRenderer {
     }
 }
 
+#[cfg(feature = "default_render")]
 pub fn create_font_pipeline(
     device: &mut Device,
     fragment: Option<&ShaderSource>,
