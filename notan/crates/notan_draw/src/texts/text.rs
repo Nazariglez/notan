@@ -107,11 +107,7 @@ impl DrawTransform for TextSection<'_> {
 
 impl DrawProcess for TextSection<'_> {
     fn draw_process(self, draw: &mut Draw) {
-        let Self {
-            matrix,
-            text,
-            font,
-        } = self;
+        let Self { matrix, text, font } = self;
 
         draw.add_text(&TextInfo {
             transform: matrix.as_ref(),

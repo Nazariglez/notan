@@ -223,8 +223,17 @@ impl Draw {
     }
 
     pub fn add_text<'a>(&mut self, info: &TextInfo<'a>) {
-        // TODO manage text to batch?
-        // self.add_batch(info, check_type, create_type);
+        let check_type = |b: &Batch, _: &TextInfo| !b.is_text();
+        let create_type = |_: &TextInfo| BatchType::Text { texts: vec![] };
+
+        self.add_batch(info, check_type, create_type);
+
+        if let Some(b) = &mut self.current_batch {
+            // vertices and indices are calculated before the flush to the gpu, so we need to store the text until that time
+            if let BatchType::Text { texts } = &mut b.typ {
+                texts.push(info.text.into());
+            }
+        }
     }
 
     //
@@ -288,6 +297,20 @@ pub struct TextInfo<'a> {
     pub transform: Option<&'a Mat3>,
     pub text: &'a Text<'a>,
     pub font: &'a Font,
+}
+
+impl DrawInfo for TextInfo<'_> {
+    fn transform(&self) -> &Option<&Mat3> {
+        &self.transform
+    }
+
+    fn vertices(&self) -> &[f32] {
+        &[]
+    }
+
+    fn indices(&self) -> &[u32] {
+        &[]
+    }
 }
 
 pub trait DrawRenderer {
