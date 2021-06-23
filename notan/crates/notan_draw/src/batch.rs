@@ -1,5 +1,5 @@
 use glam::{Mat3, Vec3};
-use notan_glyph::{Font, Text};
+use notan_glyph::{Font, OwnedText, Text};
 use notan_graphics::prelude::*;
 
 #[derive(Clone, Debug)]
@@ -7,7 +7,7 @@ pub(crate) enum BatchType {
     Image { texture: Texture },
     Pattern { texture: Texture },
     Shape,
-    Text { font: Font },
+    Text { texts: Vec<OwnedText> },
 }
 
 #[derive(Clone, Debug)]
@@ -25,6 +25,10 @@ pub(crate) struct Batch {
 impl Batch {
     pub fn is_shape(&self) -> bool {
         matches!(self.typ, BatchType::Shape)
+    }
+
+    pub fn is_text(&self) -> bool {
+        matches!(self.typ, BatchType::Text { .. })
     }
 
     pub fn add(&mut self, indices: &[u32], vertices: &[f32], matrix: Mat3, alpha: f32) {
