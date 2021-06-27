@@ -1,12 +1,25 @@
+use notan::glyph::Font;
 use notan::prelude::*;
+
+#[derive(notan::AppState)]
+struct State {
+    font: Font,
+}
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init().draw(draw).build()
+    notan::init_with(setup).draw(draw).build()
 }
 
-fn draw(gfx: &mut Graphics) {
+fn setup(app: &mut App, gfx: &mut Graphics, glyphs: &mut GlyphManager) -> State {
+    let font = glyphs
+        .load_font(include_bytes!("./assets/Ubuntu-B.ttf"))
+        .unwrap();
+    State { font }
+}
+
+fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
-    draw.triangle((400.0, 100.0), (100.0, 500.0), (700.0, 500.0));
+    draw.text(&state.font, "Hello world!");
     gfx.render(&draw);
 }
