@@ -11,6 +11,10 @@ notan_graphics = { path = "../notan_graphics" }
 notan_macro = { path = "../notan_macro" }
 notan_log = { path = "../notan_log" }
 notan_math = { path = "../notan_math" }
-notan_glyph = { path = "../notan_glyph", default-features = false }
+notan_glyph = { path = "../notan_glyph", default-features = false, optional = true }
 glam = "0.13"
 lyon = "0.17"
+
+[features]
+default = ["text"]
+text = ["notan_glyph"]
