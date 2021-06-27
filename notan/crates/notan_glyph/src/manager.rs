@@ -1,6 +1,6 @@
 use crate::font::Font;
 use crate::font_vertex::*;
-use crate::render::*;
+use crate::renderer::GlyphRenderer;
 use crate::text::{section_from_text, Text};
 use glyph_brush::{ab_glyph::*, *};
 use notan_graphics::prelude::*;
@@ -8,36 +8,22 @@ use std::sync::Arc;
 
 /// The FontManager take care of process the text and prepare them to renderer it on an inner texture
 #[derive(Debug)]
-pub struct FontManager<R>
-where
-    R: FontRender,
-{
+pub struct GlyphManager {
+    /// Glyph Brush cache
     pub cache: GlyphBrush<FontVertex, Extra, FontRef<'static>>,
+
+    /// Texture that contains the glyphs
     pub texture: Texture,
-    pub render: R,
 }
 
-#[cfg(feature = "default_render")]
-impl FontManager<DefaultFontRenderer> {
-    /// Creates a new manager using the default Render
-    pub fn new(device: &mut Device) -> Result<Self, String> {
-        let render = DefaultFontRenderer::new(device)?;
-        Self::with_render(device, render)
-    }
-}
-
-impl<R: FontRender> FontManager<R> {
+impl GlyphManager {
     /// Creates a new manager using a custom Render
-    pub fn with_render(device: &mut Device, render: R) -> Result<Self, String> {
+    pub fn new(device: &mut Device) -> Result<Self, String> {
         let cache = GlyphBrushBuilder::using_fonts::<FontRef>(vec![]).build();
         let (ww, hh) = cache.texture_dimensions();
         let texture = create_texture(device, ww, hh)?;
 
-        Ok(Self {
-            cache,
-            texture,
-            render,
-        })
+        Ok(Self { cache, texture })
     }
 
     /// Loads a fonts into the manager and returns the Font object to be used on Text objects
@@ -56,13 +42,12 @@ impl<R: FontRender> FontManager<R> {
         self.cache.queue(section_from_text(font, text));
     }
 
-    /// Render the processed texts using the given Renderer
-    pub fn render(&mut self, renderer: &mut Renderer) {
-        self.render.render(&self.texture, renderer);
-    }
-
     /// Process and prepare the inner texture with the glyph necessary to render the text
-    pub fn update(&mut self, device: &mut Device) -> Result<(), String> {
+    pub fn update(
+        &mut self,
+        device: &mut Device,
+        render: &mut GlyphRenderer,
+    ) -> Result<(), String> {
         let action = loop {
             let mut result: Result<(), String> = Ok(());
 
@@ -117,8 +102,8 @@ impl<R: FontRender> FontManager<R> {
         };
 
         match action {
-            BrushAction::Draw(data) => self.render.update(device, Some(&data)),
-            _ => self.render.update(device, None),
+            BrushAction::Draw(data) => render.update(device, Some(&data)),
+            _ => render.update(device, None),
         };
 
         Ok(())

@@ -3,7 +3,7 @@ use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 
 /// Used to manage and render the vertices glyphs
-pub trait FontRender {
+pub trait GlyphRenderer {
     /// In charge of update the vertices if they change, projections, etc...
     /// Should be called always before the render method
     fn update(&mut self, device: &mut Device, vertices: Option<&[FontVertex]>);
@@ -12,9 +12,9 @@ pub trait FontRender {
     fn render(&mut self, texture: &Texture, renderer: &mut Renderer);
 }
 
-#[cfg(feature = "default_render")]
+#[cfg(feature = "default_renderer")]
 //language=glsl
-const TEXT_VERTEX: ShaderSource = vertex_shader! {
+const GLYPH_VERTEX: ShaderSource = vertex_shader! {
     r#"
     #version 450
     layout(location = 0) in vec3 a_pos;
@@ -35,9 +35,9 @@ const TEXT_VERTEX: ShaderSource = vertex_shader! {
     "#
 };
 
-#[cfg(feature = "default_render")]
+#[cfg(feature = "default_renderer")]
 //language=glsl
-const TEXT_FRAGMENT: ShaderSource = fragment_shader! {
+const GLYPH_FRAGMENT: ShaderSource = fragment_shader! {
     r#"
     #version 450
     precision mediump float;
@@ -60,8 +60,8 @@ const TEXT_FRAGMENT: ShaderSource = fragment_shader! {
     "#
 };
 
-#[cfg(feature = "default_render")]
-pub struct DefaultFontRenderer {
+#[cfg(feature = "default_renderer")]
+pub struct DefaultGlyphRenderer {
     pub pipeline: Pipeline,
     pub vbo: VertexBuffer,
     pub ebo: IndexBuffer,
@@ -71,10 +71,10 @@ pub struct DefaultFontRenderer {
     cached_size: (i32, i32),
 }
 
-#[cfg(feature = "default_render")]
-impl DefaultFontRenderer {
+#[cfg(feature = "default_renderer")]
+impl DefaultGlyphRenderer {
     pub fn new(device: &mut Device) -> Result<Self, String> {
-        let pipeline = create_font_pipeline(device, None)?;
+        let pipeline = create_glyph_pipeline(device, None)?;
         let vbo = device.create_vertex_buffer(vec![])?;
         let ebo = device.create_index_buffer(vec![])?;
         let ubo = device.create_uniform_buffer(0, "Locals", vec![0.0; 16])?;
@@ -90,8 +90,8 @@ impl DefaultFontRenderer {
     }
 }
 
-#[cfg(feature = "default_render")]
-impl FontRender for DefaultFontRenderer {
+#[cfg(feature = "default_renderer")]
+impl GlyphRenderer for DefaultGlyphRenderer {
     fn update(&mut self, device: &mut Device, vertices: Option<&[FontVertex]>) {
         let size = device.size();
         if self.cached_size.0 != size.0 || self.cached_size.1 != size.1 {
@@ -155,14 +155,14 @@ impl FontRender for DefaultFontRenderer {
     }
 }
 
-#[cfg(feature = "default_render")]
-pub fn create_font_pipeline(
+#[cfg(feature = "default_renderer")]
+pub fn create_glyph_pipeline(
     device: &mut Device,
     fragment: Option<&ShaderSource>,
 ) -> Result<Pipeline, String> {
-    let fragment = fragment.unwrap_or(&TEXT_FRAGMENT);
+    let fragment = fragment.unwrap_or(&GLYPH_FRAGMENT);
     device.create_pipeline(
-        &TEXT_VERTEX,
+        &GLYPH_VERTEX,
         fragment,
         &[
             VertexAttr::new(0, VertexFormat::Float3),
