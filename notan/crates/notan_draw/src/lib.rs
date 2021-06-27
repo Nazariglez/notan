@@ -6,10 +6,8 @@ mod images;
 mod manager;
 mod patterns;
 mod shapes;
-mod transform;
-
-#[cfg(feature = "text")]
 mod texts;
+mod transform;
 
 pub mod prelude;
 
@@ -19,7 +17,5 @@ pub use images::*;
 pub use manager::*;
 pub use patterns::*;
 pub use shapes::*;
-pub use transform::*;
-
-#[cfg(feature = "text")]
 pub use texts::*;
+pub use transform::*;

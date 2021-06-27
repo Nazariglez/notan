@@ -1,6 +1,7 @@
 use super::images::*;
 use super::patterns::*;
 use super::shapes::*;
+use super::texts::*;
 use crate::batch::*;
 use crate::draw::*;
 use glam::Mat4;
@@ -10,6 +11,7 @@ pub struct DrawManager {
     shape_painter: ShapePainter,
     image_painter: ImagePainter,
     pattern_painter: PatternPainter,
+    text_painter: TextPainter,
     renderer: Renderer,
     drawing_mask: bool,
 }
@@ -19,11 +21,13 @@ impl DrawManager {
         let shape_painter = ShapePainter::new(device)?;
         let image_painter = ImagePainter::new(device)?;
         let pattern_painter = PatternPainter::new(device)?;
+        let text_painter = TextPainter::new(device)?;
         let renderer = device.create_renderer();
         Ok(Self {
             shape_painter,
             image_painter,
             pattern_painter,
+            text_painter,
             renderer,
             drawing_mask: false,
         })
@@ -93,9 +97,9 @@ fn paint_batch(manager: &mut DrawManager, b: &Batch, projection: &Mat4) {
                 .pattern_painter
                 .push(&mut manager.renderer, b, projection)
         }
-        BatchType::Text { .. } => {
-            unimplemented!()
-        }
+        BatchType::Text { .. } => manager
+            .text_painter
+            .push(&mut manager.renderer, b, projection),
     }
 }
 
@@ -103,6 +107,7 @@ fn process_draw(manager: &mut DrawManager, draw: &Draw) {
     manager.image_painter.clear();
     manager.shape_painter.clear();
     manager.pattern_painter.clear();
+    manager.text_painter.clear();
 
     manager.renderer.begin(Some(&ClearOptions {
         color: draw.clear_color,
