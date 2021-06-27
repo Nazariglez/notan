@@ -14,5 +14,5 @@ notan_macro = { path = "../notan_macro" }
 glam = "0.16.0"
 
 [features]
-default = ["default_render"]
-default_render = []
+default = ["default_renderer"]
+default_renderer = []

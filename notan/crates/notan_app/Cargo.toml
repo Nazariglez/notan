@@ -12,8 +12,12 @@ notan_macro = { path = "../notan_macro" }
 notan_log = { path = "../notan_log" }
 notan_graphics = { path = "../notan_graphics" }
 notan_draw = { path = "../notan_draw" }
+notan_glyph = { path = "../notan_glyph", optional = true }
 downcast-rs = "1.2"
 indexmap = "1.6"
 futures = "0.3"
 platter = {version = "0.1.4", features = ["web-sys"] }
 parking_lot = "0.11.0"
+
+[features]
+glyphs = ["notan_glyph"]
