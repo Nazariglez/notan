@@ -20,6 +20,11 @@ fn setup(app: &mut App, gfx: &mut Graphics, glyphs: &mut GlyphManager) -> State 
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
-    draw.text(&state.font, "Hello world!");
+
+    draw.text(&state.font, "Hello world!")
+        .position(400.0, 300.0)
+        .h_align_center()
+        .v_align_middle();
+
     gfx.render(&draw);
 }
