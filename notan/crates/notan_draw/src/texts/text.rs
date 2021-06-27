@@ -49,49 +49,49 @@ impl<'a> TextSection<'a> {
         self
     }
 
-    pub fn max_width(mut self, width: f32) -> Self {
+    pub fn max_width(&mut self, width: f32) -> &mut Self {
         if let Some(t) = self.text.take() {
             self.text = Some(t.max_width(width));
         }
         self
     }
 
-    pub fn h_align_left(mut self) -> Self {
+    pub fn h_align_left(&mut self) -> &mut Self {
         if let Some(t) = self.text.take() {
             self.text = Some(t.h_align_left());
         }
         self
     }
 
-    pub fn h_align_center(mut self) -> Self {
+    pub fn h_align_center(&mut self) -> &mut Self {
         if let Some(t) = self.text.take() {
             self.text = Some(t.h_align_center());
         }
         self
     }
 
-    pub fn h_align_right(mut self) -> Self {
+    pub fn h_align_right(&mut self) -> &mut Self {
         if let Some(t) = self.text.take() {
             self.text = Some(t.h_align_right());
         }
         self
     }
 
-    pub fn v_align_top(mut self) -> Self {
+    pub fn v_align_top(&mut self) -> &mut Self {
         if let Some(t) = self.text.take() {
             self.text = Some(t.v_align_top());
         }
         self
     }
 
-    pub fn v_align_middle(mut self) -> Self {
+    pub fn v_align_middle(&mut self) -> &mut Self {
         if let Some(t) = self.text.take() {
             self.text = Some(t.v_align_middle());
         }
         self
     }
 
-    pub fn v_align_bottom(mut self) -> Self {
+    pub fn v_align_bottom(&mut self) -> &mut Self {
         if let Some(t) = self.text.take() {
             self.text = Some(t.v_align_bottom());
         }
