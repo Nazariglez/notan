@@ -1,4 +1,3 @@
-use notan::glyph::Font;
 use notan::prelude::*;
 
 #[derive(notan::AppState)]
