@@ -1,23 +1,50 @@
 pub use notan_draw::*;
+use notan_glyph::{GlyphManager, GlyphRenderer, Text};
 use notan_graphics::prelude::*;
 pub use notan_graphics::*;
 
 pub struct Graphics {
     device: Device,
     draw: DrawManager,
+    glyphs: GlyphManager,
 }
 
 impl Graphics {
     pub fn new(backend: Box<DeviceBackend>) -> Result<Self, String> {
         let mut device = Device::new(backend)?;
         let draw = DrawManager::new(&mut device)?;
-        Ok(Self { device, draw })
+        let glyphs = GlyphManager::new(&mut device)?;
+        Ok(Self {
+            device,
+            draw,
+            glyphs,
+        })
+    }
+
+    #[inline(always)]
+    pub fn create_font(&mut self, data: &'static [u8]) -> Result<Font, String> {
+        self.glyphs.create_font(data)
+    }
+
+    #[inline(always)]
+    pub fn update_glyphs(&mut self, render: &mut GlyphRenderer) -> Result<(), String> {
+        self.glyphs.update(&mut self.device, render)
+    }
+
+    #[inline(always)]
+    pub fn process_text(&mut self, font: &Font, text: &Text) {
+        self.glyphs.process_text(font, text);
     }
 
     #[inline(always)]
     pub fn create_draw(&self) -> Draw {
         let (width, height) = self.device.size();
         self.draw.create_draw(width, height)
+    }
+
+    #[inline(always)]
+    pub fn glyphs_texture(&self) -> &Texture {
+        &self.glyphs.texture
     }
 
     pub fn render_to<'a>(
@@ -28,7 +55,9 @@ impl Graphics {
         let commands = match render.into() {
             GraphicsRenderer::Raw(r) => r,
             GraphicsRenderer::Device(r) => r.commands_from(&mut self.device),
-            GraphicsRenderer::Draw(r) => r.commands(&mut self.device, &mut self.draw),
+            GraphicsRenderer::Draw(r) => {
+                r.commands(&mut self.device, &mut self.draw, &mut self.glyphs)
+            }
         };
         self.device.render_to(target, commands);
     }
@@ -37,7 +66,9 @@ impl Graphics {
         let commands = match render.into() {
             GraphicsRenderer::Raw(r) => r,
             GraphicsRenderer::Device(r) => r.commands_from(&mut self.device),
-            GraphicsRenderer::Draw(r) => r.commands(&mut self.device, &mut self.draw),
+            GraphicsRenderer::Draw(r) => {
+                r.commands(&mut self.device, &mut self.draw, &mut self.glyphs)
+            }
         };
         self.device.render(commands);
     }

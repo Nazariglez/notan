@@ -3,11 +3,18 @@ use notan_glyph::{Font, OwnedText, Text};
 use notan_graphics::prelude::*;
 
 #[derive(Clone, Debug)]
+pub(crate) struct TextData {
+    pub transform: Option<Mat3>,
+    pub text: OwnedText,
+    pub font: Font,
+}
+
+#[derive(Clone, Debug)]
 pub(crate) enum BatchType {
     Image { texture: Texture },
     Pattern { texture: Texture },
     Shape,
-    Text { texts: Vec<OwnedText> },
+    Text { texts: Vec<TextData> },
 }
 
 #[derive(Clone, Debug)]

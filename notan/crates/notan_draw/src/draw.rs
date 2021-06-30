@@ -3,7 +3,7 @@ pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::manager::DrawManager;
 use crate::transform::Transform;
 use glam::{Mat3, Mat4};
-use notan_glyph::{Font, Text};
+use notan_glyph::{Font, GlyphManager, Text};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 
@@ -231,7 +231,7 @@ impl Draw {
         if let Some(b) = &mut self.current_batch {
             // vertices and indices are calculated before the flush to the gpu, so we need to store the text until that time
             if let BatchType::Text { texts } = &mut b.typ {
-                texts.push(info.text.into());
+                texts.push(info.into());
             }
         }
     }
@@ -313,17 +313,33 @@ impl DrawInfo for TextInfo<'_> {
     }
 }
 
+impl From<&TextInfo<'_>> for TextData {
+    fn from(info: &TextInfo<'_>) -> TextData {
+        TextData {
+            font: info.font.clone(),
+            text: info.text.into(),
+            transform: info.transform.cloned(),
+        }
+    }
+}
+
 pub trait DrawRenderer {
     fn commands<'a>(
         &self,
         device: &mut Device,
         draw_manager: &'a mut DrawManager,
+        glyphs: &mut GlyphManager,
     ) -> &'a [Commands];
 }
 
 impl DrawRenderer for Draw {
-    fn commands<'a>(&self, _: &mut Device, draw_manager: &'a mut DrawManager) -> &'a [Commands] {
-        draw_manager.process_draw(self)
+    fn commands<'a>(
+        &self,
+        _: &mut Device,
+        draw_manager: &'a mut DrawManager,
+        glyphs: &mut GlyphManager,
+    ) -> &'a [Commands] {
+        draw_manager.process_draw(self, glyphs)
     }
 }
 

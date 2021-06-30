@@ -7,16 +7,6 @@ use downcast_rs::{impl_downcast, Downcast};
 use std::any::TypeId;
 use std::rc::Rc;
 
-#[cfg(feature = "glyphs")]
-pub(crate) type LoaderParams<'a, S> = (
-    &'a mut App,
-    &'a mut Graphics,
-    &'a mut notan_glyph::GlyphManager,
-    &'a mut Plugins,
-    &'a mut S,
-);
-
-#[cfg(not(feature = "glyphs"))]
 pub(crate) type LoaderParams<'a, S> = (&'a mut App, &'a mut Graphics, &'a mut Plugins, &'a mut S);
 
 /// Defines how parse files once they are loaded
@@ -93,19 +83,6 @@ pub enum LoaderCallback {
         Option<TypeId>,
         Rc<dyn Fn(&mut AssetStorage, &str, Vec<u8>, &mut Graphics) -> Result<(), String>>,
     ),
-    #[cfg(feature = "glyphs")]
-    GG(
-        Option<TypeId>,
-        Rc<
-            dyn Fn(
-                &mut AssetStorage,
-                &str,
-                Vec<u8>,
-                &mut Graphics,
-                &mut GlyphManager,
-            ) -> Result<(), String>,
-        >,
-    ),
 }
 
 pub trait LoaderHandler<A, Params>
@@ -137,11 +114,6 @@ macro_rules! loader_handler {
 loader_handler!(LoaderCallback::Basic,);
 loader_handler!(LoaderCallback::G, Graphics);
 
-#[cfg(feature = "glyphs")]
-use notan_glyph::GlyphManager;
-#[cfg(feature = "glyphs")]
-loader_handler!(LoaderCallback::GG, Graphics, GlyphManager);
-
 impl LoaderCallback {
     pub(crate) fn exec<S>(
         &self,
@@ -152,18 +124,11 @@ impl LoaderCallback {
     ) -> Result<(), String> {
         use LoaderCallback::*;
 
-        #[cfg(feature = "glyphs")]
-        let (app, graphics, glyphs, plugins, state) = params;
-
-        #[cfg(not(feature = "glyphs"))]
         let (app, graphics, plugins, state) = params;
 
         match self {
             Basic(_, cb) => cb(storage, id, data),
             G(_, cb) => cb(storage, id, data, graphics),
-
-            #[cfg(feature = "glyphs")]
-            GG(_, cb) => cb(storage, id, data, graphics, glyphs),
         }
     }
 
@@ -172,7 +137,6 @@ impl LoaderCallback {
         let ty = match self {
             Basic(ref mut ty, _) => ty,
             G(ref mut ty, _) => ty,
-            GG(ref mut ty, _) => ty,
         };
 
         *ty = Some(type_id);
@@ -183,7 +147,6 @@ impl LoaderCallback {
         match self {
             Basic(ty, _) => *ty,
             G(ty, _) => *ty,
-            GG(ty, _) => *ty,
         }
     }
 }

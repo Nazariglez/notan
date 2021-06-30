@@ -5,12 +5,10 @@ use notan_glyph::{GlyphManager, GlyphRenderer};
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 
-pub(crate) struct TextPainter {
-    // glyphs: GlyphManager,
-}
+pub(crate) struct TextPainter {}
 
 impl TextPainter {
-    pub fn new(device: &mut Device /*, glyphs: &mut GlyphManager*/) -> Result<Self, String> {
+    pub fn new(device: &mut Device) -> Result<Self, String> {
         Ok(Self {})
     }
 
