@@ -27,7 +27,7 @@ impl GlyphManager {
     }
 
     /// Loads a fonts into the manager and returns the Font object to be used on Text objects
-    pub fn load_font(&mut self, data: &'static [u8]) -> Result<Font, String> {
+    pub fn create_font(&mut self, data: &'static [u8]) -> Result<Font, String> {
         let font = FontRef::try_from_slice(data).map_err(|e| e.to_string())?;
         let glyphs = GlyphCalculatorBuilder::using_font(font.clone()).build();
 
@@ -38,7 +38,7 @@ impl GlyphManager {
     }
 
     /// Add a Text object to the process queue to be prepared to render
-    pub fn add_text(&mut self, font: &Font, text: &Text) {
+    pub fn process_text(&mut self, font: &Font, text: &Text) {
         self.cache.queue(section_from_text(font, text));
     }
 

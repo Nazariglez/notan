@@ -10,9 +10,9 @@ fn main() -> Result<(), String> {
     notan::init_with(setup).draw(draw).build()
 }
 
-fn setup(app: &mut App, gfx: &mut Graphics, glyphs: &mut GlyphManager) -> State {
-    let font = glyphs
-        .load_font(include_bytes!("./assets/Ubuntu-B.ttf"))
+fn setup(app: &mut App, gfx: &mut Graphics) -> State {
+    let font = gfx
+        .create_font(include_bytes!("./assets/Ubuntu-B.ttf"))
         .unwrap();
     State { font }
 }

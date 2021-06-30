@@ -5,6 +5,7 @@ use super::texts::*;
 use crate::batch::*;
 use crate::draw::*;
 use glam::Mat4;
+use notan_glyph::GlyphManager;
 use notan_graphics::prelude::*;
 
 pub struct DrawManager {
@@ -33,9 +34,9 @@ impl DrawManager {
         })
     }
 
-    pub(crate) fn process_draw(&mut self, draw: &Draw) -> &[Commands] {
+    pub(crate) fn process_draw(&mut self, draw: &Draw, glyphs: &mut GlyphManager) -> &[Commands] {
         self.renderer.clear();
-        process_draw(self, draw);
+        process_draw(self, draw, glyphs);
         &self.renderer.commands()
     }
 
@@ -76,7 +77,7 @@ impl DrawManager {
     }
 }
 
-fn paint_batch(manager: &mut DrawManager, b: &Batch, projection: &Mat4) {
+fn paint_batch(manager: &mut DrawManager, glyphs: &mut GlyphManager, b: &Batch, projection: &Mat4) {
     if b.is_mask && !manager.drawing_mask {
         manager.renderer.end();
         manager.drawing_mask = true;
@@ -97,13 +98,22 @@ fn paint_batch(manager: &mut DrawManager, b: &Batch, projection: &Mat4) {
                 .pattern_painter
                 .push(&mut manager.renderer, b, projection)
         }
-        BatchType::Text { .. } => manager
-            .text_painter
-            .push(&mut manager.renderer, b, projection),
+        BatchType::Text { texts } => {
+            texts
+                .iter()
+                .for_each(|data| glyphs.process_text(&data.font, data.text.into()));
+
+            // glyphs.update();
+            // update renderer
+
+            manager
+                .text_painter
+                .push(&mut manager.renderer, b, projection)
+        }
     }
 }
 
-fn process_draw(manager: &mut DrawManager, draw: &Draw) {
+fn process_draw(manager: &mut DrawManager, draw: &Draw, glyphs: &mut GlyphManager) {
     manager.image_painter.clear();
     manager.shape_painter.clear();
     manager.pattern_painter.clear();
@@ -117,9 +127,9 @@ fn process_draw(manager: &mut DrawManager, draw: &Draw) {
     let projection = draw.projection();
     draw.batches
         .iter()
-        .for_each(|b| paint_batch(manager, b, &projection));
+        .for_each(|b| paint_batch(manager, glyphs, b, &projection));
     if let Some(current) = &draw.current_batch {
-        paint_batch(manager, current, &projection);
+        paint_batch(manager, glyphs, current, &projection);
     }
 
     manager.renderer.end();

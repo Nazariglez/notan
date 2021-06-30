@@ -1,5 +1,3 @@
-use glam::Mat4;
-use notan::glyph::{DefaultGlyphRenderer, Font};
 use notan::prelude::*;
 
 const TEXT: &'static str = r#"
@@ -16,19 +14,20 @@ struct State {
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).update(update).draw(draw).build()
+    notan::init_with(setup).draw(draw).build()
 }
 
-fn setup(app: &mut App, gfx: &mut Graphics, glyphs: &mut GlyphManager) -> State {
-    let font = glyphs
-        .load_font(include_bytes!("./assets/Ubuntu-B.ttf"))
+fn setup(app: &mut App, gfx: &mut Graphics) -> State {
+    let font = gfx
+        .create_font(include_bytes!("./assets/Ubuntu-B.ttf"))
         .unwrap();
     let renderer = DefaultGlyphRenderer::new(gfx).unwrap();
     State { renderer, font }
 }
 
-fn update(glyphs: &mut GlyphManager, state: &mut State) {
-    glyphs.add_text(
+fn draw(gfx: &mut Graphics, state: &mut State) {
+    // Process text
+    gfx.process_text(
         &state.font,
         &Text::new("Lorem Ipsum")
             .size(40.0)
@@ -37,7 +36,7 @@ fn update(glyphs: &mut GlyphManager, state: &mut State) {
             .position(400.0, 80.0, 0.0),
     );
 
-    glyphs.add_text(
+    gfx.process_text(
         &state.font,
         &Text::new(TEXT)
             .h_align_center()
@@ -46,17 +45,15 @@ fn update(glyphs: &mut GlyphManager, state: &mut State) {
             .max_width(700.0)
             .position(400.0, 300.0, 0.0),
     );
-}
 
-fn draw(gfx: &mut Graphics, glyphs: &mut GlyphManager, state: &mut State) {
     // Update the font manager texture
-    glyphs.update(gfx, &mut state.renderer).unwrap();
+    gfx.update_glyphs(&mut state.renderer).unwrap();
 
     let mut renderer = gfx.create_renderer();
     renderer.begin(Some(&ClearOptions::new(Color::new(0.7, 0.2, 0.3, 1.0))));
 
     // Pass to the GlyphRender the texture and the renderer to use
-    state.renderer.render(&glyphs.texture, &mut renderer);
+    state.renderer.render(gfx.glyphs_texture(), &mut renderer);
 
     renderer.end();
 

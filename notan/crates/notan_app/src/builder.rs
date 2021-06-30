@@ -145,21 +145,12 @@ where
 
         let mut graphics = Graphics::new(backend.get_graphics_backend())?;
 
-        #[cfg(feature = "glyphs")]
-        let mut glyphs = notan_glyph::GlyphManager::new(&mut graphics)?;
-
         let mut app = App::new(Box::new(backend));
 
         let (width, height) = app.window().size();
         graphics.set_size(width, height);
 
-        let mut state = setup_callback.exec(
-            &mut app,
-            &mut assets,
-            &mut graphics,
-            &mut glyphs,
-            &mut plugins,
-        );
+        let mut state = setup_callback.exec(&mut app, &mut assets, &mut graphics, &mut plugins);
 
         let _ = plugins.init(&mut app).map(|flow| match flow {
             AppFlow::Next => Ok(()),
@@ -170,7 +161,7 @@ where
         })?;
 
         if let Some(cb) = &init_callback {
-            cb.exec(&mut app, &mut assets, &mut glyphs, &mut plugins, &mut state);
+            cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
         }
 
         if let Err(e) = initialize(app, state, move |mut app, mut state| {
@@ -185,13 +176,7 @@ where
             }
 
             // assets.tick(&mut app);
-            assets.tick((
-                &mut app,
-                &mut graphics,
-                &mut glyphs,
-                &mut plugins,
-                &mut state,
-            ))?;
+            assets.tick((&mut app, &mut graphics, &mut plugins, &mut state))?;
             app.tick(); //todo delta here?
 
             // Manage each event
@@ -203,14 +188,7 @@ where
                     AppFlow::Skip => {}
                     AppFlow::Next => {
                         if let Some(cb) = &event_callback {
-                            cb.exec(
-                                &mut app,
-                                &mut assets,
-                                &mut glyphs,
-                                &mut plugins,
-                                &mut state,
-                                evt,
-                            );
+                            cb.exec(&mut app, &mut assets, &mut plugins, &mut state, evt);
                         }
                     }
                     AppFlow::SkipFrame => return Ok(()),
@@ -222,7 +200,7 @@ where
                 AppFlow::Skip => {}
                 AppFlow::Next => {
                     if let Some(cb) = &update_callback {
-                        cb.exec(&mut app, &mut assets, &mut glyphs, &mut plugins, &mut state);
+                        cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
                     }
                 }
                 AppFlow::SkipFrame => return Ok(()),
@@ -237,7 +215,6 @@ where
                             &mut app,
                             &mut assets,
                             &mut graphics,
-                            &mut glyphs,
                             &mut plugins,
                             &mut state,
                         );
