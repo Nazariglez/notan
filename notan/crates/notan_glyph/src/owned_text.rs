@@ -97,6 +97,10 @@ impl OwnedText {
         self.size = value;
         self
     }
+
+    pub fn text(&self) -> &str {
+        &self.text
+    }
 }
 
 impl From<&Text<'_>> for OwnedText {

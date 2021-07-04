@@ -96,6 +96,10 @@ impl<'a> Text<'a> {
         self.size = value;
         self
     }
+
+    pub fn text(&self) -> &str {
+        self.text
+    }
 }
 
 pub(crate) fn section_from_text<'a>(font: &Font, from: &Text<'a>) -> Section<'a> {

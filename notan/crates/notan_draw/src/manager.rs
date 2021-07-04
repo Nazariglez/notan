@@ -34,9 +34,14 @@ impl DrawManager {
         })
     }
 
-    pub(crate) fn process_draw(&mut self, draw: &Draw, glyphs: &mut GlyphManager) -> &[Commands] {
+    pub(crate) fn process_draw(
+        &mut self,
+        draw: &Draw,
+        device: &mut Device,
+        glyphs: &mut GlyphManager,
+    ) -> &[Commands] {
         self.renderer.clear();
-        process_draw(self, draw, glyphs);
+        process_draw(self, draw, device, glyphs);
         &self.renderer.commands()
     }
 
@@ -70,14 +75,20 @@ impl DrawManager {
 
     pub fn create_text_pipeline(
         &self,
-        _device: &mut Device,
-        _fragment: Option<&ShaderSource>,
+        device: &mut Device,
+        fragment: Option<&ShaderSource>,
     ) -> Result<Pipeline, String> {
-        unimplemented!()
+        create_text_pipeline(device, fragment)
     }
 }
 
-fn paint_batch(manager: &mut DrawManager, glyphs: &mut GlyphManager, b: &Batch, projection: &Mat4) {
+fn paint_batch(
+    device: &mut Device,
+    manager: &mut DrawManager,
+    glyphs: &mut GlyphManager,
+    b: &Batch,
+    projection: &Mat4,
+) {
     if b.is_mask && !manager.drawing_mask {
         manager.renderer.end();
         manager.drawing_mask = true;
@@ -98,22 +109,57 @@ fn paint_batch(manager: &mut DrawManager, glyphs: &mut GlyphManager, b: &Batch, 
                 .pattern_painter
                 .push(&mut manager.renderer, b, projection)
         }
-        BatchType::Text { texts } => {
-            texts
-                .iter()
-                .for_each(|data| glyphs.process_text(&data.font, data.text.into()));
-
-            // glyphs.update();
-            // update renderer
-
+        BatchType::Text { .. } => {
             manager
                 .text_painter
-                .push(&mut manager.renderer, b, projection)
+                .push(device, glyphs, &mut manager.renderer, b, projection)
         }
     }
 }
 
-fn process_draw(manager: &mut DrawManager, draw: &Draw, glyphs: &mut GlyphManager) {
+fn process_glyphs(
+    manager: &mut DrawManager,
+    draw: &Draw,
+    device: &mut Device,
+    glyphs: &mut GlyphManager,
+) {
+    if let Some(indices) = &draw.text_batch_indices {
+        let batch_len = draw.batches.len();
+        let mut last_index = std::usize::MAX;
+        indices.iter().for_each(|i| {
+            let n = *i;
+            if n == last_index {
+                return;
+            }
+            last_index = n;
+
+            let batch = if n >= batch_len {
+                draw.current_batch.as_ref()
+            } else {
+                draw.batches.get(n)
+            };
+
+            if let Some(b) = batch {
+                if let BatchType::Text { texts } = &b.typ {
+                    texts.iter().for_each(|data| {
+                        glyphs.process_text(&data.font, &(&data.text).into());
+                    });
+                }
+            }
+        });
+
+        glyphs.update(device, &mut manager.text_painter);
+    }
+}
+
+fn process_draw(
+    manager: &mut DrawManager,
+    draw: &Draw,
+    device: &mut Device,
+    glyphs: &mut GlyphManager,
+) {
+    process_glyphs(manager, draw, device, glyphs);
+
     manager.image_painter.clear();
     manager.shape_painter.clear();
     manager.pattern_painter.clear();
@@ -127,9 +173,9 @@ fn process_draw(manager: &mut DrawManager, draw: &Draw, glyphs: &mut GlyphManage
     let projection = draw.projection();
     draw.batches
         .iter()
-        .for_each(|b| paint_batch(manager, glyphs, b, &projection));
+        .for_each(|b| paint_batch(device, manager, glyphs, b, &projection));
     if let Some(current) = &draw.current_batch {
-        paint_batch(manager, glyphs, current, &projection);
+        paint_batch(device, manager, glyphs, current, &projection);
     }
 
     manager.renderer.end();
