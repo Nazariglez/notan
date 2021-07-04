@@ -20,8 +20,10 @@ fn setup(app: &mut App, gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
 
-    draw.text(&state.font, "Hello world!")
+    draw.text(&state.font, "Hello World!")
         .position(400.0, 300.0)
+        .size(60.0)
+        .color(Color::ORANGE)
         .h_align_center()
         .v_align_middle();
 

@@ -4,9 +4,11 @@ use notan_graphics::prelude::*;
 
 #[derive(Clone, Debug)]
 pub(crate) struct TextData {
-    pub transform: Option<Mat3>,
+    pub transform: Mat3,
     pub text: OwnedText,
     pub font: Font,
+    pub alpha: f32,
+    pub count: usize,
 }
 
 #[derive(Clone, Debug)]

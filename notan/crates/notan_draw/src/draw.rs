@@ -22,6 +22,7 @@ pub struct Draw {
     pub(crate) image_pipeline: CustomPipeline,
     pub(crate) pattern_pipeline: CustomPipeline,
     pub(crate) text_pipeline: CustomPipeline,
+    pub(crate) text_batch_indices: Option<Vec<usize>>,
     masking: bool,
 }
 
@@ -49,6 +50,7 @@ impl Draw {
             pattern_pipeline: Default::default(),
             text_pipeline: Default::default(),
             masking: false,
+            text_batch_indices: None,
         }
     }
     //
@@ -231,9 +233,32 @@ impl Draw {
         if let Some(b) = &mut self.current_batch {
             // vertices and indices are calculated before the flush to the gpu, so we need to store the text until that time
             if let BatchType::Text { texts } = &mut b.typ {
-                texts.push(info.into());
+                let global_matrix = *self.transform.matrix();
+                let matrix = match *info.transform() {
+                    Some(m) => *m * global_matrix,
+                    _ => global_matrix,
+                };
+
+                let count = info
+                    .text
+                    .text()
+                    .chars()
+                    .filter(|c| !c.is_whitespace())
+                    .count();
+
+                texts.push(TextData {
+                    font: info.font.clone(),
+                    text: info.text.into(),
+                    transform: matrix,
+                    alpha: self.alpha,
+                    count,
+                });
             }
         }
+
+        let batch_len = self.batches.len();
+        let indices = self.text_batch_indices.get_or_insert(vec![]);
+        indices.push(batch_len);
     }
 
     //
@@ -313,16 +338,6 @@ impl DrawInfo for TextInfo<'_> {
     }
 }
 
-impl From<&TextInfo<'_>> for TextData {
-    fn from(info: &TextInfo<'_>) -> TextData {
-        TextData {
-            font: info.font.clone(),
-            text: info.text.into(),
-            transform: info.transform.cloned(),
-        }
-    }
-}
-
 pub trait DrawRenderer {
     fn commands<'a>(
         &self,
@@ -335,11 +350,11 @@ pub trait DrawRenderer {
 impl DrawRenderer for Draw {
     fn commands<'a>(
         &self,
-        _: &mut Device,
+        device: &mut Device,
         draw_manager: &'a mut DrawManager,
         glyphs: &mut GlyphManager,
     ) -> &'a [Commands] {
-        draw_manager.process_draw(self, glyphs)
+        draw_manager.process_draw(self, device, glyphs)
     }
 }
 
