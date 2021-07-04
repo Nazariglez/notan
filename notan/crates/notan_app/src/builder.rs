@@ -1,6 +1,5 @@
 use crate::assets::{AssetManager, Loader};
 use crate::config::*;
-// use crate::graphics::Graphics;
 use crate::graphics::Graphics;
 use crate::handlers::{
     AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler, SetupCallback,
@@ -177,7 +176,7 @@ where
             }
 
             // assets.tick(&mut app);
-            assets.tick(&mut app, &mut graphics, &mut plugins, &mut state)?;
+            assets.tick((&mut app, &mut graphics, &mut plugins, &mut state))?;
             app.tick(); //todo delta here?
 
             // Manage each event

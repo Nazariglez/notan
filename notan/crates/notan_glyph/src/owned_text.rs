@@ -1,26 +1,27 @@
 use crate::font::Font;
+pub use crate::text::Text;
 use glyph_brush::Text as GlyphText;
 use glyph_brush::{ab_glyph::*, *};
 use notan_graphics::color::Color;
 
 /// Represents a Text object with options
 #[derive(Debug, Clone)]
-pub struct Text<'a> {
-    pub(crate) text: &'a str,
-    pub(crate) size: f32,
-    pub(crate) width: Option<f32>,
-    pub(crate) h_align: HorizontalAlign,
-    pub(crate) v_align: VerticalAlign,
-    pub(crate) xyz: [f32; 3],
-    pub(crate) color: Color,
-    pub(crate) alpha: f32,
+pub struct OwnedText {
+    text: String,
+    size: f32,
+    width: Option<f32>,
+    h_align: HorizontalAlign,
+    v_align: VerticalAlign,
+    xyz: [f32; 3],
+    color: Color,
+    alpha: f32,
 }
 
-impl<'a> Text<'a> {
+impl OwnedText {
     /// Create a new Text object with the string passed in
-    pub fn new(text: &'a str) -> Self {
+    pub fn new(text: &str) -> Self {
         Self {
-            text,
+            text: text.into(),
             size: 16.0,
             width: None,
             h_align: HorizontalAlign::Left,
@@ -98,29 +99,36 @@ impl<'a> Text<'a> {
     }
 
     pub fn text(&self) -> &str {
-        self.text
+        &self.text
     }
 }
 
-pub(crate) fn section_from_text<'a>(font: &Font, from: &Text<'a>) -> Section<'a> {
-    let [x, y, z] = from.xyz;
-    let width = from.width.unwrap_or(std::f32::INFINITY);
+impl From<&Text<'_>> for OwnedText {
+    fn from(text: &Text) -> Self {
+        Self {
+            text: text.text.into(),
+            size: text.size,
+            width: text.width,
+            h_align: text.h_align,
+            v_align: text.v_align,
+            xyz: text.xyz,
+            color: text.color,
+            alpha: text.alpha,
+        }
+    }
+}
 
-    let color = from.color.with_alpha(from.color.a * from.alpha);
-
-    let glyph_text = GlyphText::new(from.text)
-        .with_scale(PxScale::from(from.size))
-        .with_font_id(font.id)
-        .with_z(z)
-        .with_color(color.to_rgba());
-
-    Section::default()
-        .add_text(glyph_text)
-        .with_screen_position((x, y))
-        .with_layout(
-            Layout::default()
-                .h_align(from.h_align)
-                .v_align(from.v_align),
-        )
-        .with_bounds((width, std::f32::INFINITY))
+impl<'a> From<&'a OwnedText> for Text<'a> {
+    fn from(text: &'a OwnedText) -> Self {
+        Self {
+            text: &text.text,
+            size: text.size,
+            width: text.width,
+            h_align: text.h_align,
+            v_align: text.v_align,
+            xyz: text.xyz,
+            color: text.color,
+            alpha: text.alpha,
+        }
+    }
 }

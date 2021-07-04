@@ -14,4 +14,6 @@ pub mod prelude;
 pub use device::*;
 pub use limits::*;
 pub use render_texture::*;
+pub use renderer::*;
+pub use shader::*;
 pub use texture::*;

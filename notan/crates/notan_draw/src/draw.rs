@@ -3,6 +3,7 @@ pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::manager::DrawManager;
 use crate::transform::Transform;
 use glam::{Mat3, Mat4};
+use notan_glyph::{Font, GlyphManager, Text};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 
@@ -21,6 +22,7 @@ pub struct Draw {
     pub(crate) image_pipeline: CustomPipeline,
     pub(crate) pattern_pipeline: CustomPipeline,
     pub(crate) text_pipeline: CustomPipeline,
+    pub(crate) text_batch_indices: Option<Vec<usize>>,
     masking: bool,
 }
 
@@ -48,13 +50,14 @@ impl Draw {
             pattern_pipeline: Default::default(),
             text_pipeline: Default::default(),
             masking: false,
+            text_batch_indices: None,
         }
     }
-
-    pub fn round_pixels(&mut self, _round: bool) {
-        //TODO round pixels to draw "2d pixel games"
-        todo!("round pixels");
-    }
+    //
+    // pub fn round_pixels(&mut self, _round: bool) {
+    //     //TODO round pixels to draw "2d pixel games"
+    //     todo!("round pixels");
+    // }
 
     pub fn mask(&mut self, mask: Option<&Self>) {
         debug_assert!(!(self.masking && mask.is_some()), "Already using mask.");
@@ -152,7 +155,7 @@ impl Draw {
                 BatchType::Image { .. } => &self.image_pipeline,
                 BatchType::Pattern { .. } => &self.pattern_pipeline,
                 BatchType::Shape => &self.shape_pipeline,
-                //TODO text
+                BatchType::Text { .. } => &self.text_pipeline,
             };
 
             self.current_batch = Some(Batch {
@@ -220,6 +223,44 @@ impl Draw {
 
         self.add_batch(info, check_type, create_type);
     }
+
+    pub fn add_text<'a>(&mut self, info: &TextInfo<'a>) {
+        let check_type = |b: &Batch, _: &TextInfo| !b.is_text();
+        let create_type = |_: &TextInfo| BatchType::Text { texts: vec![] };
+
+        self.add_batch(info, check_type, create_type);
+
+        if let Some(b) = &mut self.current_batch {
+            // vertices and indices are calculated before the flush to the gpu, so we need to store the text until that time
+            if let BatchType::Text { texts } = &mut b.typ {
+                let global_matrix = *self.transform.matrix();
+                let matrix = match *info.transform() {
+                    Some(m) => *m * global_matrix,
+                    _ => global_matrix,
+                };
+
+                let count = info
+                    .text
+                    .text()
+                    .chars()
+                    .filter(|c| !c.is_whitespace())
+                    .count();
+
+                texts.push(TextData {
+                    font: info.font.clone(),
+                    text: info.text.into(),
+                    transform: matrix,
+                    alpha: self.alpha,
+                    count,
+                });
+            }
+        }
+
+        let batch_len = self.batches.len();
+        let indices = self.text_batch_indices.get_or_insert(vec![]);
+        indices.push(batch_len);
+    }
+
     //
     // /*
     // pub fn add_instanced<'a>(&mut self, info: &InstancedInfo<'a>) {
@@ -277,17 +318,43 @@ impl DrawInfo for ShapeInfo<'_> {
     }
 }
 
+pub struct TextInfo<'a> {
+    pub transform: Option<&'a Mat3>,
+    pub text: &'a Text<'a>,
+    pub font: &'a Font,
+}
+
+impl DrawInfo for TextInfo<'_> {
+    fn transform(&self) -> &Option<&Mat3> {
+        &self.transform
+    }
+
+    fn vertices(&self) -> &[f32] {
+        &[]
+    }
+
+    fn indices(&self) -> &[u32] {
+        &[]
+    }
+}
+
 pub trait DrawRenderer {
     fn commands<'a>(
         &self,
         device: &mut Device,
         draw_manager: &'a mut DrawManager,
+        glyphs: &mut GlyphManager,
     ) -> &'a [Commands];
 }
 
 impl DrawRenderer for Draw {
-    fn commands<'a>(&self, _: &mut Device, draw_manager: &'a mut DrawManager) -> &'a [Commands] {
-        draw_manager.process_draw(self)
+    fn commands<'a>(
+        &self,
+        device: &mut Device,
+        draw_manager: &'a mut DrawManager,
+        glyphs: &mut GlyphManager,
+    ) -> &'a [Commands] {
+        draw_manager.process_draw(self, device, glyphs)
     }
 }
 

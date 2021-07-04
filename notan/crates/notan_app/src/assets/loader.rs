@@ -7,6 +7,8 @@ use downcast_rs::{impl_downcast, Downcast};
 use std::any::TypeId;
 use std::rc::Rc;
 
+pub(crate) type LoaderParams<'a, S> = (&'a mut App, &'a mut Graphics, &'a mut Plugins, &'a mut S);
+
 /// Defines how parse files once they are loaded
 #[derive(Default, Clone)]
 pub struct Loader {
@@ -72,6 +74,7 @@ impl Loader {
 
 #[derive(Clone)]
 pub enum LoaderCallback {
+    // TODO use a macro to add all this variants
     Basic(
         Option<TypeId>,
         Rc<dyn Fn(&mut AssetStorage, &str, Vec<u8>) -> Result<(), String>>,
@@ -117,12 +120,12 @@ impl LoaderCallback {
         id: &str,
         data: Vec<u8>,
         storage: &mut AssetStorage,
-        app: &mut App,
-        graphics: &mut Graphics,
-        plugins: &mut Plugins,
-        state: &mut S,
+        params: &mut LoaderParams<S>,
     ) -> Result<(), String> {
         use LoaderCallback::*;
+
+        let (app, graphics, plugins, state) = params;
+
         match self {
             Basic(_, cb) => cb(storage, id, data),
             G(_, cb) => cb(storage, id, data, graphics),

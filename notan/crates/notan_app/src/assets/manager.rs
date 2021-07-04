@@ -34,13 +34,7 @@ impl AssetManager {
         }
     }
 
-    pub(crate) fn tick<S>(
-        &mut self,
-        app: &mut App,
-        graphics: &mut Graphics,
-        plugins: &mut Plugins,
-        state: &mut S,
-    ) -> Result<(), String> {
+    pub(crate) fn tick<S>(&mut self, mut params: LoaderParams<S>) -> Result<(), String> {
         if let Some(mut to_update) = self.storage.try_load() {
             while let Some((id, data)) = to_update.pop() {
                 let ext = Path::new(&id)
@@ -59,7 +53,7 @@ impl AssetManager {
                     }
                 };
 
-                loader.exec(&id, data, &mut self.storage, app, graphics, plugins, state)?;
+                loader.exec(&id, data, &mut self.storage, &mut params)?;
                 self.storage.clean_asset(&id)?;
             }
 
