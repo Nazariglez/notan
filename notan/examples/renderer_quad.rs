@@ -1,8 +1,3 @@
-use notan::app::assets::*;
-use notan::app::config::WindowConfig;
-use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Graphics, Plugins};
-use notan::log;
 use notan::prelude::*;
 
 //language=glsl
@@ -36,19 +31,17 @@ const FRAG: ShaderSource = notan::fragment_shader! {
     "#
 };
 
+#[derive(notan::AppState)]
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
     vertex_buffer: Buffer<f32>,
     index_buffer: Buffer<u32>,
 }
-impl AppState for State {}
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).draw(draw).build();
-
-    Ok(())
+    notan::init_with(setup).draw(draw).build()
 }
 
 fn setup(gfx: &mut Graphics) -> State {

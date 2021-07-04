@@ -1,9 +1,3 @@
-use notan::app::assets::*;
-use notan::app::config::WindowConfig;
-use notan::app::graphics::pipeline::*;
-use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Graphics, Plugins};
-use notan::log;
 use notan::prelude::*;
 
 //language=glsl
@@ -44,6 +38,7 @@ const FRAG: ShaderSource = notan::fragment_shader! {
     "#
 };
 
+#[derive(notan::AppState)]
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
@@ -53,13 +48,10 @@ struct State {
     angle: f32,
     texture: Texture,
 }
-impl AppState for State {}
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).draw(draw).build();
-
-    Ok(())
+    notan::init_with(setup).draw(draw).build()
 }
 
 fn setup(gfx: &mut Graphics) -> State {
@@ -140,7 +132,7 @@ fn setup(gfx: &mut Graphics) -> State {
 
     let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
     let uniform_buffer = gfx
-        .create_uniform_buffer(0, mvp.to_cols_array().to_vec())
+        .create_uniform_buffer(0, "Locals", mvp.to_cols_array().to_vec())
         .unwrap();
 
     let mut state = State {
@@ -162,8 +154,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     let count = state.vertex_buffer.data().len() / state.pipeline.offset();
     state
         .uniform_buffer
-        .data_mut()
-        .copy_from_slice(&rotated_matrix(state.mvp, state.angle));
+        .copy(&rotated_matrix(state.mvp, state.angle));
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);

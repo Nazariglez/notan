@@ -1,25 +1,18 @@
-use notan::app::assets::*;
-use notan::app::config::WindowConfig;
-use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Graphics, Plugins};
-use notan::log;
+use glam::{Mat4, Vec3};
 use notan::prelude::*;
 
+#[derive(notan::AppState)]
 struct State {
     cube: Cube,
     post_process: PostProcessTarget,
 }
 
-impl AppState for State {}
-
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).draw(draw).build();
-
-    Ok(())
+    notan::init_with(setup).draw(draw).build()
 }
 
-fn setup(app: &mut App, gfx: &mut Graphics) -> State {
+fn setup(gfx: &mut Graphics) -> State {
     State {
         cube: Cube::new(gfx),
         post_process: PostProcessTarget::new(gfx, 800, 600),
@@ -130,7 +123,7 @@ impl PostProcessTarget {
 
         let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
         let index_buffer = gfx.create_index_buffer(indices).unwrap();
-        let uniform_buffer = gfx.create_uniform_buffer(0, uniforms).unwrap();
+        let uniform_buffer = gfx.create_uniform_buffer(0, "Locals", uniforms).unwrap();
 
         Self {
             render_texture,
@@ -270,18 +263,18 @@ impl Cube {
             22, 21, 20,  23, 22, 20
         ];
 
-        let projection = glam::Mat4::perspective_rh_gl(45.0, 4.0 / 3.0, 0.1, 100.0);
-        let view = glam::Mat4::look_at_rh(
-            glam::Vec3::new(4.0, 3.0, 3.0),
-            glam::Vec3::new(0.0, 0.0, 0.0),
-            glam::Vec3::new(0.0, 1.0, 0.0),
+        let projection = Mat4::perspective_rh_gl(45.0, 4.0 / 3.0, 0.1, 100.0);
+        let view = Mat4::look_at_rh(
+            Vec3::new(4.0, 3.0, 3.0),
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
         );
-        let mvp = glam::Mat4::identity() * projection * view;
+        let mvp = Mat4::identity() * projection * view;
 
         let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
         let index_buffer = gfx.create_index_buffer(indices).unwrap();
         let uniform_buffer = gfx
-            .create_uniform_buffer(0, mvp.to_cols_array().to_vec())
+            .create_uniform_buffer(0, "Locals", mvp.to_cols_array().to_vec())
             .unwrap();
 
         Self {
@@ -318,8 +311,8 @@ impl Cube {
         renderer
     }
 }
-fn rotated_matrix(base: glam::Mat4, angle: f32) -> [f32; 16] {
-    let rot_x = glam::Mat4::from_rotation_x(angle);
-    let rot_y = glam::Mat4::from_rotation_y(angle);
+fn rotated_matrix(base: Mat4, angle: f32) -> [f32; 16] {
+    let rot_x = Mat4::from_rotation_x(angle);
+    let rot_y = Mat4::from_rotation_y(angle);
     (base * rot_x * rot_y).to_cols_array()
 }

@@ -1,11 +1,6 @@
-use notan::app::assets::*;
-use notan::app::config::WindowConfig;
-use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, DrawImages, DrawPattern, DrawShapes, Graphics, Plugins};
-use notan::log;
 use notan::prelude::*;
 
-#[derive(AppState)]
+#[derive(notan::AppState)]
 struct State {
     img: Texture,
     count: f32,
@@ -45,7 +40,6 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
     draw.pattern(&state.img)
         .size(800.0, 600.0)
-        // .image_scale(2.0, 2.0)
         .image_offset(-state.count, -state.count);
 
     gfx.render(&draw);

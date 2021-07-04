@@ -2,8 +2,6 @@ use crate::keyboard::Keyboard;
 use crate::mouse::Mouse;
 use crate::{Backend, WindowBackend};
 
-//TODO: looks like an interesting API to do the draw2d module https://github.com/RazrFalcon/tiny-skia/tree/master/examples
-
 /// Represents the state of the application, always accessible across the event's cycle
 pub trait AppState {}
 impl AppState for () {}

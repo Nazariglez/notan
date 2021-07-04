@@ -1,24 +1,4 @@
-use notan::app::assets::*;
-use notan::app::config::WindowConfig;
-use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, AppFlow, Graphics, Plugins, *};
-use notan::log;
-use notan::math::Random;
 use notan::prelude::*;
-use notan::{fragment_shader, vertex_shader};
-use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_name = "sb")]
-    fn sb();
-
-    #[wasm_bindgen(js_name = "se")]
-    fn se();
-
-    #[wasm_bindgen(js_name = "bunnies")]
-    fn bunnies(num: usize);
-}
 
 struct Bunny {
     x: f32,
@@ -31,6 +11,7 @@ struct State {
     texture: Texture,
     rng: Random,
     bunnies: Vec<Bunny>,
+    fps: f32,
 }
 
 impl AppState for State {}
@@ -43,6 +24,7 @@ impl State {
             texture,
             rng: Random::default(),
             bunnies: vec![],
+            fps: 0.0,
         }
     }
 
@@ -55,8 +37,6 @@ impl State {
                 speed_y: self.rng.gen_range(-5.0, 5.0),
             })
         });
-
-        bunnies(self.bunnies.len());
     }
 }
 
@@ -71,7 +51,8 @@ fn update(app: &mut App, state: &mut State) {
         state.spawn(50);
     }
 
-    for b in &mut state.bunnies {
+    let rng = &mut state.rng;
+    state.bunnies.iter_mut().for_each(|b| {
         b.x += b.speed_x;
         b.y += b.speed_y;
         b.speed_y += 0.75;
@@ -87,19 +68,19 @@ fn update(app: &mut App, state: &mut State) {
         if b.y > 600.0 {
             b.speed_y *= -0.85;
             b.y = 600.0;
-            if state.rng.gen::<bool>() {
-                b.speed_y -= state.rng.gen_range(0.0, 6.0);
+            if rng.gen::<bool>() {
+                b.speed_y -= rng.gen_range(0.0, 6.0);
             }
         } else if b.y < 0.0 {
             b.speed_y = 0.0;
             b.y = 0.0;
         }
-    }
+    });
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
-    draw.background(Color::new(0.1, 0.2, 0.3, 1.0));
+    // draw.background(Color::new(0.1, 0.2, 0.3, 1.0));
     state.bunnies.iter().for_each(|b| {
         draw.image(&state.texture).position(b.x, b.y);
     });
@@ -110,21 +91,19 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 #[notan::main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
-        .set_plugin(StatsPlugin)
+        // .set_plugin(FpsPlugin(0.0))
         .update(update)
         .draw(draw)
         .build()
 }
-
-struct StatsPlugin;
-impl Plugin for StatsPlugin {
-    fn pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
-        sb();
-        Ok(Default::default())
-    }
-
-    fn post_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
-        se();
-        Ok(Default::default())
-    }
-}
+//
+// struct FpsPlugin(f32);
+// impl Plugin for FpsPlugin {
+//     fn pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
+//         Ok(Default::default())
+//     }
+//
+//     fn post_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
+//         Ok(Default::default())
+//     }
+// }

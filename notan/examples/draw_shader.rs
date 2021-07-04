@@ -1,11 +1,3 @@
-use notan::app::assets::*;
-use notan::app::config::WindowConfig;
-use notan::app::graphics::prelude::*;
-use notan::app::{
-    App, AppBuilder, DrawCustomPipeline, DrawImages, DrawPattern, DrawShapes, DrawTransform,
-    Graphics, Plugins,
-};
-use notan::log;
 use notan::prelude::*;
 
 //language=glsl
@@ -33,7 +25,7 @@ const FRAGMENT: ShaderSource = notan::fragment_shader! {
     "#
 };
 
-#[derive(AppState)]
+#[derive(notan::AppState)]
 struct State {
     img: Texture,
     pipeline: Pipeline,
