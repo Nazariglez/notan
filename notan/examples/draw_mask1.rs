@@ -1,8 +1,3 @@
-use notan::app::assets::*;
-use notan::app::config::WindowConfig;
-use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Graphics, Plugins, *};
-use notan::log;
 use notan::prelude::*;
 
 #[notan::main]

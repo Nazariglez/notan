@@ -61,14 +61,19 @@ impl Path {
         self
     }
 
-    pub fn quadratic_bezier_to(mut self, ctrl: (f32, f32), to: (f32, f32)) -> Self {
+    pub fn quadratic_bezier_to(&mut self, ctrl: (f32, f32), to: (f32, f32)) -> &mut Self {
         debug_assert!(self.initialized, "You should use move_to first");
         self.builder
             .quadratic_bezier_to(point(ctrl.0, ctrl.1), point(to.0, to.1));
         self
     }
 
-    pub fn cubic_bezier_to(mut self, ctrl1: (f32, f32), ctrl2: (f32, f32), to: (f32, f32)) -> Self {
+    pub fn cubic_bezier_to(
+        &mut self,
+        ctrl1: (f32, f32),
+        ctrl2: (f32, f32),
+        to: (f32, f32),
+    ) -> &mut Self {
         debug_assert!(self.initialized, "You should use move_to first");
         self.builder.cubic_bezier_to(
             point(ctrl1.0, ctrl1.1),

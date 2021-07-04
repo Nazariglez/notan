@@ -1,8 +1,4 @@
-use notan::app::assets::*;
-use notan::app::config::WindowConfig;
-use notan::app::graphics::prelude::*;
-use notan::app::{App, AppBuilder, Graphics, Plugins};
-use notan::log;
+use glam::{Mat4, Vec3};
 use notan::prelude::*;
 
 //language=glsl
@@ -40,24 +36,20 @@ const FRAG: ShaderSource = notan::fragment_shader! {
     "#
 };
 
+#[derive(notan::AppState)]
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vertex_buffer: Buffer<f32>,
-    index_buffer: Buffer<u32>,
-    uniform_buffer: Buffer<f32>,
+    vbo: VertexBuffer,
+    ebo: IndexBuffer,
+    ubo: UniformBuffer,
     mvp: glam::Mat4,
     angle: f32,
 }
-impl AppState for State {}
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    if let Err(e) = notan::init_with(setup).draw(draw).build() {
-        log::error!("{}", e);
-    }
-
-    Ok(())
+    notan::init_with(setup).draw(draw).build()
 }
 
 fn setup(gfx: &mut Graphics) -> State {
@@ -131,25 +123,25 @@ fn setup(gfx: &mut Graphics) -> State {
     ];
 
     let projection = glam::Mat4::perspective_rh_gl(45.0, 4.0 / 3.0, 0.1, 100.0);
-    let view = glam::Mat4::look_at_rh(
-        glam::Vec3::new(4.0, 3.0, 3.0),
-        glam::Vec3::new(0.0, 0.0, 0.0),
-        glam::Vec3::new(0.0, 1.0, 0.0),
+    let view = Mat4::look_at_rh(
+        Vec3::new(4.0, 3.0, 3.0),
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(0.0, 1.0, 0.0),
     );
-    let mvp = glam::Mat4::identity() * projection * view;
+    let mvp = Mat4::identity() * projection * view;
 
     let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
     let index_buffer = gfx.create_index_buffer(indices).unwrap();
     let uniform_buffer = gfx
-        .create_uniform_buffer(0, mvp.to_cols_array().to_vec())
+        .create_uniform_buffer(0, "Locals", mvp.to_cols_array().to_vec())
         .unwrap();
 
     let mut state = State {
         clear_options,
         pipeline,
-        vertex_buffer,
-        index_buffer,
-        uniform_buffer,
+        vbo: vertex_buffer,
+        ebo: index_buffer,
+        ubo: uniform_buffer,
         mvp,
         angle: 0.0,
     };
@@ -160,16 +152,13 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    state
-        .uniform_buffer
-        .data_mut()
-        .copy_from_slice(&rotated_matrix(state.mvp, state.angle));
+    state.ubo.copy(&rotated_matrix(state.mvp, state.angle));
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_uniform_buffer(&state.uniform_buffer);
-    renderer.bind_vertex_buffer(&state.vertex_buffer);
-    renderer.bind_index_buffer(&state.index_buffer);
+    renderer.bind_uniform_buffer(&state.ubo);
+    renderer.bind_vertex_buffer(&state.vbo);
+    renderer.bind_index_buffer(&state.ebo);
     renderer.draw(0, 36);
     renderer.end();
 
@@ -178,8 +167,8 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     state.angle += 0.01;
 }
 
-fn rotated_matrix(base: glam::Mat4, angle: f32) -> [f32; 16] {
-    let rot_x = glam::Mat4::from_rotation_x(angle);
-    let rot_y = glam::Mat4::from_rotation_y(angle);
+fn rotated_matrix(base: Mat4, angle: f32) -> [f32; 16] {
+    let rot_x = Mat4::from_rotation_x(angle);
+    let rot_y = Mat4::from_rotation_y(angle);
     (base * rot_x * rot_y).to_cols_array()
 }
