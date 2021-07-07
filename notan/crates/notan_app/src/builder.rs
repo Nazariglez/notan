@@ -35,7 +35,7 @@ pub struct AppBuilder<S, B> {
     draw_callback: Option<DrawCallback<S>>,
     event_callback: Option<EventCallback<S>>,
 
-    pub window: WindowConfig,
+    pub(crate) window: WindowConfig,
 }
 
 impl<S, B> AppBuilder<S, B>

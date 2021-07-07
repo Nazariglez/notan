@@ -107,10 +107,12 @@ impl WindowBackend for WebWindowBackend {
     fn set_size(&mut self, width: i32, height: i32) {
         self.canvas.set_width(width as u32);
         self.canvas.set_height(height as u32);
+        self.config.width = width;
+        self.config.height = height;
     }
 
     fn size(&self) -> (i32, i32) {
-        (self.canvas.client_width(), self.canvas.client_height())
+        (self.config.width, self.config.height)
     }
 
     fn set_fullscreen(&mut self, enabled: bool) {
