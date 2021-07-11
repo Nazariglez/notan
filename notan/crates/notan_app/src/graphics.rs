@@ -1,11 +1,15 @@
 pub use notan_draw::*;
-use notan_glyph::{GlyphManager, GlyphRenderer, Text};
 use notan_graphics::prelude::*;
 pub use notan_graphics::*;
+
+#[cfg(feature = "glyphs")]
+use notan_glyph::{GlyphManager, GlyphRenderer, Text};
 
 pub struct Graphics {
     device: Device,
     draw: DrawManager,
+
+    #[cfg(feature = "glyphs")]
     glyphs: GlyphManager,
 }
 
@@ -13,10 +17,15 @@ impl Graphics {
     pub fn new(backend: Box<DeviceBackend>) -> Result<Self, String> {
         let mut device = Device::new(backend)?;
         let draw = DrawManager::new(&mut device)?;
+
+        #[cfg(feature = "glyphs")]
         let glyphs = GlyphManager::new(&mut device)?;
+
         Ok(Self {
             device,
             draw,
+
+            #[cfg(feature = "glyphs")]
             glyphs,
         })
     }
@@ -26,6 +35,7 @@ impl Graphics {
         self.glyphs.create_font(data)
     }
 
+    #[cfg(feature = "glyphs")]
     #[inline(always)]
     pub fn update_glyphs(&mut self, render: &mut GlyphRenderer) -> Result<(), String> {
         self.glyphs.update(&mut self.device, render)
@@ -42,6 +52,7 @@ impl Graphics {
         self.draw.create_draw(width, height)
     }
 
+    #[cfg(feature = "glyphs")]
     #[inline(always)]
     pub fn glyphs_texture(&self) -> &Texture {
         &self.glyphs.texture
