@@ -1,11 +1,10 @@
 pub use ::log::{debug, error, info, trace, warn};
-use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console, js_name = error)]
-    fn console_error(s: &str);
-}
+#[cfg(target_arch = "wasm32")]
+mod console_error;
+
+#[cfg(target_arch = "wasm32")]
+use console_error::*;
 
 #[cfg(target_arch = "wasm32")]
 pub use ::log::Level;
