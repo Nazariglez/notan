@@ -9,14 +9,14 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::platform::macos::WindowExtMacOS;
 use winit::window::{Fullscreen, Window, WindowBuilder};
 
-pub struct DesktopWindowBackend {
+pub struct WinitWindowBackend {
     pub(crate) sender: Sender<BackendMessages>,
     pub(crate) receiver: Receiver<BackendMessages>,
     pub(crate) is_fullscreen: bool,
     pub(crate) size: (i32, i32),
 }
 
-impl WindowBackend for DesktopWindowBackend {
+impl WindowBackend for WinitWindowBackend {
     fn set_size(&mut self, width: i32, height: i32) {
         if self
             .sender
