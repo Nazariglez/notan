@@ -1214,17 +1214,8 @@ dependencies = [
 name = "notan_default_backend"
 version = "0.1.0"
 dependencies = [
- "notan_desktop",
  "notan_web",
-]
-
-[[package]]
-name = "notan_desktop"
-version = "0.1.0"
-dependencies = [
- "crossbeam-channel",
- "notan_app",
- "winit",
+ "notan_winit",
 ]
 
 [[package]]
@@ -1323,6 +1314,15 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "notan_winit"
+version = "0.1.0"
+dependencies = [
+ "crossbeam-channel",
+ "notan_app",
+ "winit",
 ]
 
 [[package]]
