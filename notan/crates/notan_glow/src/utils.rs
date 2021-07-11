@@ -19,7 +19,7 @@ fn webgl_options() -> web_sys::WebGlContextAttributes {
     opts.stencil(true);
     opts.premultiplied_alpha(false);
     opts.alpha(false);
-    opts.antialias(true);
+    opts.antialias(false);
     opts
 }
 
