@@ -1,5 +1,5 @@
 use crate::messages::*;
-use crate::window::DesktopWindowBackend;
+use crate::window::WinitWindowBackend;
 use crossbeam_channel::{Receiver, Sender};
 use notan_app::{App, Backend, InitializeFn, WindowBackend};
 use winit::dpi::LogicalSize;
@@ -10,18 +10,18 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::platform::macos::WindowExtMacOS;
 use winit::window::{Fullscreen, Window, WindowBuilder};
 
-pub struct DesktopBackend {
+pub struct WinitBackend {
     sender: Sender<BackendMessages>,
     exit_requested: bool,
-    window: DesktopWindowBackend,
+    window: WinitWindowBackend,
 }
 
-impl DesktopBackend {
+impl WinitBackend {
     pub fn new() -> Result<Self, String> {
         let (sender, receiver) = crossbeam_channel::unbounded();
         let size = (800, 600);
 
-        let window = DesktopWindowBackend {
+        let window = WinitWindowBackend {
             sender: sender.clone(),
             receiver,
             is_fullscreen: false,
@@ -37,9 +37,9 @@ impl DesktopBackend {
     }
 }
 
-impl Backend for DesktopBackend {
-    type Impl = DesktopBackend;
-    type Window = DesktopWindowBackend;
+impl Backend for WinitBackend {
+    type Impl = WinitBackend;
+    type Window = WinitWindowBackend;
 
     fn get_impl(&mut self) -> &mut Self::Impl {
         self

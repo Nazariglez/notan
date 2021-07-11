@@ -8,5 +8,6 @@ edition = "2018"
 
 [dependencies]
 notan_app = { path = "../notan_app" }
-winit = "0.23"
+winit = "0.25"
+glutin = "0.27"
 crossbeam-channel = "0.5"
