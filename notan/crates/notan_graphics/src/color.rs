@@ -114,6 +114,22 @@ impl Color {
     pub fn to_hex_string(&self) -> String {
         hex_to_string(self.to_hex())
     }
+
+    #[inline(always)]
+    /// Returns byte representation of the color
+    pub fn to_rgba_u8(&self) -> [u8; 4] {
+        let r = (self.r * 255.0) as _;
+        let g = (self.g * 255.0) as _;
+        let b = (self.b * 255.0) as _;
+        let a = (self.a * 255.0) as _;
+        [r, g, b, a]
+    }
+}
+
+impl From<Color> for [u8; 4] {
+    fn from(c: Color) -> Self {
+        c.to_rgba_u8()
+    }
 }
 
 impl From<Color> for [f32; 4] {
