@@ -1249,6 +1249,7 @@ name = "notan"
 version = "0.1.0"
 dependencies = [
  "glam 0.13.0",
+ "js-sys",
  "notan_app",
  "notan_default_backend",
  "notan_draw",

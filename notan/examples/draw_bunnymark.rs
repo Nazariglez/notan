@@ -1,4 +1,5 @@
 use notan::prelude::*;
+use notan_app::Plugins;
 
 struct Bunny {
     x: f32,
@@ -7,20 +8,26 @@ struct Bunny {
     speed_y: f32,
 }
 
+#[derive(notan::AppState)]
 struct State {
+    font: Font,
     texture: Texture,
     rng: Random,
     bunnies: Vec<Bunny>,
-    fps: f32,
+    fps: f64,
 }
 
-impl AppState for State {}
 impl State {
     fn new(gfx: &mut Graphics) -> Self {
         let image = TextureInfo::from_image(include_bytes!("assets/bunny.png")).unwrap();
         let texture = gfx.create_texture(image).unwrap();
 
+        let font = gfx
+            .create_font(include_bytes!("./assets/Ubuntu-B.ttf"))
+            .unwrap();
+
         Self {
+            font,
             texture,
             rng: Random::default(),
             bunnies: vec![],
@@ -46,7 +53,7 @@ fn init(gfx: &mut Graphics) -> State {
     state
 }
 
-fn update(app: &mut App, state: &mut State) {
+fn update(app: &mut App, plugins: &mut Plugins, state: &mut State) {
     if app.mouse.left_is_down() {
         state.spawn(50);
     }
@@ -76,6 +83,8 @@ fn update(app: &mut App, state: &mut State) {
             b.y = 0.0;
         }
     });
+
+    state.fps = plugins.get::<FpsPlugin>().unwrap().fps();
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
@@ -85,25 +94,71 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
         draw.image(&state.texture).position(b.x, b.y);
     });
 
+    draw.text(
+        &state.font,
+        &format!("{} -> {}", state.fps.round(), state.bunnies.len()),
+    )
+    .position(10.0, 10.0);
+
     gfx.render(&draw);
 }
 
 #[notan::main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
-        // .set_plugin(FpsPlugin(0.0))
+        .set_plugin(FpsPlugin::new())
         .update(update)
         .draw(draw)
         .build()
 }
-//
-// struct FpsPlugin(f32);
-// impl Plugin for FpsPlugin {
-//     fn pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
-//         Ok(Default::default())
-//     }
-//
-//     fn post_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
-//         Ok(Default::default())
-//     }
-// }
+
+use notan_app::AppFlow;
+use std::collections::VecDeque;
+struct FpsPlugin {
+    fps: VecDeque<f64>,
+    last_time: u64,
+    last_delta: f64,
+}
+
+impl FpsPlugin {
+    fn new() -> Self {
+        let mut fps = VecDeque::with_capacity(300);
+        fps.resize(fps.capacity(), 1000.0 / 60.0);
+
+        Self {
+            fps: fps,
+            last_time: date_now(),
+            last_delta: 0.0,
+        }
+    }
+
+    fn tick(&mut self) {
+        let now = date_now();
+        let elapsed = (now - self.last_time) as f64;
+        self.last_time = now;
+        self.last_delta = elapsed / 1000.0;
+        self.fps.pop_front();
+        self.fps.push_back(elapsed);
+    }
+
+    pub fn fps(&self) -> f64 {
+        let average: f64 = self.fps.iter().sum::<f64>() / self.fps.len() as f64;
+        1000.0 / average
+    }
+
+    pub fn delta(&self) -> f64 {
+        self.last_delta
+    }
+}
+
+impl Plugin for FpsPlugin {
+    fn pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
+        self.tick();
+        Ok(AppFlow::Next)
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn date_now() -> u64 {
+    js_sys::Date::now() as u64
+}
