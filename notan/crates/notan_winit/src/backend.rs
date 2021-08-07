@@ -62,7 +62,7 @@ impl BackendSystem for WinitBackend {
                             .window
                             .as_mut()
                             .unwrap()
-                            .window
+                            .window()
                             .request_redraw();
                     }
                     Event::RedrawRequested(_) => {
