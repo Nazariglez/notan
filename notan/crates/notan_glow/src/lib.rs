@@ -224,7 +224,7 @@ impl GlowBackend {
     }
 
     #[inline(always)]
-    fn get_uniform_loc(&self, location: &u32) -> &UniformLocation {
+    fn get_uniform_loc<'a>(&'a self, location: &'a u32) -> &'a UniformLocation {
         #[cfg(target_arch = "wasm32")]
         {
             &self.current_uniforms[*location as usize]

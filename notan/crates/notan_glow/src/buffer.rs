@@ -67,7 +67,10 @@ impl InnerBuffer {
     }
 
     pub fn setup_as_ubo(&mut self, gl: &Context, slot: u32, name: &str) {
-        self.uniform_block_name = Some(name.to_string());
+        #[cfg(target_arch = "wasm32")]
+        {
+            self.uniform_block_name = Some(name.to_string());
+        }
         self.bind_as_ubo(gl, slot);
     }
 
