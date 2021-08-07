@@ -1,140 +1,150 @@
-use crate::messages::*;
 use crate::window::WinitWindowBackend;
-use crossbeam_channel::{Receiver, Sender};
-use notan_app::{App, Backend, InitializeFn, WindowBackend};
-use winit::dpi::LogicalSize;
-use winit::event::DeviceEvent::Button;
-use winit::event::Event::DeviceEvent;
+use glutin::event_loop::ControlFlow;
+use notan_app::buffer::VertexAttr;
+use notan_app::commands::Commands;
+use notan_app::config::WindowConfig;
+use notan_app::graphics::pipeline::PipelineOptions;
+use notan_app::{
+    App, Backend, BackendSystem, DeviceBackend, EventIterator, InitializeFn, ResourceId,
+    TextureInfo, TextureUpdate, WindowBackend,
+};
 use winit::event::{Event, WindowEvent};
-use winit::event_loop::{ControlFlow, EventLoop};
-use winit::platform::macos::WindowExtMacOS;
-use winit::window::{Fullscreen, Window, WindowBuilder};
+use winit::event_loop::EventLoop;
 
 pub struct WinitBackend {
-    sender: Sender<BackendMessages>,
+    window: Option<WinitWindowBackend>,
     exit_requested: bool,
-    window: WinitWindowBackend,
 }
 
 impl WinitBackend {
     pub fn new() -> Result<Self, String> {
-        let (sender, receiver) = crossbeam_channel::unbounded();
-        let size = (800, 600);
-
-        let window = WinitWindowBackend {
-            sender: sender.clone(),
-            receiver,
-            is_fullscreen: false,
-            size,
-        };
-
         Ok(Self {
-            sender,
+            window: None,
             exit_requested: false,
-
-            window,
         })
     }
 }
 
 impl Backend for WinitBackend {
-    type Impl = WinitBackend;
-    type Window = WinitWindowBackend;
-
-    fn get_impl(&mut self) -> &mut Self::Impl {
-        self
+    fn window(&mut self) -> &mut dyn WindowBackend {
+        self.window.as_mut().unwrap()
     }
 
-    fn initialize<B, S, R>(&mut self) -> Result<Box<InitializeFn<B, S, R>>, String>
-    where
-        B: Backend<Impl = Self::Impl> + 'static,
-        S: 'static,
-        R: FnMut(&mut App<B>, &mut S) + 'static,
-    {
-        Ok(Box::new(move |mut app: App<B>, mut state: S, mut cb: R| {
-            let event_loop = EventLoop::new();
-
-            let window = WindowBuilder::new()
-                .with_title("yeah")
-                .build(&event_loop)
-                .map_err(|e| format!("{:?}", e))
-                .unwrap();
-
-            let backend = app.backend.get_impl();
-            let receiver = backend.window.receiver.clone();
-
-            std::thread::spawn(move || {
-                use BackendMessages::*;
-                while let Ok(evt) = receiver.recv() {
-                    match evt {
-                        FullscreenMode(enabled) => {
-                            let mode = if enabled {
-                                let monitor = window.current_monitor();
-                                Some(Fullscreen::Borderless(monitor))
-                            } else {
-                                None
-                            };
-
-                            window.set_fullscreen(mode);
-                        }
-                        Size { width, height } => {
-                            window.set_inner_size(LogicalSize::new(width, height));
-                        }
-                        Exit => {
-                            break;
-                        }
-                    }
-                }
-            });
-
-            event_loop.run(move |event, target, mut control| {
-                *control = ControlFlow::Poll;
-
-                let backend = app.backend.get_impl();
-
-                match event {
-                    Event::WindowEvent { ref event, .. } => match event {
-                        WindowEvent::CloseRequested => {
-                            // running = false;
-                            *control = ControlFlow::Exit;
-                            return;
-                        }
-                        _ => {}
-                    },
-                    Event::DeviceEvent { device_id, event } => match event {
-                        Button { button, state } => {
-                            println!("{:?} {:?}", button, state);
-                            let (width, height) = backend.window.size();
-                            if button == 0 {
-                                backend.window.set_size(width + 10, height + 10);
-                            //app.backend.get_impl().set_fullscreen(true);
-                            } else {
-                                backend.window.set_size(width - 10, height - 10);
-                                //app.backend.get_impl().set_fullscreen(false);
-                            }
-                        }
-                        _ => {}
-                    },
-                    _ => {}
-                }
-
-                cb(&mut app, &mut state);
-
-                if app.backend.get_impl().exit_requested {
-                    *control = ControlFlow::Exit;
-                }
-            });
-            Ok(())
-        }))
-    }
-
-    fn window(&mut self) -> &mut Self::Window {
-        &mut self.window
+    fn events_iter(&mut self) -> EventIterator {
+        Default::default()
     }
 
     fn exit(&mut self) {
-        if self.sender.send(BackendMessages::Exit).is_ok() {
-            self.exit_requested = true;
-        }
+        self.exit_requested = true;
     }
+}
+
+impl BackendSystem for WinitBackend {
+    fn initialize<S, R>(&mut self, window: WindowConfig) -> Result<Box<InitializeFn<S, R>>, String>
+    where
+        S: 'static,
+        R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static,
+    {
+        let event_loop = EventLoop::new();
+        self.window = Some(WinitWindowBackend::new(window, &event_loop)?);
+
+        Ok(Box::new(move |mut app: App, mut state: S, mut cb: R| {
+            event_loop.run(move |event, _win_target, control_flow| {
+                match event {
+                    Event::WindowEvent { ref event, .. } => match event {
+                        WindowEvent::CloseRequested => {
+                            app.exit();
+                        }
+                        _ => {}
+                    },
+                    Event::MainEventsCleared => {
+                        backend(&mut app)
+                            .window
+                            .as_mut()
+                            .unwrap()
+                            .window
+                            .request_redraw();
+                    }
+                    Event::RedrawRequested(_) => {
+                        cb(&mut app, &mut state);
+                    }
+                    _ => {}
+                }
+
+                let exit_requested = backend(&mut app).exit_requested;
+                if exit_requested {
+                    *control_flow = ControlFlow::Exit;
+                }
+            });
+        }))
+    }
+
+    fn get_graphics_backend(&self) -> Box<DeviceBackend> {
+        Box::new(WinitDeviceBackend::default())
+    }
+}
+
+#[derive(Default)]
+struct WinitDeviceBackend {
+    id_count: i32,
+}
+
+impl DeviceBackend for WinitDeviceBackend {
+    fn api_name(&self) -> &str {
+        "opengl"
+    }
+
+    fn create_pipeline(
+        &mut self,
+        vertex_source: &[u8],
+        fragment_source: &[u8],
+        vertex_attrs: &[VertexAttr],
+        options: PipelineOptions,
+    ) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn create_vertex_buffer(&mut self) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn create_index_buffer(&mut self) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn create_uniform_buffer(&mut self, _slot: u32, name: &str) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn create_render_texture(
+        &mut self,
+        _texture_id: i32,
+        _info: &TextureInfo,
+    ) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn render(&mut self, commands: &[Commands], _target: Option<i32>) {}
+
+    fn clean(&mut self, to_clean: &[ResourceId]) {}
+
+    fn set_size(&mut self, width: i32, height: i32) {}
+
+    fn update_texture(&mut self, texture: i32, opts: &TextureUpdate) -> Result<(), String> {
+        Ok(())
+    }
+}
+
+fn backend(app: &mut App) -> &mut WinitBackend {
+    app.backend.downcast_mut::<WinitBackend>().unwrap()
 }

@@ -6,13 +6,13 @@ use futures::prelude::*;
 use futures::Future;
 
 /// Closure returned from the backend's initialize method
-pub type InitializeFn<S, R> = dyn Fn(App, S, R) -> Result<(), String>;
+pub type InitializeFn<S, R> = dyn FnOnce(App, S, R) -> Result<(), String>;
 
 /// Closure used to load files
 pub type LoadFileFn = Box<dyn Fn(String) -> Box<dyn Future<Output = Result<Vec<u8>, String>>>>;
 
 /// Represents the backend implementation
-pub trait Backend: Send + Sync + Downcast {
+pub trait Backend: Downcast {
     /// Returns the window implementation
     fn window(&mut self) -> &mut dyn WindowBackend;
 
