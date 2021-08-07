@@ -1,6 +1,7 @@
 use notan_app::WindowBackend;
 // use winit::{WindowedContext, PossiblyCurrent};
 use glutin::window::Fullscreen::Borderless;
+use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
 use notan_app::config::WindowConfig;
 use winit::dpi::LogicalSize;
 use winit::event_loop::EventLoop;
@@ -8,31 +9,32 @@ use winit::window::{Window, WindowBuilder};
 // use glutin::{WindowedContext, PossiblyCurrent};
 
 pub struct WinitWindowBackend {
-    pub(crate) window: Window,
+    pub(crate) gl_ctx: ContextWrapper<PossiblyCurrent, Window>,
     // win: WindowedContext<PossiblyCurrent>,
 }
 
 impl WindowBackend for WinitWindowBackend {
     fn set_size(&mut self, width: i32, height: i32) {
-        self.window.set_inner_size(LogicalSize::new(width, height));
+        self.window()
+            .set_inner_size(LogicalSize::new(width, height));
     }
 
     fn size(&self) -> (i32, i32) {
-        let inner = self.window.inner_size();
+        let inner = self.window().inner_size();
         (inner.width as _, inner.height as _)
     }
 
     fn set_fullscreen(&mut self, enabled: bool) {
         if enabled {
-            let monitor = self.window.current_monitor();
-            self.window.set_fullscreen(Some(Borderless(monitor)));
+            let monitor = self.window().current_monitor();
+            self.window().set_fullscreen(Some(Borderless(monitor)));
         } else {
-            self.window.set_fullscreen(None);
+            self.window().set_fullscreen(None);
         }
     }
 
     fn is_fullscreen(&self) -> bool {
-        self.window.fullscreen().is_some()
+        self.window().fullscreen().is_some()
     }
 }
 
@@ -52,13 +54,28 @@ impl WinitWindowBackend {
             builder = builder.with_max_inner_size(LogicalSize::new(w, h));
         }
 
-        let mut window = builder.build(&event_loop).map_err(|e| e.to_string())?;
+        let gl_context = ContextBuilder::new()
+            .with_vsync(true) // TODO get this from window config?
+            .with_gl(glutin::GlRequest::GlThenGles {
+                opengl_version: (3, 3),
+                opengles_version: (2, 0),
+            })
+            .with_gl_profile(glutin::GlProfile::Core)
+            .with_multisampling(0) // TODO get this from window config?
+            .build_windowed(builder, event_loop)
+            .map_err(|e| format!("{}", e))?;
+
+        let gl_ctx = unsafe { gl_context.make_current().unwrap() };
 
         if config.fullscreen {
-            let monitor = window.current_monitor();
-            window.set_fullscreen(Some(Borderless(monitor)));
+            let monitor = gl_ctx.window().current_monitor();
+            gl_ctx.window().set_fullscreen(Some(Borderless(monitor)));
         }
 
-        Ok(Self { window })
+        Ok(Self { gl_ctx })
+    }
+
+    pub(crate) fn window(&self) -> &Window {
+        self.gl_ctx.window()
     }
 }

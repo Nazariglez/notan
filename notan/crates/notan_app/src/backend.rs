@@ -44,7 +44,7 @@ pub trait BackendSystem: Backend {
 }
 
 /// Represents a window
-pub trait WindowBackend: Send + Sync {
+pub trait WindowBackend {
     /// Sets the window's size
     fn set_size(&mut self, width: i32, height: i32);
 
