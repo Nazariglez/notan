@@ -105,6 +105,18 @@ impl WindowConfig {
         self.resizable = true;
         self
     }
+
+    /// Enable vsync
+    pub fn vsync(mut self) -> Self {
+        self.vsync = true;
+        self
+    }
+
+    /// Enabled multisampling aliasing (opengl)
+    pub fn multisampling(mut self, samples: u16) -> Self {
+        self.multisampling = samples;
+        self
+    }
 }
 
 impl<S, B> BuildConfig<S, B> for WindowConfig
