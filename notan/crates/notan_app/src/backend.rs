@@ -21,6 +21,9 @@ pub trait Backend: Downcast {
 
     /// Closes the application
     fn exit(&mut self);
+
+    /// Return the system timestamp
+    fn system_timestamp(&self) -> u64;
 }
 
 impl_downcast!(Backend);

@@ -55,13 +55,13 @@ impl WinitWindowBackend {
         }
 
         let gl_context = ContextBuilder::new()
-            .with_vsync(true) // TODO get this from window config?
+            .with_vsync(config.vsync)
             .with_gl(glutin::GlRequest::GlThenGles {
                 opengl_version: (3, 3),
                 opengles_version: (2, 0),
             })
             .with_gl_profile(glutin::GlProfile::Core)
-            .with_multisampling(0) // TODO get this from window config?
+            .with_multisampling(config.multisampling) // TODO get this from window config?
             .build_windowed(builder, event_loop)
             .map_err(|e| format!("{}", e))?;
 
@@ -77,5 +77,9 @@ impl WinitWindowBackend {
 
     pub(crate) fn window(&self) -> &Window {
         self.gl_ctx.window()
+    }
+
+    pub(crate) fn swap_buffers(&self) {
+        self.gl_ctx.swap_buffers();
     }
 }

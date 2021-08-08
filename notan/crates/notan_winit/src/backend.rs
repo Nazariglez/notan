@@ -5,8 +5,8 @@ use notan_app::commands::Commands;
 use notan_app::config::WindowConfig;
 use notan_app::graphics::pipeline::PipelineOptions;
 use notan_app::{
-    App, Backend, BackendSystem, DeviceBackend, EventIterator, InitializeFn, ResourceId,
-    TextureInfo, TextureUpdate, WindowBackend,
+    App, Backend, BackendSystem, DeviceBackend, EventIterator, InitializeFn, LoadFileFn,
+    ResourceId, TextureInfo, TextureUpdate, WindowBackend,
 };
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::EventLoop;
@@ -36,6 +36,14 @@ impl Backend for WinitBackend {
 
     fn exit(&mut self) {
         self.exit_requested = true;
+    }
+
+    fn system_timestamp(&self) -> u64 {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u64
     }
 }
 
@@ -67,6 +75,7 @@ impl BackendSystem for WinitBackend {
                     }
                     Event::RedrawRequested(_) => {
                         cb(&mut app, &mut state);
+                        backend(&mut app).window.as_mut().unwrap().swap_buffers();
                     }
                     _ => {}
                 }
@@ -80,68 +89,10 @@ impl BackendSystem for WinitBackend {
     }
 
     fn get_graphics_backend(&self) -> Box<DeviceBackend> {
-        Box::new(WinitDeviceBackend::default())
-    }
-}
-
-#[derive(Default)]
-struct WinitDeviceBackend {
-    id_count: i32,
-}
-
-impl DeviceBackend for WinitDeviceBackend {
-    fn api_name(&self) -> &str {
-        "opengl"
-    }
-
-    fn create_pipeline(
-        &mut self,
-        vertex_source: &[u8],
-        fragment_source: &[u8],
-        vertex_attrs: &[VertexAttr],
-        options: PipelineOptions,
-    ) -> Result<i32, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn create_vertex_buffer(&mut self) -> Result<i32, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn create_index_buffer(&mut self) -> Result<i32, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn create_uniform_buffer(&mut self, _slot: u32, name: &str) -> Result<i32, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn create_render_texture(
-        &mut self,
-        _texture_id: i32,
-        _info: &TextureInfo,
-    ) -> Result<i32, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn render(&mut self, commands: &[Commands], _target: Option<i32>) {}
-
-    fn clean(&mut self, to_clean: &[ResourceId]) {}
-
-    fn set_size(&mut self, width: i32, height: i32) {}
-
-    fn update_texture(&mut self, texture: i32, opts: &TextureUpdate) -> Result<(), String> {
-        Ok(())
+        let ctx = &self.window.as_ref().unwrap().gl_ctx;
+        let backend =
+            notan_glow::GlowBackend::new(|s| ctx.get_proc_address(s) as *const _).unwrap();
+        Box::new(backend)
     }
 }
 

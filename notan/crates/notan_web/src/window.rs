@@ -15,6 +15,8 @@ pub struct WebWindowBackend {
     pub document: Document,
     pub canvas_parent: Element,
 
+    pub(crate) antialias: bool,
+
     pub(crate) events: Rc<RefCell<EventIterator>>,
 
     fullscreen_requested: Rc<RefCell<Option<bool>>>,
@@ -62,6 +64,7 @@ impl WebWindowBackend {
 
         let mouse_callbacks = Default::default();
         let keyboard_callbacks = Default::default();
+        let antialias = config.multisampling != 0;
 
         Ok(Self {
             window,
@@ -79,6 +82,7 @@ impl WebWindowBackend {
             resize_callback_ref,
             _context_menu_callback_ref: context_menu_callback_ref,
             config,
+            antialias,
         })
     }
 

@@ -41,9 +41,19 @@ pub struct GlowBackend {
 
 impl GlowBackend {
     #[cfg(target_arch = "wasm32")]
-    pub fn new(canvas: &web_sys::HtmlCanvasElement) -> Result<Self, String> {
-        let (gl, api) = utils::create_gl_context(canvas)?;
+    pub fn new(canvas: &web_sys::HtmlCanvasElement, antialias: bool) -> Result<Self, String> {
+        let (gl, api) = utils::create_gl_context(canvas, antialias)?;
         Self::from(gl, &api)
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn new<F>(mut loader_function: F) -> Result<Self, String>
+    where
+        F: FnMut(&str) -> *const std::os::raw::c_void,
+    {
+        let gl = unsafe { Context::from_loader_function(loader_function) };
+
+        Self::from(gl, "opengl")
     }
 
     fn from(gl: Context, api: &str) -> Result<Self, String> {
