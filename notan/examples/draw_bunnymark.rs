@@ -54,14 +54,18 @@ fn init(gfx: &mut Graphics) -> State {
 }
 
 fn update(app: &mut App, plugins: &mut Plugins, state: &mut State) {
+    let fps_plugin = plugins.get::<FpsPlugin>().unwrap();
+    state.fps = fps_plugin.fps();
+    let delta = fps_plugin.delta() as f32;
+
     if app.mouse.left_is_down() {
         state.spawn(50);
     }
 
     let rng = &mut state.rng;
     state.bunnies.iter_mut().for_each(|b| {
-        b.x += b.speed_x;
-        b.y += b.speed_y;
+        b.x += b.speed_x * delta;
+        b.y += b.speed_y * delta;
         b.speed_y += 0.75;
 
         if b.x > 800.0 {
@@ -83,13 +87,11 @@ fn update(app: &mut App, plugins: &mut Plugins, state: &mut State) {
             b.y = 0.0;
         }
     });
-
-    state.fps = plugins.get::<FpsPlugin>().unwrap().fps();
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
-    // draw.background(Color::new(0.1, 0.2, 0.3, 1.0));
+    draw.clear([0.0, 0.0, 0.0, 1.0].into());
     state.bunnies.iter().for_each(|b| {
         draw.image(&state.texture).position(b.x, b.y);
     });
@@ -127,13 +129,12 @@ impl FpsPlugin {
 
         Self {
             fps: fps,
-            last_time: date_now(),
+            last_time: 0,
             last_delta: 0.0,
         }
     }
 
-    fn tick(&mut self) {
-        let now = date_now();
+    fn tick(&mut self, now: u64) {
         let elapsed = (now - self.last_time) as f64;
         self.last_time = now;
         self.last_delta = elapsed / 1000.0;
@@ -153,12 +154,7 @@ impl FpsPlugin {
 
 impl Plugin for FpsPlugin {
     fn pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
-        self.tick();
+        self.tick(app.date_now());
         Ok(AppFlow::Next)
     }
-}
-
-#[cfg(target_arch = "wasm32")]
-pub fn date_now() -> u64 {
-    js_sys::Date::now() as u64
 }

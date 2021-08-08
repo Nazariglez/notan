@@ -26,6 +26,11 @@ impl App {
         }
     }
 
+    #[inline]
+    pub fn date_now(&self) -> u64 {
+        self.backend.system_timestamp()
+    }
+
     pub fn tick(&mut self) {
         //TODO
     }
