@@ -1,6 +1,6 @@
 use crate::config::WindowConfig;
 use crate::graphics::{Device, DeviceBackend, RenderTexture};
-use crate::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
+use crate::{App, Backend, BackendSystem, EventIterator, InitializeFn, LoadFileFn, WindowBackend};
 use notan_graphics::prelude::*;
 
 #[derive(Default)]
@@ -50,6 +50,10 @@ impl Backend for EmptyBackend {
 
     fn exit(&mut self) {
         self.exit_requested = true;
+    }
+
+    fn system_timestamp(&self) -> u64 {
+        0
     }
 }
 

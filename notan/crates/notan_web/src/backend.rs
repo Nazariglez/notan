@@ -40,6 +40,10 @@ impl Backend for WebBackend {
     fn exit(&mut self) {
         self.exit_requested = true;
     }
+
+    fn system_timestamp(&self) -> u64 {
+        js_sys::Date::now() as u64
+    }
 }
 
 impl BackendSystem for WebBackend {
@@ -78,7 +82,8 @@ impl BackendSystem for WebBackend {
     }
 
     fn get_graphics_backend(&self) -> Box<DeviceBackend> {
-        let backend = notan_glow::GlowBackend::new(&self.window.as_ref().unwrap().canvas).unwrap();
+        let win = self.window.as_ref().unwrap();
+        let backend = notan_glow::GlowBackend::new(&win.canvas, win.antialias).unwrap();
         Box::new(backend)
     }
 }

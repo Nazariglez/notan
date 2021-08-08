@@ -3,14 +3,41 @@ use crate::builder::{AppBuilder, BuildConfig};
 
 /// Builder configuration for the window options
 pub struct WindowConfig {
+    /// Window's title
+    /// `Web: no-op`
     pub title: String,
+
+    /// Window's width
     pub width: i32,
+
+    /// Window's height
     pub height: i32,
+
+    /// Start window in fullscreen mode
+    /// `Web: no-op`
     pub fullscreen: bool,
+
+    /// Minimum resizable window's size
     pub min_size: Option<(i32, i32)>,
+
+    /// Maximum resizable window's size
     pub max_size: Option<(i32, i32)>,
+
+    /// Start the window maximized
+    /// `Web: no-op`
     pub maximized: bool,
+
+    /// Allow to resize the window
+    /// `Web: no-op`
     pub resizable: bool,
+
+    /// Enable V-Sync
+    /// `Web: no-op`
+    pub vsync: bool,
+
+    /// Antialias nultisamples level
+    /// `Web: WebGL will use this as antialias = false if the value is 0 or true otherwise`
+    pub multisampling: u16,
 }
 
 impl Default for WindowConfig {
@@ -24,6 +51,8 @@ impl Default for WindowConfig {
             max_size: None,
             maximized: false,
             resizable: false,
+            vsync: false,
+            multisampling: 0,
         }
     }
 }
