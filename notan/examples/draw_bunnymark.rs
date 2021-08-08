@@ -15,6 +15,7 @@ struct State {
     rng: Random,
     bunnies: Vec<Bunny>,
     fps: f64,
+    delta: f32,
 }
 
 impl State {
@@ -32,6 +33,7 @@ impl State {
             rng: Random::default(),
             bunnies: vec![],
             fps: 0.0,
+            delta: 0.0,
         }
     }
 
@@ -56,7 +58,7 @@ fn init(gfx: &mut Graphics) -> State {
 fn update(app: &mut App, plugins: &mut Plugins, state: &mut State) {
     let fps_plugin = plugins.get::<FpsPlugin>().unwrap();
     state.fps = fps_plugin.fps();
-    let delta = fps_plugin.delta() as f32;
+    let delta = fps_plugin.delta() as f32 * 60.0;
 
     if app.mouse.left_is_down() {
         state.spawn(50);
@@ -87,6 +89,9 @@ fn update(app: &mut App, plugins: &mut Plugins, state: &mut State) {
             b.y = 0.0;
         }
     });
+
+    state.delta = delta;
+    notan::log::info!("delta -> {}", fps_plugin.delta());
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
@@ -98,7 +103,12 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
     draw.text(
         &state.font,
-        &format!("{} -> {}", state.fps.round(), state.bunnies.len()),
+        &format!(
+            "{} -> {} ({:.32})",
+            state.fps.round(),
+            state.bunnies.len(),
+            state.delta
+        ),
     )
     .position(10.0, 10.0);
 
@@ -108,14 +118,20 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 #[notan::main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
+        .set_config(WindowConfig {
+            vsync: true,
+            ..Default::default()
+        })
         .set_plugin(FpsPlugin::new())
         .update(update)
         .draw(draw)
         .build()
 }
 
+use notan::app::config::WindowConfig;
 use notan_app::AppFlow;
 use std::collections::VecDeque;
+
 struct FpsPlugin {
     fps: VecDeque<f64>,
     last_time: u64,
@@ -135,6 +151,10 @@ impl FpsPlugin {
     }
 
     fn tick(&mut self, now: u64) {
+        if self.last_time == 0 {
+            self.last_time = now;
+        }
+
         let elapsed = (now - self.last_time) as f64;
         self.last_time = now;
         self.last_delta = elapsed / 1000.0;
