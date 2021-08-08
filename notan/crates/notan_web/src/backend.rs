@@ -88,9 +88,6 @@ impl BackendSystem for WebBackend {
     }
 }
 
-// unsafe impl Send for WebBackend {}
-// unsafe impl Sync for WebBackend {}
-
 fn backend(app: &mut App) -> &mut WebBackend {
     app.backend.downcast_mut::<WebBackend>().unwrap()
 }
