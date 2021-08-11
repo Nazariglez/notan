@@ -1,3 +1,4 @@
+use crate::mouse;
 use crate::window::WinitWindowBackend;
 use glutin::event::ElementState;
 use glutin::event_loop::ControlFlow;
@@ -66,42 +67,27 @@ impl BackendSystem for WinitBackend {
             event_loop.run(move |event, _win_target, control_flow| {
                 let b = backend(&mut app);
                 match event {
-                    WEvent::WindowEvent { ref event, .. } => match event {
-                        WindowEvent::CloseRequested => {
-                            app.exit();
-                        }
-                        WindowEvent::Resized(size) => {
-                            b.events.push(Event::WindowResize {
-                                width: size.width as _,
-                                height: size.height as _,
-                            });
-                        }
-                        WindowEvent::MouseInput { state, button, .. } => {
-                            let evt = match state {
-                                // TODO
-                                ElementState::Pressed => Event::MouseDown {
-                                    button: MouseButton::Left,
-                                    x: mouse_x,
-                                    y: mouse_y,
-                                },
-                                _ => Event::MouseUp {
-                                    button: MouseButton::Left,
-                                    x: mouse_x,
-                                    y: mouse_y,
-                                },
-                            };
+                    WEvent::WindowEvent { ref event, .. } => {
+                        if let Some(evt) = mouse::process_events(event, &mut mouse_x, &mut mouse_y)
+                        {
                             b.events.push(evt);
                         }
-                        WindowEvent::CursorMoved { position, .. } => {
-                            mouse_x = position.x as _;
-                            mouse_y = position.y as _;
-                            b.events.push(Event::MouseMove {
-                                x: mouse_x,
-                                y: mouse_y,
-                            });
+
+                        //process_keyboard_events(event);
+
+                        match event {
+                            WindowEvent::CloseRequested => {
+                                app.exit();
+                            }
+                            WindowEvent::Resized(size) => {
+                                b.events.push(Event::WindowResize {
+                                    width: size.width as _,
+                                    height: size.height as _,
+                                });
+                            }
+                            _ => {}
                         }
-                        _ => {}
-                    },
+                    }
                     WEvent::MainEventsCleared => {
                         b.window.as_mut().unwrap().window().request_redraw();
                     }
