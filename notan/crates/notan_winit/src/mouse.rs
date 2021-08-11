@@ -1,7 +1,8 @@
+use glutin::dpi::PhysicalPosition;
 use glutin::event::ElementState;
 use notan_app::prelude::mouse::MouseButton;
 use notan_app::Event;
-use winit::event::{MouseButton as WMouseButton, WindowEvent};
+use winit::event::{MouseButton as WMouseButton, MouseScrollDelta, WindowEvent};
 
 pub fn process_events(event: &WindowEvent, mx: &mut i32, my: &mut i32) -> Option<Event> {
     match event {
@@ -19,6 +20,29 @@ pub fn process_events(event: &WindowEvent, mx: &mut i32, my: &mut i32) -> Option
                 },
             };
 
+            Some(evt)
+        }
+        WindowEvent::MouseWheel { delta, .. } => {
+            let evt = match delta {
+                MouseScrollDelta::LineDelta(x, y) => Event::MouseWheel {
+                    delta_x: *x,
+                    delta_y: *y,
+                },
+                MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }) => {
+                    let delta_x = if *x > 0.0 {
+                        (*x / 10.0).max(0.1)
+                    } else {
+                        (*x / 10.0).min(-0.1)
+                    } as f32;
+
+                    let delta_y = if *y > 0.0 {
+                        (*y / 10.0).max(0.1)
+                    } else {
+                        (*y / 10.0).min(-0.1)
+                    } as f32;
+                    Event::MouseWheel { delta_x, delta_y }
+                }
+            };
             Some(evt)
         }
         WindowEvent::CursorEntered { .. } => Some(Event::MouseEnter { x: *mx, y: *my }),
