@@ -1,7 +1,7 @@
-use glutin::dpi::PhysicalPosition;
-use glutin::event::ElementState;
 use notan_app::prelude::mouse::MouseButton;
 use notan_app::Event;
+use winit::dpi::PhysicalPosition;
+use winit::event::ElementState;
 use winit::event::{MouseButton as WMouseButton, MouseScrollDelta, WindowEvent};
 
 pub fn process_events(event: &WindowEvent, mx: &mut i32, my: &mut i32) -> Option<Event> {

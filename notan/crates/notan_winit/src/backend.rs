@@ -1,5 +1,5 @@
-use crate::mouse;
 use crate::window::WinitWindowBackend;
+use crate::{keyboard, mouse};
 use glutin::event::ElementState;
 use glutin::event_loop::ControlFlow;
 use notan_app::buffer::VertexAttr;
@@ -73,9 +73,9 @@ impl BackendSystem for WinitBackend {
                             b.events.push(evt);
                         }
 
-                        // if let Some(evt) = keyboard::process_events(event) {
-                        //     b.events.push(evt);
-                        // }
+                        if let Some(evt) = keyboard::process_events(event) {
+                            b.events.push(evt);
+                        }
 
                         match event {
                             WindowEvent::CloseRequested => {
@@ -86,6 +86,12 @@ impl BackendSystem for WinitBackend {
                                     width: size.width as _,
                                     height: size.height as _,
                                 });
+                            }
+                            WindowEvent::ScaleFactorChanged { .. } => {
+                                // TODO
+                            }
+                            WindowEvent::ReceivedCharacter(c) => {
+                                // TODO
                             }
                             _ => {}
                         }
