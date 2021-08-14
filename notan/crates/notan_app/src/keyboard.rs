@@ -62,7 +62,8 @@ impl Keyboard {
 
 #[derive(Debug, Hash, Ord, PartialOrd, PartialEq, Eq, Clone, Copy)]
 #[repr(u32)]
-/// KeyCode from winit adding 'unknown'
+/// KeyCode represents the symbolic name of the keyboard keys pressed
+/// This enum code comes from `winit` just adding the Unknown key for non-compatible keys between platforms
 pub enum KeyCode {
     /// The '1' key over the letters.
     Key1,
@@ -161,7 +162,6 @@ pub enum KeyCode {
     Down,
 
     /// The Backspace key, right over Enter.
-    // TODO: rename
     Back,
     /// The Enter key.
     Return,
@@ -184,14 +184,14 @@ pub enum KeyCode {
     Numpad7,
     Numpad8,
     Numpad9,
-    NumpadAdd,
-    NumpadDivide,
-    NumpadDecimal,
+    Add,
+    Divide,
+    Decimal,
     NumpadComma,
     NumpadEnter,
     NumpadEquals,
-    NumpadMultiply,
-    NumpadSubtract,
+    Multiply,
+    Subtract,
 
     AbntC1,
     AbntC2,

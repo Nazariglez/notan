@@ -55,7 +55,7 @@ pub fn enable_keyboard(
     Ok(())
 }
 
-//Code from winit
+// Code from winit
 pub fn keyboard_code(code: &str) -> Option<KeyCode> {
     Some(match code {
         "Digit1" => KeyCode::Key1,
@@ -150,7 +150,7 @@ pub fn keyboard_code(code: &str) -> Option<KeyCode> {
         "Numpad9" => KeyCode::Numpad9,
         "AbntC1" => KeyCode::AbntC1,
         "AbntC2" => KeyCode::AbntC2,
-        "NumpadAdd" => KeyCode::NumpadAdd,
+        "NumpadAdd" => KeyCode::Add,
         "Quote" => KeyCode::Apostrophe,
         "Apps" => KeyCode::Apps,
         "At" => KeyCode::At,
@@ -161,8 +161,8 @@ pub fn keyboard_code(code: &str) -> Option<KeyCode> {
         "Semicolon" => KeyCode::Semicolon,
         "Comma" => KeyCode::Comma,
         "Convert" => KeyCode::Convert,
-        "NumpadDecimal" => KeyCode::NumpadDecimal,
-        "NumpadDivide" => KeyCode::NumpadDivide,
+        "NumpadDecimal" => KeyCode::Decimal,
+        "NumpadDivide" => KeyCode::Divide,
         "Equal" => KeyCode::Equals,
         "Backquote" => KeyCode::Grave,
         "Kana" => KeyCode::Kana,
@@ -176,7 +176,7 @@ pub fn keyboard_code(code: &str) -> Option<KeyCode> {
         "MediaSelect" => KeyCode::MediaSelect,
         "MediaStop" => KeyCode::MediaStop,
         "Minus" => KeyCode::Minus,
-        "NumpadMultiply" => KeyCode::NumpadMultiply,
+        "NumpadMultiply" => KeyCode::Multiply,
         "Mute" => KeyCode::Mute,
         "LaunchMyComputer" => KeyCode::MyComputer,
         "NavigateForward" => KeyCode::NavigateForward,
@@ -199,7 +199,7 @@ pub fn keyboard_code(code: &str) -> Option<KeyCode> {
         "Slash" => KeyCode::Slash,
         "Sleep" => KeyCode::Sleep,
         "Stop" => KeyCode::Stop,
-        "NumpadSubtract" => KeyCode::NumpadSubtract,
+        "NumpadSubtract" => KeyCode::Subtract,
         "Sysrq" => KeyCode::Sysrq,
         "Tab" => KeyCode::Tab,
         "Underline" => KeyCode::Underline,
