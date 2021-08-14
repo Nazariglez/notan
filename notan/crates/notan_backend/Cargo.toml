@@ -1,5 +1,5 @@
 [package]
-name = "notan_default_backend"
+name = "notan_backend"
 version = "0.1.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2018"

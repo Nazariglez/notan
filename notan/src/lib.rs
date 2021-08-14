@@ -14,4 +14,4 @@ pub use notan_glyph as glyph;
 pub use notan_macro::*;
 
 #[cfg(feature = "default_backend")]
-pub use notan_default_backend as backend;
+pub use notan_backend as backend;
