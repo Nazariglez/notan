@@ -89,10 +89,10 @@ impl BackendSystem for WinitBackend {
                                 });
                             }
                             WindowEvent::ScaleFactorChanged { .. } => {
-                                // TODO
+                                // TODO this is important for the "draw" module when using more than one display with different dpis
                             }
                             WindowEvent::ReceivedCharacter(c) => {
-                                // TODO
+                                b.events.push(Event::ReceivedCharacter(*c));
                             }
                             _ => {}
                         }
