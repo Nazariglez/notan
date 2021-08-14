@@ -1251,7 +1251,7 @@ dependencies = [
  "glam 0.13.0",
  "js-sys",
  "notan_app",
- "notan_default_backend",
+ "notan_backend",
  "notan_draw",
  "notan_glyph",
  "notan_graphics",
@@ -1279,7 +1279,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "notan_default_backend"
+name = "notan_backend"
 version = "0.1.0"
 dependencies = [
  "notan_web",
