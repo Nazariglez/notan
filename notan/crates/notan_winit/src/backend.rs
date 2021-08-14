@@ -82,6 +82,7 @@ impl BackendSystem for WinitBackend {
                                 app.exit();
                             }
                             WindowEvent::Resized(size) => {
+                                b.window.as_mut().unwrap().gl_ctx.resize(*size);
                                 b.events.push(Event::WindowResize {
                                     width: size.width as _,
                                     height: size.height as _,
