@@ -10,9 +10,16 @@ pub struct Keyboard {
     pub down: HashMap<KeyCode, f32>,
     /// released keys
     pub released: HashSet<KeyCode>,
+    /// last key release
+    pub last_key_released: Option<KeyCode>,
 }
 
 impl Keyboard {
+    /// returns the last key released
+    pub fn last_key_released(&self) -> Option<KeyCode> {
+        self.last_key_released
+    }
+
     /// returns true if the key was released on the last frame
     pub fn was_released(&self, key: KeyCode) -> bool {
         self.released.contains(&key)
@@ -45,6 +52,7 @@ impl Keyboard {
                 self.down.remove(key);
                 self.pressed.remove(key);
                 self.released.insert(*key);
+                self.last_key_released = Some(*key);
             }
 
             Event::KeyDown { key } => {
