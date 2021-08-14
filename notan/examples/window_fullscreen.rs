@@ -1,4 +1,5 @@
-use keyboard::*;
+use notan::app::config::WindowConfig;
+use notan::app::keyboard::KeyCode;
 use notan::prelude::*;
 
 #[derive(notan::AppState)]
@@ -8,7 +9,13 @@ struct State {
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).update(update).draw(draw).build()
+    let win = WindowConfig::new().resizable().vsync();
+
+    notan::init_with(setup)
+        .set_config(win)
+        .update(update)
+        .draw(draw)
+        .build()
 }
 
 fn setup(gfx: &mut Graphics) -> State {
@@ -37,6 +44,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     };
 
     let mut draw = gfx.create_draw();
+    draw.clear(Color::BLACK);
     draw.text(&state.font, text)
         .position(ww * 0.5, hh * 0.5)
         .size(40.0)
