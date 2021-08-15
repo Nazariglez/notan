@@ -59,7 +59,14 @@ impl BackendSystem for WinitBackend {
         R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static,
     {
         let event_loop = EventLoop::new();
-        self.window = Some(WinitWindowBackend::new(window, &event_loop)?);
+        let win = WinitWindowBackend::new(window, &event_loop)?;
+        let mut dpi_scale = win
+            .window()
+            .current_monitor()
+            .as_ref()
+            .unwrap()
+            .scale_factor();
+        self.window = Some(win);
 
         Ok(Box::new(move |mut app: App, mut state: S, mut cb: R| {
             let (mut mouse_x, mut mouse_y) = (0, 0);
@@ -68,7 +75,8 @@ impl BackendSystem for WinitBackend {
                 let b = backend(&mut app);
                 match event {
                     WEvent::WindowEvent { ref event, .. } => {
-                        if let Some(evt) = mouse::process_events(event, &mut mouse_x, &mut mouse_y)
+                        if let Some(evt) =
+                            mouse::process_events(event, &mut mouse_x, &mut mouse_y, dpi_scale)
                         {
                             b.events.push(evt);
                         }
@@ -88,7 +96,17 @@ impl BackendSystem for WinitBackend {
                                     height: size.height as _,
                                 });
                             }
-                            WindowEvent::ScaleFactorChanged { .. } => {
+                            WindowEvent::ScaleFactorChanged {
+                                scale_factor,
+                                new_inner_size: size,
+                            } => {
+                                println!(" -->> {} {:?} <<-- ", scale_factor, size);
+                                b.window.as_mut().unwrap().gl_ctx.resize(**size);
+                                dpi_scale = *scale_factor;
+                                // b.events.push(Event::WindowResize {
+                                //     width: size.width as _,
+                                //     height: size.height as _,
+                                // });
                                 // TODO this is important for the "draw" module when using more than one display with different dpis
                             }
                             WindowEvent::ReceivedCharacter(c) => {
