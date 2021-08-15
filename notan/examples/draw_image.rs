@@ -18,6 +18,7 @@ fn init(gfx: &mut Graphics) -> State {
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
+    draw.clear(Color::BLACK);
     draw.image(&state.img).position(250.0, 200.0);
     gfx.render(&draw);
 }

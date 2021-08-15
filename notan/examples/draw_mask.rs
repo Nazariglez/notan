@@ -11,6 +11,7 @@ fn draw(gfx: &mut Graphics) {
     mask.rect((180.0, 180.0), (440.0, 240.0));
 
     let mut draw = gfx.create_draw();
+    draw.clear(Color::BLACK);
 
     // Draw a triangle inside the mask, it will be displayed trimmed by the mask rectangle
     draw.mask(Some(&mask));

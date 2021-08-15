@@ -7,6 +7,7 @@ fn main() -> Result<(), String> {
 
 fn draw(gfx: &mut Graphics) {
     let mut draw = gfx.create_draw();
+    draw.clear(Color::BLACK);
 
     draw.path()
         .move_to(10.0, 10.0)

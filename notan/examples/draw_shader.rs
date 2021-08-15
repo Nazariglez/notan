@@ -74,6 +74,7 @@ fn update(state: &mut State) {
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
+    draw.clear(Color::BLACK);
 
     // Image without a custom shader
     draw.image(&state.img).position(50.0, 200.0);
@@ -84,6 +85,8 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
         .uniform_buffer(&state.uniforms);
 
     draw.image(&state.img).position(400.0, 200.0);
+
+    draw.image_pipeline().remove();
 
     gfx.render(&draw);
 }
