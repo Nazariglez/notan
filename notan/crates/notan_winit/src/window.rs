@@ -60,7 +60,7 @@ impl WinitWindowBackend {
             builder = builder.with_max_inner_size(LogicalSize::new(w, h));
         }
 
-        let gl_context = ContextBuilder::new()
+        let windowed_context = ContextBuilder::new()
             .with_vsync(config.vsync)
             .with_gl(glutin::GlRequest::GlThenGles {
                 opengl_version: (3, 3),
@@ -71,7 +71,7 @@ impl WinitWindowBackend {
             .build_windowed(builder, event_loop)
             .map_err(|e| format!("{}", e))?;
 
-        let gl_ctx = unsafe { gl_context.make_current().unwrap() };
+        let gl_ctx = unsafe { windowed_context.make_current().unwrap() };
 
         let monitor = gl_ctx.window().current_monitor();
         let scale_factor = monitor.as_ref().unwrap().scale_factor();

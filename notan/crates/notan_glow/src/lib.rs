@@ -24,6 +24,7 @@ pub struct GlowBackend {
     pipeline_count: i32,
     render_target_count: i32,
     size: (i32, i32),
+    dpi: f32,
     pipelines: HashMap<i32, InnerPipeline>,
     buffers: HashMap<i32, InnerBuffer>,
     textures: HashMap<i32, InnerTexture>,
@@ -77,6 +78,7 @@ impl GlowBackend {
             render_target_count: 0,
             gl,
             size: (0, 0),
+            dpi: 1.0,
             pipelines: HashMap::new(),
             current_vertex_attrs: None,
             buffers: HashMap::new(),
@@ -136,22 +138,32 @@ impl GlowBackend {
             _ => None,
         };
 
-        unsafe {
-            let (width, height) = match render_target {
-                Some(rt) => {
-                    rt.bind(&self.gl);
-                    rt.size
-                }
-                None => {
+        let (width, height, dpi) = match render_target {
+            Some(rt) => {
+                rt.bind(&self.gl);
+                (rt.size.0, rt.size.1, 1.0)
+            }
+            None => {
+                unsafe {
                     self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
-                    self.size
                 }
-            };
+                (self.size.0, self.size.1, self.dpi)
+            }
+        };
 
-            self.gl.viewport(0, 0, width, height);
-        }
+        self.viewport(0.0, 0.0, width as _, height as _, dpi);
 
         self.clear(color, depth, stencil);
+    }
+
+    #[inline]
+    fn viewport(&self, x: f32, y: f32, width: f32, height: f32, dpi: f32) {
+        let ww = width * dpi;
+        let hh = height * dpi;
+
+        unsafe {
+            self.gl.viewport(x as _, y as _, ww as _, hh as _);
+        }
     }
 
     fn end(&mut self) {
@@ -376,6 +388,13 @@ impl DeviceBackend for GlowBackend {
                 } => self.bind_buffer(*id, data.clone(), usage, draw),
                 Draw { offset, count } => self.draw(*offset, *count),
                 BindTexture { id, slot, location } => self.bind_texture(*id, *slot, *location),
+                Size { width, height } => self.set_size(*width, *height),
+                Viewport {
+                    x,
+                    y,
+                    width,
+                    height,
+                } => self.viewport(*x, *y, *width, *height, self.dpi),
                 _ => {}
             }
         });
@@ -394,6 +413,10 @@ impl DeviceBackend for GlowBackend {
 
     fn set_size(&mut self, width: i32, height: i32) {
         self.size = (width, height);
+    }
+
+    fn set_dpi(&mut self, scale_factor: f64) {
+        self.dpi = scale_factor as _;
     }
 
     fn update_texture(&mut self, id: i32, opts: &TextureUpdate) -> Result<(), String> {
