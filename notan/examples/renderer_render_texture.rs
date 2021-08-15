@@ -43,6 +43,7 @@ struct State {
     texture: Texture,
     render_texture: RenderTexture,
     render_texture2: RenderTexture,
+    init_texture_draw: bool,
 }
 
 #[notan::main]
@@ -112,34 +113,56 @@ fn setup(gfx: &mut Graphics) -> State {
         texture,
         render_texture,
         render_texture2,
+        init_texture_draw: false,
     }
 }
+
+// TODO makes sense to clear the render target with transparent when they are created?
 
 // create an effect of infinite loop
 fn draw(gfx: &mut Graphics, state: &mut State) {
     // draw the texture and the first render_texture on the second render_texture
-    let image_on_rt2 = render_texture(gfx, state, &state.texture, false);
-    gfx.render_to(&state.render_texture2, &image_on_rt2);
-    let rt1_on_rt2 = render_texture(gfx, state, &state.render_texture, false);
-    gfx.render_to(&state.render_texture2, &rt1_on_rt2);
+    if !state.init_texture_draw {
+        let mut clean_render_target = !state.init_texture_draw;
 
-    let rt2_on_screen = render_texture(gfx, state, &state.render_texture2, true);
-    gfx.render(&rt2_on_screen);
+        for _ in 0..30 {
+            let (tex, color): (&Texture, _) = if clean_render_target {
+                (&state.texture, Some(Color::TRANSPARENT))
+            } else {
+                (&state.render_texture, None)
+            };
 
-    // swap render target to draw on the next frame on a different rt
-    std::mem::swap(&mut state.render_texture, &mut state.render_texture2);
+            let image_on_rt2 = render_texture(gfx, state, tex, color);
+            gfx.render_to(&state.render_texture2, &image_on_rt2);
+
+            let rt1_on_rt2 = render_texture(gfx, state, &state.render_texture2, color);
+            gfx.render_to(&state.render_texture, &rt1_on_rt2);
+
+            // swap render target to draw on the next frame on a different rt
+            std::mem::swap(&mut state.render_texture, &mut state.render_texture2);
+
+            clean_render_target = false;
+        }
+
+        state.init_texture_draw = true;
+    }
+
+    let rt_to_screen = render_texture(gfx, state, &state.render_texture, Some(Color::ORANGE));
+    gfx.render(&rt_to_screen);
 }
 
-fn render_texture(gfx: &mut Graphics, state: &State, texture: &Texture, clear: bool) -> Renderer {
-    let clear_options = if clear {
-        ClearOptions::new(Color::BLACK)
-    } else {
-        ClearOptions::none()
-    };
-
+fn render_texture(
+    gfx: &mut Graphics,
+    state: &State,
+    texture: &Texture,
+    clear_color: Option<Color>,
+) -> Renderer {
     let mut renderer = gfx.create_renderer();
 
-    renderer.begin(Some(&clear_options));
+    renderer.begin(Some(&ClearOptions {
+        color: clear_color,
+        ..Default::default()
+    }));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_texture(0, texture);
     renderer.bind_vertex_buffer(&state.vertex_buffer);
