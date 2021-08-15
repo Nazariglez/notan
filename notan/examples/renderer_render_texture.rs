@@ -123,7 +123,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     let rt1_on_rt2 = render_texture(gfx, state, &state.render_texture, false);
     gfx.render_to(&state.render_texture2, &rt1_on_rt2);
 
-    let rt2_on_screen = render_texture(gfx, state, &state.render_texture2, false);
+    let rt2_on_screen = render_texture(gfx, state, &state.render_texture2, true);
     gfx.render(&rt2_on_screen);
 
     // swap render target to draw on the next frame on a different rt
@@ -132,7 +132,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
 fn render_texture(gfx: &mut Graphics, state: &State, texture: &Texture, clear: bool) -> Renderer {
     let clear_options = if clear {
-        ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0))
+        ClearOptions::new(Color::BLACK)
     } else {
         ClearOptions::none()
     };

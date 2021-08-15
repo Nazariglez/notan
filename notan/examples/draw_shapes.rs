@@ -7,6 +7,8 @@ fn main() -> Result<(), String> {
 
 fn draw(gfx: &mut Graphics) {
     let mut draw = gfx.create_draw();
+    draw.clear(Color::BLACK);
+
     draw.line((20.0, 30.0), (780.0, 30.0)).width(4.0);
 
     draw.triangle((100.0, 100.0), (150.0, 200.0), (200.0, 100.0))

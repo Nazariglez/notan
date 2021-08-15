@@ -19,6 +19,7 @@ fn setup(gfx: &mut Graphics) -> State {
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
+    draw.clear(Color::BLACK);
 
     draw.text(&state.font, "Hello World!")
         .position(400.0, 300.0)
