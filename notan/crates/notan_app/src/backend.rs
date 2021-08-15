@@ -69,4 +69,9 @@ pub trait WindowBackend {
     fn height(&self) -> i32 {
         self.size().1
     }
+
+    /// Screen's DPI
+    fn dpi(&self) -> f64 {
+        1.0
+    }
 }

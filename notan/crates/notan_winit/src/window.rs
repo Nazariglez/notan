@@ -10,6 +10,7 @@ use winit::window::{Window, WindowBuilder};
 
 pub struct WinitWindowBackend {
     pub(crate) gl_ctx: ContextWrapper<PossiblyCurrent, Window>,
+    pub(crate) scale_factor: f64,
     // win: WindowedContext<PossiblyCurrent>,
 }
 
@@ -21,7 +22,8 @@ impl WindowBackend for WinitWindowBackend {
 
     fn size(&self) -> (i32, i32) {
         let inner = self.window().inner_size();
-        (inner.width as _, inner.height as _)
+        let logical = inner.to_logical::<f64>(self.scale_factor);
+        (logical.width as _, logical.height as _)
     }
 
     fn set_fullscreen(&mut self, enabled: bool) {
@@ -35,6 +37,10 @@ impl WindowBackend for WinitWindowBackend {
 
     fn is_fullscreen(&self) -> bool {
         self.window().fullscreen().is_some()
+    }
+
+    fn dpi(&self) -> f64 {
+        self.scale_factor
     }
 }
 
@@ -67,12 +73,16 @@ impl WinitWindowBackend {
 
         let gl_ctx = unsafe { gl_context.make_current().unwrap() };
 
+        let monitor = gl_ctx.window().current_monitor();
+        let scale_factor = monitor.as_ref().unwrap().scale_factor();
         if config.fullscreen {
-            let monitor = gl_ctx.window().current_monitor();
             gl_ctx.window().set_fullscreen(Some(Borderless(monitor)));
         }
 
-        Ok(Self { gl_ctx })
+        Ok(Self {
+            gl_ctx,
+            scale_factor,
+        })
     }
 
     pub(crate) fn window(&self) -> &Window {

@@ -91,23 +91,27 @@ impl BackendSystem for WinitBackend {
                             }
                             WindowEvent::Resized(size) => {
                                 b.window.as_mut().unwrap().gl_ctx.resize(*size);
+
+                                let logical_size = size.to_logical::<f64>(dpi_scale);
                                 b.events.push(Event::WindowResize {
-                                    width: size.width as _,
-                                    height: size.height as _,
+                                    width: logical_size.width as _,
+                                    height: logical_size.height as _,
                                 });
                             }
                             WindowEvent::ScaleFactorChanged {
                                 scale_factor,
                                 new_inner_size: size,
                             } => {
-                                println!(" -->> {} {:?} <<-- ", scale_factor, size);
-                                b.window.as_mut().unwrap().gl_ctx.resize(**size);
+                                let win = b.window.as_mut().unwrap();
                                 dpi_scale = *scale_factor;
-                                // b.events.push(Event::WindowResize {
-                                //     width: size.width as _,
-                                //     height: size.height as _,
-                                // });
-                                // TODO this is important for the "draw" module when using more than one display with different dpis
+                                win.scale_factor = dpi_scale;
+
+                                let logical_size = size.to_logical::<f64>(dpi_scale);
+
+                                b.events.push(Event::WindowResize {
+                                    width: logical_size.width as _,
+                                    height: logical_size.height as _,
+                                });
                             }
                             WindowEvent::ReceivedCharacter(c) => {
                                 b.events.push(Event::ReceivedCharacter(*c));
