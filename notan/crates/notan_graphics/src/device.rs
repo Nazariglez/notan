@@ -55,6 +55,9 @@ pub trait DeviceBackend {
     /// Sets the render size
     fn set_size(&mut self, width: i32, height: i32);
 
+    /// Sets the screen dpi
+    fn set_dpi(&mut self, scale_factor: f64);
+
     /// Create a new texture and returns the id
     fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String>;
 
@@ -85,6 +88,7 @@ impl DropManager {
 
 pub struct Device {
     size: (i32, i32),
+    dpi: f64,
     backend: Box<dyn DeviceBackend>, //TODO generic?
     drop_manager: Arc<DropManager>,
 }
@@ -94,6 +98,7 @@ impl Device {
         Ok(Self {
             backend,
             size: (1, 1),
+            dpi: 1.0,
             drop_manager: Arc::new(Default::default()),
         })
     }
@@ -112,6 +117,17 @@ impl Device {
     pub fn set_size(&mut self, width: i32, height: i32) {
         self.size = (width, height);
         self.backend.set_size(width, height);
+    }
+
+    #[inline(always)]
+    pub fn dpi(&self) -> f64 {
+        self.dpi
+    }
+
+    #[inline(always)]
+    pub fn set_dpi(&mut self, scale_factor: f64) {
+        self.dpi = scale_factor;
+        self.backend.set_dpi(scale_factor);
     }
 
     #[inline(always)]

@@ -102,6 +102,7 @@ impl BackendSystem for WinitBackend {
                                 scale_factor,
                                 new_inner_size: size,
                             } => {
+                                b.window.as_mut().unwrap().gl_ctx.resize(**size);
                                 let win = b.window.as_mut().unwrap();
                                 dpi_scale = *scale_factor;
                                 win.scale_factor = dpi_scale;

@@ -148,7 +148,9 @@ where
         let mut app = App::new(Box::new(backend));
 
         let (width, height) = app.window().size();
+        let win_dpi = app.window().dpi();
         graphics.set_size(width, height);
+        graphics.set_dpi(win_dpi);
 
         let mut state = setup_callback.exec(&mut app, &mut assets, &mut graphics, &mut plugins);
 
@@ -165,9 +167,15 @@ where
         }
 
         if let Err(e) = initialize(app, state, move |mut app, mut state| {
-            if app.window().size() != graphics.size() {
-                let (width, height) = app.window().size();
+            let win_size = app.window().size();
+            if graphics.size() != win_size {
+                let (width, height) = win_size;
                 graphics.set_size(width, height);
+            }
+
+            let win_dpi = app.window().dpi();
+            if graphics.dpi() != win_dpi {
+                graphics.set_dpi(win_dpi);
             }
 
             // Manage pre frame events
