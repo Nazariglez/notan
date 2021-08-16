@@ -99,31 +99,7 @@ impl GlowBackend {
 impl GlowBackend {
     #[inline(always)]
     fn clear(&self, color: &Option<Color>, depth: &Option<f32>, stencil: &Option<i32>) {
-        let mut mask = 0;
-        unsafe {
-            if let Some(color) = color {
-                mask |= glow::COLOR_BUFFER_BIT;
-                self.gl.clear_color(color.r, color.g, color.b, color.a);
-            }
-
-            if let Some(depth) = *depth {
-                mask |= glow::DEPTH_BUFFER_BIT;
-                self.gl.enable(glow::DEPTH_TEST);
-                self.gl.depth_mask(true);
-                self.gl.clear_depth_f32(depth);
-            }
-
-            if let Some(stencil) = *stencil {
-                mask |= glow::STENCIL_BUFFER_BIT;
-                self.gl.enable(glow::STENCIL_TEST);
-                self.gl.stencil_mask(0xff);
-                self.gl.clear_stencil(stencil);
-            }
-
-            if mask != 0 {
-                self.gl.clear(mask);
-            }
-        }
+        clear(&self.gl, color, depth, stencil);
     }
 
     fn begin(
@@ -441,6 +417,40 @@ impl DeviceBackend for GlowBackend {
                 }
             }
             _ => Err("Invalid texture id".to_string()),
+        }
+    }
+}
+
+#[inline]
+pub(crate) fn clear(
+    gl: &Context,
+    color: &Option<Color>,
+    depth: &Option<f32>,
+    stencil: &Option<i32>,
+) {
+    let mut mask = 0;
+    unsafe {
+        if let Some(color) = color {
+            mask |= glow::COLOR_BUFFER_BIT;
+            gl.clear_color(color.r, color.g, color.b, color.a);
+        }
+
+        if let Some(depth) = *depth {
+            mask |= glow::DEPTH_BUFFER_BIT;
+            gl.enable(glow::DEPTH_TEST);
+            gl.depth_mask(true);
+            gl.clear_depth_f32(depth);
+        }
+
+        if let Some(stencil) = *stencil {
+            mask |= glow::STENCIL_BUFFER_BIT;
+            gl.enable(glow::STENCIL_TEST);
+            gl.stencil_mask(0xff);
+            gl.clear_stencil(stencil);
+        }
+
+        if mask != 0 {
+            gl.clear(mask);
         }
     }
 }

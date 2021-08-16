@@ -1,3 +1,4 @@
+use crate::clear;
 use crate::texture::*;
 use glow::*;
 use notan_graphics::prelude::*;
@@ -82,6 +83,9 @@ unsafe fn create_fbo(
             "Cannot create a render target because the frambuffer is incomplete...".to_string(),
         );
     }
+
+    // transparent clear to avoid weird visual glitches
+    clear(gl, &Some(Color::TRANSPARENT), &None, &None);
 
     gl.bind_framebuffer(glow::FRAMEBUFFER, None);
     Ok((fbo, depth_texture))
