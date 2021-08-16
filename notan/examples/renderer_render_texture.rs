@@ -43,7 +43,7 @@ struct State {
     texture: Texture,
     render_texture: RenderTexture,
     render_texture2: RenderTexture,
-    init_texture_draw: bool,
+    texture_initiated: bool,
 }
 
 #[notan::main]
@@ -113,40 +113,39 @@ fn setup(gfx: &mut Graphics) -> State {
         texture,
         render_texture,
         render_texture2,
-        init_texture_draw: false,
+        texture_initiated: false,
     }
 }
 
-// TODO makes sense to clear the render target with transparent when they are created?
-
 // create an effect of infinite loop
 fn draw(gfx: &mut Graphics, state: &mut State) {
-    // draw the texture and the first render_texture on the second render_texture
-    if !state.init_texture_draw {
-        let mut clean_render_target = !state.init_texture_draw;
-
-        for _ in 0..30 {
-            let (tex, color): (&Texture, _) = if clean_render_target {
-                (&state.texture, Some(Color::TRANSPARENT))
+    // drawing the render textures
+    if !state.texture_initiated {
+        for i in 0..30 {
+            // the first pass will draw the texture to the rt1
+            let tex = if i == 0 {
+                &state.texture
             } else {
-                (&state.render_texture, None)
+                &state.render_texture
             };
 
-            let image_on_rt2 = render_texture(gfx, state, tex, color);
+            // draw rt1 to rt2
+            let image_on_rt2 = render_texture(gfx, state, tex, None);
             gfx.render_to(&state.render_texture2, &image_on_rt2);
 
-            let rt1_on_rt2 = render_texture(gfx, state, &state.render_texture2, color);
+            // draw rt2 to rt1
+            let rt1_on_rt2 = render_texture(gfx, state, &state.render_texture2, None);
             gfx.render_to(&state.render_texture, &rt1_on_rt2);
 
             // swap render target to draw on the next frame on a different rt
             std::mem::swap(&mut state.render_texture, &mut state.render_texture2);
-
-            clean_render_target = false;
         }
 
-        state.init_texture_draw = true;
+        // avoid to do this on each frame
+        state.texture_initiated = true;
     }
 
+    // draw to screen the rt1
     let rt_to_screen = render_texture(gfx, state, &state.render_texture, Some(Color::ORANGE));
     gfx.render(&rt_to_screen);
 }
