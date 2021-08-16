@@ -183,9 +183,10 @@ where
                 return Ok(());
             }
 
-            // assets.tick(&mut app);
             assets.tick((&mut app, &mut graphics, &mut plugins, &mut state))?;
-            app.tick(); //todo delta here?
+
+            // update delta time and fps here
+            app.timer.update();
 
             // Manage each event
             for evt in app.backend.events_iter() {

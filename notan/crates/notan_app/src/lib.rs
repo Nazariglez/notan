@@ -10,6 +10,7 @@ mod builder;
 pub mod graphics;
 mod handlers;
 mod parsers;
+mod timer;
 
 pub mod assets;
 mod events;

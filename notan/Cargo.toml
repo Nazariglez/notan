@@ -16,6 +16,7 @@ notan_glyph = { path = "./crates/notan_glyph", optional = true }
 notan_graphics = { path = "./crates/notan_graphics" }
 notan_draw = { path = "./crates/notan_draw" }
 notan_backend = { path = "crates/notan_backend", optional = true }
+notan_utils = { path = "./crates/notan_utils" }
 
 [workspace]
 members = ["crates/*"]

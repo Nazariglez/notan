@@ -1,4 +1,6 @@
+use notan::app::config::WindowConfig;
 use notan::prelude::*;
+use notan::utils::{Duration, Instant};
 use notan_app::Plugins;
 
 struct Bunny {
@@ -14,8 +16,6 @@ struct State {
     texture: Texture,
     rng: Random,
     bunnies: Vec<Bunny>,
-    fps: f64,
-    delta: f32,
 }
 
 impl State {
@@ -32,8 +32,6 @@ impl State {
             texture,
             rng: Random::default(),
             bunnies: vec![],
-            fps: 0.0,
-            delta: 0.0,
         }
     }
 
@@ -55,19 +53,15 @@ fn init(gfx: &mut Graphics) -> State {
     state
 }
 
-fn update(app: &mut App, plugins: &mut Plugins, state: &mut State) {
-    let fps_plugin = plugins.get::<FpsPlugin>().unwrap();
-    state.fps = fps_plugin.fps();
-    let delta = fps_plugin.delta() as f32 * 60.0;
-
+fn update(app: &mut App, state: &mut State) {
     if app.mouse.left_is_down() {
         state.spawn(50);
     }
 
     let rng = &mut state.rng;
     state.bunnies.iter_mut().for_each(|b| {
-        b.x += b.speed_x * delta;
-        b.y += b.speed_y * delta;
+        b.x += b.speed_x;
+        b.y += b.speed_y;
         b.speed_y += 0.75;
 
         if b.x > 800.0 {
@@ -89,12 +83,9 @@ fn update(app: &mut App, plugins: &mut Plugins, state: &mut State) {
             b.y = 0.0;
         }
     });
-
-    state.delta = delta;
-    notan::log::info!("delta -> {}", fps_plugin.delta());
 }
 
-fn draw(gfx: &mut Graphics, state: &mut State) {
+fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
     draw.clear([0.0, 0.0, 0.0, 1.0].into());
     state.bunnies.iter().for_each(|b| {
@@ -104,13 +95,14 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     draw.text(
         &state.font,
         &format!(
-            "{} -> {} ({:.32})",
-            state.fps.round(),
+            "{} -> {} ({:.10})",
+            app.timer.fps().round(),
             state.bunnies.len(),
-            state.delta
+            app.timer.delta_f32()
         ),
     )
-    .position(10.0, 10.0);
+    .position(10.0, 10.0)
+    .size(24.0);
 
     gfx.render(&draw);
 }
@@ -118,63 +110,8 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 #[notan::main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
-        .set_config(WindowConfig {
-            vsync: true,
-            ..Default::default()
-        })
-        .set_plugin(FpsPlugin::new())
+        .set_config(WindowConfig::new().vsync())
         .update(update)
         .draw(draw)
         .build()
-}
-
-use notan::app::config::WindowConfig;
-use notan_app::AppFlow;
-use std::collections::VecDeque;
-
-struct FpsPlugin {
-    fps: VecDeque<f64>,
-    last_time: u64,
-    last_delta: f64,
-}
-
-impl FpsPlugin {
-    fn new() -> Self {
-        let mut fps = VecDeque::with_capacity(300);
-        fps.resize(fps.capacity(), 1000.0 / 60.0);
-
-        Self {
-            fps: fps,
-            last_time: 0,
-            last_delta: 0.0,
-        }
-    }
-
-    fn tick(&mut self, now: u64) {
-        if self.last_time == 0 {
-            self.last_time = now;
-        }
-
-        let elapsed = (now - self.last_time) as f64;
-        self.last_time = now;
-        self.last_delta = elapsed / 1000.0;
-        self.fps.pop_front();
-        self.fps.push_back(elapsed);
-    }
-
-    pub fn fps(&self) -> f64 {
-        let average: f64 = self.fps.iter().sum::<f64>() / self.fps.len() as f64;
-        1000.0 / average
-    }
-
-    pub fn delta(&self) -> f64 {
-        self.last_delta
-    }
-}
-
-impl Plugin for FpsPlugin {
-    fn pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
-        self.tick(app.date_now());
-        Ok(AppFlow::Next)
-    }
 }
