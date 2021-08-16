@@ -1,5 +1,6 @@
 use crate::keyboard::Keyboard;
 use crate::mouse::Mouse;
+use crate::timer::AppTimer;
 use crate::{Backend, WindowBackend};
 
 /// Represents the state of the application, always accessible across the event's cycle
@@ -11,6 +12,7 @@ pub struct App {
     pub backend: Box<dyn Backend>,
     pub mouse: Mouse,
     pub keyboard: Keyboard,
+    pub timer: AppTimer,
     pub delta: f32,
 }
 
@@ -22,6 +24,7 @@ impl App {
             backend,
             mouse,
             keyboard,
+            timer: AppTimer::default(),
             delta: 0.0,
         }
     }
@@ -29,10 +32,6 @@ impl App {
     #[inline]
     pub fn date_now(&self) -> u64 {
         self.backend.system_timestamp()
-    }
-
-    pub fn tick(&mut self) {
-        //TODO
     }
 
     #[inline]

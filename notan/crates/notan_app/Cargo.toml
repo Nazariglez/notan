@@ -13,6 +13,7 @@ notan_log = { path = "../notan_log" }
 notan_graphics = { path = "../notan_graphics" }
 notan_draw = { path = "../notan_draw" }
 notan_glyph = { path = "../notan_glyph", optional = true }
+notan_utils = { path = "../notan_utils" }
 downcast-rs = "1.2"
 indexmap = "1.6"
 futures = "0.3"
