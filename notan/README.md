@@ -105,6 +105,20 @@ Adding `backends` for **iOS** and **Android** is something that will happen even
 The current graphics backend in place for these platforms is using [glow.rs](https://github.com/grovesNL/glow) which allow us to target WebGl2, GL and GL ES easily. 
 Adding a `wgpu.rs` would be great, but I don't have the knowledge to do that right now. Any help with that will be really appreciated.
 
+## Why?
+
+I have been looking since ever for a project that allows me to create multimedia apps (games in my case) with just one codebase, 
+not been too much opinionated about how to do it, with multiple platforms support and treating the web as a first-class citizen. 
+
+I felt that it was a tricky thing to find until I found [Haxe](https://haxe.org/) and [Kha](https://kha.tech/), the perfect match.
+However, I did not like a few things about the build system, the lack of tools and IDEs, and how the language itself does some things. 
+So, after a while I decided to start looking again, and I saw that **Rust** had a great **WebAssembly** compiler among other targets.
+
+For the last three years, I have been working on this project in different repositories with different names and multiple "start-over" times.
+It was my place to learn Rust and OpenGL, my hobby and my sandbox. 
+
+However, I feel that it could be useful for more people than me in the current state.
+
 ## License
 
 This project is licensed under either of [Apache License, Version
