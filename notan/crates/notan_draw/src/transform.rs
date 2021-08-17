@@ -12,6 +12,12 @@ pub trait DrawTransform {
         self
     }
 
+    #[inline]
+    /// Clone the transformation matrix to the passed matrix
+    fn clone_matrix_to(&mut self, matrix: &mut Mat3) -> &mut Self {
+        *matrix = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
+    }
+
     /// Set the matrix position
     fn translate(&mut self, x: f32, y: f32) -> &mut Self {
         let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
@@ -69,6 +75,7 @@ pub trait DrawTransform {
         self
     }
 
+    #[inline]
     /// Set the matrix rotation using degrees from the point given
     fn rotate_degrees_from(&mut self, point: (f32, f32), deg: f32) -> &mut Self {
         self.rotate_from(point, deg * notan_math::DEG_TO_RAD)
