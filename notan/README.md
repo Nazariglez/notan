@@ -103,7 +103,7 @@ but Notan should help with most of them.
 Adding `backends` for **iOS** and **Android** is something that will happen eventually because supporting them is a priority.
 
 The current graphics backend in place for these platforms is using [glow.rs](https://github.com/grovesNL/glow) which allow us to target WebGl2, GL and GL ES easily. 
-Adding a `wgpu.rs` would be great, but I don't have the knowledge to do that right now. Any help with that will be really appreciated.
+Adding a [wgpu.rs](https://wgpu.rs/) would be great, but I don't have the knowledge to do that right now. Any help with that will be really appreciated.
 
 ## Why?
 
