@@ -16,6 +16,7 @@ pub struct Draw {
     base_projection: Mat4,
     projection: Option<Mat4>,
     size: (f32, f32),
+    blend_mode: BlendMode,
     pub(crate) batches: Vec<Batch>,
     pub(crate) current_batch: Option<Batch>,
     pub(crate) shape_pipeline: CustomPipeline,
@@ -45,6 +46,7 @@ impl Draw {
             ),
             projection: None,
             size: (width as _, height as _),
+            blend_mode: BlendMode::NORMAL,
             shape_pipeline: Default::default(),
             image_pipeline: Default::default(),
             pattern_pipeline: Default::default(),
@@ -128,6 +130,14 @@ impl Draw {
         self.alpha
     }
 
+    pub fn blend_mode(&self) -> BlendMode {
+        self.blend_mode
+    }
+
+    pub fn set_blend_mode(&mut self, mode: BlendMode) {
+        self.blend_mode = mode;
+    }
+
     pub fn transform(&mut self) -> &mut Transform {
         &mut self.transform
     }
@@ -158,13 +168,15 @@ impl Draw {
                 BatchType::Text { .. } => &self.text_pipeline,
             };
 
+            let blend = info.blend_mode().unwrap_or(self.blend_mode);
+
             self.current_batch = Some(Batch {
                 typ: create_type(info),
                 vertices: vec![],
                 indices: vec![],
                 pipeline: custom.pipeline.clone(),
                 uniform_buffers: custom.uniforms.clone(),
-                blend_mode: None, //todo blend_mode
+                blend_mode: blend,
                 is_mask: false,
                 masking: self.masking,
             });
@@ -273,6 +285,7 @@ trait DrawInfo {
     fn transform(&self) -> &Option<&Mat3>;
     fn vertices(&self) -> &[f32];
     fn indices(&self) -> &[u32];
+    fn blend_mode(&self) -> Option<BlendMode>;
 }
 
 /// Information to render the image or pattern
@@ -281,6 +294,7 @@ pub struct ImageInfo<'a> {
     pub transform: Option<&'a Mat3>,
     pub vertices: &'a [f32],
     pub indices: &'a [u32],
+    pub blend_mode: Option<BlendMode>,
 }
 
 impl DrawInfo for ImageInfo<'_> {
@@ -295,6 +309,10 @@ impl DrawInfo for ImageInfo<'_> {
     fn indices(&self) -> &[u32] {
         &self.indices
     }
+
+    fn blend_mode(&self) -> Option<BlendMode> {
+        self.blend_mode
+    }
 }
 
 /// Information to render the shape
@@ -302,6 +320,7 @@ pub struct ShapeInfo<'a> {
     pub transform: Option<&'a Mat3>,
     pub vertices: &'a [f32],
     pub indices: &'a [u32],
+    // pub blend_mode: Option<BlendMode>,
 }
 
 impl DrawInfo for ShapeInfo<'_> {
@@ -316,12 +335,18 @@ impl DrawInfo for ShapeInfo<'_> {
     fn indices(&self) -> &[u32] {
         &self.indices
     }
+
+    fn blend_mode(&self) -> Option<BlendMode> {
+        // self.blend_mode
+        None
+    }
 }
 
 pub struct TextInfo<'a> {
     pub transform: Option<&'a Mat3>,
     pub text: &'a Text<'a>,
     pub font: &'a Font,
+    // pub blend_mode: Option<BlendMode>,
 }
 
 impl DrawInfo for TextInfo<'_> {
@@ -335,6 +360,11 @@ impl DrawInfo for TextInfo<'_> {
 
     fn indices(&self) -> &[u32] {
         &[]
+    }
+
+    fn blend_mode(&self) -> Option<BlendMode> {
+        // self.blend_mode
+        None
     }
 }
 
@@ -370,7 +400,11 @@ fn needs_new_batch<I: DrawInfo, F: Fn(&Batch, &I) -> bool>(
                 return true; // different pipeline
             }
 
-            //TODO check blend mode here
+            if let Some(bm) = info.blend_mode() {
+                if bm != b.blend_mode {
+                    return true; // different blend mode
+                }
+            }
 
             check_type(b, info)
         }

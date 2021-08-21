@@ -3,6 +3,7 @@ use crate::draw::{Draw, ImageInfo};
 use crate::transform::DrawTransform;
 use glam::Mat3;
 use notan_graphics::color::Color;
+use notan_graphics::pipeline::BlendMode;
 use notan_graphics::Texture;
 use notan_math::Rect;
 
@@ -14,6 +15,7 @@ pub struct Image<'a> {
     crop: Option<Rect>,
     color: Color,
     alpha: f32,
+    blend_mode: Option<BlendMode>,
 }
 
 impl<'a> Image<'a> {
@@ -26,6 +28,7 @@ impl<'a> Image<'a> {
             alpha: 1.0,
             size: None,
             crop: None,
+            blend_mode: None,
         }
     }
 
@@ -60,6 +63,11 @@ impl<'a> Image<'a> {
         self.alpha = alpha;
         self
     }
+
+    pub fn blend_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.blend_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawTransform for Image<'_> {
@@ -78,7 +86,7 @@ impl DrawProcess for Image<'_> {
             alpha,
             size,
             crop,
-            ..
+            blend_mode,
         } = self;
 
         let c = color.with_alpha(color.a * alpha);
@@ -125,6 +133,7 @@ impl DrawProcess for Image<'_> {
             transform: matrix.as_ref(),
             vertices: &vertices,
             indices: &[0, 1, 2, 2, 1, 3],
+            blend_mode,
         });
     }
 }

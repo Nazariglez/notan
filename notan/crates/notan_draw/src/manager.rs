@@ -228,20 +228,44 @@ pub(crate) fn process_pipeline(
 ) {
     match &batch.pipeline {
         Some(pip) => {
-            match override_pipeline_options(pip, batch.is_mask, batch.masking) {
-                Some(pip) => renderer.set_pipeline(&pip),
-                _ => renderer.set_pipeline(pip),
-            };
+            let masked = masked_pip(pip, batch.is_mask, batch.masking);
+            let pip_to_use = masked.as_ref().unwrap_or(pip);
+            let blended = blended_pip(&pip_to_use, batch.blend_mode);
+            let final_pip = blended.as_ref().unwrap_or(pip_to_use);
+            renderer.set_pipeline(final_pip);
 
             if let Some(buffers) = &batch.uniform_buffers {
                 buffers.iter().for_each(|u| renderer.bind_uniform_buffer(u));
             }
         }
         _ => {
-            match override_pipeline_options(default_pipeline, batch.is_mask, batch.masking) {
-                Some(pip) => renderer.set_pipeline(&pip),
-                _ => renderer.set_pipeline(default_pipeline),
-            };
+            let masked = masked_pip(default_pipeline, batch.is_mask, batch.masking);
+            let pip_to_use = masked.as_ref().unwrap_or(default_pipeline);
+            let blended = blended_pip(&pip_to_use, batch.blend_mode);
+            let final_pip = blended.as_ref().unwrap_or(pip_to_use);
+            renderer.set_pipeline(final_pip);
         }
+    }
+}
+
+fn masked_pip(pip: &Pipeline, is_mask: bool, masking: bool) -> Option<Pipeline> {
+    match override_pipeline_options(pip, is_mask, masking) {
+        Some(overridden_pip) => Some(overridden_pip),
+        _ => None,
+    }
+}
+
+fn blended_pip(pip: &Pipeline, blend_mode: BlendMode) -> Option<Pipeline> {
+    match pip.options.color_blend {
+        Some(bm) => {
+            if bm != blend_mode {
+                let mut blend_pip = pip.clone();
+                blend_pip.options.color_blend = Some(blend_mode);
+                Some(blend_pip)
+            } else {
+                None
+            }
+        }
+        _ => None,
     }
 }

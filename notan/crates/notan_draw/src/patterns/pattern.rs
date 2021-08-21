@@ -3,6 +3,7 @@ use crate::draw::{Draw, ImageInfo};
 use crate::transform::DrawTransform;
 use glam::Mat3;
 use notan_graphics::color::Color;
+use notan_graphics::pipeline::BlendMode;
 use notan_graphics::Texture;
 
 pub struct Pattern<'a> {
@@ -14,6 +15,7 @@ pub struct Pattern<'a> {
     scale: (f32, f32),
     color: Color,
     alpha: f32,
+    blend_mode: Option<BlendMode>,
 }
 
 impl<'a> Pattern<'a> {
@@ -27,6 +29,7 @@ impl<'a> Pattern<'a> {
             size: (texture.width(), texture.height()),
             offset: (0.0, 0.0),
             scale: (1.0, 1.0),
+            blend_mode: None,
         }
     }
 
@@ -59,6 +62,11 @@ impl<'a> Pattern<'a> {
         self.alpha = alpha;
         self
     }
+
+    pub fn blend_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.blend_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawTransform for Pattern<'_> {
@@ -78,7 +86,7 @@ impl DrawProcess for Pattern<'_> {
             size: (width, height),
             scale: (sx, sy),
             offset: (ox, oy),
-            ..
+            blend_mode,
         } = self;
 
         let c = color.with_alpha(color.a * alpha);
@@ -122,6 +130,7 @@ impl DrawProcess for Pattern<'_> {
             transform: matrix.as_ref(),
             vertices: &vertices,
             indices: &[0, 1, 2, 2, 1, 3],
+            blend_mode,
         });
     }
 }

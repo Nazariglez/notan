@@ -4,6 +4,7 @@ use crate::draw::Draw;
 use crate::transform::DrawTransform;
 use glam::Mat3;
 use notan_graphics::color::Color;
+use notan_graphics::pipeline::BlendMode;
 use notan_graphics::Texture;
 
 pub struct NineSlice<'a> {
@@ -17,6 +18,7 @@ pub struct NineSlice<'a> {
     top: Option<f32>,
     bottom: Option<f32>,
     matrix: Option<Mat3>,
+    blend_mode: Option<BlendMode>,
 }
 
 impl<'a> NineSlice<'a> {
@@ -32,6 +34,7 @@ impl<'a> NineSlice<'a> {
             top: None,
             bottom: None,
             matrix: None,
+            blend_mode: None,
         }
     }
 
@@ -74,6 +77,11 @@ impl<'a> NineSlice<'a> {
         self.alpha = alpha;
         self
     }
+
+    pub fn blend_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.blend_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawTransform for NineSlice<'_> {
@@ -95,6 +103,7 @@ impl DrawProcess for NineSlice<'_> {
             top,
             bottom,
             matrix,
+            blend_mode,
         } = self;
 
         let img_ww = texture.width();
@@ -119,21 +128,21 @@ impl DrawProcess for NineSlice<'_> {
         };
 
         //top-left
-        img(draw, texture)
+        img(draw, texture, blend_mode)
             .color(color)
             .alpha(alpha)
             .position(x, y)
             .size(left, top)
             .crop((0.0, 0.0), (left, top));
         //top-center
-        img(draw, texture)
+        img(draw, texture, blend_mode)
             .color(color)
             .alpha(alpha)
             .position(x + left, y)
             .size(center_w, top)
             .crop((left, 0.0), (center_img_w, top));
         //top-right
-        img(draw, texture)
+        img(draw, texture, blend_mode)
             .color(color)
             .alpha(alpha)
             .position(x + left + center_w, y)
@@ -141,21 +150,21 @@ impl DrawProcess for NineSlice<'_> {
             .crop((left + center_img_w, 0.0), (right, top));
 
         //center-left
-        img(draw, texture)
+        img(draw, texture, blend_mode)
             .color(color)
             .alpha(alpha)
             .position(x, y + top)
             .size(left, center_h)
             .crop((0.0, top), (left, center_img_h));
         //center-center
-        img(draw, texture)
+        img(draw, texture, blend_mode)
             .color(color)
             .alpha(alpha)
             .position(x + left, y + top)
             .size(center_w, center_h)
             .crop((left, top), (center_img_w, center_img_h));
         //center-right
-        img(draw, texture)
+        img(draw, texture, blend_mode)
             .color(color)
             .alpha(alpha)
             .position(x + left + center_w, y + top)
@@ -163,21 +172,21 @@ impl DrawProcess for NineSlice<'_> {
             .crop((left + center_img_w, top), (right, center_img_h));
 
         //bottom-left
-        img(draw, texture)
+        img(draw, texture, blend_mode)
             .color(color)
             .alpha(alpha)
             .position(x, y + top + center_h)
             .size(left, bottom)
             .crop((0.0, top + center_img_h), (left, bottom));
         //bottom-center
-        img(draw, texture)
+        img(draw, texture, blend_mode)
             .color(color)
             .alpha(alpha)
             .position(x + left, y + top + center_h)
             .size(center_w, bottom)
             .crop((left, top + center_img_h), (center_img_w, bottom));
         //bottom-right
-        img(draw, texture)
+        img(draw, texture, blend_mode)
             .color(color)
             .alpha(alpha)
             .size(right, bottom)
@@ -191,6 +200,15 @@ impl DrawProcess for NineSlice<'_> {
 }
 
 #[inline(always)]
-fn img<'a>(draw: &'a mut Draw, tex: &'a Texture) -> DrawBuilder<'a, Image<'a>> {
-    DrawBuilder::new(draw, Image::new(tex))
+fn img<'a>(
+    draw: &'a mut Draw,
+    tex: &'a Texture,
+    blend_mode: Option<BlendMode>,
+) -> DrawBuilder<'a, Image<'a>> {
+    let mut img = Image::new(tex);
+    if let Some(bm) = blend_mode {
+        img.blend_mode(bm);
+    }
+
+    DrawBuilder::new(draw, img)
 }
