@@ -16,6 +16,7 @@ pub trait DrawTransform {
     /// Clone the transformation matrix to the passed matrix
     fn clone_matrix_to(&mut self, matrix: &mut Mat3) -> &mut Self {
         *matrix = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
+        self
     }
 
     /// Set the matrix position
