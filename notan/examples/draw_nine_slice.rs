@@ -21,7 +21,7 @@ impl State {
 #[notan::main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
-        .update(|app: &mut App, state: &mut State| state.count(1.0))
+        .update(|app: &mut App, state: &mut State| state.count(60.0 * app.timer.delta_f32()))
         .draw(draw)
         .build()
 }
