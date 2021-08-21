@@ -20,10 +20,7 @@ impl State {
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(init)
-        .update(|app: &mut App, state: &mut State| state.count(60.0 * app.timer.delta_f32()))
-        .draw(draw)
-        .build()
+    notan::init_with(init).update(update).draw(draw).build()
 }
 
 fn init(gfx: &mut Graphics) -> State {
@@ -37,6 +34,10 @@ fn init(gfx: &mut Graphics) -> State {
         count: 1.0,
         multi: 1.0,
     }
+}
+
+fn update(app: &mut App, state: &mut State) {
+    state.count(60.0 * app.timer.delta_f32());
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
