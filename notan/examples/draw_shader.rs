@@ -55,7 +55,7 @@ fn init(gfx: &mut Graphics) -> State {
 }
 
 // Change the size of the pixel effect
-fn update(app:&mut App, state: &mut State) {
+fn update(app: &mut App, state: &mut State) {
     let pixel_size = 5.0 + state.count;
 
     {
