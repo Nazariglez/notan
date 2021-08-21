@@ -26,7 +26,7 @@ pub(crate) struct Batch {
     pub indices: Vec<u32>,
     pub pipeline: Option<Pipeline>,
     pub uniform_buffers: Option<Vec<Buffer<f32>>>,
-    pub blend_mode: Option<BlendMode>,
+    pub blend_mode: BlendMode,
     pub is_mask: bool,
     pub masking: bool,
 }
