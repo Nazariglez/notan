@@ -238,7 +238,10 @@ fn create_pipeline(
                 Some(u) => match gl.get_uniform_location(program, &u.name) {
                     Some(loc) => Some(loc),
                     _ => {
-                        notan_log::debug!("Cannot get uniform location for: {}", u.name);
+                        // inform about uniforms outside of blocks that are missing
+                        if !u.name.contains("") {
+                            notan_log::debug!("Cannot get uniform location for: {}", u.name);
+                        }
                         None
                     }
                 },

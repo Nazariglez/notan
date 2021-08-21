@@ -14,7 +14,6 @@ pub(crate) struct InnerBuffer {
     #[cfg(target_arch = "wasm32")]
     global_ubo: Option<Vec<u8>>, //Hack, wasm doesn't use the offset for std140
 
-    #[cfg(target_arch = "wasm32")]
     uniform_block_name: Option<String>,
 
     pub block_binded: bool,
@@ -39,7 +38,6 @@ impl InnerBuffer {
             #[cfg(target_arch = "wasm32")]
             global_ubo,
 
-            #[cfg(target_arch = "wasm32")]
             uniform_block_name: None,
 
             block_binded: false,
@@ -49,9 +47,8 @@ impl InnerBuffer {
     pub fn bind_block(&mut self, gl: &Context, pipeline: &InnerPipeline, slot: u32) {
         self.block_binded = true;
 
-        #[cfg(target_arch = "wasm32")]
-        unsafe {
-            if let Some(name) = &self.uniform_block_name {
+        if let Some(name) = &self.uniform_block_name {
+            unsafe {
                 if let Some(index) = gl.get_uniform_block_index(pipeline.program, name) {
                     gl.uniform_block_binding(pipeline.program, index, slot as _);
                 }
@@ -67,10 +64,7 @@ impl InnerBuffer {
     }
 
     pub fn setup_as_ubo(&mut self, gl: &Context, slot: u32, name: &str) {
-        #[cfg(target_arch = "wasm32")]
-        {
-            self.uniform_block_name = Some(name.to_string());
-        }
+        self.uniform_block_name = Some(name.to_string());
         self.bind_as_ubo(gl, slot);
     }
 
