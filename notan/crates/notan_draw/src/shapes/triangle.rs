@@ -5,6 +5,7 @@ use crate::draw::{Draw, ShapeInfo};
 use crate::transform::DrawTransform;
 use glam::Mat3;
 use notan_graphics::color::Color;
+use notan_graphics::pipeline::BlendMode;
 
 pub struct Triangle {
     colors: [Color; 3],
@@ -13,6 +14,7 @@ pub struct Triangle {
     stroke_width: f32,
     alpha: f32,
     matrix: Option<Mat3>,
+    blend_mode: Option<BlendMode>,
 }
 
 impl Triangle {
@@ -24,6 +26,7 @@ impl Triangle {
             stroke_width: 1.0,
             alpha: 1.0,
             matrix: None,
+            blend_mode: None,
         }
     }
 
@@ -54,6 +57,11 @@ impl Triangle {
         self.stroke_width = width;
         self
     }
+
+    pub fn blend_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.blend_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawTransform for Triangle {
@@ -78,10 +86,16 @@ fn stroke(triangle: Triangle, draw: &mut Draw) {
         stroke_width,
         alpha,
         matrix,
+        blend_mode,
         ..
     } = triangle;
 
     let mut path = Path::new();
+
+    if let Some(bm) = blend_mode {
+        path.blend_mode(bm);
+    }
+
     path.move_to(a.0, a.1)
         .line_to(b.0, b.1)
         .line_to(c.0, c.1)
@@ -102,6 +116,7 @@ fn fill(triangle: Triangle, draw: &mut Draw) {
         points: [a, b, c],
         alpha,
         matrix,
+        blend_mode,
         ..
     } = triangle;
 
@@ -117,5 +132,6 @@ fn fill(triangle: Triangle, draw: &mut Draw) {
         transform: matrix.as_ref(),
         vertices: &vertices,
         indices: &indices,
+        blend_mode,
     });
 }

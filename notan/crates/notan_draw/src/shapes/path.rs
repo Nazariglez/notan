@@ -7,6 +7,7 @@ use lyon::math::point;
 use lyon::path::path::Builder;
 use lyon::tessellation::*;
 use notan_graphics::color::Color;
+use notan_graphics::pipeline::BlendMode;
 
 pub struct Path {
     stroke_options: StrokeOptions,
@@ -17,6 +18,7 @@ pub struct Path {
     color: Color,
     alpha: f32,
     matrix: Option<Mat3>,
+    blend_mode: Option<BlendMode>,
 }
 
 impl Default for Path {
@@ -36,6 +38,7 @@ impl Path {
             color: Color::WHITE,
             alpha: 1.0,
             matrix: None,
+            blend_mode: None,
         }
     }
 
@@ -151,6 +154,11 @@ impl Path {
         self.color = color;
         self
     }
+
+    pub fn blend_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.blend_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawProcess for Path {
@@ -166,6 +174,7 @@ impl DrawProcess for Path {
             color,
             alpha,
             matrix,
+            blend_mode,
             ..
         } = self;
 
@@ -181,6 +190,7 @@ impl DrawProcess for Path {
             transform: matrix.as_ref(),
             vertices: &vertices,
             indices: &indices,
+            blend_mode,
         });
     }
 }

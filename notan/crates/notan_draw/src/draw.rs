@@ -320,7 +320,7 @@ pub struct ShapeInfo<'a> {
     pub transform: Option<&'a Mat3>,
     pub vertices: &'a [f32],
     pub indices: &'a [u32],
-    // pub blend_mode: Option<BlendMode>,
+    pub blend_mode: Option<BlendMode>,
 }
 
 impl DrawInfo for ShapeInfo<'_> {
@@ -337,8 +337,7 @@ impl DrawInfo for ShapeInfo<'_> {
     }
 
     fn blend_mode(&self) -> Option<BlendMode> {
-        // self.blend_mode
-        None
+        self.blend_mode
     }
 }
 
@@ -346,7 +345,7 @@ pub struct TextInfo<'a> {
     pub transform: Option<&'a Mat3>,
     pub text: &'a Text<'a>,
     pub font: &'a Font,
-    // pub blend_mode: Option<BlendMode>,
+    pub blend_mode: Option<BlendMode>,
 }
 
 impl DrawInfo for TextInfo<'_> {
@@ -363,8 +362,7 @@ impl DrawInfo for TextInfo<'_> {
     }
 
     fn blend_mode(&self) -> Option<BlendMode> {
-        // self.blend_mode
-        None
+        self.blend_mode
     }
 }
 
