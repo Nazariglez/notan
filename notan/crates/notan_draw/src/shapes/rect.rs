@@ -7,6 +7,7 @@ use crate::transform::DrawTransform;
 use glam::Mat3;
 use lyon::tessellation::*;
 use notan_graphics::color::Color;
+use notan_graphics::pipeline::BlendMode;
 
 pub struct Rectangle {
     colors: [Color; 4],
@@ -18,6 +19,7 @@ pub struct Rectangle {
     matrix: Option<Mat3>,
     rounded_corners: Option<[f32; 4]>,
     corner_tolerance: f32,
+    blend_mode: Option<BlendMode>,
 }
 
 impl Rectangle {
@@ -32,6 +34,7 @@ impl Rectangle {
             matrix: None,
             rounded_corners: None,
             corner_tolerance: FillOptions::DEFAULT_TOLERANCE,
+            blend_mode: None,
         }
     }
 
@@ -97,6 +100,11 @@ impl Rectangle {
         self.stroke_width = width;
         self
     }
+
+    pub fn blend_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.blend_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawTransform for Rectangle {
@@ -124,6 +132,7 @@ fn stroke(quad: Rectangle, draw: &mut Draw) {
         matrix,
         rounded_corners,
         corner_tolerance,
+        blend_mode,
         ..
     } = quad;
 
@@ -143,6 +152,7 @@ fn stroke(quad: Rectangle, draw: &mut Draw) {
         transform: matrix.as_ref(),
         vertices: &vertices,
         indices: &indices,
+        blend_mode,
     });
 }
 
@@ -155,6 +165,7 @@ fn fill(quad: Rectangle, draw: &mut Draw) {
         matrix,
         rounded_corners,
         corner_tolerance,
+        blend_mode,
         ..
     } = quad;
 
@@ -163,6 +174,7 @@ fn fill(quad: Rectangle, draw: &mut Draw) {
             transform: matrix.as_ref(),
             vertices,
             indices,
+            blend_mode,
         });
     };
 

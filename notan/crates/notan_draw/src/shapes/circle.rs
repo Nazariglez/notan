@@ -7,6 +7,7 @@ use crate::transform::DrawTransform;
 use glam::Mat3;
 use lyon::tessellation::*;
 use notan_graphics::color::Color;
+use notan_graphics::pipeline::BlendMode;
 
 pub struct Circle {
     color: Color,
@@ -17,6 +18,7 @@ pub struct Circle {
     alpha: f32,
     matrix: Option<Mat3>,
     tolerance: f32,
+    blend_mode: Option<BlendMode>,
 }
 
 impl Circle {
@@ -30,6 +32,7 @@ impl Circle {
             alpha: 1.0,
             matrix: None,
             tolerance: StrokeOptions::DEFAULT_TOLERANCE,
+            blend_mode: None,
         }
     }
 
@@ -63,6 +66,11 @@ impl Circle {
         self.stroke_width = width;
         self
     }
+
+    pub fn blend_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.blend_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawTransform for Circle {
@@ -89,6 +97,7 @@ fn stroke(circle: Circle, draw: &mut Draw) {
         alpha,
         matrix,
         tolerance,
+        blend_mode,
         ..
     } = circle;
 
@@ -104,6 +113,7 @@ fn stroke(circle: Circle, draw: &mut Draw) {
         transform: matrix.as_ref(),
         vertices: &vertices,
         indices: &indices,
+        blend_mode,
     });
 }
 
@@ -115,6 +125,7 @@ fn fill(circle: Circle, draw: &mut Draw) {
         alpha,
         matrix,
         tolerance,
+        blend_mode,
         ..
     } = circle;
 
@@ -128,5 +139,6 @@ fn fill(circle: Circle, draw: &mut Draw) {
         transform: matrix.as_ref(),
         vertices: &vertices,
         indices: &indices,
+        blend_mode,
     });
 }

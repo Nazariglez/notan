@@ -7,6 +7,7 @@ use crate::transform::DrawTransform;
 use glam::Mat3;
 use lyon::tessellation::*;
 use notan_graphics::color::Color;
+use notan_graphics::pipeline::BlendMode;
 
 pub struct Ellipse {
     color: Color,
@@ -18,6 +19,7 @@ pub struct Ellipse {
     alpha: f32,
     matrix: Option<Mat3>,
     tolerance: f32,
+    blend_mode: Option<BlendMode>,
 }
 
 impl Ellipse {
@@ -32,6 +34,7 @@ impl Ellipse {
             matrix: None,
             tolerance: StrokeOptions::DEFAULT_TOLERANCE,
             rotation: 0.0,
+            blend_mode: None,
         }
     }
 
@@ -70,6 +73,11 @@ impl Ellipse {
         self.stroke_width = width;
         self
     }
+
+    pub fn blend_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.blend_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawTransform for Ellipse {
@@ -97,6 +105,7 @@ fn stroke(ellipse: Ellipse, draw: &mut Draw) {
         alpha,
         matrix,
         tolerance,
+        blend_mode,
         ..
     } = ellipse;
 
@@ -112,6 +121,7 @@ fn stroke(ellipse: Ellipse, draw: &mut Draw) {
         transform: matrix.as_ref(),
         vertices: &vertices,
         indices: &indices,
+        blend_mode,
     });
 }
 
@@ -124,6 +134,7 @@ fn fill(ellipse: Ellipse, draw: &mut Draw) {
         alpha,
         matrix,
         tolerance,
+        blend_mode,
         ..
     } = ellipse;
 
@@ -137,5 +148,6 @@ fn fill(ellipse: Ellipse, draw: &mut Draw) {
         transform: matrix.as_ref(),
         vertices: &vertices,
         indices: &indices,
+        blend_mode,
     });
 }

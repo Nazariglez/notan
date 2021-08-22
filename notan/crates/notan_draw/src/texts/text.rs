@@ -4,11 +4,13 @@ use crate::transform::DrawTransform;
 use glam::Mat3;
 use notan_glyph::{Font, Text};
 use notan_graphics::color::Color;
+use notan_graphics::pipeline::BlendMode;
 
 pub struct TextSection<'a> {
     matrix: Option<Mat3>,
     text: Option<Text<'a>>,
     font: &'a Font,
+    blend_mode: Option<BlendMode>,
 }
 
 impl<'a> TextSection<'a> {
@@ -17,6 +19,7 @@ impl<'a> TextSection<'a> {
             matrix: None,
             font,
             text: Some(Text::new(text)),
+            blend_mode: None,
         }
     }
 
@@ -97,6 +100,11 @@ impl<'a> TextSection<'a> {
         }
         self
     }
+
+    pub fn blend_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.blend_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawTransform for TextSection<'_> {
@@ -107,12 +115,18 @@ impl DrawTransform for TextSection<'_> {
 
 impl DrawProcess for TextSection<'_> {
     fn draw_process(self, draw: &mut Draw) {
-        let Self { matrix, text, font } = self;
+        let Self {
+            matrix,
+            text,
+            font,
+            blend_mode,
+        } = self;
 
         draw.add_text(&TextInfo {
             transform: matrix.as_ref(),
             text: text.as_ref().unwrap(),
             font,
+            blend_mode,
         });
     }
 }
