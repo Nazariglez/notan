@@ -1,4 +1,5 @@
 use crate::device::{DropManager, ResourceId};
+use crate::Device;
 use notan_math::Rect;
 use std::sync::Arc;
 
@@ -117,7 +118,7 @@ impl TextureInfo {
         })
     }
 
-    pub fn bytes_per_pixel(&self) -> usize {
+    pub fn bytes_per_pixel(&self) -> u8 {
         use TextureFormat::*;
         match (self.format, self.internal_format) {
             (Red, R8) => 1,
@@ -270,10 +271,11 @@ impl std::cmp::PartialEq for Texture {
     }
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TextureFormat {
-    Rgba,
-    Red,
+    Rgba, //rgba32
+    Red,  //r32
     R8,
     Depth,
 }
@@ -282,4 +284,118 @@ pub enum TextureFormat {
 pub enum TextureFilter {
     Linear,
     Nearest,
+}
+
+enum TextureKind<'a> {
+    Texture(&'a [u8]),
+    Bytes(&'a [u8]),
+    FromSize,
+    RenderTexture,
+}
+
+pub struct TextureBuilder<'a, 'b> {
+    device: &'a mut Device,
+    kind: Option<TextureKind<'b>>,
+    info: TextureInfo,
+}
+
+impl<'a, 'b> TextureBuilder<'a, 'b> {
+    pub fn new(device: &'a mut Device) -> Self {
+        Self {
+            device,
+            info: Default::default(),
+            kind: None,
+        }
+    }
+
+    /// Creates a Texture from an image
+    pub fn from_image(mut self, bytes: &'b [u8]) -> Self {
+        self.kind = Some(TextureKind::Texture(bytes));
+        self
+    }
+
+    /// Creates a Texture from a buffer of pixels
+    pub fn from_bytes(mut self, bytes: &'b [u8], width: i32, height: i32) -> Self {
+        self.kind = Some(TextureKind::Bytes(bytes));
+        self.info.width = width;
+        self.info.height = height;
+        self
+    }
+
+    /// Creates a buffer for the size passed in and creates a Texture with it
+    pub fn from_size(mut self, width: i32, height: i32) -> Self {
+        self.kind = Some(TextureKind::FromSize);
+        self.with_size(width, height)
+    }
+
+    /// Set the size of the texture (ignored if used with `from_image`, image size will be used instead)
+    pub fn with_size(mut self, width: i32, height: i32) -> Self {
+        self.info.width = width;
+        self.info.height = height;
+        self
+    }
+
+    /// Enable depth
+    pub fn with_depth(mut self) -> Self {
+        self.info.depth = true;
+        self
+    }
+
+    /// Set the Texture format (ignored if used with `from_image`, Rgba will be used instead )
+    pub fn with_format(mut self, format: TextureFormat) -> Self {
+        self.info.format = format;
+        self.info.internal_format = format; // todo check this, worth to allow set the internal_format independently?
+        self
+    }
+
+    /// Set the Texture filter modes
+    pub fn with_filter(mut self, min: TextureFilter, mag: TextureFilter) -> Self {
+        self.info.min_filter = min;
+        self.info.mag_filter = mag;
+        self
+    }
+
+    /// Generate the mipmaps
+    pub fn generate_mipmap(mut self) -> Self {
+        todo!("generate mipmaps");
+        self
+    }
+
+    pub fn build(self) -> Result<Texture, String> {
+        let TextureBuilder {
+            mut info,
+            device,
+            kind,
+        } = self;
+
+        match kind {
+            Some(TextureKind::Texture(bytes)) => {
+                let data = image::load_from_memory(bytes)
+                    .map_err(|e| e.to_string())?
+                    .to_rgba8();
+
+                info.bytes = Some(data.to_vec());
+                info.format = TextureFormat::Rgba;
+                info.internal_format = TextureFormat::Rgba;
+                info.width = data.width() as _;
+                info.height = data.height() as _;
+            }
+            Some(TextureKind::Bytes(bytes)) => {
+                #[cfg(debug_assertions)]
+                {
+                    let size = info.width * info.height * (info.bytes_per_pixel() as i32);
+                    debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, info.bytes_per_pixel());
+                }
+
+                info.bytes = Some(bytes.to_vec());
+            }
+            Some(TextureKind::FromSize) => {
+                let size = info.width * info.height * (info.bytes_per_pixel() as i32);
+                info.bytes = Some(vec![0; size as _]);
+            }
+            _ => {}
+        }
+
+        device.create_texture(info)
+    }
 }

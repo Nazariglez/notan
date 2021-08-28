@@ -30,8 +30,12 @@ impl Graphics {
         })
     }
 
-    pub fn create_pipeline2(&mut self) -> PipelineBuilder {
+    pub fn create_pipeline(&mut self) -> PipelineBuilder {
         PipelineBuilder::new(&mut self.device)
+    }
+
+    pub fn create_texture(&mut self) -> TextureBuilder {
+        TextureBuilder::new(&mut self.device)
     }
 
     #[inline(always)]
@@ -157,105 +161,5 @@ impl<'a> From<&'a Renderer> for GraphicsRenderer<'a> {
 impl<'a> From<&'a Draw> for GraphicsRenderer<'a> {
     fn from(r: &'a Draw) -> GraphicsRenderer {
         GraphicsRenderer::Draw(r)
-    }
-}
-
-enum Shaders<'b> {
-    Raw {
-        vertex: &'b [u8],
-        fragment: &'b [u8],
-    },
-
-    Source {
-        vertex: &'b ShaderSource<'b>,
-        fragment: &'b ShaderSource<'b>,
-    },
-}
-
-/// Pipeline builder pattern
-pub struct PipelineBuilder<'a, 'b> {
-    device: &'a mut Device,
-    attrs: Vec<VertexAttr>,
-    options: PipelineOptions,
-    shaders: Option<Shaders<'b>>,
-}
-
-impl<'a, 'b> PipelineBuilder<'a, 'b> {
-    pub fn new(device: &'a mut Device) -> Self {
-        Self {
-            device,
-            attrs: vec![],
-            options: Default::default(),
-            shaders: None,
-        }
-    }
-
-    /// Set the shaders from a ShaderSource object
-    pub fn from(mut self, vertex: &'b ShaderSource, fragment: &'b ShaderSource) -> Self {
-        self.shaders = Some(Shaders::Source { vertex, fragment });
-        self
-    }
-
-    /// Set the shaders from a bytes slice
-    pub fn from_raw(mut self, vertex: &'b [u8], fragment: &'b [u8]) -> Self {
-        self.shaders = Some(Shaders::Raw { vertex, fragment });
-        self
-    }
-
-    /// Set the format and location for a vertex attribute
-    pub fn vertex_attr(mut self, location: u32, data: VertexFormat) -> Self {
-        self.attrs.push(VertexAttr::new(location, data));
-        self
-    }
-
-    /// Set the Color blending mode
-    pub fn with_color_blend(mut self, color_blend: BlendMode) -> Self {
-        self.options.color_blend = Some(color_blend);
-        self
-    }
-
-    /// Set the alpha blending mode
-    pub fn with_alpha_blend(mut self, alpha_blend: BlendMode) -> Self {
-        self.options.alpha_blend = Some(alpha_blend);
-        self
-    }
-
-    /// Set the Culling mode
-    pub fn with_cull_mode(mut self, cull_mode: CullMode) -> Self {
-        self.options.cull_mode = cull_mode;
-        self
-    }
-
-    /// Set the Depth Stencil options
-    pub fn with_depth_stencil(mut self, depth_stencil: DepthStencil) -> Self {
-        self.options.depth_stencil = depth_stencil;
-        self
-    }
-
-    /// Set the Color Mask options
-    pub fn with_color_mask(mut self, color_mask: ColorMask) -> Self {
-        self.options.color_mask = color_mask;
-        self
-    }
-
-    /// Set the Stencil options
-    pub fn with_stencil(mut self, stencil: StencilOptions) -> Self {
-        self.options.stencil = Some(stencil);
-        self
-    }
-
-    /// Build the pipeline with the data set on the builder
-    pub fn build(self) -> Result<Pipeline, String> {
-        match self.shaders {
-            Some(Shaders::Source { vertex, fragment }) => {
-                self.device
-                    .create_pipeline(vertex, fragment, &self.attrs, self.options)
-            }
-            Some(Shaders::Raw { vertex, fragment }) => {
-                self.device
-                    .create_pipeline_from_raw(vertex, fragment, &self.attrs, self.options)
-            }
-            _ => Err("Vertex and Fragment shaders should be present".to_string()),
-        }
     }
 }
