@@ -65,18 +65,12 @@ fn setup(gfx: &mut Graphics) -> State {
     };
 
     let pipeline = gfx
-        .create_pipeline(
-            &VERT,
-            &FRAG,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float4),
-            ],
-            PipelineOptions {
-                depth_stencil,
-                ..Default::default()
-            },
-        )
+        .create_pipeline()
+        .from(&VERT, &FRAG)
+        .vertex_attr(0, VertexFormat::Float3)
+        .vertex_attr(1, VertexFormat::Float4)
+        .with_depth_stencil(depth_stencil)
+        .build()
         .unwrap();
 
     #[rustfmt::skip]
@@ -128,12 +122,24 @@ fn setup(gfx: &mut Graphics) -> State {
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(0.0, 1.0, 0.0),
     );
-    let mvp = Mat4::identity() * projection * view;
+    let mvp = Mat4::IDENTITY * projection * view;
 
-    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
-    let index_buffer = gfx.create_index_buffer(indices).unwrap();
+    let vertex_buffer = gfx
+        .create_vertex_buffer()
+        .with_data(vertices)
+        .build()
+        .unwrap();
+
+    let index_buffer = gfx
+        .create_index_buffer()
+        .with_data(indices)
+        .build()
+        .unwrap();
+
     let uniform_buffer = gfx
-        .create_uniform_buffer(0, "Locals", mvp.to_cols_array().to_vec())
+        .create_uniform_buffer(0, "Locals")
+        .with_data(mvp.to_cols_array().to_vec())
+        .build()
         .unwrap();
 
     let mut state = State {
@@ -149,7 +155,7 @@ fn setup(gfx: &mut Graphics) -> State {
     state
 }
 
-fn draw(gfx: &mut Graphics, state: &mut State) {
+fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
     state.ubo.copy(&rotated_matrix(state.mvp, state.angle));
@@ -164,7 +170,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
     gfx.render(&renderer);
 
-    state.angle += 0.01;
+    state.angle += 0.6 * app.timer.delta_f32();
 }
 
 fn rotated_matrix(base: Mat4, angle: f32) -> [f32; 16] {

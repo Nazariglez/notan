@@ -48,15 +48,11 @@ fn setup(gfx: &mut Graphics) -> State {
     let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
 
     let pipeline = gfx
-        .create_pipeline(
-            &VERT,
-            &FRAG,
-            &[
-                VertexAttr::new(0, VertexFormat::Float2),
-                VertexAttr::new(1, VertexFormat::Float3),
-            ],
-            PipelineOptions::default(),
-        )
+        .create_pipeline()
+        .from(&VERT, &FRAG)
+        .vertex_attr(0, VertexFormat::Float2)
+        .vertex_attr(1, VertexFormat::Float3)
+        .build()
         .unwrap();
 
     #[rustfmt::skip]
@@ -69,8 +65,17 @@ fn setup(gfx: &mut Graphics) -> State {
 
     let indices = vec![0, 1, 2, 0, 2, 3];
 
-    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
-    let index_buffer = gfx.create_index_buffer(indices).unwrap();
+    let vertex_buffer = gfx
+        .create_vertex_buffer()
+        .with_data(vertices)
+        .build()
+        .unwrap();
+
+    let index_buffer = gfx
+        .create_index_buffer()
+        .with_data(indices)
+        .build()
+        .unwrap();
 
     let mut state = State {
         clear_options,

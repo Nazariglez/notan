@@ -81,8 +81,17 @@ fn setup(gfx: &mut Graphics) -> State {
         1, 2, 3,
     ];
 
-    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
-    let index_buffer = gfx.create_index_buffer(indices).unwrap();
+    let vertex_buffer = gfx
+        .create_vertex_buffer()
+        .with_data(vertices)
+        .build()
+        .unwrap();
+
+    let index_buffer = gfx
+        .create_index_buffer()
+        .with_data(indices)
+        .build()
+        .unwrap();
 
     let mut state = State {
         clear_options,

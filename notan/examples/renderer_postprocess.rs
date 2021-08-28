@@ -19,11 +19,13 @@ fn setup(gfx: &mut Graphics) -> State {
     }
 }
 
-fn draw(gfx: &mut Graphics, state: &mut State) {
-    let cube_renderer = state.cube.create_renderer(gfx);
+fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
+    let cube_renderer = state.cube.create_renderer(gfx, app.timer.delta_f32());
     gfx.render_to(&state.post_process.render_texture, &cube_renderer);
 
-    let post_process_renderer = state.post_process.create_renderer(gfx);
+    let post_process_renderer = state
+        .post_process
+        .create_renderer(gfx, app.timer.delta_f32());
     gfx.render(&post_process_renderer);
 }
 
@@ -87,21 +89,18 @@ struct PostProcessTarget {
 impl PostProcessTarget {
     fn new(gfx: &mut Graphics, width: i32, height: i32) -> Self {
         let render_texture = gfx
-            .create_render_texture(TextureInfo::render_texture(true, width, height))
+            .create_render_texture(width, height)
+            .with_depth()
+            .build()
             .unwrap();
+
         let pipeline = gfx
-            .create_pipeline(
-                &IMAGE_VERTEX,
-                &PIXEL_INVERT_FRAGMENT,
-                &[
-                    VertexAttr::new(0, VertexFormat::Float3),
-                    VertexAttr::new(1, VertexFormat::Float2),
-                ],
-                PipelineOptions {
-                    color_blend: Some(BlendMode::NORMAL),
-                    ..Default::default()
-                },
-            )
+            .create_pipeline()
+            .from(&IMAGE_VERTEX, &PIXEL_INVERT_FRAGMENT)
+            .vertex_attr(0, VertexFormat::Float3)
+            .vertex_attr(1, VertexFormat::Float2)
+            .with_color_blend(BlendMode::NORMAL)
+            .build()
             .unwrap();
 
         #[rustfmt::skip]
@@ -121,9 +120,23 @@ impl PostProcessTarget {
 
         let uniforms = vec![800.0, 600.0, 0.0];
 
-        let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
-        let index_buffer = gfx.create_index_buffer(indices).unwrap();
-        let uniform_buffer = gfx.create_uniform_buffer(0, "Locals", uniforms).unwrap();
+        let vertex_buffer = gfx
+            .create_vertex_buffer()
+            .with_data(vertices)
+            .build()
+            .unwrap();
+
+        let index_buffer = gfx
+            .create_index_buffer()
+            .with_data(indices)
+            .build()
+            .unwrap();
+
+        let uniform_buffer = gfx
+            .create_uniform_buffer(0, "Locals")
+            .with_data(uniforms)
+            .build()
+            .unwrap();
 
         Self {
             render_texture,
@@ -135,9 +148,9 @@ impl PostProcessTarget {
         }
     }
 
-    fn create_renderer(&mut self, gfx: &mut Graphics) -> Renderer {
+    fn create_renderer(&mut self, gfx: &mut Graphics, delta: f32) -> Renderer {
         (*self.uniform_buffer.data_mut())[2] = 5.5 + self.value.sin();
-        self.value += 0.005;
+        self.value += 0.3 * delta;
 
         let mut renderer = gfx.create_renderer();
 
@@ -203,21 +216,15 @@ struct Cube {
 impl Cube {
     fn new(gfx: &mut Graphics) -> Self {
         let pipeline = gfx
-            .create_pipeline(
-                &COLOR_VERTEX,
-                &COLOR_FRAGMENT,
-                &[
-                    VertexAttr::new(0, VertexFormat::Float3),
-                    VertexAttr::new(1, VertexFormat::Float4),
-                ],
-                PipelineOptions {
-                    depth_stencil: DepthStencil {
-                        write: true,
-                        compare: CompareMode::Less,
-                    },
-                    ..Default::default()
-                },
-            )
+            .create_pipeline()
+            .from(&COLOR_VERTEX, &COLOR_FRAGMENT)
+            .vertex_attr(0, VertexFormat::Float3)
+            .vertex_attr(1, VertexFormat::Float4)
+            .with_depth_stencil(DepthStencil {
+                write: true,
+                compare: CompareMode::Less,
+            })
+            .build()
             .unwrap();
 
         #[rustfmt::skip]
@@ -269,12 +276,24 @@ impl Cube {
             Vec3::new(0.0, 0.0, 0.0),
             Vec3::new(0.0, 1.0, 0.0),
         );
-        let mvp = Mat4::identity() * projection * view;
+        let mvp = Mat4::IDENTITY * projection * view;
 
-        let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
-        let index_buffer = gfx.create_index_buffer(indices).unwrap();
+        let vertex_buffer = gfx
+            .create_vertex_buffer()
+            .with_data(vertices)
+            .build()
+            .unwrap();
+
+        let index_buffer = gfx
+            .create_index_buffer()
+            .with_data(indices)
+            .build()
+            .unwrap();
+
         let uniform_buffer = gfx
-            .create_uniform_buffer(0, "Locals", mvp.to_cols_array().to_vec())
+            .create_uniform_buffer(0, "Locals")
+            .with_data(mvp.to_cols_array().to_vec())
+            .build()
             .unwrap();
 
         Self {
@@ -287,7 +306,7 @@ impl Cube {
         }
     }
 
-    fn create_renderer(&mut self, gfx: &mut Graphics) -> Renderer {
+    fn create_renderer(&mut self, gfx: &mut Graphics, delta: f32) -> Renderer {
         self.uniform_buffer
             .data_mut()
             .copy_from_slice(&rotated_matrix(self.mvp, self.angle));
@@ -306,7 +325,7 @@ impl Cube {
         renderer.draw(0, 36);
         renderer.end();
 
-        self.angle += 0.01;
+        self.angle += 0.6 * delta;
 
         renderer
     }

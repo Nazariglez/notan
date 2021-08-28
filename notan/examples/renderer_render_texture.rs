@@ -93,7 +93,7 @@ fn setup(gfx: &mut Graphics) -> State {
         .with_data(vertices)
         .build()
         .unwrap();
-    
+
     let index_buffer = gfx
         .create_index_buffer()
         .with_data(indices)
