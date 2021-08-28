@@ -1,5 +1,6 @@
 use crate::device::{DropManager, ResourceId};
 use crate::pipeline::*;
+use crate::Device;
 use parking_lot::{
     MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
 };
@@ -123,6 +124,79 @@ where
 {
     fn eq(&self, other: &Self) -> bool {
         self.id() == other.id()
+    }
+}
+
+pub struct BufferBuilder<'a, T>
+where
+    T: BufferDataType + Copy,
+{
+    device: &'a mut Device,
+    usage: BufferUsage,
+    data: Option<Vec<T>>,
+    ubo_name: Option<String>,
+}
+
+impl<'a, T> BufferBuilder<'a, T>
+where
+    T: BufferDataType + Copy,
+{
+    pub fn new(device: &'a mut Device, usage: BufferUsage, ubo_name: Option<&str>) -> Self {
+        Self {
+            device,
+            usage,
+            data: None,
+            ubo_name: ubo_name.map(|v| v.to_string()),
+        }
+    }
+
+    pub fn with_data(mut self, data: Vec<T>) -> Self {
+        self.data = Some(data);
+        self
+    }
+}
+
+pub trait BufferBuildImpl<T>
+where
+    T: BufferDataType + Copy,
+{
+    fn build(self) -> Result<Buffer<T>, String>;
+}
+
+impl BufferBuildImpl<f32> for BufferBuilder<'_, f32> {
+    fn build(self) -> Result<Buffer<f32>, String> {
+        let Self {
+            device,
+            usage,
+            data,
+            ubo_name,
+        } = self;
+
+        match usage {
+            BufferUsage::Vertex => device.create_vertex_buffer(data.unwrap_or_else(|| vec![])),
+            BufferUsage::Uniform(loc) => device.create_uniform_buffer(
+                loc,
+                &ubo_name.ok_or("Missing UBO name".to_string())?,
+                data.unwrap_or_else(|| vec![]),
+            ),
+            _ => Err("Invalid Buffer Type...".to_string()),
+        }
+    }
+}
+
+impl BufferBuildImpl<u32> for BufferBuilder<'_, u32> {
+    fn build(self) -> Result<Buffer<u32>, String> {
+        let Self {
+            device,
+            usage,
+            data,
+            ..
+        } = self;
+
+        match usage {
+            BufferUsage::Index => device.create_index_buffer(data.unwrap_or_else(|| vec![])),
+            _ => Err("Invalid Buffer Type...".to_string()),
+        }
     }
 }
 

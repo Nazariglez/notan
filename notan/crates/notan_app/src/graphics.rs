@@ -38,8 +38,20 @@ impl Graphics {
         TextureBuilder::new(&mut self.device)
     }
 
-    pub fn create_render_texture(&mut self) -> RenderTextureBuilder {
-        RenderTextureBuilder::new(&mut self.device)
+    pub fn create_render_texture(&mut self, width: i32, height: i32) -> RenderTextureBuilder {
+        RenderTextureBuilder::new(&mut self.device, width, height)
+    }
+
+    pub fn create_vertex_buffer(&mut self) -> BufferBuilder<f32> {
+        BufferBuilder::new(&mut self.device, BufferUsage::Vertex, None)
+    }
+
+    pub fn create_index_buffer(&mut self) -> BufferBuilder<u32> {
+        BufferBuilder::new(&mut self.device, BufferUsage::Index, None)
+    }
+
+    pub fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> BufferBuilder<f32> {
+        BufferBuilder::new(&mut self.device, BufferUsage::Uniform(slot), Some(name))
     }
 
     #[inline(always)]

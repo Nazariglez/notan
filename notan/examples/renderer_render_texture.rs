@@ -70,20 +70,11 @@ fn setup(gfx: &mut Graphics) -> State {
         .unwrap();
 
     let (width, height) = (texture.width() as i32, texture.height() as i32);
-    let render_texture = gfx
-        .create_render_texture()
-        .with_size(width, height)
-        .build()
-        .unwrap();
-
-    let render_texture2 = gfx
-        .create_render_texture()
-        .with_size(width, height)
-        .build()
-        .unwrap();
+    let render_texture = gfx.create_render_texture(width, height).build().unwrap();
+    let render_texture2 = gfx.create_render_texture(width, height).build().unwrap();
 
     #[rustfmt::skip]
-        let vertices = vec![
+    let vertices = vec![
         //pos               //coords
         0.9,  0.9, 0.0,     1.0, 1.0,
         0.9, -0.9, 0.0,     1.0, 0.0,
@@ -92,13 +83,22 @@ fn setup(gfx: &mut Graphics) -> State {
     ];
 
     #[rustfmt::skip]
-        let indices = vec![
+    let indices = vec![
         0, 1, 3,
         1, 2, 3,
     ];
 
-    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
-    let index_buffer = gfx.create_index_buffer(indices).unwrap();
+    let vertex_buffer = gfx
+        .create_vertex_buffer()
+        .with_data(vertices)
+        .build()
+        .unwrap();
+    
+    let index_buffer = gfx
+        .create_index_buffer()
+        .with_data(indices)
+        .build()
+        .unwrap();
 
     State {
         clear_options,

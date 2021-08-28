@@ -62,18 +62,14 @@ pub struct RenderTextureBuilder<'a> {
 }
 
 impl<'a> RenderTextureBuilder<'a> {
-    pub fn new(device: &'a mut Device) -> Self {
-        Self {
-            device,
-            info: Default::default(),
-        }
-    }
+    pub fn new(device: &'a mut Device, width: i32, height: i32) -> Self {
+        let info = TextureInfo {
+            width,
+            height,
+            ..Default::default()
+        };
 
-    /// Set the size of the texture
-    pub fn with_size(mut self, width: i32, height: i32) -> Self {
-        self.info.width = width;
-        self.info.height = height;
-        self
+        Self { device, info }
     }
 
     /// Enable depth
