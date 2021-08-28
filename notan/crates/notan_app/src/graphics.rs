@@ -38,6 +38,10 @@ impl Graphics {
         TextureBuilder::new(&mut self.device)
     }
 
+    pub fn create_render_texture(&mut self) -> RenderTextureBuilder {
+        RenderTextureBuilder::new(&mut self.device)
+    }
+
     #[inline(always)]
     pub fn create_font(&mut self, data: &'static [u8]) -> Result<Font, String> {
         self.glyphs.create_font(data)

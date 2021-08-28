@@ -55,36 +55,31 @@ fn setup(gfx: &mut Graphics) -> State {
     let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
 
     let pipeline = gfx
-        .create_pipeline(
-            &VERT,
-            &FRAG,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float2),
-            ],
-            PipelineOptions {
-                color_blend: Some(BlendMode::NORMAL),
-                ..Default::default()
-            },
-        )
+        .create_pipeline()
+        .from(&VERT, &FRAG)
+        .vertex_attr(0, VertexFormat::Float3)
+        .vertex_attr(1, VertexFormat::Float2)
+        .with_color_blend(BlendMode::NORMAL)
+        .build()
         .unwrap();
 
-    let image = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
-    let texture = gfx.create_texture(image).unwrap();
+    let texture = gfx
+        .create_texture()
+        .from_image(include_bytes!("assets/ferris.png"))
+        .build()
+        .unwrap();
 
+    let (width, height) = (texture.width() as i32, texture.height() as i32);
     let render_texture = gfx
-        .create_render_texture(TextureInfo::render_texture(
-            false,
-            texture.width() as _,
-            texture.height() as _,
-        ))
+        .create_render_texture()
+        .with_size(width, height)
+        .build()
         .unwrap();
+
     let render_texture2 = gfx
-        .create_render_texture(TextureInfo::render_texture(
-            false,
-            texture.width() as _,
-            texture.height() as _,
-        ))
+        .create_render_texture()
+        .with_size(width, height)
+        .build()
         .unwrap();
 
     #[rustfmt::skip]

@@ -289,7 +289,7 @@ pub enum TextureFilter {
 enum TextureKind<'a> {
     Texture(&'a [u8]),
     Bytes(&'a [u8]),
-    FromSize,
+    EmptyBuffer,
     RenderTexture,
 }
 
@@ -323,8 +323,8 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
     }
 
     /// Creates a buffer for the size passed in and creates a Texture with it
-    pub fn from_size(mut self, width: i32, height: i32) -> Self {
-        self.kind = Some(TextureKind::FromSize);
+    pub fn from_empty_buffer(mut self, width: i32, height: i32) -> Self {
+        self.kind = Some(TextureKind::EmptyBuffer);
         self.with_size(width, height)
     }
 
@@ -389,7 +389,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
 
                 info.bytes = Some(bytes.to_vec());
             }
-            Some(TextureKind::FromSize) => {
+            Some(TextureKind::EmptyBuffer) => {
                 let size = info.width * info.height * (info.bytes_per_pixel() as i32);
                 info.bytes = Some(vec![0; size as _]);
             }
