@@ -20,8 +20,10 @@ struct State {
 
 impl State {
     fn new(gfx: &mut Graphics) -> Self {
-        let image = TextureInfo::from_image(include_bytes!("assets/bunny.png")).unwrap();
-        let texture = gfx.create_texture(image).unwrap();
+        let texture = gfx.create_texture()
+            .from_image(include_bytes!("assets/bunny.png"))
+            .build()
+            .unwrap();
 
         let font = gfx
             .create_font(include_bytes!("./assets/Ubuntu-B.ttf"))
@@ -95,7 +97,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     draw.text(
         &state.font,
         &format!(
-            "{} -> {} ({:.10})",
+            "{} -> {} ({:.6})",
             app.timer.fps().round(),
             state.bunnies.len(),
             app.timer.delta_f32()
@@ -104,7 +106,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     .position(10.0, 10.0)
     .size(24.0);
 
-    gfx.render(&draw);
+    gfx.r(&draw);
 }
 
 #[notan::main]

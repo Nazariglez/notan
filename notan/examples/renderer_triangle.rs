@@ -85,5 +85,5 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     renderer.draw(0, 3);
     renderer.end();
 
-    gfx.render(&renderer);
+    gfx.r(&renderer);
 }

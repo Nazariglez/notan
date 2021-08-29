@@ -2,15 +2,17 @@ pub use notan_draw::*;
 use notan_graphics::prelude::*;
 pub use notan_graphics::*;
 
-#[cfg(feature = "glyphs")]
+// #[cfg(feature = "glyphs")]
 use notan_glyph::{GlyphManager, GlyphRenderer, Text};
 
 pub struct Graphics {
     device: Device,
     draw: DrawManager,
+    //
+    // #[cfg(feature = "glyphs")]
+    // glyphs: GlyphManager,
 
-    #[cfg(feature = "glyphs")]
-    glyphs: GlyphManager,
+    pub plugins: GfxPlugins
 }
 
 impl Graphics {
@@ -18,15 +20,24 @@ impl Graphics {
         let mut device = Device::new(backend)?;
         let draw = DrawManager::new(&mut device)?;
 
-        #[cfg(feature = "glyphs")]
-        let glyphs = GlyphManager::new(&mut device)?;
+        // #[cfg(feature = "glyphs")]
+        // let glyphs = GlyphManager::new(&mut device)?;
+
+        let mut plugins = GfxPlugins::default();
+        plugins.set(RenderPlugin);
+        plugins.set(Draw2DPlugin {
+            manager: DrawManager::new(&mut device)?,
+            glyphs: GlyphManager::new(&mut device)?
+        });
 
         Ok(Self {
             device,
             draw,
+            //
+            // #[cfg(feature = "glyphs")]
+            // glyphs,
 
-            #[cfg(feature = "glyphs")]
-            glyphs,
+            plugins,
         })
     }
 
@@ -56,19 +67,21 @@ impl Graphics {
 
     #[inline(always)]
     pub fn create_font(&mut self, data: &'static [u8]) -> Result<Font, String> {
-        self.glyphs.create_font(data)
+        // self.glyphs.create_font(data)
+        let mut glyphs = &mut self.plugins.get_mut::<Draw, Draw2DPlugin>().unwrap().glyphs;
+        glyphs.create_font(data)
     }
 
-    #[cfg(feature = "glyphs")]
-    #[inline(always)]
-    pub fn update_glyphs(&mut self, render: &mut GlyphRenderer) -> Result<(), String> {
-        self.glyphs.update(&mut self.device, render)
-    }
+    // #[cfg(feature = "glyphs")]
+    // #[inline(always)]
+    // pub fn update_glyphs(&mut self, render: &mut GlyphRenderer) -> Result<(), String> {
+    //     self.glyphs.update(&mut self.device, render)
+    // }
 
-    #[inline(always)]
-    pub fn process_text(&mut self, font: &Font, text: &Text) {
-        self.glyphs.process_text(font, text);
-    }
+    // #[inline(always)]
+    // pub fn process_text(&mut self, font: &Font, text: &Text) {
+    //     self.glyphs.process_text(font, text);
+    // }
 
     #[inline(always)]
     pub fn create_draw(&self) -> Draw {
@@ -76,36 +89,40 @@ impl Graphics {
         self.draw.create_draw(width, height)
     }
 
-    #[cfg(feature = "glyphs")]
-    #[inline(always)]
-    pub fn glyphs_texture(&self) -> &Texture {
-        &self.glyphs.texture
-    }
+    // #[cfg(feature = "glyphs")]
+    // #[inline(always)]
+    // pub fn glyphs_texture(&self) -> &Texture {
+    //     &self.glyphs.texture
+    // }
+    //
+    // pub fn render_to<'a>(
+    //     &mut self,
+    //     target: &RenderTexture,
+    //     render: impl Into<GraphicsRenderer<'a>>,
+    // ) {
+    //     let commands = match render.into() {
+    //         GraphicsRenderer::Raw(r) => r,
+    //         GraphicsRenderer::Device(r) => r.commands_from(&mut self.device),
+    //         GraphicsRenderer::Draw(r) => {
+    //             r.commands(&mut self.device, &mut self.draw, &mut self.glyphs)
+    //         }
+    //     };
+    //     self.device.render_to(target, commands);
+    // }
+    //
+    // pub fn render<'a>(&mut self, render: impl Into<GraphicsRenderer<'a>>) {
+    //     let commands = match render.into() {
+    //         GraphicsRenderer::Raw(r) => r,
+    //         GraphicsRenderer::Device(r) => r.commands_from(&mut self.device),
+    //         GraphicsRenderer::Draw(r) => {
+    //             r.commands(&mut self.device, &mut self.draw, &mut self.glyphs)
+    //         }
+    //     };
+    //     self.device.render(commands);
+    // }
 
-    pub fn render_to<'a>(
-        &mut self,
-        target: &RenderTexture,
-        render: impl Into<GraphicsRenderer<'a>>,
-    ) {
-        let commands = match render.into() {
-            GraphicsRenderer::Raw(r) => r,
-            GraphicsRenderer::Device(r) => r.commands_from(&mut self.device),
-            GraphicsRenderer::Draw(r) => {
-                r.commands(&mut self.device, &mut self.draw, &mut self.glyphs)
-            }
-        };
-        self.device.render_to(target, commands);
-    }
-
-    pub fn render<'a>(&mut self, render: impl Into<GraphicsRenderer<'a>>) {
-        let commands = match render.into() {
-            GraphicsRenderer::Raw(r) => r,
-            GraphicsRenderer::Device(r) => r.commands_from(&mut self.device),
-            GraphicsRenderer::Draw(r) => {
-                r.commands(&mut self.device, &mut self.draw, &mut self.glyphs)
-            }
-        };
-        self.device.render(commands);
+    pub fn r(&mut self, render: &GfxRenderer) {
+        render.render(self);
     }
 
     #[inline(always)]
@@ -177,5 +194,86 @@ impl<'a> From<&'a Renderer> for GraphicsRenderer<'a> {
 impl<'a> From<&'a Draw> for GraphicsRenderer<'a> {
     fn from(r: &'a Draw) -> GraphicsRenderer {
         GraphicsRenderer::Draw(r)
+    }
+}
+
+// -
+use downcast_rs::{impl_downcast, Downcast};
+use indexmap::IndexMap;
+use std::any::{Any, TypeId};
+use hashbrown::HashMap;
+
+#[derive(Default)]
+pub struct GfxPlugins {
+    map: HashMap<TypeId, Box<dyn Any>>
+}
+
+impl GfxPlugins {
+    pub fn set<R: GfxRenderer, T: GraphicPlugin<R> + 'static>(&mut self, value: T) {
+        self.map.insert(TypeId::of::<T>(), Box::new(value));
+    }
+
+    /// Returns the plugin of the type passed
+    pub fn get<R: GfxRenderer, T: GraphicPlugin<R> + 'static>(&self) -> Option<&T> {
+        self.map
+            .get(&TypeId::of::<T>())
+            .map(|value| value.downcast_ref().unwrap())
+    }
+
+    /// Returns the plugin of the type passed as mutable reference
+    pub fn get_mut<R: GfxRenderer, T: GraphicPlugin<R> + 'static>(&mut self) -> Option<&mut T> {
+        self.map
+            .get_mut(&TypeId::of::<T>())
+            .map(|value| value.downcast_mut().unwrap())
+    }
+}
+
+pub trait GfxRenderer
+    where
+        Self: Any + Downcast {
+    fn render(&self, gfx: &mut Graphics);
+}
+
+pub trait GraphicPlugin<T: ?Sized>
+    where
+        Self: Any + Downcast {
+    fn prepare<'a>(&'a mut self, device: &mut Device, renderer: &'a T) -> &'a [Commands];
+}
+//
+//
+// impl_downcast!(GfxRenderer);
+// impl_downcast!(GraphicPlugin<GfxRenderer>);
+
+struct RenderPlugin;
+impl GraphicPlugin<Renderer> for RenderPlugin {
+    fn prepare<'a>(&'a mut self, device: &mut Device, renderer: &'a Renderer) -> &'a [Commands] {
+        renderer.commands_from(device)
+    }
+}
+
+impl GfxRenderer for Renderer {
+    fn render(&self, gfx: &mut Graphics) {
+        let plugin= gfx.plugins.get_mut::<Self, RenderPlugin>().unwrap();
+        let commands = plugin.prepare(&mut gfx.device, self);
+        gfx.device.render(commands);
+    }
+}
+
+struct Draw2DPlugin {
+    pub manager: DrawManager,
+    pub glyphs: GlyphManager
+}
+
+impl GraphicPlugin<Draw> for Draw2DPlugin {
+    fn prepare<'a>(&'a mut self, device: &mut Device, renderer: &'a Draw) -> &'a [Commands] {
+        renderer.commands(device, &mut self.manager, &mut self.glyphs)
+    }
+}
+
+impl GfxRenderer for Draw {
+    fn render(&self, gfx: &mut Graphics) {
+        let plugin= gfx.plugins.get_mut::<Self, Draw2DPlugin>().unwrap();
+        let commands = plugin.prepare(&mut gfx.device, self);
+        gfx.device.render(commands);
     }
 }
