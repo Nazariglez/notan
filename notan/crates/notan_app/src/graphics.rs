@@ -1,42 +1,36 @@
-pub use notan_draw::*;
-use notan_graphics::prelude::*;
+pub use notan_graphics::prelude::*;
 pub use notan_graphics::*;
 
-// #[cfg(feature = "glyphs")]
-use notan_glyph::{GlyphManager, GlyphRenderer, Text};
-
 pub struct Graphics {
-    device: Device,
-    draw: DrawManager,
+    pub device: Device,
+    // draw: DrawManager,
     //
     // #[cfg(feature = "glyphs")]
     // glyphs: GlyphManager,
-
-    pub plugins: GfxPlugins
+    pub plugins: GfxPlugins,
 }
 
 impl Graphics {
     pub fn new(backend: Box<DeviceBackend>) -> Result<Self, String> {
         let mut device = Device::new(backend)?;
-        let draw = DrawManager::new(&mut device)?;
+        // let draw = DrawManager::new(&mut device)?;
 
         // #[cfg(feature = "glyphs")]
         // let glyphs = GlyphManager::new(&mut device)?;
 
         let mut plugins = GfxPlugins::default();
-        plugins.set(RenderPlugin);
-        plugins.set(Draw2DPlugin {
-            manager: DrawManager::new(&mut device)?,
-            glyphs: GlyphManager::new(&mut device)?
-        });
+        // plugins.set(RenderPlugin);
+        // plugins.set(Draw2DPlugin {
+        //     manager: DrawManager::new(&mut device)?,
+        //     glyphs: GlyphManager::new(&mut device)?
+        // });
 
         Ok(Self {
             device,
-            draw,
+
             //
             // #[cfg(feature = "glyphs")]
             // glyphs,
-
             plugins,
         })
     }
@@ -64,13 +58,13 @@ impl Graphics {
     pub fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> BufferBuilder<f32> {
         BufferBuilder::new(&mut self.device, BufferUsage::Uniform(slot), Some(name))
     }
-
-    #[inline(always)]
-    pub fn create_font(&mut self, data: &'static [u8]) -> Result<Font, String> {
-        // self.glyphs.create_font(data)
-        let mut glyphs = &mut self.plugins.get_mut::<Draw, Draw2DPlugin>().unwrap().glyphs;
-        glyphs.create_font(data)
-    }
+    //
+    // #[inline(always)]
+    // pub fn create_font(&mut self, data: &'static [u8]) -> Result<Font, String> {
+    //     // self.glyphs.create_font(data)
+    //     let mut glyphs = &mut self.plugins.get_mut::<Draw, Draw2DPlugin>().unwrap().glyphs;
+    //     glyphs.create_font(data)
+    // }
 
     // #[cfg(feature = "glyphs")]
     // #[inline(always)]
@@ -83,11 +77,11 @@ impl Graphics {
     //     self.glyphs.process_text(font, text);
     // }
 
-    #[inline(always)]
-    pub fn create_draw(&self) -> Draw {
-        let (width, height) = self.device.size();
-        self.draw.create_draw(width, height)
-    }
+    // #[inline(always)]
+    // pub fn create_draw(&self) -> Draw {
+    //     let (width, height) = self.device.size();
+    //     self.draw.create_draw(width, height)
+    // }
 
     // #[cfg(feature = "glyphs")]
     // #[inline(always)]
@@ -125,38 +119,38 @@ impl Graphics {
         render.render(self);
     }
 
-    #[inline(always)]
-    pub fn create_draw_image_pipeline(
-        &mut self,
-        fragment: Option<&ShaderSource>,
-    ) -> Result<Pipeline, String> {
-        self.draw.create_image_pipeline(&mut self.device, fragment)
-    }
-
-    #[inline(always)]
-    pub fn create_draw_pattern_pipeline(
-        &mut self,
-        fragment: Option<&ShaderSource>,
-    ) -> Result<Pipeline, String> {
-        self.draw
-            .create_pattern_pipeline(&mut self.device, fragment)
-    }
-
-    #[inline(always)]
-    pub fn create_draw_shape_pipeline(
-        &mut self,
-        fragment: Option<&ShaderSource>,
-    ) -> Result<Pipeline, String> {
-        self.draw.create_shape_pipeline(&mut self.device, fragment)
-    }
-
-    #[inline(always)]
-    pub fn create_draw_text_pipeline(
-        &mut self,
-        fragment: Option<&ShaderSource>,
-    ) -> Result<Pipeline, String> {
-        self.draw.create_text_pipeline(&mut self.device, fragment)
-    }
+    // #[inline(always)]
+    // pub fn create_draw_image_pipeline(
+    //     &mut self,
+    //     fragment: Option<&ShaderSource>,
+    // ) -> Result<Pipeline, String> {
+    //     self.draw.create_image_pipeline(&mut self.device, fragment)
+    // }
+    //
+    // #[inline(always)]
+    // pub fn create_draw_pattern_pipeline(
+    //     &mut self,
+    //     fragment: Option<&ShaderSource>,
+    // ) -> Result<Pipeline, String> {
+    //     self.draw
+    //         .create_pattern_pipeline(&mut self.device, fragment)
+    // }
+    //
+    // #[inline(always)]
+    // pub fn create_draw_shape_pipeline(
+    //     &mut self,
+    //     fragment: Option<&ShaderSource>,
+    // ) -> Result<Pipeline, String> {
+    //     self.draw.create_shape_pipeline(&mut self.device, fragment)
+    // }
+    //
+    // #[inline(always)]
+    // pub fn create_draw_text_pipeline(
+    //     &mut self,
+    //     fragment: Option<&ShaderSource>,
+    // ) -> Result<Pipeline, String> {
+    //     self.draw.create_text_pipeline(&mut self.device, fragment)
+    // }
 }
 
 impl std::ops::Deref for Graphics {
@@ -176,7 +170,7 @@ impl std::ops::DerefMut for Graphics {
 pub enum GraphicsRenderer<'a> {
     Raw(&'a [Commands]),
     Device(&'a DeviceRenderer),
-    Draw(&'a DrawRenderer),
+    // Draw(&'a DrawRenderer),
 }
 
 impl<'a> From<&'a [Commands]> for GraphicsRenderer<'a> {
@@ -191,52 +185,122 @@ impl<'a> From<&'a Renderer> for GraphicsRenderer<'a> {
     }
 }
 
-impl<'a> From<&'a Draw> for GraphicsRenderer<'a> {
-    fn from(r: &'a Draw) -> GraphicsRenderer {
-        GraphicsRenderer::Draw(r)
-    }
-}
+// impl<'a> From<&'a Draw> for GraphicsRenderer<'a> {
+//     fn from(r: &'a Draw) -> GraphicsRenderer {
+//         GraphicsRenderer::Draw(r)
+//     }
+// }
 
 // -
 use downcast_rs::{impl_downcast, Downcast};
+use hashbrown::HashMap;
+use hecs::{DynamicBundle, Entity, World};
 use indexmap::IndexMap;
 use std::any::{Any, TypeId};
-use hashbrown::HashMap;
+use std::cell::{RefCell, RefMut};
+use std::ops::{Deref, DerefMut};
+use std::rc::Rc;
 
-#[derive(Default)]
 pub struct GfxPlugins {
-    map: HashMap<TypeId, Box<dyn Any>>
+    // map: HashMap<TypeId, Rc<dyn Any>>,
+    world: World,
+    entity: Entity,
+}
+
+impl Default for GfxPlugins {
+    fn default() -> Self {
+        let mut world = World::new();
+        let entity = world.reserve_entity();
+        Self { world, entity }
+    }
 }
 
 impl GfxPlugins {
     pub fn set<R: GfxRenderer, T: GraphicPlugin<R> + 'static>(&mut self, value: T) {
-        self.map.insert(TypeId::of::<T>(), Box::new(value));
+        // self.map.insert(TypeId::of::<T>(), Rc::new(RefCell::new(value)));
+        self.world.insert_one(self.entity, value);
     }
 
-    /// Returns the plugin of the type passed
-    pub fn get<R: GfxRenderer, T: GraphicPlugin<R> + 'static>(&self) -> Option<&T> {
-        self.map
-            .get(&TypeId::of::<T>())
-            .map(|value| value.downcast_ref().unwrap())
-    }
+    // /// Returns the plugin of the type passed
+    // pub fn get<R: GfxRenderer, T: GraphicPlugin<R> + 'static>(&self) -> Option<&T> {
+    //     self.map
+    //         .get(&TypeId::of::<T>())
+    //         .map(|value| value.downcast_ref().unwrap())
+    // }
 
-    /// Returns the plugin of the type passed as mutable reference
-    pub fn get_mut<R: GfxRenderer, T: GraphicPlugin<R> + 'static>(&mut self) -> Option<&mut T> {
-        self.map
-            .get_mut(&TypeId::of::<T>())
-            .map(|value| value.downcast_mut().unwrap())
+    // /// Returns the plugin of the type passed as mutable reference
+    pub fn get_mut<R: GfxRenderer, T: GraphicPlugin<R> + 'static>(
+        &self,
+    ) -> Option<hecs::RefMut<'_, T>> {
+        self.world.get_mut(self.entity).ok()
     }
+    //     // self.map
+    //     //     .get(&TypeId::of::<T>())
+    //     //     .map(|value| {
+    //     //
+    //     //         // let rc = value.as_any_mut().downcast_mut::<Rc<RefCell<T>>>().unwrap().clone();
+    //     //         // let ref_m = RefMut::map(rc.borrow_mut(), |v| v);
+    //     //         // let rc = value.clone().as_any().downcast::<Rc<RefCell<T>>>().unwrap();
+    //     //         let rc = value.clone().downcast::<RefCell<T>>().unwrap();
+    //     //
+    //     //         let mut w = ExtWrapper {
+    //     //             rc,
+    //     //             ref_m: None,
+    //     //         };
+    //     //
+    //     //         w
+    //     //     })
+    //     match self.map.get(&TypeId::of::<T>()).cloned() {
+    //         Some(value) => {
+    //             let rc = value.clone().downcast::<RefCell<T>>().unwrap();
+    //
+    //             let mut w = ExtWrapper {
+    //                 rc,
+    //                 ref_m: None,
+    //             };
+    //
+    //             // w.ref_m = Some(RefMut::map(wrc.borrow_mut(), |v| v));
+    //
+    //             Some(w)
+    //         }
+    //         None => None,
+    //     }
+    // }
 }
 
+pub struct ExtWrapper<T: 'static> {
+    rc: Rc<RefCell<T>>,
+    ref_m: Option<RefMut<'static, T>>,
+}
+//
+// impl<T> Deref for ExtWrapper<T> {
+//     type Target = T;
+//
+//     fn deref(&self) -> &Self::Target {
+//         self.ref_m.as_ref().unwrap()
+//     }
+// }
+//
+// impl<T> DerefMut for ExtWrapper<T> {
+//     fn deref_mut(&mut self) -> &mut Self::Target {
+//         if self.ref_m.is_none() {
+//             self.ref_m = Some(RefMut::map(self.rc.borrow_mut(), |v| v));
+//         }
+//         self.ref_m.as_mut().unwrap()
+//     }
+// }
+
 pub trait GfxRenderer
-    where
-        Self: Any + Downcast {
+where
+    Self: Any + Downcast,
+{
     fn render(&self, gfx: &mut Graphics);
 }
 
 pub trait GraphicPlugin<T: ?Sized>
-    where
-        Self: Any + Downcast {
+where
+    Self: Any + Send + Sync + Downcast,
+{
     fn prepare<'a>(&'a mut self, device: &mut Device, renderer: &'a T) -> &'a [Commands];
 }
 //
@@ -244,36 +308,28 @@ pub trait GraphicPlugin<T: ?Sized>
 // impl_downcast!(GfxRenderer);
 // impl_downcast!(GraphicPlugin<GfxRenderer>);
 
-struct RenderPlugin;
-impl GraphicPlugin<Renderer> for RenderPlugin {
-    fn prepare<'a>(&'a mut self, device: &mut Device, renderer: &'a Renderer) -> &'a [Commands] {
-        renderer.commands_from(device)
-    }
-}
-
 impl GfxRenderer for Renderer {
     fn render(&self, gfx: &mut Graphics) {
-        let plugin= gfx.plugins.get_mut::<Self, RenderPlugin>().unwrap();
-        let commands = plugin.prepare(&mut gfx.device, self);
-        gfx.device.render(commands);
+        gfx.device.render(self.commands());
     }
 }
-
-struct Draw2DPlugin {
-    pub manager: DrawManager,
-    pub glyphs: GlyphManager
-}
-
-impl GraphicPlugin<Draw> for Draw2DPlugin {
-    fn prepare<'a>(&'a mut self, device: &mut Device, renderer: &'a Draw) -> &'a [Commands] {
-        renderer.commands(device, &mut self.manager, &mut self.glyphs)
-    }
-}
-
-impl GfxRenderer for Draw {
-    fn render(&self, gfx: &mut Graphics) {
-        let plugin= gfx.plugins.get_mut::<Self, Draw2DPlugin>().unwrap();
-        let commands = plugin.prepare(&mut gfx.device, self);
-        gfx.device.render(commands);
-    }
-}
+//
+// struct Draw2DPlugin {
+//     pub manager: DrawManager,
+//     // pub glyphs: GlyphManager
+// }
+//
+// impl GraphicPlugin<Draw> for Draw2DPlugin {
+//     fn prepare<'a>(&'a mut self, device: &mut Device, renderer: &'a Draw) -> &'a [Commands] {
+//         // renderer.commands(device, &mut self.manager, &mut self.glyphs)
+//         todo!()
+//     }
+// }
+//
+// impl GfxRenderer for Draw {
+//     fn render(&self, gfx: &mut Graphics) {
+//         let plugin= gfx.plugins.get_mut::<Self, Draw2DPlugin>().unwrap();
+//         let commands = plugin.prepare(&mut gfx.device, self);
+//         gfx.device.render(commands);
+//     }
+// }

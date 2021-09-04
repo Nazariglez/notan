@@ -1,9 +1,9 @@
 use crate::font_vertex::FontVertex;
-use notan_graphics::prelude::*;
+use notan_app::graphics::*;
 use notan_macro::{fragment_shader, vertex_shader};
 
 /// Used to manage and render the vertices glyphs
-pub trait GlyphRenderer {
+pub trait GlyphPipeline {
     /// In charge of update the vertices if they change, projections, etc...
     /// Should be called always before the render method
     fn update(&mut self, device: &mut Device, vertices: Option<&[FontVertex]>);
@@ -12,7 +12,7 @@ pub trait GlyphRenderer {
     fn render(&mut self, texture: &Texture, renderer: &mut Renderer);
 }
 
-#[cfg(feature = "default_renderer")]
+#[cfg(feature = "basic_pipeline")]
 //language=glsl
 const GLYPH_VERTEX: ShaderSource = vertex_shader! {
     r#"
@@ -35,7 +35,7 @@ const GLYPH_VERTEX: ShaderSource = vertex_shader! {
     "#
 };
 
-#[cfg(feature = "default_renderer")]
+#[cfg(feature = "basic_pipeline")]
 //language=glsl
 const GLYPH_FRAGMENT: ShaderSource = fragment_shader! {
     r#"
@@ -60,8 +60,8 @@ const GLYPH_FRAGMENT: ShaderSource = fragment_shader! {
     "#
 };
 
-#[cfg(feature = "default_renderer")]
-pub struct DefaultGlyphRenderer {
+#[cfg(feature = "basic_pipeline")]
+pub struct BasicPipeline {
     pub pipeline: Pipeline,
     pub vbo: VertexBuffer,
     pub ebo: IndexBuffer,
@@ -71,8 +71,8 @@ pub struct DefaultGlyphRenderer {
     cached_size: (i32, i32),
 }
 
-#[cfg(feature = "default_renderer")]
-impl DefaultGlyphRenderer {
+#[cfg(feature = "basic_pipeline")]
+impl BasicPipeline {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let pipeline = create_glyph_pipeline(device, None)?;
         let vbo = device.create_vertex_buffer(vec![])?;
@@ -90,8 +90,8 @@ impl DefaultGlyphRenderer {
     }
 }
 
-#[cfg(feature = "default_renderer")]
-impl GlyphRenderer for DefaultGlyphRenderer {
+#[cfg(feature = "basic_pipeline")]
+impl GlyphPipeline for BasicPipeline {
     fn update(&mut self, device: &mut Device, vertices: Option<&[FontVertex]>) {
         let size = device.size();
         if self.cached_size.0 != size.0 || self.cached_size.1 != size.1 {
@@ -155,7 +155,7 @@ impl GlyphRenderer for DefaultGlyphRenderer {
     }
 }
 
-#[cfg(feature = "default_renderer")]
+#[cfg(feature = "basic_pipeline")]
 pub fn create_glyph_pipeline(
     device: &mut Device,
     fragment: Option<&ShaderSource>,

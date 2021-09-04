@@ -1,8 +1,14 @@
+use notan::draw::*;
 use notan::prelude::*;
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init().draw(draw).build()
+    notan::init_with(|gfx: &mut Graphics| {
+        let ext = DrawPlugin::new(gfx).unwrap();
+        gfx.plugins.set(ext);
+    })
+    .draw(draw)
+    .build()
 }
 
 fn draw(gfx: &mut Graphics) {

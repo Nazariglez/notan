@@ -2,10 +2,8 @@ use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse};
 use glutin::event::ElementState;
 use glutin::event_loop::ControlFlow;
-use notan_app::buffer::VertexAttr;
-use notan_app::commands::Commands;
 use notan_app::config::WindowConfig;
-use notan_app::graphics::pipeline::PipelineOptions;
+use notan_app::graphics::*;
 use notan_app::prelude::mouse::MouseButton;
 use notan_app::{
     App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, LoadFileFn,

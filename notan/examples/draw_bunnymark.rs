@@ -1,4 +1,6 @@
 use notan::app::config::WindowConfig;
+use notan::draw::*;
+use notan::glyph::*;
 use notan::prelude::*;
 use notan::utils::{Duration, Instant};
 use notan_app::Plugins;
@@ -20,7 +22,8 @@ struct State {
 
 impl State {
     fn new(gfx: &mut Graphics) -> Self {
-        let texture = gfx.create_texture()
+        let texture = gfx
+            .create_texture()
             .from_image(include_bytes!("assets/bunny.png"))
             .build()
             .unwrap();
@@ -49,7 +52,13 @@ impl State {
     }
 }
 
-fn init(gfx: &mut Graphics) -> State {
+fn init(gfx: &mut Graphics, plugins: &mut Plugins) -> State {
+    let draw_ext = DrawPlugin::new(gfx).unwrap();
+    gfx.plugins.set(draw_ext);
+
+    let glyph_ext = GlyphManager::new(gfx).unwrap();
+    plugins.set(glyph_ext);
+
     let mut state = State::new(gfx);
     state.spawn(5);
     state

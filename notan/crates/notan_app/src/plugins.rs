@@ -104,7 +104,7 @@ impl Plugins {
 /// A plugin allow the user to extend or alter the application
 pub trait Plugin
 where
-    Self: Any + Send + Sync + Downcast,
+    Self: Any + Downcast,
 {
     /// Executed before the application loop
     fn init(&mut self, app: &mut App) -> Result<AppFlow, String> {

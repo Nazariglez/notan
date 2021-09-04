@@ -1,5 +1,5 @@
 use glyph_brush::GlyphVertex;
-use notan_graphics::prelude::*;
+use notan_app::graphics::*;
 
 /// Represents a vertex used to draw a glyph
 #[derive(Debug, Clone)]

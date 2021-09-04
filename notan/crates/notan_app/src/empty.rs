@@ -1,5 +1,5 @@
 use crate::config::WindowConfig;
-use crate::graphics::{Device, DeviceBackend, RenderTexture};
+// use crate::graphics::{Device, DeviceBackend, RenderTexture};
 use crate::{App, Backend, BackendSystem, EventIterator, InitializeFn, LoadFileFn, WindowBackend};
 use notan_graphics::prelude::*;
 

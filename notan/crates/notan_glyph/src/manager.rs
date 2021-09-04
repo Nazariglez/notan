@@ -1,9 +1,9 @@
 use crate::font::Font;
 use crate::font_vertex::*;
-use crate::renderer::GlyphRenderer;
+use crate::renderer::GlyphPipeline;
 use crate::text::{section_from_text, Text};
 use glyph_brush::{ab_glyph::*, *};
-use notan_graphics::prelude::*;
+use notan_app::graphics::*;
 use std::sync::Arc;
 
 /// The FontManager take care of process the text and prepare them to renderer it on an inner texture
@@ -46,7 +46,7 @@ impl GlyphManager {
     pub fn update(
         &mut self,
         device: &mut Device,
-        render: &mut GlyphRenderer,
+        render: &mut GlyphPipeline,
     ) -> Result<(), String> {
         let action = loop {
             let mut result: Result<(), String> = Ok(());
@@ -109,6 +109,8 @@ impl GlyphManager {
         Ok(())
     }
 }
+
+impl notan_app::Plugin for GlyphManager {}
 
 fn create_texture(device: &mut Device, ww: u32, hh: u32) -> Result<Texture, String> {
     let size = (ww * hh) as usize;
