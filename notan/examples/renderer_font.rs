@@ -1,4 +1,3 @@
-use notan::glyph::GlyphPlugin;
 use notan::prelude::*;
 use notan_app::Plugins;
 
@@ -21,7 +20,7 @@ fn main() -> Result<(), String> {
 
 fn setup(gfx: &mut Graphics, plugins: &mut Plugins) -> State {
     let renderer = BasicPipeline::new(gfx).unwrap();
-    let mut glyph = GlyphManager::new(gfx).unwrap();
+    let mut glyph = GlyphPlugin::new(gfx).unwrap();
     let font = glyph
         .create_font(include_bytes!("./assets/Ubuntu-B.ttf"))
         .unwrap();
@@ -31,7 +30,7 @@ fn setup(gfx: &mut Graphics, plugins: &mut Plugins) -> State {
 }
 
 fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
-    let mut glyphs = plugins.get_mut::<GlyphManager>().unwrap();
+    let mut glyphs = plugins.get_mut::<GlyphPlugin>().unwrap();
 
     // Process text
     glyphs.process_text(
@@ -64,5 +63,5 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
 
     renderer.end();
 
-    gfx.r(&renderer);
+    gfx.render(&renderer);
 }

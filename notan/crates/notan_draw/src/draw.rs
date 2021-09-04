@@ -3,7 +3,7 @@ pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::manager::DrawManager;
 use crate::transform::Transform;
 use glam::{Mat3, Mat4};
-use notan_glyph::{Font, GlyphManager, Text};
+use notan_glyph::{Font, GlyphPlugin, Text};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 
@@ -363,26 +363,6 @@ impl DrawInfo for TextInfo<'_> {
 
     fn blend_mode(&self) -> Option<BlendMode> {
         self.blend_mode
-    }
-}
-
-pub trait DrawRenderer {
-    fn commands<'a>(
-        &self,
-        device: &mut Device,
-        draw_manager: &'a mut DrawManager,
-        glyphs: &mut GlyphManager,
-    ) -> &'a [Commands];
-}
-
-impl DrawRenderer for Draw {
-    fn commands<'a>(
-        &self,
-        device: &mut Device,
-        draw_manager: &'a mut DrawManager,
-        glyphs: &mut GlyphManager,
-    ) -> &'a [Commands] {
-        draw_manager.process_draw(self, device, glyphs)
     }
 }
 

@@ -87,13 +87,3 @@ impl BufferDataWrapper {
         }
     }
 }
-
-pub trait ToCommandBuffer {
-    fn commands(&self) -> &[Commands];
-}
-
-impl ToCommandBuffer for [Commands] {
-    fn commands(&self) -> &[Commands] {
-        &self
-    }
-}

@@ -52,12 +52,9 @@ impl State {
     }
 }
 
-fn init(gfx: &mut Graphics, plugins: &mut Plugins) -> State {
-    let draw_ext = DrawPlugin::new(gfx).unwrap();
-    gfx.plugins.set(draw_ext);
-
-    let glyph_ext = GlyphManager::new(gfx).unwrap();
-    plugins.set(glyph_ext);
+fn init(gfx: &mut Graphics) -> State {
+    let draw_ext = DrawExtension::new(gfx).unwrap();
+    gfx.add_ext(draw_ext);
 
     let mut state = State::new(gfx);
     state.spawn(5);
@@ -115,7 +112,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     .position(10.0, 10.0)
     .size(24.0);
 
-    gfx.r(&draw);
+    gfx.render(&draw);
 }
 
 #[notan::main]

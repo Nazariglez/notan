@@ -1,156 +1,94 @@
+use hecs::{Entity, Ref, World};
 pub use notan_graphics::prelude::*;
 pub use notan_graphics::*;
 
+/// Graphic interface to interact with the GPU
 pub struct Graphics {
+    /// Graphic raw implementation
     pub device: Device,
-    // draw: DrawManager,
-    //
-    // #[cfg(feature = "glyphs")]
-    // glyphs: GlyphManager,
-    pub plugins: GfxPlugins,
+
+    /// Graphics extensions
+    pub extensions: ExtContainer,
 }
 
 impl Graphics {
     pub fn new(backend: Box<DeviceBackend>) -> Result<Self, String> {
         let mut device = Device::new(backend)?;
-        // let draw = DrawManager::new(&mut device)?;
-
-        // #[cfg(feature = "glyphs")]
-        // let glyphs = GlyphManager::new(&mut device)?;
-
-        let mut plugins = GfxPlugins::default();
-        // plugins.set(RenderPlugin);
-        // plugins.set(Draw2DPlugin {
-        //     manager: DrawManager::new(&mut device)?,
-        //     glyphs: GlyphManager::new(&mut device)?
-        // });
+        let plugins = ExtContainer::default();
 
         Ok(Self {
             device,
-
-            //
-            // #[cfg(feature = "glyphs")]
-            // glyphs,
-            plugins,
+            extensions: plugins,
         })
     }
 
+    /// Adds a new graphic extensions
+    #[inline]
+    pub fn add_ext<R, T>(&mut self, extension: T)
+    where
+        R: GfxRenderer,
+        T: GfxExtension<R> + 'static,
+    {
+        self.extensions.add(extension);
+    }
+
+    /// Remove a graphic extensions
+    #[inline]
+    pub fn remove_ext<R, T>(&mut self)
+    where
+        R: GfxRenderer,
+        T: GfxExtension<R> + 'static,
+    {
+        self.extensions.remove::<R, T>();
+    }
+
+    /// Creates a Pipeline builder
+    #[inline]
     pub fn create_pipeline(&mut self) -> PipelineBuilder {
         PipelineBuilder::new(&mut self.device)
     }
 
+    /// Creates a texture builder
+    #[inline]
     pub fn create_texture(&mut self) -> TextureBuilder {
         TextureBuilder::new(&mut self.device)
     }
 
+    /// Creates a render texture builder
+    #[inline]
     pub fn create_render_texture(&mut self, width: i32, height: i32) -> RenderTextureBuilder {
         RenderTextureBuilder::new(&mut self.device, width, height)
     }
 
+    /// Creates a vertex buffer builder
+    #[inline]
     pub fn create_vertex_buffer(&mut self) -> BufferBuilder<f32> {
         BufferBuilder::new(&mut self.device, BufferUsage::Vertex, None)
     }
 
+    /// Creates a index buffer builder
+    #[inline]
     pub fn create_index_buffer(&mut self) -> BufferBuilder<u32> {
         BufferBuilder::new(&mut self.device, BufferUsage::Index, None)
     }
 
+    /// Creates a uniform buffer builder
+    #[inline]
     pub fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> BufferBuilder<f32> {
         BufferBuilder::new(&mut self.device, BufferUsage::Uniform(slot), Some(name))
     }
-    //
-    // #[inline(always)]
-    // pub fn create_font(&mut self, data: &'static [u8]) -> Result<Font, String> {
-    //     // self.glyphs.create_font(data)
-    //     let mut glyphs = &mut self.plugins.get_mut::<Draw, Draw2DPlugin>().unwrap().glyphs;
-    //     glyphs.create_font(data)
-    // }
 
-    // #[cfg(feature = "glyphs")]
-    // #[inline(always)]
-    // pub fn update_glyphs(&mut self, render: &mut GlyphRenderer) -> Result<(), String> {
-    //     self.glyphs.update(&mut self.device, render)
-    // }
-
-    // #[inline(always)]
-    // pub fn process_text(&mut self, font: &Font, text: &Text) {
-    //     self.glyphs.process_text(font, text);
-    // }
-
-    // #[inline(always)]
-    // pub fn create_draw(&self) -> Draw {
-    //     let (width, height) = self.device.size();
-    //     self.draw.create_draw(width, height)
-    // }
-
-    // #[cfg(feature = "glyphs")]
-    // #[inline(always)]
-    // pub fn glyphs_texture(&self) -> &Texture {
-    //     &self.glyphs.texture
-    // }
-    //
-    // pub fn render_to<'a>(
-    //     &mut self,
-    //     target: &RenderTexture,
-    //     render: impl Into<GraphicsRenderer<'a>>,
-    // ) {
-    //     let commands = match render.into() {
-    //         GraphicsRenderer::Raw(r) => r,
-    //         GraphicsRenderer::Device(r) => r.commands_from(&mut self.device),
-    //         GraphicsRenderer::Draw(r) => {
-    //             r.commands(&mut self.device, &mut self.draw, &mut self.glyphs)
-    //         }
-    //     };
-    //     self.device.render_to(target, commands);
-    // }
-    //
-    // pub fn render<'a>(&mut self, render: impl Into<GraphicsRenderer<'a>>) {
-    //     let commands = match render.into() {
-    //         GraphicsRenderer::Raw(r) => r,
-    //         GraphicsRenderer::Device(r) => r.commands_from(&mut self.device),
-    //         GraphicsRenderer::Draw(r) => {
-    //             r.commands(&mut self.device, &mut self.draw, &mut self.glyphs)
-    //         }
-    //     };
-    //     self.device.render(commands);
-    // }
-
-    pub fn r(&mut self, render: &GfxRenderer) {
-        render.render(self);
+    /// Render to the screen
+    #[inline]
+    pub fn render(&mut self, renderer: &GfxRenderer) {
+        renderer.render(&mut self.device, &mut self.extensions, None);
     }
 
-    // #[inline(always)]
-    // pub fn create_draw_image_pipeline(
-    //     &mut self,
-    //     fragment: Option<&ShaderSource>,
-    // ) -> Result<Pipeline, String> {
-    //     self.draw.create_image_pipeline(&mut self.device, fragment)
-    // }
-    //
-    // #[inline(always)]
-    // pub fn create_draw_pattern_pipeline(
-    //     &mut self,
-    //     fragment: Option<&ShaderSource>,
-    // ) -> Result<Pipeline, String> {
-    //     self.draw
-    //         .create_pattern_pipeline(&mut self.device, fragment)
-    // }
-    //
-    // #[inline(always)]
-    // pub fn create_draw_shape_pipeline(
-    //     &mut self,
-    //     fragment: Option<&ShaderSource>,
-    // ) -> Result<Pipeline, String> {
-    //     self.draw.create_shape_pipeline(&mut self.device, fragment)
-    // }
-    //
-    // #[inline(always)]
-    // pub fn create_draw_text_pipeline(
-    //     &mut self,
-    //     fragment: Option<&ShaderSource>,
-    // ) -> Result<Pipeline, String> {
-    //     self.draw.create_text_pipeline(&mut self.device, fragment)
-    // }
+    /// Render to a custom target
+    #[inline]
+    pub fn render_to(&mut self, target: &RenderTexture, renderer: &GfxRenderer) {
+        renderer.render(&mut self.device, &mut self.extensions, Some(target));
+    }
 }
 
 impl std::ops::Deref for Graphics {
@@ -167,47 +105,13 @@ impl std::ops::DerefMut for Graphics {
     }
 }
 
-pub enum GraphicsRenderer<'a> {
-    Raw(&'a [Commands]),
-    Device(&'a DeviceRenderer),
-    // Draw(&'a DrawRenderer),
-}
-
-impl<'a> From<&'a [Commands]> for GraphicsRenderer<'a> {
-    fn from(r: &'a [Commands]) -> GraphicsRenderer {
-        GraphicsRenderer::Raw(r)
-    }
-}
-
-impl<'a> From<&'a Renderer> for GraphicsRenderer<'a> {
-    fn from(r: &'a Renderer) -> GraphicsRenderer {
-        GraphicsRenderer::Device(r)
-    }
-}
-
-// impl<'a> From<&'a Draw> for GraphicsRenderer<'a> {
-//     fn from(r: &'a Draw) -> GraphicsRenderer {
-//         GraphicsRenderer::Draw(r)
-//     }
-// }
-
-// -
-use downcast_rs::{impl_downcast, Downcast};
-use hashbrown::HashMap;
-use hecs::{DynamicBundle, Entity, World};
-use indexmap::IndexMap;
-use std::any::{Any, TypeId};
-use std::cell::{RefCell, RefMut};
-use std::ops::{Deref, DerefMut};
-use std::rc::Rc;
-
-pub struct GfxPlugins {
-    // map: HashMap<TypeId, Rc<dyn Any>>,
+/// Graphic extensions container
+pub struct ExtContainer {
     world: World,
     entity: Entity,
 }
 
-impl Default for GfxPlugins {
+impl Default for ExtContainer {
     fn default() -> Self {
         let mut world = World::new();
         let entity = world.reserve_entity();
@@ -215,121 +119,73 @@ impl Default for GfxPlugins {
     }
 }
 
-impl GfxPlugins {
-    pub fn set<R: GfxRenderer, T: GraphicPlugin<R> + 'static>(&mut self, value: T) {
-        // self.map.insert(TypeId::of::<T>(), Rc::new(RefCell::new(value)));
+impl ExtContainer {
+    /// Adds a graphics extension
+    pub fn add<R, T>(&mut self, value: T)
+    where
+        R: GfxRenderer,
+        T: GfxExtension<R> + 'static,
+    {
         self.world.insert_one(self.entity, value);
     }
 
-    // /// Returns the plugin of the type passed
-    // pub fn get<R: GfxRenderer, T: GraphicPlugin<R> + 'static>(&self) -> Option<&T> {
-    //     self.map
-    //         .get(&TypeId::of::<T>())
-    //         .map(|value| value.downcast_ref().unwrap())
-    // }
-
-    // /// Returns the plugin of the type passed as mutable reference
-    pub fn get_mut<R: GfxRenderer, T: GraphicPlugin<R> + 'static>(
-        &self,
-    ) -> Option<hecs::RefMut<'_, T>> {
+    /// Returns the extension as mutable reference
+    pub fn get_mut<R, T>(&self) -> Option<hecs::RefMut<'_, T>>
+    where
+        R: GfxRenderer,
+        T: GfxExtension<R> + 'static,
+    {
         self.world.get_mut(self.entity).ok()
     }
-    //     // self.map
-    //     //     .get(&TypeId::of::<T>())
-    //     //     .map(|value| {
-    //     //
-    //     //         // let rc = value.as_any_mut().downcast_mut::<Rc<RefCell<T>>>().unwrap().clone();
-    //     //         // let ref_m = RefMut::map(rc.borrow_mut(), |v| v);
-    //     //         // let rc = value.clone().as_any().downcast::<Rc<RefCell<T>>>().unwrap();
-    //     //         let rc = value.clone().downcast::<RefCell<T>>().unwrap();
-    //     //
-    //     //         let mut w = ExtWrapper {
-    //     //             rc,
-    //     //             ref_m: None,
-    //     //         };
-    //     //
-    //     //         w
-    //     //     })
-    //     match self.map.get(&TypeId::of::<T>()).cloned() {
-    //         Some(value) => {
-    //             let rc = value.clone().downcast::<RefCell<T>>().unwrap();
-    //
-    //             let mut w = ExtWrapper {
-    //                 rc,
-    //                 ref_m: None,
-    //             };
-    //
-    //             // w.ref_m = Some(RefMut::map(wrc.borrow_mut(), |v| v));
-    //
-    //             Some(w)
-    //         }
-    //         None => None,
-    //     }
-    // }
-}
 
-pub struct ExtWrapper<T: 'static> {
-    rc: Rc<RefCell<T>>,
-    ref_m: Option<RefMut<'static, T>>,
-}
-//
-// impl<T> Deref for ExtWrapper<T> {
-//     type Target = T;
-//
-//     fn deref(&self) -> &Self::Target {
-//         self.ref_m.as_ref().unwrap()
-//     }
-// }
-//
-// impl<T> DerefMut for ExtWrapper<T> {
-//     fn deref_mut(&mut self) -> &mut Self::Target {
-//         if self.ref_m.is_none() {
-//             self.ref_m = Some(RefMut::map(self.rc.borrow_mut(), |v| v));
-//         }
-//         self.ref_m.as_mut().unwrap()
-//     }
-// }
+    /// Returns the extension
+    pub fn get<R, T>(&self) -> Option<Ref<'_, T>>
+    where
+        R: GfxRenderer,
+        T: GfxExtension<R> + 'static,
+    {
+        self.world.get(self.entity).ok()
+    }
 
-pub trait GfxRenderer
-where
-    Self: Any + Downcast,
-{
-    fn render(&self, gfx: &mut Graphics);
-}
-
-pub trait GraphicPlugin<T: ?Sized>
-where
-    Self: Any + Send + Sync + Downcast,
-{
-    fn prepare<'a>(&'a mut self, device: &mut Device, renderer: &'a T) -> &'a [Commands];
-}
-//
-//
-// impl_downcast!(GfxRenderer);
-// impl_downcast!(GraphicPlugin<GfxRenderer>);
-
-impl GfxRenderer for Renderer {
-    fn render(&self, gfx: &mut Graphics) {
-        gfx.device.render(self.commands());
+    /// Remove the extension
+    pub fn remove<R, T>(&mut self)
+    where
+        R: GfxRenderer,
+        T: GfxExtension<R> + 'static,
+    {
+        self.world.remove_one::<T>(self.entity);
     }
 }
-//
-// struct Draw2DPlugin {
-//     pub manager: DrawManager,
-//     // pub glyphs: GlyphManager
-// }
-//
-// impl GraphicPlugin<Draw> for Draw2DPlugin {
-//     fn prepare<'a>(&'a mut self, device: &mut Device, renderer: &'a Draw) -> &'a [Commands] {
-//         // renderer.commands(device, &mut self.manager, &mut self.glyphs)
-//         todo!()
-//     }
-// }
-//
-// impl GfxRenderer for Draw {
-//     fn render(&self, gfx: &mut Graphics) {
-//         let plugin= gfx.plugins.get_mut::<Self, Draw2DPlugin>().unwrap();
-//         let commands = plugin.prepare(&mut gfx.device, self);
-//         gfx.device.render(commands);
-//     }
-// }
+
+/// Represents an object that contains render commands
+pub trait GfxRenderer {
+    /// Send the commands to the gpu to be rendered
+    fn render(
+        &self,
+        device: &mut Device,
+        extensions: &mut ExtContainer,
+        target: Option<&RenderTexture>,
+    );
+}
+
+pub trait GfxExtension<T: ?Sized>
+where
+    Self: Send + Sync,
+{
+    /// Process and returns the commands
+    fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a T) -> &'a [Commands];
+}
+
+impl GfxRenderer for Renderer {
+    fn render(
+        &self,
+        device: &mut Device,
+        _extensions: &mut ExtContainer,
+        target: Option<&RenderTexture>,
+    ) {
+        match target {
+            None => device.render(self.commands()),
+            Some(rt) => device.render_to(rt, self.commands()),
+        }
+    }
+}

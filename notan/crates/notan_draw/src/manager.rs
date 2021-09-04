@@ -5,8 +5,8 @@ use super::texts::*;
 use crate::batch::*;
 use crate::draw::*;
 use glam::Mat4;
-use notan_app::{GfxRenderer, GraphicPlugin, Graphics};
-use notan_glyph::GlyphManager;
+use notan_app::{ExtContainer, GfxExtension, GfxRenderer, Graphics};
+use notan_glyph::GlyphPlugin;
 use notan_graphics::prelude::*;
 
 pub struct DrawManager {
@@ -39,7 +39,7 @@ impl DrawManager {
         &mut self,
         draw: &Draw,
         device: &mut Device,
-        glyphs: &mut GlyphManager,
+        glyphs: &mut GlyphPlugin,
     ) -> &[Commands] {
         self.renderer.clear();
         process_draw(self, draw, device, glyphs);
@@ -86,7 +86,7 @@ impl DrawManager {
 fn paint_batch(
     device: &mut Device,
     manager: &mut DrawManager,
-    glyphs: &mut GlyphManager,
+    glyphs: &mut GlyphPlugin,
     b: &Batch,
     projection: &Mat4,
 ) {
@@ -122,7 +122,7 @@ fn process_glyphs(
     manager: &mut DrawManager,
     draw: &Draw,
     device: &mut Device,
-    glyphs: &mut GlyphManager,
+    glyphs: &mut GlyphPlugin,
 ) {
     if let Some(indices) = &draw.text_batch_indices {
         let batch_len = draw.batches.len();
@@ -157,7 +157,7 @@ fn process_draw(
     manager: &mut DrawManager,
     draw: &Draw,
     device: &mut Device,
-    glyphs: &mut GlyphManager,
+    glyphs: &mut GlyphPlugin,
 ) {
     process_glyphs(manager, draw, device, glyphs);
 
@@ -268,54 +268,5 @@ fn blended_pip(pip: &Pipeline, blend_mode: BlendMode) -> Option<Pipeline> {
             }
         }
         _ => None,
-    }
-}
-
-pub trait CreateDraw {
-    fn create_draw(&self) -> Draw;
-    fn create_font(&self, data: &'static [u8]) -> Result<Font, String>;
-}
-
-impl CreateDraw for Graphics {
-    fn create_draw(&self) -> Draw {
-        let (width, height) = self.device.size();
-        Draw::new(width, height)
-    }
-
-    fn create_font(&self, data: &'static [u8]) -> Result<Font, String> {
-        let mut ext = self
-            .plugins
-            .get_mut::<Draw, DrawPlugin>()
-            .ok_or("The DrawExtension is not in use.".to_string())?;
-
-        ext.glyphs.create_font(data)
-    }
-}
-
-pub struct DrawPlugin {
-    manager: DrawManager,
-    glyphs: GlyphManager,
-}
-
-impl DrawPlugin {
-    pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
-        Ok(Self {
-            manager: DrawManager::new(gfx)?,
-            glyphs: GlyphManager::new(gfx)?,
-        })
-    }
-}
-
-impl GraphicPlugin<Draw> for DrawPlugin {
-    fn prepare<'a>(&'a mut self, device: &mut Device, renderer: &'a Draw) -> &'a [Commands] {
-        renderer.commands(device, &mut self.manager, &mut self.glyphs)
-    }
-}
-
-impl GfxRenderer for Draw {
-    fn render(&self, gfx: &mut Graphics) {
-        let mut plugin = gfx.plugins.get_mut::<Self, DrawPlugin>().unwrap();
-        let commands = plugin.prepare(&mut gfx.device, self);
-        gfx.device.render(commands);
     }
 }

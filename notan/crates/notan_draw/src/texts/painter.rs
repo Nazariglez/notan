@@ -1,7 +1,7 @@
 use crate::batch::*;
 use crate::manager::process_pipeline;
 use glam::{Mat3, Mat4, Vec3};
-use notan_glyph::{FontVertex, GlyphManager, GlyphPipeline};
+use notan_glyph::{FontVertex, GlyphPipeline, GlyphPlugin};
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 
@@ -90,7 +90,7 @@ impl TextPainter {
     pub fn push(
         &mut self,
         _device: &mut Device,
-        glyphs: &mut GlyphManager,
+        glyphs: &mut GlyphPlugin,
         renderer: &mut Renderer,
         batch: &Batch,
         projection: &Mat4,

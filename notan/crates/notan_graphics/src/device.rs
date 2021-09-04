@@ -238,13 +238,13 @@ impl Device {
     }
 
     #[inline(always)]
-    pub fn render(&mut self, render: &[Commands]) {
-        self.backend.render(render.commands(), None);
+    pub fn render(&mut self, commands: &[Commands]) {
+        self.backend.render(commands, None);
     }
 
     #[inline]
-    pub fn render_to(&mut self, target: &RenderTexture, render: &[Commands]) {
-        self.backend.render(render.commands(), Some(target.id()));
+    pub fn render_to(&mut self, target: &RenderTexture, commands: &[Commands]) {
+        self.backend.render(commands, Some(target.id()));
     }
 
     pub fn update_texture(
@@ -264,8 +264,4 @@ impl Device {
         self.backend.clean(&self.drop_manager.dropped.read());
         self.drop_manager.clean();
     }
-}
-
-pub trait DeviceRenderer {
-    fn commands_from(&self, device: &mut Device) -> &[Commands];
 }
