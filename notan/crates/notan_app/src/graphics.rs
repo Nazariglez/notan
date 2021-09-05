@@ -121,6 +121,7 @@ impl Default for ExtContainer {
 
 impl ExtContainer {
     /// Adds a graphics extension
+    #[inline]
     pub fn add<R, T>(&mut self, value: T)
     where
         R: GfxRenderer,
@@ -130,6 +131,7 @@ impl ExtContainer {
     }
 
     /// Returns the extension as mutable reference
+    #[inline]
     pub fn get_mut<R, T>(&self) -> Option<hecs::RefMut<'_, T>>
     where
         R: GfxRenderer,
@@ -139,6 +141,7 @@ impl ExtContainer {
     }
 
     /// Returns the extension
+    #[inline]
     pub fn get<R, T>(&self) -> Option<Ref<'_, T>>
     where
         R: GfxRenderer,
@@ -148,6 +151,7 @@ impl ExtContainer {
     }
 
     /// Remove the extension
+    #[inline]
     pub fn remove<R, T>(&mut self)
     where
         R: GfxRenderer,
