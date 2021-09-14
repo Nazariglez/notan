@@ -112,9 +112,9 @@ where
     }
 
     /// Sets a plugin that can alter or control the app
-    pub fn set_plugin<P: Plugin + 'static>(mut self, mut plugin: P) -> Self {
+    pub fn add_plugin<P: Plugin + 'static>(mut self, mut plugin: P) -> Self {
         plugin.build(&mut self);
-        self.plugins.set(plugin);
+        self.plugins.add(plugin);
         self
     }
 

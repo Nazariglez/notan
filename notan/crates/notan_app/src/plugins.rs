@@ -82,7 +82,7 @@ pub struct Plugins {
 
 impl Plugins {
     /// Adds a new plugin
-    pub fn set<T: Plugin + 'static>(&mut self, value: T) {
+    pub fn add<T: Plugin + 'static>(&mut self, value: T) {
         self.map
             .insert(TypeId::of::<T>(), Box::new(RefCell::new(value)));
     }

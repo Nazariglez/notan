@@ -24,7 +24,7 @@ fn setup(gfx: &mut Graphics, plugins: &mut Plugins) -> State {
     let font = glyph
         .create_font(include_bytes!("./assets/Ubuntu-B.ttf"))
         .unwrap();
-    plugins.set(glyph);
+    plugins.add(glyph);
 
     State { font, renderer }
 }
