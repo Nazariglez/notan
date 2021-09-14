@@ -47,7 +47,11 @@ impl GlowBackend {
         Self::from(gl, &api)
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(all(
+        not(target_arch = "wasm32"),
+        not(target_os = "ios"),
+        not(target_os = "android")
+    ))]
     pub fn new<F>(mut loader_function: F) -> Result<Self, String>
     where
         F: FnMut(&str) -> *const std::os::raw::c_void,
@@ -55,6 +59,16 @@ impl GlowBackend {
         let gl = unsafe { Context::from_loader_function(loader_function) };
 
         Self::from(gl, "opengl")
+    }
+
+    #[cfg(any(target_os = "ios", target_os = "android"))]
+    pub fn new<F>(mut loader_function: F) -> Result<Self, String>
+    where
+        F: FnMut(&str) -> *const std::os::raw::c_void,
+    {
+        let gl = unsafe { Context::from_loader_function(loader_function) };
+
+        Self::from(gl, "opengl_es")
     }
 
     fn from(gl: Context, api: &str) -> Result<Self, String> {
