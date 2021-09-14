@@ -17,6 +17,5 @@ indexmap = "1.6"
 futures = "0.3"
 platter = {version = "0.1.4", features = ["web-sys"] }
 parking_lot =  { version = "0.11", features = ["wasm-bindgen"] }
-hecs = "0.6.3"
 
 [features]

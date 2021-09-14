@@ -1,14 +1,15 @@
-use hecs::{Entity, Ref, World};
+use hashbrown::HashMap;
 pub use notan_graphics::prelude::*;
 pub use notan_graphics::*;
+use std::any::{Any, TypeId};
+use std::cell::{Ref, RefCell, RefMut};
 
 /// Graphic interface to interact with the GPU
 pub struct Graphics {
     /// Graphic raw implementation
     pub device: Device,
 
-    /// Graphics extensions
-    pub extensions: ExtContainer,
+    extensions: ExtContainer,
 }
 
 impl Graphics {
@@ -40,6 +41,26 @@ impl Graphics {
         T: GfxExtension<R> + 'static,
     {
         self.extensions.remove::<R, T>();
+    }
+
+    /// Returns the extension as mutable reference
+    #[inline]
+    pub fn get_ext_mut<R, T>(&self) -> Option<RefMut<T>>
+    where
+        R: GfxRenderer,
+        T: GfxExtension<R> + 'static,
+    {
+        self.extensions.get_mut()
+    }
+
+    /// Returns the extension as reference
+    #[inline]
+    pub fn get_ext<R, T>(&self) -> Option<Ref<T>>
+    where
+        R: GfxRenderer,
+        T: GfxExtension<R> + 'static,
+    {
+        self.extensions.get()
     }
 
     /// Creates a Pipeline builder
@@ -106,17 +127,9 @@ impl std::ops::DerefMut for Graphics {
 }
 
 /// Graphic extensions container
+#[derive(Default)]
 pub struct ExtContainer {
-    world: World,
-    entity: Entity,
-}
-
-impl Default for ExtContainer {
-    fn default() -> Self {
-        let mut world = World::new();
-        let entity = world.reserve_entity();
-        Self { world, entity }
-    }
+    map: HashMap<TypeId, Box<dyn Any>>,
 }
 
 impl ExtContainer {
@@ -127,17 +140,21 @@ impl ExtContainer {
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
     {
-        self.world.insert_one(self.entity, value);
+        self.map
+            .insert(TypeId::of::<T>(), Box::new(RefCell::new(value)));
     }
 
     /// Returns the extension as mutable reference
     #[inline]
-    pub fn get_mut<R, T>(&self) -> Option<hecs::RefMut<'_, T>>
+    pub fn get_mut<R, T>(&self) -> Option<RefMut<'_, T>>
     where
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
     {
-        self.world.get_mut(self.entity).ok()
+        self.map
+            .get(&TypeId::of::<T>())?
+            .downcast_ref::<RefCell<T>>()
+            .map(|value| value.borrow_mut())
     }
 
     /// Returns the extension
@@ -147,7 +164,10 @@ impl ExtContainer {
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
     {
-        self.world.get(self.entity).ok()
+        self.map
+            .get(&TypeId::of::<T>())?
+            .downcast_ref::<RefCell<T>>()
+            .map(|value| value.borrow())
     }
 
     /// Remove the extension
@@ -157,7 +177,7 @@ impl ExtContainer {
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
     {
-        self.world.remove_one::<T>(self.entity);
+        self.map.remove(&TypeId::of::<T>());
     }
 }
 
