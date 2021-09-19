@@ -15,16 +15,18 @@ struct State {
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).draw(draw).build()
+    notan::init_with(setup)
+        .add_plugin_with(|gfx: &mut Graphics| GlyphPlugin::new(gfx).unwrap())
+        .draw(draw)
+        .build()
 }
 
 fn setup(gfx: &mut Graphics, plugins: &mut Plugins) -> State {
     let renderer = BasicPipeline::new(gfx).unwrap();
-    let mut glyph = GlyphPlugin::new(gfx).unwrap();
+    let mut glyph = plugins.get_mut::<GlyphPlugin>().unwrap();
     let font = glyph
         .create_font(include_bytes!("./assets/Ubuntu-B.ttf"))
         .unwrap();
-    plugins.add(glyph);
 
     State { font, renderer }
 }

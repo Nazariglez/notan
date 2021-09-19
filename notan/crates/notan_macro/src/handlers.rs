@@ -4,11 +4,14 @@ use syn::{parse_macro_input, Ident, LitStr};
 use syn::{ItemFn, ItemStruct};
 
 pub(crate) fn process_tokens(input: String) -> String {
+    let is_plugin = input.contains("!");
+    let input = input.replace("!", "");
+
     let tokens = get_tokens(&input);
     let enum_generated = enum_generator(&tokens);
     let enum_impl_generated = enum_impl_generator(&tokens);
     let trait_generated = trait_generator(&tokens);
-    let trait_impl_generated = trait_impl_generator(&tokens);
+    let trait_impl_generated = trait_impl_generator(&tokens, is_plugin);
     [
         enum_generated,
         enum_impl_generated,
@@ -83,6 +86,7 @@ fn get_tokens(input: &str) -> Tokens {
                 if s == '>' {
                     return;
                 }
+
                 r.push(s);
             }
         };
@@ -143,7 +147,7 @@ fn trait_generator(tokens: &Tokens) -> String {
     )
 }
 
-fn trait_impl_generator(tokens: &Tokens) -> String {
+fn trait_impl_generator(tokens: &Tokens, is_plugin: bool) -> String {
     let callback_ident = format!("{}Callback", tokens.name);
     let handler_ident = format!("{}Handler", tokens.name);
     let combinations = combo(&tokens.params);
@@ -152,6 +156,12 @@ fn trait_impl_generator(tokens: &Tokens) -> String {
         .as_ref()
         .map(|v| format!(" -> {}", v))
         .unwrap_or("".to_string());
+
+    let s_type = if is_plugin {
+        "Plugin + 'static"
+    } else {
+        "AppState"
+    };
 
     combinations
         .iter()
@@ -165,13 +175,14 @@ fn trait_impl_generator(tokens: &Tokens) -> String {
         impl<F, S> {handler_ident}<S, ({params})> for F
         where
             F: Fn({params}){ret} + 'static,
-            S: AppState
+            S: {s_type}
         {{
             fn callback(self) -> {callback_ident}<S> {{
                 {callback_ident}::_{i}(Box::new(self))
             }}
         }}
     "#,
+                s_type = s_type,
                 callback_ident = callback_ident,
                 handler_ident = handler_ident,
                 params = params,

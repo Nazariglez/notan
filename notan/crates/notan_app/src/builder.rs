@@ -2,7 +2,8 @@ use crate::assets::{AssetManager, Loader};
 use crate::config::*;
 use crate::graphics::Graphics;
 use crate::handlers::{
-    AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler, SetupCallback,
+    AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler,
+    PluginCallback, PluginHandler, SetupCallback,
 };
 use crate::parsers::*;
 use crate::plugins::*;
@@ -35,6 +36,8 @@ pub struct AppBuilder<S, B> {
     draw_callback: Option<DrawCallback<S>>,
     event_callback: Option<EventCallback<S>>,
 
+    plugin_callbacks: Vec<Box<FnOnce(&mut App, &mut AssetManager, &mut Graphics, &mut Plugins)>>,
+
     pub(crate) window: WindowConfig,
 }
 
@@ -49,14 +52,15 @@ where
         H: SetupHandler<S, Params>,
     {
         let builder = AppBuilder {
-            setup_callback: setup.callback(),
             backend,
             plugins: Default::default(),
             assets: AssetManager::new(),
+            setup_callback: setup.callback(),
             init_callback: None,
             update_callback: None,
             draw_callback: None,
             event_callback: None,
+            plugin_callbacks: vec![],
             window: Default::default(),
         };
 
@@ -118,6 +122,23 @@ where
         self
     }
 
+    /// Sets a callback to be used on each event
+    pub fn add_plugin_with<P, H, Params>(mut self, handler: H) -> Self
+    where
+        P: Plugin + 'static,
+        H: PluginHandler<P, Params> + 'static,
+    {
+        let cb = move |app: &mut App,
+                       assets: &mut AssetManager,
+                       gfx: &mut Graphics,
+                       plugins: &mut Plugins| {
+            let p = handler.callback().exec(app, assets, gfx, plugins);
+            plugins.add(p);
+        };
+        self.plugin_callbacks.push(Box::new(cb));
+        self
+    }
+
     /// Adds a new [AssetLoader]
     pub fn add_loader(mut self, loader: Loader) -> Self {
         self.assets.add_loader(loader);
@@ -136,6 +157,7 @@ where
             update_callback,
             draw_callback,
             event_callback,
+            mut plugin_callbacks,
             window,
             ..
         } = self;
@@ -151,6 +173,11 @@ where
         let win_dpi = app.window().dpi();
         graphics.set_size(width, height);
         graphics.set_dpi(win_dpi);
+
+        plugin_callbacks.reverse();
+        while let Some(cb) = plugin_callbacks.pop() {
+            cb(&mut app, &mut assets, &mut graphics, &mut plugins);
+        }
 
         let mut state = setup_callback.exec(&mut app, &mut assets, &mut graphics, &mut plugins);
 
