@@ -3,12 +3,10 @@ use notan::prelude::*;
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(|gfx: &mut Graphics| {
-        let ext = DrawExtension::new(gfx).unwrap();
-        gfx.add_ext(ext);
-    })
-    .draw(draw)
-    .build()
+    notan::init()
+        .add_graphic_ext(|gfx: &mut Graphics| DrawExtension::new(gfx).unwrap())
+        .draw(draw)
+        .build()
 }
 
 fn draw(gfx: &mut Graphics) {

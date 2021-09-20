@@ -3,15 +3,28 @@ use quote::quote;
 use syn::{parse_macro_input, Ident, LitStr};
 use syn::{ItemFn, ItemStruct};
 
-pub(crate) fn process_tokens(input: String) -> String {
-    let is_plugin = input.contains("!");
-    let input = input.replace("!", "");
+#[derive(Copy, Clone)]
+enum GenericType {
+    Plugin,
+    Extension,
+    None,
+}
 
+pub(crate) fn process_tokens(input: String) -> String {
+    let generic_type = if input.contains("!") {
+        GenericType::Plugin
+    } else if input.contains("$") {
+        GenericType::Extension
+    } else {
+        GenericType::None
+    };
+
+    let input = input.replace("!", "").replace("$", "");
     let tokens = get_tokens(&input);
     let enum_generated = enum_generator(&tokens);
     let enum_impl_generated = enum_impl_generator(&tokens);
-    let trait_generated = trait_generator(&tokens);
-    let trait_impl_generated = trait_impl_generator(&tokens, is_plugin);
+    let trait_generated = trait_generator(&tokens, generic_type);
+    let trait_impl_generated = trait_impl_generator(&tokens, generic_type);
     [
         enum_generated,
         enum_impl_generated,
@@ -134,20 +147,31 @@ fn enum_impl_generator(tokens: &Tokens) -> String {
     )
 }
 
-fn trait_generator(tokens: &Tokens) -> String {
+fn trait_generator(tokens: &Tokens, gen_type: GenericType) -> String {
     let callback_ident = format!("{}Callback", tokens.name);
     let handler_ident = format!("{}Handler", tokens.name);
-    format!(
-        r#"
-    pub trait {}<S, Params> {{
-        fn callback(self) -> {}<S>;
-    }}
-    "#,
-        handler_ident, callback_ident
-    )
+    if matches!(gen_type, GenericType::Extension) {
+        format!(
+            r#"
+        pub trait {}<R, S, Params> {{
+            fn callback(self) -> {}<S>;
+        }}
+        "#,
+            handler_ident, callback_ident
+        )
+    } else {
+        format!(
+            r#"
+        pub trait {}<S, Params> {{
+            fn callback(self) -> {}<S>;
+        }}
+        "#,
+            handler_ident, callback_ident
+        )
+    }
 }
 
-fn trait_impl_generator(tokens: &Tokens, is_plugin: bool) -> String {
+fn trait_impl_generator(tokens: &Tokens, gen_type: GenericType) -> String {
     let callback_ident = format!("{}Callback", tokens.name);
     let handler_ident = format!("{}Handler", tokens.name);
     let combinations = combo(&tokens.params);
@@ -157,10 +181,10 @@ fn trait_impl_generator(tokens: &Tokens, is_plugin: bool) -> String {
         .map(|v| format!(" -> {}", v))
         .unwrap_or("".to_string());
 
-    let s_type = if is_plugin {
-        "Plugin + 'static"
-    } else {
-        "AppState"
+    let s_type = match gen_type {
+        GenericType::Plugin => "Plugin + 'static",
+        GenericType::Extension => "GfxExtension<R>",
+        GenericType::None => "AppState",
     };
 
     combinations
@@ -169,8 +193,31 @@ fn trait_impl_generator(tokens: &Tokens, is_plugin: bool) -> String {
         .map(|(i, n)| {
             let params = n.join(", ");
 
-            format!(
-                r#"
+            if matches!(gen_type, GenericType::Extension) {
+                format!(
+                    r#"
+        #[allow(unused_parens)]
+        impl<R, F, S> {handler_ident}<R, S, ({params})> for F
+        where
+            R: GfxRenderer,
+            F: Fn({params}){ret} + 'static,
+            S: {s_type}
+        {{
+            fn callback(self) -> {callback_ident}<S> {{
+                {callback_ident}::_{i}(Box::new(self))
+            }}
+        }}
+    "#,
+                    s_type = s_type,
+                    callback_ident = callback_ident,
+                    handler_ident = handler_ident,
+                    params = params,
+                    ret = ret,
+                    i = i
+                )
+            } else {
+                format!(
+                    r#"
         #[allow(unused_parens)]
         impl<F, S> {handler_ident}<S, ({params})> for F
         where
@@ -182,13 +229,14 @@ fn trait_impl_generator(tokens: &Tokens, is_plugin: bool) -> String {
             }}
         }}
     "#,
-                s_type = s_type,
-                callback_ident = callback_ident,
-                handler_ident = handler_ident,
-                params = params,
-                ret = ret,
-                i = i
-            )
+                    s_type = s_type,
+                    callback_ident = callback_ident,
+                    handler_ident = handler_ident,
+                    params = params,
+                    ret = ret,
+                    i = i
+                )
+            }
         })
         .collect::<Vec<_>>()
         .join("\n")
