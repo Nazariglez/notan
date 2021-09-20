@@ -85,7 +85,6 @@ impl quote::ToTokens for ShaderBytes {
 }
 
 pub(crate) fn source_from_spirv(spirv: Vec<u8>) -> Result<TokenStream, String> {
-    let webgl_bytes = spirv_to(&spirv, Output::Webgl)?;
     let webgl2_bytes = spirv_to(&spirv, Output::Webgl2)?;
     let wgpu_bytes = spirv_to(&spirv, Output::Wgpu)?;
     let opengl_3_3_bytes = spirv_to(&spirv, Output::OpenGl3_3)?;
@@ -94,9 +93,6 @@ pub(crate) fn source_from_spirv(spirv: Vec<u8>) -> Result<TokenStream, String> {
     Ok((quote! {
         ShaderSource {
             sources: &[
-                #[cfg(target_arch = "wasm32")]
-                ("webgl", &#webgl_bytes),
-
                 #[cfg(target_arch = "wasm32")]
                 ("webgl2", &#webgl2_bytes),
 
@@ -116,7 +112,6 @@ pub(crate) fn source_from_spirv(spirv: Vec<u8>) -> Result<TokenStream, String> {
 
 #[derive(Debug, Clone, Copy)]
 enum Output {
-    Webgl,
     Webgl2,
     OpenGl3_3,
     OpenGl_ES,
@@ -128,7 +123,6 @@ impl Into<Option<glsl::Version>> for Output {
         use glsl::Version::*;
 
         Some(match self {
-            Output::Webgl => V1_00Es,
             Output::Webgl2 => V3_00Es,
             Output::OpenGl3_3 => V3_30,
             Output::OpenGl_ES => V1_00Es,
@@ -147,7 +141,7 @@ fn spirv_to(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
 fn spirv_to_glsl(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
     let spv = read_spirv(Cursor::new(&spirv[..])).map_err(|e| e.to_string())?;
     let glsl = compile_spirv_to_glsl(&spv, output)?;
-    println!("{:?} \n{}", output, glsl);
+    // println!("{:?} \n{}", output, glsl);
     Ok(ShaderBytes(glsl.as_bytes().to_vec()))
 }
 
