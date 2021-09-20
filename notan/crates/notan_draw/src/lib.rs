@@ -1,5 +1,6 @@
 mod batch;
 mod builder;
+mod config;
 mod custom_pipeline;
 mod draw;
 mod extension;
@@ -12,6 +13,7 @@ mod transform;
 
 pub mod prelude;
 
+pub use config::*;
 pub use custom_pipeline::*;
 pub use draw::*;
 pub use extension::*;

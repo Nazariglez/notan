@@ -1,5 +1,4 @@
 use notan::prelude::*;
-use notan_app::Plugins;
 
 const TEXT: &'static str = r#"
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada nisl non mi pharetra, a euismod mi volutpat. Pellentesque dictum turpis id lorem ornare, quis commodo ipsum tempus. Ut a nulla sed leo ullamcorper dignissim. Nullam in dolor nunc. Phasellus vitae neque malesuada, ultrices elit vel, dapibus turpis. Aenean sodales nulla ac mauris rutrum, vel fringilla metus tincidunt. Proin ultricies ultricies posuere. Sed cursus, mauris at maximus mollis, enim nisl sodales est, sed porta justo nisi quis tortor. Aenean ornare, sem dignissim scelerisque posuere, ligula quam eleifend diam, sit amet suscipit nibh lacus at purus. Nunc vel rhoncus purus, in accumsan magna. Proin diam sem, dapibus et felis nec, vestibulum varius turpis. Donec condimentum justo nec ipsum laoreet, ac consectetur sapien luctus.
@@ -16,7 +15,7 @@ struct State {
 #[notan::main]
 fn main() -> Result<(), String> {
     notan::init_with(setup)
-        .add_plugin_with(|gfx: &mut Graphics| GlyphPlugin::new(gfx).unwrap())
+        .set_config(GlyphConfig) // Adds the GlyphPlugin in a simple way
         .draw(draw)
         .build()
 }

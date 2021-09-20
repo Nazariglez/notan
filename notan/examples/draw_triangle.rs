@@ -1,10 +1,9 @@
-use notan::draw::*;
 use notan::prelude::*;
 
 #[notan::main]
 fn main() -> Result<(), String> {
     notan::init()
-        .add_graphic_ext(|gfx: &mut Graphics| DrawExtension::new(gfx).unwrap())
+        .set_config(DrawConfig) // Simple way to add the draw extension
         .draw(draw)
         .build()
 }
