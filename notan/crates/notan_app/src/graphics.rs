@@ -99,6 +99,12 @@ impl Graphics {
         BufferBuilder::new(&mut self.device, BufferUsage::Uniform(slot), Some(name))
     }
 
+    /// Update the texture data
+    #[inline]
+    pub fn update_texture<'a>(&'a mut self, texture: &'a mut Texture) -> TextureUpdater {
+        TextureUpdater::new(&mut self.device, texture)
+    }
+
     /// Render to the screen
     #[inline]
     pub fn render(&mut self, renderer: &GfxRenderer) {

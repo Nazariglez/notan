@@ -399,3 +399,91 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
         device.create_texture(info)
     }
 }
+
+pub struct TextureUpdater<'a> {
+    device: &'a mut Device,
+    texture: &'a mut Texture,
+    x_offset: i32,
+    y_offset: i32,
+    width: i32,
+    height: i32,
+    format: TextureFormat,
+    bytes: Option<&'a [u8]>,
+}
+
+impl<'a> TextureUpdater<'a> {
+    pub fn new(device: &'a mut Device, texture: &'a mut Texture) -> Self {
+        let x_offset = texture.frame.x as _;
+        let y_offset = texture.frame.y as _;
+        let width = texture.frame.width as _;
+        let height = texture.frame.height as _;
+        let format = texture.format;
+
+        Self {
+            device,
+            texture,
+            x_offset,
+            y_offset,
+            width,
+            height,
+            format,
+            bytes: None,
+        }
+    }
+
+    /// Update pixels from the axis x offset
+    pub fn with_x_offset(mut self, offset: i32) -> Self {
+        self.x_offset = offset;
+        self
+    }
+
+    /// Update pixels from the axis y offset
+    pub fn with_y_offset(mut self, offset: i32) -> Self {
+        self.y_offset = offset;
+        self
+    }
+
+    /// Update pixels until this width from the x offset value
+    pub fn with_width(mut self, width: i32) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Update pixels until this height from the y offset value
+    pub fn with_height(mut self, height: i32) -> Self {
+        self.height = height;
+        self
+    }
+
+    pub fn with_data(mut self, bytes: &'a [u8]) -> Self {
+        self.bytes = Some(bytes);
+        self
+    }
+
+    pub fn update(self) -> Result<(), String> {
+        let Self {
+            device,
+            texture,
+            x_offset,
+            y_offset,
+            width,
+            height,
+            format,
+            bytes,
+        } = self;
+
+        let bytes =
+            bytes.ok_or_else(|| "You need to provide bytes to update a texture".to_string())?;
+
+        let info = TextureUpdate {
+            x_offset,
+            y_offset,
+            width,
+            height,
+            format,
+            bytes,
+        };
+
+        device.update_texture(texture, &info)
+    }
+}
