@@ -13,6 +13,7 @@ pub use crate::draw::Draw;
 pub use circle::Circle;
 pub use ellipse::Ellipse;
 pub use line::Line;
+pub use painter::create_shape_pipeline;
 pub(crate) use painter::*;
 pub use path::Path;
 pub use rect::Rectangle;
