@@ -2,7 +2,7 @@ use notan::prelude::*;
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init().draw(draw).build()
+    notan::init().set_config(DrawConfig).draw(draw).build()
 }
 
 fn draw(gfx: &mut Graphics) {

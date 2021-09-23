@@ -53,9 +53,6 @@ impl State {
 }
 
 fn init(gfx: &mut Graphics) -> State {
-    let draw_ext = DrawExtension::new(gfx).unwrap();
-    gfx.add_ext(draw_ext);
-
     let mut state = State::new(gfx);
     state.spawn(5);
     state
@@ -119,6 +116,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 fn main() -> Result<(), String> {
     notan::init_with(init)
         .set_config(WindowConfig::new().vsync())
+        .set_config(DrawConfig)
         .update(update)
         .draw(draw)
         .build()

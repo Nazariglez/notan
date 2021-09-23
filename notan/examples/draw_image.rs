@@ -7,12 +7,18 @@ struct State {
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(init).draw(draw).build()
+    notan::init_with(init)
+        .set_config(DrawConfig)
+        .draw(draw)
+        .build()
 }
 
 fn init(gfx: &mut Graphics) -> State {
-    let img = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
-    let texture = gfx.create_texture(img).unwrap();
+    let texture = gfx
+        .create_texture()
+        .from_image(include_bytes!("assets/ferris.png"))
+        .build()
+        .unwrap();
     State { img: texture }
 }
 

@@ -13,6 +13,7 @@ fn main() -> Result<(), String> {
 
     notan::init_with(setup)
         .set_config(win)
+        .set_config(DrawConfig)
         .update(update)
         .draw(draw)
         .build()

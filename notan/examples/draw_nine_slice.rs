@@ -20,14 +20,25 @@ impl State {
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(init).update(update).draw(draw).build()
+    notan::init_with(init)
+        .set_config(DrawConfig)
+        .update(update)
+        .draw(draw)
+        .build()
 }
 
 fn init(gfx: &mut Graphics) -> State {
-    let img1 = TextureInfo::from_image(include_bytes!("assets/green_panel.png")).unwrap();
-    let img2 = TextureInfo::from_image(include_bytes!("assets/grey_button.png")).unwrap();
-    let texture1 = gfx.create_texture(img1).unwrap();
-    let texture2 = gfx.create_texture(img2).unwrap();
+    let texture1 = gfx
+        .create_texture()
+        .from_image(include_bytes!("assets/green_panel.png"))
+        .build()
+        .unwrap();
+
+    let texture2 = gfx
+        .create_texture()
+        .from_image(include_bytes!("assets/grey_button.png"))
+        .build()
+        .unwrap();
     State {
         img1: texture1,
         img2: texture2,

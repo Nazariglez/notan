@@ -13,7 +13,11 @@ struct State {
 
 #[notan::main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).update(update).draw(draw).build()
+    notan::init_with(setup)
+        .set_config(DrawConfig)
+        .update(update)
+        .draw(draw)
+        .build()
 }
 
 fn setup(gfx: &mut Graphics) -> State {
