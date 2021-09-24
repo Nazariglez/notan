@@ -7,7 +7,7 @@ where
     S: AppState + 'static,
     B: BackendSystem,
 {
-    fn apply(self, mut builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
+    fn apply(self, builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
         builder.add_plugin_with(|gfx: &mut Graphics| GlyphPlugin::new(gfx).unwrap())
     }
 }

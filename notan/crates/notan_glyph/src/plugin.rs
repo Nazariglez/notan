@@ -46,7 +46,7 @@ impl GlyphPlugin {
     pub fn update(
         &mut self,
         device: &mut Device,
-        render: &mut GlyphPipeline,
+        render: &mut dyn GlyphPipeline,
     ) -> Result<(), String> {
         let action = loop {
             let mut result: Result<(), String> = Ok(());
@@ -69,7 +69,7 @@ impl GlyphPlugin {
                             width,
                             height,
                             format: TextureFormat::Red,
-                            bytes: &data,
+                            bytes: data,
                         },
                     );
                 },
