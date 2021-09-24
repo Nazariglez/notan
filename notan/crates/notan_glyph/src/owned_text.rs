@@ -1,7 +1,6 @@
-
 pub use crate::text::Text;
 
-use glyph_brush::{*};
+use glyph_brush::*;
 // use notan_graphics::color::Color;
 use notan_app::graphics::color::Color;
 

@@ -4,7 +4,6 @@ use crate::{keyboard, mouse};
 use glutin::event_loop::ControlFlow;
 use notan_app::config::WindowConfig;
 
-
 use notan_app::{
     App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, WindowBackend,
 };

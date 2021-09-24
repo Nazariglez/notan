@@ -16,7 +16,7 @@ impl CreateDraw for Graphics {
     fn create_font(&self, data: &'static [u8]) -> Result<Font, String> {
         let mut ext = self
             .get_ext_mut::<Draw, DrawExtension>()
-            .ok_or("The DrawExtension is not in use.".to_string())?;
+            .ok_or_else(|| "The DrawExtension is not in use.".to_string())?;
 
         ext.glyphs.create_font(data)
     }
