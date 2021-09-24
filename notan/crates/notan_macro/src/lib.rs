@@ -1,8 +1,8 @@
 extern crate proc_macro;
 use proc_macro::*;
 use quote::quote;
-use syn::{parse_macro_input, Ident, LitStr};
-use syn::{ItemFn, ItemStruct};
+use syn::ItemFn;
+use syn::{parse_macro_input, LitStr};
 
 mod handlers;
 mod shaders;
@@ -50,9 +50,8 @@ pub fn vertex_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
     let content = input.value();
     let spirv = shaders::spirv_from(&content, shaders::ShaderType::Vertex).unwrap();
-    let source = shaders::source_from_spirv(spirv).unwrap();
 
-    source
+    shaders::source_from_spirv(spirv).unwrap()
 }
 
 #[proc_macro]
@@ -60,9 +59,8 @@ pub fn include_vertex_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
     let relative_path = input.value();
     let spirv = shaders::spirv_from_file(&relative_path, shaders::ShaderType::Vertex).unwrap();
-    let source = shaders::source_from_spirv(spirv).unwrap();
 
-    source
+    shaders::source_from_spirv(spirv).unwrap()
 }
 
 #[proc_macro]
@@ -70,9 +68,8 @@ pub fn fragment_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
     let content = input.value();
     let spirv = shaders::spirv_from(&content, shaders::ShaderType::Fragment).unwrap();
-    let source = shaders::source_from_spirv(spirv).unwrap();
 
-    source
+    shaders::source_from_spirv(spirv).unwrap()
 }
 
 #[proc_macro]
@@ -80,7 +77,6 @@ pub fn include_fragment_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
     let relative_path = input.value();
     let spirv = shaders::spirv_from_file(&relative_path, shaders::ShaderType::Fragment).unwrap();
-    let source = shaders::source_from_spirv(spirv).unwrap();
 
-    source
+    shaders::source_from_spirv(spirv).unwrap()
 }

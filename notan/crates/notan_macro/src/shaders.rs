@@ -4,11 +4,8 @@ use quote::quote;
 use spirv_cross::{glsl, spirv, ErrorCode};
 use std::fs::read_to_string;
 use std::io::{Cursor, Read};
-use std::iter::FromIterator;
 use std::path::Path;
 use std::{io, slice};
-use syn::{parse_macro_input, LitStr};
-use syn::{ItemFn, ItemStruct};
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum ShaderType {
@@ -17,12 +14,11 @@ pub(crate) enum ShaderType {
     //TODO more types
 }
 
-impl Into<glsl_to_spirv::ShaderType> for ShaderType {
-    fn into(self) -> glsl_to_spirv::ShaderType {
-        match self {
+impl From<ShaderType> for glsl_to_spirv::ShaderType {
+    fn from(value: ShaderType) -> Self {
+        match value {
             ShaderType::Vertex => glsl_to_spirv::ShaderType::Vertex,
             ShaderType::Fragment => glsl_to_spirv::ShaderType::Fragment,
-            _ => panic!("Shader type doesn't supported."),
         }
     }
 }
@@ -39,7 +35,7 @@ fn read_file(full_path: &Path) -> Result<String, String> {
 }
 
 pub(crate) fn spirv_from_file(relative_path: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
-    let root = std::env::var("CARGO_MANIFEST_DIR").unwrap_or(".".into());
+    let root = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".into());
     let root_path = Path::new(&root);
     let full_path = root_path.join(Path::new(relative_path));
 
@@ -48,8 +44,8 @@ pub(crate) fn spirv_from_file(relative_path: &str, typ: ShaderType) -> Result<Ve
 
 pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
     let source = source.trim();
-    let mut spirv_output =
-        glsl_to_spirv::compile(source, typ.into()).expect(&format!("Invalid {:#?} shader.", typ));
+    let mut spirv_output = glsl_to_spirv::compile(source, typ.into())
+        .unwrap_or_else(|_| panic!("Invalid {:#?} shader.", typ));
 
     let mut spirv = vec![];
     spirv_output
@@ -76,11 +72,7 @@ impl quote::ToTokens for ShaderBytes {
             buff
         });
 
-        proc_macro2::Group::new(
-            proc_macro2::Delimiter::Bracket,
-            proc_macro2::TokenStream::from_iter(tree),
-        )
-        .to_tokens(tokens)
+        proc_macro2::Group::new(proc_macro2::Delimiter::Bracket, tree.collect()).to_tokens(tokens)
     }
 }
 
@@ -110,6 +102,7 @@ pub(crate) fn source_from_spirv(spirv: Vec<u8>) -> Result<TokenStream, String> {
     .into())
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Debug, Clone, Copy)]
 enum Output {
     Webgl2,
@@ -118,11 +111,11 @@ enum Output {
     Wgpu,
 }
 
-impl Into<Option<glsl::Version>> for Output {
-    fn into(self) -> Option<glsl::Version> {
+impl From<Output> for Option<glsl::Version> {
+    fn from(value: Output) -> Self {
         use glsl::Version::*;
 
-        Some(match self {
+        Some(match value {
             Output::Webgl2 => V3_00Es,
             Output::OpenGl3_3 => V3_30,
             Output::OpenGl_ES => V1_00Es,
@@ -139,7 +132,7 @@ fn spirv_to(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
 }
 
 fn spirv_to_glsl(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
-    let spv = read_spirv(Cursor::new(&spirv[..])).map_err(|e| e.to_string())?;
+    let spv = read_spirv(Cursor::new(spirv)).map_err(|e| e.to_string())?;
     let glsl = compile_spirv_to_glsl(&spv, output)?;
     // println!("{:?} \n{}", output, glsl);
     Ok(ShaderBytes(glsl.as_bytes().to_vec()))
@@ -214,12 +207,12 @@ pub fn read_spirv<R: io::Read + io::Seek>(mut x: R) -> io::Result<Vec<u32>> {
         result.set_len(words);
     }
     const MAGIC_NUMBER: u32 = 0x07230203;
-    if result.len() > 0 && result[0] == MAGIC_NUMBER.swap_bytes() {
+    if !result.is_empty() && result[0] == MAGIC_NUMBER.swap_bytes() {
         for word in &mut result {
             *word = word.swap_bytes();
         }
     }
-    if result.len() == 0 || result[0] != MAGIC_NUMBER {
+    if result.is_empty() || result[0] != MAGIC_NUMBER {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
             "input missing SPIR-V magic number",

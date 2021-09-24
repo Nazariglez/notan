@@ -1,8 +1,3 @@
-use proc_macro::*;
-use quote::quote;
-use syn::{parse_macro_input, Ident, LitStr};
-use syn::{ItemFn, ItemStruct};
-
 #[derive(Copy, Clone)]
 enum GenericType {
     Plugin,
@@ -11,9 +6,9 @@ enum GenericType {
 }
 
 pub(crate) fn process_tokens(input: String) -> String {
-    let generic_type = if input.contains("!") {
+    let generic_type = if input.contains('!') {
         GenericType::Plugin
-    } else if input.contains("$") {
+    } else if input.contains('$') {
         GenericType::Extension
     } else {
         GenericType::None
@@ -108,7 +103,7 @@ fn get_tokens(input: &str) -> Tokens {
     Tokens {
         name,
         params,
-        ret: if r == "" { None } else { Some(r) },
+        ret: if r.is_empty() { None } else { Some(r) },
     }
 }
 
@@ -128,7 +123,7 @@ fn enum_impl_generator(tokens: &Tokens) -> String {
         .ret
         .as_ref()
         .map(|v| format!(" -> {}", v))
-        .unwrap_or("".to_string());
+        .unwrap_or_else(|| "".to_string());
     let callback = enum_callback_generics(&combo(&tokens.params), &tokens.params);
 
     format!(
@@ -179,7 +174,7 @@ fn trait_impl_generator(tokens: &Tokens, gen_type: GenericType) -> String {
         .ret
         .as_ref()
         .map(|v| format!(" -> {}", v))
-        .unwrap_or("".to_string());
+        .unwrap_or_else(|| "".to_string());
 
     let s_type = match gen_type {
         GenericType::Plugin => "Plugin + 'static",
@@ -244,19 +239,18 @@ fn trait_impl_generator(tokens: &Tokens, gen_type: GenericType) -> String {
 
 fn combo(arr: &[String]) -> Vec<Vec<String>> {
     let mut combi: Vec<Vec<String>> = vec![vec![String::from("")]];
-    let mut temp: Vec<String> = vec![];
-    let nn = num::pow::pow(0, 0);
+    let mut temp: Vec<String>;
     let slent = num::pow::pow(2, arr.len());
 
     for i in 0..slent {
         temp = vec![];
-        for j in 0..arr.len() {
+        for (j, value) in arr.iter().enumerate() {
             if (i & num::pow::pow(2, j)) != 0 {
-                temp.push(arr[j].clone());
+                temp.push(value.clone());
             }
         }
 
-        if temp.len() > 0 {
+        if !temp.is_empty() {
             combi.push(temp);
         }
     }
@@ -273,7 +267,8 @@ fn enum_generics(g: &[Vec<String>], r: Option<&String>) -> String {
                 "_{}(Box<dyn Fn({}){}>)",
                 i,
                 gen,
-                r.map(|v| format!(" -> {}", v)).unwrap_or("".to_string())
+                r.map(|v| format!(" -> {}", v))
+                    .unwrap_or_else(|| "".to_string())
             )
         })
         .collect::<Vec<_>>()
