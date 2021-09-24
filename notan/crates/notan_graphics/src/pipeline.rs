@@ -19,8 +19,8 @@ impl Drop for PipelineId {
 #[derive(Debug, Clone)]
 pub struct Pipeline {
     id: Arc<PipelineId>,
-    pub options: PipelineOptions,
     stride: usize,
+    pub options: PipelineOptions,
 }
 
 impl std::cmp::PartialEq for Pipeline {
@@ -98,6 +98,7 @@ impl<'a, 'b> PipelineBuilder<'a, 'b> {
     }
 
     /// Set the shaders from a bytes slice
+    #[allow(clippy::wrong_self_convention)]
     pub fn from_raw(mut self, vertex: &'b [u8], fragment: &'b [u8]) -> Self {
         self.shaders = Some(ShaderKind::Raw { vertex, fragment });
         self

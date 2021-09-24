@@ -1,3 +1,5 @@
+#![allow(clippy::wrong_self_convention)]
+
 use crate::device::{DropManager, ResourceId};
 use crate::Device;
 use notan_math::Rect;
@@ -290,7 +292,6 @@ enum TextureKind<'a> {
     Texture(&'a [u8]),
     Bytes(&'a [u8]),
     EmptyBuffer,
-    RenderTexture,
 }
 
 pub struct TextureBuilder<'a, 'b> {
@@ -356,9 +357,8 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
     }
 
     /// Generate the mipmaps
-    pub fn generate_mipmap(mut self) -> Self {
+    pub fn generate_mipmap(self) -> Self {
         todo!("generate mipmaps");
-        self
     }
 
     pub fn build(self) -> Result<Texture, String> {

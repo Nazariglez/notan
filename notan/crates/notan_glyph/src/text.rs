@@ -113,7 +113,7 @@ pub(crate) fn section_from_text<'a>(font: &Font, from: &Text<'a>) -> Section<'a>
         .with_scale(PxScale::from(from.size))
         .with_font_id(font.id)
         .with_z(z)
-        .with_color(color.to_rgba());
+        .with_color(color.rgba());
 
     Section::default()
         .add_text(glyph_text)

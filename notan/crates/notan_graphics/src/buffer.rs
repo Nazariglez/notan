@@ -173,11 +173,13 @@ impl BufferBuildImpl<f32> for BufferBuilder<'_, f32> {
         } = self;
 
         match usage {
-            BufferUsage::Vertex => device.create_vertex_buffer(data.unwrap_or_else(|| vec![])),
+            BufferUsage::Vertex => {
+                device.create_vertex_buffer(data.unwrap_or_else(std::vec::Vec::new))
+            }
             BufferUsage::Uniform(loc) => device.create_uniform_buffer(
                 loc,
-                &ubo_name.ok_or("Missing UBO name".to_string())?,
-                data.unwrap_or_else(|| vec![]),
+                &ubo_name.ok_or_else(|| "Missing UBO name".to_string())?,
+                data.unwrap_or_else(std::vec::Vec::new),
             ),
             _ => Err("Invalid Buffer Type...".to_string()),
         }
@@ -194,7 +196,9 @@ impl BufferBuildImpl<u32> for BufferBuilder<'_, u32> {
         } = self;
 
         match usage {
-            BufferUsage::Index => device.create_index_buffer(data.unwrap_or_else(|| vec![])),
+            BufferUsage::Index => {
+                device.create_index_buffer(data.unwrap_or_else(std::vec::Vec::new))
+            }
             _ => Err("Invalid Buffer Type...".to_string()),
         }
     }

@@ -68,7 +68,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 fn update_bytes(state: &mut State) {
     for _ in 0..100 {
         let index = state.count * 4;
-        state.bytes[index..index + 4].copy_from_slice(&state.color.to_rgba_u8());
+        state.bytes[index..index + 4].copy_from_slice(&state.color.rgba_u8());
         state.count += 9;
 
         let len = state.bytes.len() / 4;

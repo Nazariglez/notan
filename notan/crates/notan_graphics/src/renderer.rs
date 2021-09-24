@@ -1,6 +1,6 @@
 use crate::buffer::*;
 use crate::commands::*;
-use crate::device::Device;
+
 use crate::pipeline::*;
 use crate::texture::*;
 

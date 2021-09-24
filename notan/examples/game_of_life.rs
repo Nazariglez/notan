@@ -54,7 +54,7 @@ impl State {
 
     fn set_color(&mut self, color: Color, x: usize, y: usize) {
         if let Some(idx) = index(x as _, y as _) {
-            self.current_bytes[idx..idx + 4].copy_from_slice(&color.to_rgba_u8());
+            self.current_bytes[idx..idx + 4].copy_from_slice(&color.rgba_u8());
         }
     }
 }
