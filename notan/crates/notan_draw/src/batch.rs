@@ -1,5 +1,5 @@
 use glam::{Mat3, Vec3};
-use notan_glyph::{Font, OwnedText, Text};
+use notan_glyph::{Font, OwnedText};
 use notan_graphics::prelude::*;
 
 #[derive(Clone, Debug)]

@@ -1,5 +1,5 @@
 use crate::texture::*;
-use crate::{DropManager, ResourceId};
+use crate::{Device, DropManager, ResourceId};
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -53,5 +53,48 @@ impl Deref for RenderTexture {
 
     fn deref(&self) -> &Self::Target {
         &self.texture
+    }
+}
+
+pub struct RenderTextureBuilder<'a> {
+    device: &'a mut Device,
+    info: TextureInfo,
+}
+
+impl<'a> RenderTextureBuilder<'a> {
+    pub fn new(device: &'a mut Device, width: i32, height: i32) -> Self {
+        let info = TextureInfo {
+            width,
+            height,
+            ..Default::default()
+        };
+
+        Self { device, info }
+    }
+
+    /// Enable depth
+    pub fn with_depth(mut self) -> Self {
+        self.info.depth = true;
+        self
+    }
+
+    /// Set the Texture format
+    pub fn with_format(mut self, format: TextureFormat) -> Self {
+        self.info.format = format;
+        self.info.internal_format = format;
+        self
+    }
+
+    /// Set the Texture filter modes
+    pub fn with_filter(mut self, min: TextureFilter, mag: TextureFilter) -> Self {
+        self.info.min_filter = min;
+        self.info.mag_filter = mag;
+        self
+    }
+
+    pub fn build(self) -> Result<RenderTexture, String> {
+        let Self { device, info } = self;
+
+        device.create_render_texture(info)
     }
 }

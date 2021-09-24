@@ -7,6 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+notan_app = { path = "../notan_app" }
 notan_graphics = { path = "../notan_graphics" }
 notan_macro = { path = "../notan_macro" }
 notan_log = { path = "../notan_log" }

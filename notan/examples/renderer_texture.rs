@@ -34,7 +34,7 @@ const FRAG: ShaderSource = notan::fragment_shader! {
     "#
 };
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
@@ -43,7 +43,7 @@ struct State {
     texture: Texture,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup).draw(draw).build()
 }
@@ -52,22 +52,19 @@ fn setup(gfx: &mut Graphics) -> State {
     let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
 
     let pipeline = gfx
-        .create_pipeline(
-            &VERT,
-            &FRAG,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float2),
-            ],
-            PipelineOptions {
-                color_blend: Some(BlendMode::NORMAL),
-                ..Default::default()
-            },
-        )
+        .create_pipeline()
+        .from(&VERT, &FRAG)
+        .vertex_attr(0, VertexFormat::Float3)
+        .vertex_attr(1, VertexFormat::Float2)
+        .with_color_blend(BlendMode::NORMAL)
+        .build()
         .unwrap();
 
-    let image = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
-    let texture = gfx.create_texture(image).unwrap();
+    let texture = gfx
+        .create_texture()
+        .from_image(include_bytes!("assets/ferris.png"))
+        .build()
+        .unwrap();
 
     #[rustfmt::skip]
     let vertices = vec![
@@ -84,18 +81,25 @@ fn setup(gfx: &mut Graphics) -> State {
         1, 2, 3,
     ];
 
-    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
-    let index_buffer = gfx.create_index_buffer(indices).unwrap();
+    let vertex_buffer = gfx
+        .create_vertex_buffer()
+        .with_data(vertices)
+        .build()
+        .unwrap();
 
-    let mut state = State {
+    let index_buffer = gfx
+        .create_index_buffer()
+        .with_data(indices)
+        .build()
+        .unwrap();
+
+    State {
         clear_options,
         pipeline,
         vertex_buffer,
         index_buffer,
         texture,
-    };
-
-    state
+    }
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {

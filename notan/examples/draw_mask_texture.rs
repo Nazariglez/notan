@@ -1,22 +1,26 @@
 use notan::prelude::*;
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     img: Texture,
     count: f32,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup)
+        .set_config(DrawConfig)
         .update(|app: &mut App, state: &mut State| state.count += 60.0 * app.timer.delta_f32())
         .draw(draw)
         .build()
 }
 
 fn setup(gfx: &mut Graphics) -> State {
-    let img = TextureInfo::from_image(include_bytes!("assets/pattern.png")).unwrap();
-    let texture = gfx.create_texture(img).unwrap();
+    let texture = gfx
+        .create_texture()
+        .from_image(include_bytes!("assets/pattern.png"))
+        .build()
+        .unwrap();
     State {
         img: texture,
         count: 1.0,

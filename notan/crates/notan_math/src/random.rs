@@ -1,4 +1,3 @@
-use rand;
 pub use rand::Rng;
 use rand::SeedableRng;
 use rand_pcg::Pcg32;

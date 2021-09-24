@@ -1,7 +1,7 @@
 use notan::app::mouse::MouseButton;
 use notan::prelude::*;
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     font: Font,
     x: f32,
@@ -11,9 +11,13 @@ struct State {
     right: Vec<(f32, f32)>,  // blue
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).update(update).draw(draw).build()
+    notan::init_with(setup)
+        .set_config(DrawConfig)
+        .update(update)
+        .draw(draw)
+        .build()
 }
 
 fn setup(gfx: &mut Graphics) -> State {

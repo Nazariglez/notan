@@ -2,15 +2,16 @@ use notan::app::keyboard::KeyCode;
 use notan::app::Event;
 use notan::prelude::*;
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     font: Font,
     msg: String,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup)
+        .set_config(DrawConfig)
         .event(event)
         .update(update)
         .draw(draw)
@@ -38,7 +39,7 @@ fn event(state: &mut State, event: Event) {
 }
 
 fn update(app: &mut App, state: &mut State) {
-    if app.keyboard.was_pressed(KeyCode::Back) && state.msg.len() > 0 {
+    if app.keyboard.was_pressed(KeyCode::Back) && !state.msg.is_empty() {
         state.msg.pop();
     }
 }

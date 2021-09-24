@@ -1,9 +1,10 @@
 use crate::config::WindowConfig;
-use crate::graphics::DeviceBackend;
+// use crate::graphics::DeviceBackend;
 use crate::{App, EventIterator};
 use downcast_rs::{impl_downcast, Downcast};
 use futures::prelude::*;
 use futures::Future;
+use notan_graphics::DeviceBackend;
 
 /// Closure returned from the backend's initialize method
 pub type InitializeFn<S, R> = dyn FnOnce(App, S, R) -> Result<(), String>;
@@ -43,7 +44,7 @@ pub trait BackendSystem: Backend {
     }
 
     /// Returns the graphics backend implementation
-    fn get_graphics_backend(&self) -> Box<DeviceBackend>;
+    fn get_graphics_backend(&self) -> Box<dyn DeviceBackend>;
 }
 
 /// Represents a window

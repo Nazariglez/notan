@@ -1,23 +1,31 @@
 use notan::prelude::*;
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     texture: Texture,
     font: Font,
     count: f32,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
-    notan::init_with(init).draw(draw).build()
+    notan::init_with(init)
+        .set_config(DrawConfig)
+        .draw(draw)
+        .build()
 }
 
 fn init(gfx: &mut Graphics) -> State {
     let font = gfx
         .create_font(include_bytes!("./assets/Ubuntu-B.ttf"))
         .unwrap();
-    let img = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
-    let texture = gfx.create_texture(img).unwrap();
+
+    let texture = gfx
+        .create_texture()
+        .from_image(include_bytes!("assets/ferris.png"))
+        .build()
+        .unwrap();
+
     State {
         font,
         texture,

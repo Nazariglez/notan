@@ -2,8 +2,7 @@ use crate::to_glow::ToGlow;
 use glow::*;
 use hashbrown::HashMap;
 use notan_graphics::prelude::*;
-use notan_graphics::{Device, DeviceBackend};
-use std::rc::Rc;
+use notan_graphics::DeviceBackend;
 
 mod buffer;
 mod pipeline;
@@ -47,14 +46,28 @@ impl GlowBackend {
         Self::from(gl, &api)
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn new<F>(mut loader_function: F) -> Result<Self, String>
+    #[cfg(all(
+        not(target_arch = "wasm32"),
+        not(target_os = "ios"),
+        not(target_os = "android")
+    ))]
+    pub fn new<F>(loader_function: F) -> Result<Self, String>
     where
         F: FnMut(&str) -> *const std::os::raw::c_void,
     {
         let gl = unsafe { Context::from_loader_function(loader_function) };
 
         Self::from(gl, "opengl")
+    }
+
+    #[cfg(any(target_os = "ios", target_os = "android"))]
+    pub fn new<F>(mut loader_function: F) -> Result<Self, String>
+    where
+        F: FnMut(&str) -> *const std::os::raw::c_void,
+    {
+        let gl = unsafe { Context::from_loader_function(loader_function) };
+
+        Self::from(gl, "opengl_es")
     }
 
     fn from(gl: Context, api: &str) -> Result<Self, String> {
@@ -66,9 +79,9 @@ impl GlowBackend {
         };
 
         let limits = unsafe {
-            let mut limits = Limits::default();
-            limits.max_texture_size = gl.get_parameter_i32(glow::MAX_TEXTURE_SIZE) as _;
-            limits
+            Limits {
+                max_texture_size: gl.get_parameter_i32(glow::MAX_TEXTURE_SIZE) as _,
+            }
         };
 
         Ok(Self {
@@ -337,7 +350,6 @@ impl DeviceBackend for GlowBackend {
 
     fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String> {
         let inner_texture = InnerTexture::new(&self.gl, info)?;
-        //TODO bind?
         self.texture_count += 1;
         self.textures.insert(self.texture_count, inner_texture);
         Ok(self.texture_count)
@@ -371,7 +383,6 @@ impl DeviceBackend for GlowBackend {
                     width,
                     height,
                 } => self.viewport(*x, *y, *width, *height, self.dpi),
-                _ => {}
             }
         });
     }
@@ -383,7 +394,6 @@ impl DeviceBackend for GlowBackend {
             ResourceId::Buffer(id) => self.clean_buffer(*id),
             ResourceId::Texture(id) => self.clean_texture(*id),
             ResourceId::RenderTexture(id) => self.clean_render_target(*id),
-            _ => {}
         })
     }
 
@@ -410,7 +420,7 @@ impl DeviceBackend for GlowBackend {
                         opts.height,
                         opts.format.to_glow(), // 3d texture needs another value?
                         glow::UNSIGNED_BYTE,   // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
-                        PixelUnpackData::Slice(&opts.bytes),
+                        PixelUnpackData::Slice(opts.bytes),
                     );
                     // todo unbind texture?
                     Ok(())

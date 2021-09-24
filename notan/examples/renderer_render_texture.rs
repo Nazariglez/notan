@@ -34,7 +34,7 @@ const FRAG: ShaderSource = notan::fragment_shader! {
     "#
 };
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
@@ -46,7 +46,7 @@ struct State {
     texture_initiated: bool,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup).draw(draw).build()
 }
@@ -55,40 +55,26 @@ fn setup(gfx: &mut Graphics) -> State {
     let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
 
     let pipeline = gfx
-        .create_pipeline(
-            &VERT,
-            &FRAG,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float2),
-            ],
-            PipelineOptions {
-                color_blend: Some(BlendMode::NORMAL),
-                ..Default::default()
-            },
-        )
+        .create_pipeline()
+        .from(&VERT, &FRAG)
+        .vertex_attr(0, VertexFormat::Float3)
+        .vertex_attr(1, VertexFormat::Float2)
+        .with_color_blend(BlendMode::NORMAL)
+        .build()
         .unwrap();
 
-    let image = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
-    let texture = gfx.create_texture(image).unwrap();
+    let texture = gfx
+        .create_texture()
+        .from_image(include_bytes!("assets/ferris.png"))
+        .build()
+        .unwrap();
 
-    let render_texture = gfx
-        .create_render_texture(TextureInfo::render_texture(
-            false,
-            texture.width() as _,
-            texture.height() as _,
-        ))
-        .unwrap();
-    let render_texture2 = gfx
-        .create_render_texture(TextureInfo::render_texture(
-            false,
-            texture.width() as _,
-            texture.height() as _,
-        ))
-        .unwrap();
+    let (width, height) = (texture.width() as i32, texture.height() as i32);
+    let render_texture = gfx.create_render_texture(width, height).build().unwrap();
+    let render_texture2 = gfx.create_render_texture(width, height).build().unwrap();
 
     #[rustfmt::skip]
-        let vertices = vec![
+    let vertices = vec![
         //pos               //coords
         0.9,  0.9, 0.0,     1.0, 1.0,
         0.9, -0.9, 0.0,     1.0, 0.0,
@@ -97,13 +83,22 @@ fn setup(gfx: &mut Graphics) -> State {
     ];
 
     #[rustfmt::skip]
-        let indices = vec![
+    let indices = vec![
         0, 1, 3,
         1, 2, 3,
     ];
 
-    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
-    let index_buffer = gfx.create_index_buffer(indices).unwrap();
+    let vertex_buffer = gfx
+        .create_vertex_buffer()
+        .with_data(vertices)
+        .build()
+        .unwrap();
+
+    let index_buffer = gfx
+        .create_index_buffer()
+        .with_data(indices)
+        .build()
+        .unwrap();
 
     State {
         clear_options,

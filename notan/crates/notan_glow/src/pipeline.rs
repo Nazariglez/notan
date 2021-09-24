@@ -1,7 +1,6 @@
 use crate::to_glow::*;
 use glow::*;
 use notan_graphics::prelude::*;
-use std::rc::Rc;
 
 pub(crate) struct InnerPipeline {
     pub vertex: Shader,
@@ -50,7 +49,7 @@ impl InnerPipeline {
             set_depth_stencil(gl, options);
             set_color_mask(gl, options);
             set_culling(gl, options);
-            set_blend_mode(gl, &options);
+            set_blend_mode(gl, options);
         }
     }
 }
@@ -112,21 +111,19 @@ impl InnerAttr {
 unsafe fn set_stencil(gl: &Context, options: &PipelineOptions) {
     if should_disable_stencil(&options.stencil) {
         gl.disable(glow::STENCIL_TEST);
-    } else {
-        if let Some(opts) = options.stencil {
-            gl.enable(glow::STENCIL_TEST);
-            gl.stencil_mask(opts.write_mask);
-            gl.stencil_op(
-                opts.stencil_fail.to_glow(),
-                opts.depth_fail.to_glow(),
-                opts.pass.to_glow(),
-            );
-            gl.stencil_func(
-                opts.compare.to_glow().unwrap_or(glow::ALWAYS),
-                opts.reference as _,
-                opts.read_mask,
-            );
-        }
+    } else if let Some(opts) = options.stencil {
+        gl.enable(glow::STENCIL_TEST);
+        gl.stencil_mask(opts.write_mask);
+        gl.stencil_op(
+            opts.stencil_fail.to_glow(),
+            opts.depth_fail.to_glow(),
+            opts.pass.to_glow(),
+        );
+        gl.stencil_func(
+            opts.compare.to_glow().unwrap_or(glow::ALWAYS),
+            opts.reference as _,
+            opts.read_mask,
+        );
     }
 }
 
@@ -274,7 +271,7 @@ fn create_pipeline(
 fn create_shader(gl: &Context, typ: u32, source: &str) -> Result<Shader, String> {
     unsafe {
         let shader = gl.create_shader(typ)?;
-        gl.shader_source(shader, &source);
+        gl.shader_source(shader, source);
         gl.compile_shader(shader);
 
         let success = gl.get_shader_compile_status(shader);

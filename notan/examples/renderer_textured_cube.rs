@@ -38,7 +38,7 @@ const FRAG: ShaderSource = notan::fragment_shader! {
     "#
 };
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
@@ -49,7 +49,7 @@ struct State {
     texture: Texture,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup).draw(draw).build()
 }
@@ -62,25 +62,22 @@ fn setup(gfx: &mut Graphics) -> State {
     };
 
     let pipeline = gfx
-        .create_pipeline(
-            &VERT,
-            &FRAG,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float2),
-            ],
-            PipelineOptions {
-                depth_stencil: DepthStencil {
-                    write: true,
-                    compare: CompareMode::Less,
-                },
-                ..Default::default()
-            },
-        )
+        .create_pipeline()
+        .from(&VERT, &FRAG)
+        .vertex_attr(0, VertexFormat::Float3)
+        .vertex_attr(1, VertexFormat::Float2)
+        .with_depth_stencil(DepthStencil {
+            write: true,
+            compare: CompareMode::Less,
+        })
+        .build()
         .unwrap();
 
-    let image = TextureInfo::from_image(include_bytes!("assets/cube.png")).unwrap();
-    let texture = gfx.create_texture(image).unwrap();
+    let texture = gfx
+        .create_texture()
+        .from_image(include_bytes!("assets/cube.png"))
+        .build()
+        .unwrap();
 
     #[rustfmt::skip]
     let vertices = vec![
@@ -119,7 +116,7 @@ fn setup(gfx: &mut Graphics) -> State {
         -1.0,1.0,1.0,       0.335973,0.335903,
         1.0,1.0,1.0,        0.667969,0.671889,
         -1.0,1.0,1.0,       1.000004,0.671847,
-        1.0,-1.0,1.0,       0.667979,0.3358510
+        1.0,-1.0,1.0,       0.667979,0.335_851
     ];
 
     let projection = glam::Mat4::perspective_rh_gl(45.0, 4.0 / 3.0, 0.1, 100.0);
@@ -128,14 +125,21 @@ fn setup(gfx: &mut Graphics) -> State {
         glam::Vec3::new(0.0, 0.0, 0.0),
         glam::Vec3::new(0.0, 1.0, 0.0),
     );
-    let mvp = glam::Mat4::identity() * projection * view;
+    let mvp = glam::Mat4::IDENTITY * projection * view;
 
-    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
-    let uniform_buffer = gfx
-        .create_uniform_buffer(0, "Locals", mvp.to_cols_array().to_vec())
+    let vertex_buffer = gfx
+        .create_vertex_buffer()
+        .with_data(vertices)
+        .build()
         .unwrap();
 
-    let mut state = State {
+    let uniform_buffer = gfx
+        .create_uniform_buffer(0, "Locals")
+        .with_data(mvp.to_cols_array().to_vec())
+        .build()
+        .unwrap();
+
+    State {
         clear_options,
         pipeline,
         vertex_buffer,
@@ -143,12 +147,10 @@ fn setup(gfx: &mut Graphics) -> State {
         texture,
         mvp,
         angle: 0.0,
-    };
-
-    state
+    }
 }
 
-fn draw(gfx: &mut Graphics, state: &mut State) {
+fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
     let count = state.vertex_buffer.data().len() / state.pipeline.offset();
@@ -166,7 +168,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
     gfx.render(&renderer);
 
-    state.angle += 0.01
+    state.angle += 0.6 * app.timer.delta_f32();
 }
 
 fn rotated_matrix(base: glam::Mat4, angle: f32) -> [f32; 16] {

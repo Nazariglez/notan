@@ -1,13 +1,16 @@
 use notan::prelude::*;
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     font: Font,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).draw(draw).build()
+    notan::init_with(setup)
+        .set_config(DrawConfig)
+        .draw(draw)
+        .build()
 }
 
 fn setup(gfx: &mut Graphics) -> State {

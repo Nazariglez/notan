@@ -1,14 +1,14 @@
 use crate::font::Font;
 use crate::font_vertex::*;
-use crate::renderer::GlyphRenderer;
+use crate::pipeline::GlyphPipeline;
 use crate::text::{section_from_text, Text};
 use glyph_brush::{ab_glyph::*, *};
-use notan_graphics::prelude::*;
+use notan_app::graphics::*;
 use std::sync::Arc;
 
 /// The FontManager take care of process the text and prepare them to renderer it on an inner texture
 #[derive(Debug)]
-pub struct GlyphManager {
+pub struct GlyphPlugin {
     /// Glyph Brush cache
     pub cache: GlyphBrush<FontVertex, Extra, FontRef<'static>>,
 
@@ -16,7 +16,7 @@ pub struct GlyphManager {
     pub texture: Texture,
 }
 
-impl GlyphManager {
+impl GlyphPlugin {
     /// Creates a new manager using a custom Render
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let cache = GlyphBrushBuilder::using_fonts::<FontRef>(vec![]).build();
@@ -46,7 +46,7 @@ impl GlyphManager {
     pub fn update(
         &mut self,
         device: &mut Device,
-        render: &mut GlyphRenderer,
+        render: &mut dyn GlyphPipeline,
     ) -> Result<(), String> {
         let action = loop {
             let mut result: Result<(), String> = Ok(());
@@ -69,7 +69,7 @@ impl GlyphManager {
                             width,
                             height,
                             format: TextureFormat::Red,
-                            bytes: &data,
+                            bytes: data,
                         },
                     );
                 },
@@ -109,6 +109,8 @@ impl GlyphManager {
         Ok(())
     }
 }
+
+impl notan_app::Plugin for GlyphPlugin {}
 
 fn create_texture(device: &mut Device, ww: u32, hh: u32) -> Result<Texture, String> {
     let size = (ww * hh) as usize;

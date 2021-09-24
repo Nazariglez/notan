@@ -1,6 +1,7 @@
 use crate::assets::Loader;
 use crate::graphics::Graphics;
-use crate::graphics::{Texture, TextureInfo};
+// use crate::graphics::{Texture, TextureInfo};
+use notan_graphics::Texture;
 
 pub fn create_texture_parser() -> Loader {
     Loader::new()
@@ -9,8 +10,7 @@ pub fn create_texture_parser() -> Loader {
 }
 
 fn parse_image(id: &str, data: Vec<u8>, gfx: &mut Graphics) -> Result<Texture, String> {
-    let info = TextureInfo::from_image(&data)?;
-    let texture = gfx.create_texture(info)?;
+    let texture = gfx.create_texture().from_image(&data).build()?;
     notan_log::debug!("Asset '{}' parsed as Texture", id);
     Ok(texture)
 }

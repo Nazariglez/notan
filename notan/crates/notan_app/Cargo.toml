@@ -11,8 +11,6 @@ hashbrown = "0.9"
 notan_macro = { path = "../notan_macro" }
 notan_log = { path = "../notan_log" }
 notan_graphics = { path = "../notan_graphics" }
-notan_draw = { path = "../notan_draw" }
-notan_glyph = { path = "../notan_glyph", optional = true }
 notan_utils = { path = "../notan_utils" }
 downcast-rs = "1.2"
 indexmap = "1.6"
@@ -21,4 +19,3 @@ platter = {version = "0.1.4", features = ["web-sys"] }
 parking_lot =  { version = "0.11", features = ["wasm-bindgen"] }
 
 [features]
-glyphs = ["notan_glyph"]

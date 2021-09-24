@@ -1,3 +1,4 @@
+use notan::draw::create_image_pipeline;
 use notan::prelude::*;
 
 //language=glsl
@@ -26,29 +27,42 @@ const FRAGMENT: ShaderSource = notan::fragment_shader! {
 "#
 };
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
-    img: Texture,
+    texture: Texture,
     pipeline: Pipeline,
     uniforms: Buffer<f32>,
     count: f32,
     multi: f32,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
-    notan::init_with(init).update(update).draw(draw).build()
+    notan::init_with(init)
+        .set_config(DrawConfig)
+        .update(update)
+        .draw(draw)
+        .build()
 }
 
 fn init(gfx: &mut Graphics) -> State {
-    let img = TextureInfo::from_image(include_bytes!("assets/ferris.png")).unwrap();
-    let texture = gfx.create_texture(img).unwrap();
+    let texture = gfx
+        .create_texture()
+        .from_image(include_bytes!("assets/ferris.png"))
+        .build()
+        .unwrap();
+
+    let pipeline = create_image_pipeline(gfx, Some(&FRAGMENT)).unwrap();
+    let uniforms = gfx
+        .create_uniform_buffer(1, "TextureInfo")
+        .with_data(vec![5.0])
+        .build()
+        .unwrap();
+
     State {
-        img: texture,
-        pipeline: gfx.create_draw_image_pipeline(Some(&FRAGMENT)).unwrap(),
-        uniforms: gfx
-            .create_uniform_buffer(1, "TextureInfo", vec![5.0])
-            .unwrap(),
+        texture,
+        pipeline,
+        uniforms,
         count: 1.0,
         multi: 1.0,
     }
@@ -75,15 +89,15 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     draw.clear(Color::BLACK);
 
     // Image without a custom shader
-    draw.image(&state.img).position(10.0, 200.0);
+    draw.image(&state.texture).position(10.0, 200.0);
 
-    // Set the custom pipeline for imagec
+    // Set the custom pipeline for image
     draw.image_pipeline()
         .pipeline(&state.pipeline)
         .uniform_buffer(&state.uniforms);
 
-    draw.image(&state.img)
-        .position(10.0 + state.img.width() + 40.0, 200.0);
+    draw.image(&state.texture)
+        .position(10.0 + state.texture.width() + 40.0, 200.0);
 
     draw.image_pipeline().remove();
 

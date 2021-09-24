@@ -1,12 +1,15 @@
+#![allow(clippy::type_complexity)]
+
 use crate::assets::{AssetManager, Loader};
 use crate::config::*;
 use crate::graphics::Graphics;
 use crate::handlers::{
-    AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler, SetupCallback,
+    AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler,
+    ExtensionHandler, PluginHandler, SetupCallback,
 };
 use crate::parsers::*;
 use crate::plugins::*;
-use crate::{App, Backend, BackendSystem};
+use crate::{App, Backend, BackendSystem, GfxExtension, GfxRenderer};
 use notan_log as log;
 
 pub use crate::handlers::SetupHandler;
@@ -35,6 +38,11 @@ pub struct AppBuilder<S, B> {
     draw_callback: Option<DrawCallback<S>>,
     event_callback: Option<EventCallback<S>>,
 
+    plugin_callbacks:
+        Vec<Box<dyn FnOnce(&mut App, &mut AssetManager, &mut Graphics, &mut Plugins)>>,
+    extension_callbacks:
+        Vec<Box<dyn FnOnce(&mut App, &mut AssetManager, &mut Graphics, &mut Plugins)>>,
+
     pub(crate) window: WindowConfig,
 }
 
@@ -49,14 +57,16 @@ where
         H: SetupHandler<S, Params>,
     {
         let builder = AppBuilder {
-            setup_callback: setup.callback(),
             backend,
             plugins: Default::default(),
             assets: AssetManager::new(),
+            setup_callback: setup.callback(),
             init_callback: None,
             update_callback: None,
             draw_callback: None,
             event_callback: None,
+            plugin_callbacks: vec![],
+            extension_callbacks: vec![],
             window: Default::default(),
         };
 
@@ -112,9 +122,44 @@ where
     }
 
     /// Sets a plugin that can alter or control the app
-    pub fn set_plugin<P: Plugin>(mut self, mut plugin: P) -> Self {
+    pub fn add_plugin<P: Plugin + 'static>(mut self, mut plugin: P) -> Self {
         plugin.build(&mut self);
-        self.plugins.set(plugin);
+        self.plugins.add(plugin);
+        self
+    }
+
+    /// Adds a plugin using parameters from the app
+    pub fn add_plugin_with<P, H, Params>(mut self, handler: H) -> Self
+    where
+        P: Plugin + 'static,
+        H: PluginHandler<P, Params> + 'static,
+    {
+        let cb = move |app: &mut App,
+                       assets: &mut AssetManager,
+                       gfx: &mut Graphics,
+                       plugins: &mut Plugins| {
+            let p = handler.callback().exec(app, assets, gfx, plugins);
+            plugins.add(p);
+        };
+        self.plugin_callbacks.push(Box::new(cb));
+        self
+    }
+
+    /// Adds an extension using parameters from the app
+    pub fn add_graphic_ext<R, E, H, Params>(mut self, handler: H) -> Self
+    where
+        R: GfxRenderer,
+        E: GfxExtension<R> + 'static,
+        H: ExtensionHandler<R, E, Params> + 'static,
+    {
+        let cb = move |app: &mut App,
+                       assets: &mut AssetManager,
+                       gfx: &mut Graphics,
+                       plugins: &mut Plugins| {
+            let e = handler.callback().exec(app, assets, gfx, plugins);
+            gfx.add_ext(e);
+        };
+        self.extension_callbacks.push(Box::new(cb));
         self
     }
 
@@ -136,6 +181,8 @@ where
             update_callback,
             draw_callback,
             event_callback,
+            mut plugin_callbacks,
+            mut extension_callbacks,
             window,
             ..
         } = self;
@@ -152,8 +199,22 @@ where
         graphics.set_size(width, height);
         graphics.set_dpi(win_dpi);
 
+        // add graphics extensions
+        extension_callbacks.reverse();
+        while let Some(cb) = extension_callbacks.pop() {
+            cb(&mut app, &mut assets, &mut graphics, &mut plugins);
+        }
+
+        // add plguins
+        plugin_callbacks.reverse();
+        while let Some(cb) = plugin_callbacks.pop() {
+            cb(&mut app, &mut assets, &mut graphics, &mut plugins);
+        }
+
+        // create the state
         let mut state = setup_callback.exec(&mut app, &mut assets, &mut graphics, &mut plugins);
 
+        // init callback from plugins
         let _ = plugins.init(&mut app).map(|flow| match flow {
             AppFlow::Next => Ok(()),
             _ => Err(format!(
@@ -162,6 +223,7 @@ where
             )),
         })?;
 
+        // app init life event
         if let Some(cb) = &init_callback {
             cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
         }
@@ -174,7 +236,7 @@ where
             }
 
             let win_dpi = app.window().dpi();
-            if graphics.dpi() != win_dpi {
+            if (graphics.dpi() - win_dpi).abs() > f64::EPSILON {
                 graphics.set_dpi(win_dpi);
             }
 

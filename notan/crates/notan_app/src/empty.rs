@@ -1,6 +1,6 @@
 use crate::config::WindowConfig;
-use crate::graphics::{Device, DeviceBackend, RenderTexture};
-use crate::{App, Backend, BackendSystem, EventIterator, InitializeFn, LoadFileFn, WindowBackend};
+// use crate::graphics::{Device, DeviceBackend, RenderTexture};
+use crate::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 use notan_graphics::prelude::*;
 
 #[derive(Default)]
@@ -29,7 +29,6 @@ impl WindowBackend for EmptyWindowBackend {
 
 #[derive(Default)]
 pub struct EmptyBackend {
-    exit_requested: bool,
     window: EmptyWindowBackend,
 }
 
@@ -48,9 +47,7 @@ impl Backend for EmptyBackend {
         Default::default()
     }
 
-    fn exit(&mut self) {
-        self.exit_requested = true;
-    }
+    fn exit(&mut self) {}
 
     fn system_timestamp(&self) -> u64 {
         0
@@ -69,7 +66,7 @@ impl BackendSystem for EmptyBackend {
         }))
     }
 
-    fn get_graphics_backend(&self) -> Box<DeviceBackend> {
+    fn get_graphics_backend(&self) -> Box<dyn DeviceBackend> {
         Box::new(EmptyDeviceBackend::default())
     }
 }
@@ -86,10 +83,10 @@ impl DeviceBackend for EmptyDeviceBackend {
 
     fn create_pipeline(
         &mut self,
-        vertex_source: &[u8],
-        fragment_source: &[u8],
-        vertex_attrs: &[VertexAttr],
-        options: PipelineOptions,
+        _vertex_source: &[u8],
+        _fragment_source: &[u8],
+        _vertex_attrs: &[VertexAttr],
+        _options: PipelineOptions,
     ) -> Result<i32, String> {
         self.id_count += 1;
         Ok(self.id_count)
@@ -105,7 +102,7 @@ impl DeviceBackend for EmptyDeviceBackend {
         Ok(self.id_count)
     }
 
-    fn create_uniform_buffer(&mut self, _slot: u32, name: &str) -> Result<i32, String> {
+    fn create_uniform_buffer(&mut self, _slot: u32, _name: &str) -> Result<i32, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }
@@ -119,7 +116,7 @@ impl DeviceBackend for EmptyDeviceBackend {
         Ok(self.id_count)
     }
 
-    fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String> {
+    fn create_texture(&mut self, _info: &TextureInfo) -> Result<i32, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }
@@ -134,11 +131,11 @@ impl DeviceBackend for EmptyDeviceBackend {
         notan_log::info!("{:?}", to_clean);
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {}
+    fn set_size(&mut self, _width: i32, _height: i32) {}
 
-    fn set_dpi(&mut self, scale_factor: f64) {}
+    fn set_dpi(&mut self, _scale_factor: f64) {}
 
-    fn update_texture(&mut self, texture: i32, opts: &TextureUpdate) -> Result<(), String> {
+    fn update_texture(&mut self, _texture: i32, _opts: &TextureUpdate) -> Result<(), String> {
         Ok(())
     }
 }

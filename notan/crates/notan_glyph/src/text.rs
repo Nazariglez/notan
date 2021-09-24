@@ -1,7 +1,8 @@
 use crate::font::Font;
 use glyph_brush::Text as GlyphText;
 use glyph_brush::{ab_glyph::*, *};
-use notan_graphics::color::Color;
+// use notan_graphics::color::Color;
+use notan_app::graphics::color::Color;
 
 /// Represents a Text object with options
 #[derive(Debug, Clone)]
@@ -112,7 +113,7 @@ pub(crate) fn section_from_text<'a>(font: &Font, from: &Text<'a>) -> Section<'a>
         .with_scale(PxScale::from(from.size))
         .with_font_id(font.id)
         .with_z(z)
-        .with_color(color.to_rgba());
+        .with_color(color.rgba());
 
     Section::default()
         .add_text(glyph_text)

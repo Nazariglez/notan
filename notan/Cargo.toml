@@ -12,20 +12,21 @@ notan_log = { path = "./crates/notan_log" }
 notan_app = { path = "./crates/notan_app" }
 notan_macro = { path = "crates/notan_macro" }
 notan_math = { path = "./crates/notan_math" }
-notan_glyph = { path = "./crates/notan_glyph", optional = true }
 notan_graphics = { path = "./crates/notan_graphics" }
-notan_draw = { path = "./crates/notan_draw" }
-notan_backend = { path = "crates/notan_backend", optional = true }
 notan_utils = { path = "./crates/notan_utils" }
+notan_glyph = { path = "./crates/notan_glyph", optional = true }
+notan_draw = { path = "./crates/notan_draw", optional = true }
+notan_backend = { path = "crates/notan_backend", optional = true }
 
 [workspace]
 members = ["crates/*"]
 
 [features]
-default = ["default_backend", "log_enabled", "glyphs"]
+default = ["default_backend", "log_enabled", "draw", "glyphs"]
 log_enabled = []
 default_backend = ["notan_backend"]
-glyphs = ["notan_glyph", "notan_app/glyphs"]
+glyphs = ["notan_glyph"]
+draw = ["notan_draw"]
 
 [dev-dependencies]
 wasm-bindgen = "0.2"

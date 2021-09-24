@@ -689,6 +689,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "getrandom"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fcd999463524c52659517fe2cea98493cfe485d10565e7b0fb07dbba7ad2753"
+dependencies = [
+ "cfg-if 1.0.0",
+ "js-sys",
+ "libc",
+ "wasi 0.10.0+wasi-snapshot-preview1",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "gif"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1270,8 +1283,6 @@ dependencies = [
  "futures",
  "hashbrown",
  "indexmap",
- "notan_draw",
- "notan_glyph",
  "notan_graphics",
  "notan_log",
  "notan_macro",
@@ -1294,6 +1305,7 @@ version = "0.1.0"
 dependencies = [
  "glam 0.13.0",
  "lyon",
+ "notan_app",
  "notan_glyph",
  "notan_graphics",
  "notan_log",
@@ -1321,7 +1333,7 @@ version = "0.1.0"
 dependencies = [
  "glam 0.16.0",
  "glyph_brush",
- "notan_graphics",
+ "notan_app",
  "notan_log",
  "notan_macro",
 ]
@@ -1367,6 +1379,7 @@ dependencies = [
 name = "notan_math"
 version = "0.1.0"
 dependencies = [
+ "getrandom 0.2.3",
  "rand",
  "rand_pcg",
 ]
@@ -1401,6 +1414,7 @@ dependencies = [
  "glutin",
  "notan_app",
  "notan_glow",
+ "notan_log",
  "winit",
 ]
 
@@ -1552,9 +1566,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.4.1"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "260e51e7efe62b592207e9e13a68e43692a7a279171d6ba57abd208bf23645ad"
+checksum = "692fcb63b64b1758029e0a96ee63e049ce8c5948587f2f7208df04625e5f6b56"
 
 [[package]]
 name = "ordered-float"
@@ -1737,7 +1751,7 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a6b1679d49b24bbfe0c803429aa1874472f50d9b363131f0e89fc356b544d03"
 dependencies = [
- "getrandom",
+ "getrandom 0.1.15",
  "libc",
  "rand_chacha",
  "rand_core",
@@ -1760,7 +1774,7 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90bde5296fc891b0cef12a6d03ddccc162ce7b2aff54160af9338f8d40df6d19"
 dependencies = [
- "getrandom",
+ "getrandom 0.1.15",
 ]
 
 [[package]]

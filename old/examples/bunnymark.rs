@@ -1,4 +1,5 @@
 use nae::prelude::*;
+use notan::draw::*;
 
 struct Bunny {
     x: f32,

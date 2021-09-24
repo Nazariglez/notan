@@ -9,6 +9,7 @@ use crate::draw::Draw;
 pub use image::*;
 pub use nine_slice::*;
 use notan_graphics::Texture;
+pub use painter::create_image_pipeline;
 pub(crate) use painter::*;
 
 pub trait DrawImages {

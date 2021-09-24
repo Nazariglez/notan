@@ -93,31 +93,31 @@ impl Color {
 
     #[inline(always)]
     /// Returns an array with the r, g, b, a values
-    pub const fn to_rgba(&self) -> [f32; 4] {
+    pub const fn rgba(&self) -> [f32; 4] {
         [self.r, self.g, self.b, self.a]
     }
 
     #[inline(always)]
     /// Returns an array with the r, g, b values
-    pub const fn to_rgb(&self) -> [f32; 3] {
+    pub const fn rgb(&self) -> [f32; 3] {
         [self.r, self.g, self.b]
     }
 
     #[inline(always)]
     /// Returns the hexadecimal representation of the color like 0xRRGGBBAA
-    pub fn to_hex(&self) -> u32 {
+    pub fn hex(&self) -> u32 {
         rgba_to_hex(self.r, self.g, self.b, self.a)
     }
 
     #[inline(always)]
     /// Returns the hexadecimal representantion of the colos as string like #RRGGBBAA
-    pub fn to_hex_string(&self) -> String {
-        hex_to_string(self.to_hex())
+    pub fn hex_string(&self) -> String {
+        hex_to_string(self.hex())
     }
 
     #[inline(always)]
     /// Returns byte representation of the color
-    pub fn to_rgba_u8(&self) -> [u8; 4] {
+    pub fn rgba_u8(&self) -> [u8; 4] {
         let r = (self.r * 255.0) as _;
         let g = (self.g * 255.0) as _;
         let b = (self.b * 255.0) as _;
@@ -128,13 +128,13 @@ impl Color {
 
 impl From<Color> for [u8; 4] {
     fn from(c: Color) -> Self {
-        c.to_rgba_u8()
+        c.rgba_u8()
     }
 }
 
 impl From<Color> for [f32; 4] {
     fn from(c: Color) -> Self {
-        c.to_rgba()
+        c.rgba()
     }
 }
 

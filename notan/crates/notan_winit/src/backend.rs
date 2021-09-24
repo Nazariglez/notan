@@ -1,15 +1,11 @@
 use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse};
-use glutin::event::ElementState;
+
 use glutin::event_loop::ControlFlow;
-use notan_app::buffer::VertexAttr;
-use notan_app::commands::Commands;
 use notan_app::config::WindowConfig;
-use notan_app::graphics::pipeline::PipelineOptions;
-use notan_app::prelude::mouse::MouseButton;
+
 use notan_app::{
-    App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, LoadFileFn,
-    ResourceId, TextureInfo, TextureUpdate, WindowBackend,
+    App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, WindowBackend,
 };
 use winit::event::{Event as WEvent, WindowEvent};
 use winit::event_loop::EventLoop;
@@ -124,7 +120,10 @@ impl BackendSystem for WinitBackend {
                         b.window.as_mut().unwrap().window().request_redraw();
                     }
                     WEvent::RedrawRequested(_) => {
-                        cb(&mut app, &mut state);
+                        if let Err(e) = cb(&mut app, &mut state) {
+                            notan_log::error!("{}", e);
+                        }
+
                         backend(&mut app).window.as_mut().unwrap().swap_buffers();
                     }
                     _ => {}
@@ -138,7 +137,7 @@ impl BackendSystem for WinitBackend {
         }))
     }
 
-    fn get_graphics_backend(&self) -> Box<DeviceBackend> {
+    fn get_graphics_backend(&self) -> Box<dyn DeviceBackend> {
         let ctx = &self.window.as_ref().unwrap().gl_ctx;
         let backend =
             notan_glow::GlowBackend::new(|s| ctx.get_proc_address(s) as *const _).unwrap();

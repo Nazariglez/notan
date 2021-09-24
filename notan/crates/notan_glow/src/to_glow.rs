@@ -1,4 +1,3 @@
-use glow::*;
 use notan_graphics::prelude::*;
 
 //TODO use Into<u32> and Into<Option<u32>>?

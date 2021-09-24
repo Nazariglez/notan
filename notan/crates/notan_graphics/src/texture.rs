@@ -1,4 +1,7 @@
+#![allow(clippy::wrong_self_convention)]
+
 use crate::device::{DropManager, ResourceId};
+use crate::Device;
 use notan_math::Rect;
 use std::sync::Arc;
 
@@ -117,7 +120,7 @@ impl TextureInfo {
         })
     }
 
-    pub fn bytes_per_pixel(&self) -> usize {
+    pub fn bytes_per_pixel(&self) -> u8 {
         use TextureFormat::*;
         match (self.format, self.internal_format) {
             (Red, R8) => 1,
@@ -270,10 +273,11 @@ impl std::cmp::PartialEq for Texture {
     }
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TextureFormat {
-    Rgba,
-    Red,
+    Rgba, //rgba32
+    Red,  //r32
     R8,
     Depth,
 }
@@ -282,4 +286,204 @@ pub enum TextureFormat {
 pub enum TextureFilter {
     Linear,
     Nearest,
+}
+
+enum TextureKind<'a> {
+    Texture(&'a [u8]),
+    Bytes(&'a [u8]),
+    EmptyBuffer,
+}
+
+pub struct TextureBuilder<'a, 'b> {
+    device: &'a mut Device,
+    kind: Option<TextureKind<'b>>,
+    info: TextureInfo,
+}
+
+impl<'a, 'b> TextureBuilder<'a, 'b> {
+    pub fn new(device: &'a mut Device) -> Self {
+        Self {
+            device,
+            info: Default::default(),
+            kind: None,
+        }
+    }
+
+    /// Creates a Texture from an image
+    pub fn from_image(mut self, bytes: &'b [u8]) -> Self {
+        self.kind = Some(TextureKind::Texture(bytes));
+        self
+    }
+
+    /// Creates a Texture from a buffer of pixels
+    pub fn from_bytes(mut self, bytes: &'b [u8], width: i32, height: i32) -> Self {
+        self.kind = Some(TextureKind::Bytes(bytes));
+        self.info.width = width;
+        self.info.height = height;
+        self
+    }
+
+    /// Creates a buffer for the size passed in and creates a Texture with it
+    pub fn from_empty_buffer(mut self, width: i32, height: i32) -> Self {
+        self.kind = Some(TextureKind::EmptyBuffer);
+        self.with_size(width, height)
+    }
+
+    /// Set the size of the texture (ignored if used with `from_image`, image size will be used instead)
+    pub fn with_size(mut self, width: i32, height: i32) -> Self {
+        self.info.width = width;
+        self.info.height = height;
+        self
+    }
+
+    /// Enable depth
+    pub fn with_depth(mut self) -> Self {
+        self.info.depth = true;
+        self
+    }
+
+    /// Set the Texture format (ignored if used with `from_image`, Rgba will be used instead )
+    pub fn with_format(mut self, format: TextureFormat) -> Self {
+        self.info.format = format;
+        self.info.internal_format = format; // todo check this, worth to allow set the internal_format independently?
+        self
+    }
+
+    /// Set the Texture filter modes
+    pub fn with_filter(mut self, min: TextureFilter, mag: TextureFilter) -> Self {
+        self.info.min_filter = min;
+        self.info.mag_filter = mag;
+        self
+    }
+
+    /// Generate the mipmaps
+    pub fn generate_mipmap(self) -> Self {
+        todo!("generate mipmaps");
+    }
+
+    pub fn build(self) -> Result<Texture, String> {
+        let TextureBuilder {
+            mut info,
+            device,
+            kind,
+        } = self;
+
+        match kind {
+            Some(TextureKind::Texture(bytes)) => {
+                let data = image::load_from_memory(bytes)
+                    .map_err(|e| e.to_string())?
+                    .to_rgba8();
+
+                info.bytes = Some(data.to_vec());
+                info.format = TextureFormat::Rgba;
+                info.internal_format = TextureFormat::Rgba;
+                info.width = data.width() as _;
+                info.height = data.height() as _;
+            }
+            Some(TextureKind::Bytes(bytes)) => {
+                #[cfg(debug_assertions)]
+                {
+                    let size = info.width * info.height * (info.bytes_per_pixel() as i32);
+                    debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, info.bytes_per_pixel());
+                }
+
+                info.bytes = Some(bytes.to_vec());
+            }
+            Some(TextureKind::EmptyBuffer) => {
+                let size = info.width * info.height * (info.bytes_per_pixel() as i32);
+                info.bytes = Some(vec![0; size as _]);
+            }
+            _ => {}
+        }
+
+        device.create_texture(info)
+    }
+}
+
+pub struct TextureUpdater<'a> {
+    device: &'a mut Device,
+    texture: &'a mut Texture,
+    x_offset: i32,
+    y_offset: i32,
+    width: i32,
+    height: i32,
+    format: TextureFormat,
+    bytes: Option<&'a [u8]>,
+}
+
+impl<'a> TextureUpdater<'a> {
+    pub fn new(device: &'a mut Device, texture: &'a mut Texture) -> Self {
+        let x_offset = texture.frame.x as _;
+        let y_offset = texture.frame.y as _;
+        let width = texture.frame.width as _;
+        let height = texture.frame.height as _;
+        let format = texture.format;
+
+        Self {
+            device,
+            texture,
+            x_offset,
+            y_offset,
+            width,
+            height,
+            format,
+            bytes: None,
+        }
+    }
+
+    /// Update pixels from the axis x offset
+    pub fn with_x_offset(mut self, offset: i32) -> Self {
+        self.x_offset = offset;
+        self
+    }
+
+    /// Update pixels from the axis y offset
+    pub fn with_y_offset(mut self, offset: i32) -> Self {
+        self.y_offset = offset;
+        self
+    }
+
+    /// Update pixels until this width from the x offset value
+    pub fn with_width(mut self, width: i32) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Update pixels until this height from the y offset value
+    pub fn with_height(mut self, height: i32) -> Self {
+        self.height = height;
+        self
+    }
+
+    pub fn with_data(mut self, bytes: &'a [u8]) -> Self {
+        self.bytes = Some(bytes);
+        self
+    }
+
+    pub fn update(self) -> Result<(), String> {
+        let Self {
+            device,
+            texture,
+            x_offset,
+            y_offset,
+            width,
+            height,
+            format,
+            bytes,
+        } = self;
+
+        let bytes =
+            bytes.ok_or_else(|| "You need to provide bytes to update a texture".to_string())?;
+
+        let info = TextureUpdate {
+            x_offset,
+            y_offset,
+            width,
+            height,
+            format,
+            bytes,
+        };
+
+        device.update_texture(texture, &info)
+    }
 }

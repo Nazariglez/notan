@@ -31,14 +31,14 @@ const FRAG: ShaderSource = notan::fragment_shader! {
     "#
 };
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
     vertex_buffer: Buffer<f32>,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup).draw(draw).build()
 }
@@ -47,15 +47,11 @@ fn setup(gfx: &mut Graphics) -> State {
     let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
 
     let pipeline = gfx
-        .create_pipeline(
-            &VERT,
-            &FRAG,
-            &[
-                VertexAttr::new(0, VertexFormat::Float2),
-                VertexAttr::new(1, VertexFormat::Float3),
-            ],
-            PipelineOptions::default(),
-        )
+        .create_pipeline()
+        .from(&VERT, &FRAG)
+        .vertex_attr(0, VertexFormat::Float2)
+        .vertex_attr(1, VertexFormat::Float3)
+        .build()
         .unwrap();
 
     #[rustfmt::skip]
@@ -65,15 +61,17 @@ fn setup(gfx: &mut Graphics) -> State {
         1.0, 0.0,   0.1, 0.2, 1.0,
     ];
 
-    let vertex_buffer = gfx.create_vertex_buffer(vertices).unwrap();
+    let vertex_buffer = gfx
+        .create_vertex_buffer()
+        .with_data(vertices)
+        .build()
+        .unwrap();
 
-    let mut state = State {
+    State {
         clear_options,
         pipeline,
         vertex_buffer,
-    };
-
-    state
+    }
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {

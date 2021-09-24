@@ -1,6 +1,6 @@
 use notan::prelude::*;
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init().build()
 }

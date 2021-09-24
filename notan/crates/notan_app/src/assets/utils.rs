@@ -1,6 +1,5 @@
 use super::waker::*;
 use futures::future::LocalBoxFuture;
-use futures::prelude::*;
 use futures::task::{Context, Poll};
 use hashbrown::HashMap;
 use parking_lot::RwLock;
@@ -22,11 +21,6 @@ impl DoneSignal {
     }
 
     #[inline]
-    pub fn from_atomic(value: Arc<AtomicBool>) -> Self {
-        Self(value)
-    }
-
-    #[inline]
     pub fn done(&mut self) {
         self.0.store(true, Ordering::SeqCst);
     }
@@ -34,22 +28,6 @@ impl DoneSignal {
     #[inline]
     pub fn is_done(&self) -> bool {
         self.0.load(Ordering::SeqCst)
-    }
-}
-
-#[inline]
-fn try_load(state: &mut LoadWrapper) -> Option<Vec<u8>> {
-    let waker = DummyWaker.into_task_waker();
-    let mut ctx = Context::from_waker(&waker);
-    match state.fut.as_mut().poll(&mut ctx) {
-        Poll::Ready(r_buff) => match r_buff {
-            Ok(buff) => Some(buff),
-            Err(err) => {
-                notan_log::error!("{}", err);
-                None
-            }
-        },
-        _ => None,
     }
 }
 

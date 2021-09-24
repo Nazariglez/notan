@@ -1,7 +1,7 @@
 use notan::app::config::WindowConfig;
 use notan::prelude::*;
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     // Check the documentation for more options
     let window_config = WindowConfig::new()

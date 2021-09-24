@@ -67,7 +67,7 @@ impl WinitWindowBackend {
                 opengles_version: (2, 0),
             })
             .with_gl_profile(glutin::GlProfile::Core)
-            .with_multisampling(config.multisampling) // TODO get this from window config?
+            .with_multisampling(config.multisampling)
             .build_windowed(builder, event_loop)
             .map_err(|e| format!("{}", e))?;
 
@@ -90,6 +90,6 @@ impl WinitWindowBackend {
     }
 
     pub(crate) fn swap_buffers(&self) {
-        self.gl_ctx.swap_buffers();
+        self.gl_ctx.swap_buffers().unwrap();
     }
 }

@@ -4,6 +4,7 @@ mod pattern;
 use crate::builder::DrawBuilder;
 use crate::draw::Draw;
 use notan_graphics::Texture;
+pub use painter::create_pattern_pipeline;
 pub(crate) use painter::*;
 pub use pattern::*;
 

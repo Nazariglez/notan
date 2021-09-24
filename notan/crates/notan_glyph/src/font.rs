@@ -17,7 +17,7 @@ impl Font {
 
     /// Returns the width and the height of a custom text
     pub fn text_size(&self, text: &Text) -> (f32, f32) {
-        let section = section_from_text(&self, text);
+        let section = section_from_text(self, text);
         let mut cache = self.glyphs.cache_scope();
         if let Some(bounds) = cache.glyph_bounds(section) {
             return (bounds.width(), bounds.height());
