@@ -1,6 +1,6 @@
 use notan::prelude::*;
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     img1: Texture,
     img2: Texture,
@@ -18,7 +18,7 @@ impl State {
     }
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
         .set_config(DrawConfig)

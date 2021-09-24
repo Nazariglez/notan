@@ -31,14 +31,14 @@ const FRAG: ShaderSource = notan::fragment_shader! {
     "#
 };
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
     vertex_buffer: Buffer<f32>,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup).draw(draw).build()
 }
@@ -67,13 +67,11 @@ fn setup(gfx: &mut Graphics) -> State {
         .build()
         .unwrap();
 
-    let mut state = State {
+    State {
         clear_options,
         pipeline,
         vertex_buffer,
-    };
-
-    state
+    }
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {

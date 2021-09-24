@@ -1,13 +1,13 @@
 use glam::{Mat4, Vec3};
 use notan::prelude::*;
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     cube: Cube,
     post_process: PostProcessTarget,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup).draw(draw).build()
 }

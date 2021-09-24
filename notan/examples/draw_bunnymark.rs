@@ -2,8 +2,6 @@ use notan::app::config::WindowConfig;
 use notan::draw::*;
 use notan::glyph::*;
 use notan::prelude::*;
-use notan::utils::{Duration, Instant};
-use notan_app::Plugins;
 
 struct Bunny {
     x: f32,
@@ -12,7 +10,7 @@ struct Bunny {
     speed_y: f32,
 }
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     font: Font,
     texture: Texture,
@@ -112,7 +110,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     gfx.render(&draw);
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
         .set_config(WindowConfig::new().vsync())

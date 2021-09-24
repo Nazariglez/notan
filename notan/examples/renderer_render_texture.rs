@@ -34,7 +34,7 @@ const FRAG: ShaderSource = notan::fragment_shader! {
     "#
 };
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
@@ -46,7 +46,7 @@ struct State {
     texture_initiated: bool,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup).draw(draw).build()
 }

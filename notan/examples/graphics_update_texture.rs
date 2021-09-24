@@ -9,7 +9,7 @@ const COLORS: [Color; 6] = [
     Color::from_rgb(0.1, 0.2, 0.3),
 ];
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     texture: Texture,
     bytes: Vec<u8>,
@@ -18,7 +18,7 @@ struct State {
     step: usize,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
         .set_config(DrawConfig)
@@ -31,7 +31,7 @@ fn init(app: &mut App, gfx: &mut Graphics) -> State {
     let bytes_per_pixel = 4;
 
     let len = (width * height * bytes_per_pixel) as usize;
-    let mut bytes = vec![0; len];
+    let bytes = vec![0; len];
 
     let texture = gfx
         .create_texture()

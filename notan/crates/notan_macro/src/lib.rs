@@ -1,27 +1,32 @@
 extern crate proc_macro;
 use proc_macro::*;
 use quote::quote;
-use syn::ItemFn;
 use syn::{parse_macro_input, LitStr};
+use syn::{ItemFn, ReturnType};
 
 mod handlers;
 mod shaders;
 mod state;
 
 #[proc_macro_attribute]
-pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn notan_main(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(item as ItemFn);
     handle_main_func(input)
 }
 
 fn handle_main_func(input: ItemFn) -> TokenStream {
     let ident = input.sig.ident.clone();
+    let void_ret = input.sig.output == ReturnType::Default;
+    let ret: proc_macro2::TokenStream = if void_ret { "()" } else { "Result<(), String>" }
+        .parse()
+        .unwrap();
+
     let expand = quote! {
         #input
 
         #[no_mangle]
-        pub extern fn notan_main() {
-            #ident();
+        pub extern fn notan_main() -> #ret {
+            #ident()
         }
     };
 

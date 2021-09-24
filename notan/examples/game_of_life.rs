@@ -1,5 +1,5 @@
 use notan::app::config::WindowConfig;
-use notan::app::keyboard::KeyCode;
+
 use notan::prelude::*;
 use std::convert::TryInto;
 
@@ -7,7 +7,7 @@ const WIDTH: usize = 100;
 const HEIGHT: usize = 100;
 const BYTES_LENGTH: usize = WIDTH * HEIGHT * 4;
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     texture: Texture,
     current_bytes: [u8; BYTES_LENGTH],
@@ -59,7 +59,7 @@ impl State {
     }
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     let width = WIDTH * 4;
     let height = HEIGHT * 4;
@@ -77,7 +77,7 @@ fn main() -> Result<(), String> {
 
 fn setup(gfx: &mut Graphics) -> State {
     let current_bytes = [255; BYTES_LENGTH];
-    let previous_bytes = current_bytes.clone();
+    let previous_bytes = current_bytes;
 
     let texture = gfx
         .create_texture()
@@ -160,7 +160,7 @@ fn index(x: isize, y: isize) -> Option<usize> {
 
     let x = x as usize;
     let y = y as usize;
-    let index = (((y * WIDTH) + x) * 4);
+    let index = ((y * WIDTH) + x) * 4;
     if index >= BYTES_LENGTH {
         None
     } else {

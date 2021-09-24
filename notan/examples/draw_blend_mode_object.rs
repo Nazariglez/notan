@@ -1,13 +1,13 @@
 use notan::prelude::*;
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     texture: Texture,
     font: Font,
     count: f32,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
         .set_config(DrawConfig)

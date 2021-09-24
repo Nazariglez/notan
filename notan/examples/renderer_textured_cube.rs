@@ -38,7 +38,7 @@ const FRAG: ShaderSource = notan::fragment_shader! {
     "#
 };
 
-#[derive(notan::AppState)]
+#[derive(AppState)]
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
@@ -49,7 +49,7 @@ struct State {
     texture: Texture,
 }
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup).draw(draw).build()
 }
@@ -116,7 +116,7 @@ fn setup(gfx: &mut Graphics) -> State {
         -1.0,1.0,1.0,       0.335973,0.335903,
         1.0,1.0,1.0,        0.667969,0.671889,
         -1.0,1.0,1.0,       1.000004,0.671847,
-        1.0,-1.0,1.0,       0.667979,0.3358510
+        1.0,-1.0,1.0,       0.667979,0.335_851
     ];
 
     let projection = glam::Mat4::perspective_rh_gl(45.0, 4.0 / 3.0, 0.1, 100.0);
@@ -139,7 +139,7 @@ fn setup(gfx: &mut Graphics) -> State {
         .build()
         .unwrap();
 
-    let mut state = State {
+    State {
         clear_options,
         pipeline,
         vertex_buffer,
@@ -147,9 +147,7 @@ fn setup(gfx: &mut Graphics) -> State {
         texture,
         mvp,
         angle: 0.0,
-    };
-
-    state
+    }
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
