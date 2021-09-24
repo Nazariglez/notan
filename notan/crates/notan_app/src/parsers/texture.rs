@@ -1,7 +1,7 @@
 use crate::assets::Loader;
 use crate::graphics::Graphics;
 // use crate::graphics::{Texture, TextureInfo};
-use notan_graphics::{Texture, TextureInfo};
+use notan_graphics::Texture;
 
 pub fn create_texture_parser() -> Loader {
     Loader::new()

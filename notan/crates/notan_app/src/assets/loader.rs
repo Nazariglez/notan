@@ -1,9 +1,11 @@
+#![allow(clippy::wrong_self_convention, non_snake_case, clippy::type_complexity)]
+
 use super::manager::AssetManager;
 use super::storage::AssetStorage;
 use crate::app::App;
 use crate::graphics::Graphics;
 use crate::plugins::Plugins;
-use downcast_rs::{impl_downcast, Downcast};
+
 use std::any::TypeId;
 use std::rc::Rc;
 
@@ -124,7 +126,7 @@ impl LoaderCallback {
     ) -> Result<(), String> {
         use LoaderCallback::*;
 
-        let (app, graphics, plugins, state) = params;
+        let (_app, graphics, _plugins, _state) = params;
 
         match self {
             Basic(_, cb) => cb(storage, id, data),

@@ -1,9 +1,11 @@
+#![allow(clippy::type_complexity)]
+
 use crate::assets::{AssetManager, Loader};
 use crate::config::*;
 use crate::graphics::Graphics;
 use crate::handlers::{
     AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler,
-    ExtensionCallback, ExtensionHandler, PluginCallback, PluginHandler, SetupCallback,
+    ExtensionHandler, PluginHandler, SetupCallback,
 };
 use crate::parsers::*;
 use crate::plugins::*;
@@ -36,8 +38,10 @@ pub struct AppBuilder<S, B> {
     draw_callback: Option<DrawCallback<S>>,
     event_callback: Option<EventCallback<S>>,
 
-    plugin_callbacks: Vec<Box<FnOnce(&mut App, &mut AssetManager, &mut Graphics, &mut Plugins)>>,
-    extension_callbacks: Vec<Box<FnOnce(&mut App, &mut AssetManager, &mut Graphics, &mut Plugins)>>,
+    plugin_callbacks:
+        Vec<Box<dyn FnOnce(&mut App, &mut AssetManager, &mut Graphics, &mut Plugins)>>,
+    extension_callbacks:
+        Vec<Box<dyn FnOnce(&mut App, &mut AssetManager, &mut Graphics, &mut Plugins)>>,
 
     pub(crate) window: WindowConfig,
 }
@@ -232,7 +236,7 @@ where
             }
 
             let win_dpi = app.window().dpi();
-            if graphics.dpi() != win_dpi {
+            if (graphics.dpi() - win_dpi).abs() > f64::EPSILON {
                 graphics.set_dpi(win_dpi);
             }
 

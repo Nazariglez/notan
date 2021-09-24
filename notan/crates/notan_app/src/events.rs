@@ -66,7 +66,7 @@ impl EventIterator {
 
     /// Return the events and clear the list
     pub fn take_events(&mut self) -> EventIterator {
-        EventIterator(std::mem::replace(&mut self.0, VecDeque::new()))
+        EventIterator(std::mem::take(&mut self.0))
     }
 }
 

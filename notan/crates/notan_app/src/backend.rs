@@ -44,7 +44,7 @@ pub trait BackendSystem: Backend {
     }
 
     /// Returns the graphics backend implementation
-    fn get_graphics_backend(&self) -> Box<DeviceBackend>;
+    fn get_graphics_backend(&self) -> Box<dyn DeviceBackend>;
 }
 
 /// Represents a window

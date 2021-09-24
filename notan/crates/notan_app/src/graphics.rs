@@ -13,8 +13,8 @@ pub struct Graphics {
 }
 
 impl Graphics {
-    pub fn new(backend: Box<DeviceBackend>) -> Result<Self, String> {
-        let mut device = Device::new(backend)?;
+    pub fn new(backend: Box<dyn DeviceBackend>) -> Result<Self, String> {
+        let device = Device::new(backend)?;
         let plugins = ExtContainer::default();
 
         Ok(Self {
@@ -107,13 +107,13 @@ impl Graphics {
 
     /// Render to the screen
     #[inline]
-    pub fn render(&mut self, renderer: &GfxRenderer) {
+    pub fn render(&mut self, renderer: &dyn GfxRenderer) {
         renderer.render(&mut self.device, &mut self.extensions, None);
     }
 
     /// Render to a custom target
     #[inline]
-    pub fn render_to(&mut self, target: &RenderTexture, renderer: &GfxRenderer) {
+    pub fn render_to(&mut self, target: &RenderTexture, renderer: &dyn GfxRenderer) {
         renderer.render(&mut self.device, &mut self.extensions, Some(target));
     }
 }

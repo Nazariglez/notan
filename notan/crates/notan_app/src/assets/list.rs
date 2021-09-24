@@ -1,9 +1,9 @@
 use super::asset::Asset;
-use super::utils::{AssetLoadTracker, DoneSignal, LoadTracker};
+use super::utils::{AssetLoadTracker, DoneSignal};
 use hashbrown::{HashMap, HashSet};
 use parking_lot::RwLock;
 use std::any::{Any, TypeId};
-use std::sync::atomic::{AtomicBool, Ordering};
+
 use std::sync::Arc;
 
 pub struct AssetList {
@@ -109,11 +109,8 @@ impl AssetList {
         self.load_tracker.remove(id);
         self.claimed.remove(id);
         self.tracker.clean();
-        match self.assets.get_mut(&TypeId::of::<A>()) {
-            Some(map) => {
-                map.remove(id);
-            }
-            _ => {}
+        if let Some(map) = self.assets.get_mut(&TypeId::of::<A>()) {
+            map.remove(id);
         }
         Ok(asset)
     }

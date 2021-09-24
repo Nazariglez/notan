@@ -3,15 +3,11 @@ use super::list::AssetList;
 use super::loader::*;
 use super::storage::AssetStorage;
 use super::utils::DoneSignal;
-use crate::app::App;
-use crate::graphics::Graphics;
-use crate::plugins::Plugins;
-use crate::AppState;
+
 use hashbrown::HashMap;
 use std::any::TypeId;
 use std::path::Path;
 use std::rc::Rc;
-use std::sync::Arc;
 
 pub struct AssetManager {
     storage: AssetStorage,

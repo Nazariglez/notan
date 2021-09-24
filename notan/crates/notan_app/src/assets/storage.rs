@@ -1,19 +1,13 @@
 use super::asset::Asset;
-use super::list::AssetList;
-use super::waker::DummyWaker;
-
 use super::utils::{AssetLoadTracker, DoneSignal, LoadWrapper};
 use futures::prelude::*;
 use hashbrown::HashMap;
-use parking_lot::RwLock;
-use std::any::{Any, TypeId};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+
+use std::any::TypeId;
 
 /// Store the assets while they are loading
 #[derive(Default)]
 pub struct AssetStorage {
-    pub(crate) list: Option<AssetList>,
     to_load: HashMap<String, LoadWrapper>,
     pub(crate) tracker: AssetLoadTracker,
 }
@@ -80,10 +74,7 @@ impl AssetStorage {
         let loaded = self
             .to_load
             .iter_mut()
-            .filter_map(|(id, state)| match state.try_load() {
-                Some(data) => Some((id.clone(), data)),
-                _ => None,
-            })
+            .filter_map(|(id, state)| state.try_load().map(|data| (id.clone(), data)))
             .collect::<Vec<_>>();
 
         Some(loaded)
