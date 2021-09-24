@@ -23,8 +23,8 @@ impl InnerRenderTexture {
         let size = texture.size;
         Ok(Self {
             fbo,
-            size,
             depth_texture,
+            size,
         })
     }
 

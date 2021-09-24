@@ -3,7 +3,6 @@ use crate::pipeline::*;
 use crate::to_glow::*;
 use glow::*;
 use notan_graphics::prelude::*;
-use std::rc::Rc;
 
 //https://sotrh.github.io/learn-wgpu/beginner/tutorial6-uniforms/#a-perspective-camera
 //https://wgld.org/d/webgl2/w009.html
@@ -20,6 +19,7 @@ pub(crate) struct InnerBuffer {
 }
 
 impl InnerBuffer {
+    #[allow(unused_variables)] // ubo is used only on wasm32 builds
     pub fn new(gl: &Context, ubo: bool) -> Result<Self, String> {
         let buffer = unsafe { gl.create_buffer()? };
 
@@ -86,7 +86,7 @@ impl InnerBuffer {
             let ubo = self
                 .global_ubo
                 .as_mut()
-                .map(|mut ubo| {
+                .map(|ubo| {
                     ubo[..data.len()].copy_from_slice(data);
                     ubo.as_slice()
                 })

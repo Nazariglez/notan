@@ -94,7 +94,7 @@ pub(crate) unsafe fn create_texture(
     );
 
     let depth = TextureFormat::Depth == info.format;
-    let mut data = info.bytes.as_ref().map(|bytes| bytes.as_slice());
+    let mut data = info.bytes.as_deref();
     let mut typ = glow::UNSIGNED_BYTE;
     let mut format = info.format.to_glow();
     if depth {
