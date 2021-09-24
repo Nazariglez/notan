@@ -1,9 +1,9 @@
 use crate::batch::*;
 pub(crate) use crate::custom_pipeline::CustomPipeline;
-use crate::manager::DrawManager;
+
 use crate::transform::Transform;
 use glam::{Mat3, Mat4};
-use notan_glyph::{Font, GlyphPlugin, Text};
+use notan_glyph::{Font, Text};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 
@@ -303,11 +303,11 @@ impl DrawInfo for ImageInfo<'_> {
     }
 
     fn vertices(&self) -> &[f32] {
-        &self.vertices
+        self.vertices
     }
 
     fn indices(&self) -> &[u32] {
-        &self.indices
+        self.indices
     }
 
     fn blend_mode(&self) -> Option<BlendMode> {
@@ -329,11 +329,11 @@ impl DrawInfo for ShapeInfo<'_> {
     }
 
     fn vertices(&self) -> &[f32] {
-        &self.vertices
+        self.vertices
     }
 
     fn indices(&self) -> &[u32] {
-        &self.indices
+        self.indices
     }
 
     fn blend_mode(&self) -> Option<BlendMode> {

@@ -5,7 +5,6 @@ use super::texts::*;
 use crate::batch::*;
 use crate::draw::*;
 use glam::Mat4;
-use notan_app::{ExtContainer, GfxExtension, GfxRenderer, Graphics};
 use notan_glyph::GlyphPlugin;
 use notan_graphics::prelude::*;
 
@@ -43,7 +42,7 @@ impl DrawManager {
     ) -> &[Commands] {
         self.renderer.clear();
         process_draw(self, draw, device, glyphs);
-        &self.renderer.commands()
+        self.renderer.commands()
     }
 
     pub fn create_draw(&self, width: i32, height: i32) -> Draw {
@@ -149,7 +148,9 @@ fn process_glyphs(
             }
         });
 
-        glyphs.update(device, &mut manager.text_painter);
+        if let Err(e) = glyphs.update(device, &mut manager.text_painter) {
+            notan_log::error!("{}", e);
+        }
     }
 }
 
@@ -231,7 +232,7 @@ pub(crate) fn process_pipeline(
         Some(pip) => {
             let masked = masked_pip(pip, batch.is_mask, batch.masking);
             let pip_to_use = masked.as_ref().unwrap_or(pip);
-            let blended = blended_pip(&pip_to_use, batch.blend_mode);
+            let blended = blended_pip(pip_to_use, batch.blend_mode);
             let final_pip = blended.as_ref().unwrap_or(pip_to_use);
             renderer.set_pipeline(final_pip);
 
@@ -242,7 +243,7 @@ pub(crate) fn process_pipeline(
         _ => {
             let masked = masked_pip(default_pipeline, batch.is_mask, batch.masking);
             let pip_to_use = masked.as_ref().unwrap_or(default_pipeline);
-            let blended = blended_pip(&pip_to_use, batch.blend_mode);
+            let blended = blended_pip(pip_to_use, batch.blend_mode);
             let final_pip = blended.as_ref().unwrap_or(pip_to_use);
             renderer.set_pipeline(final_pip);
         }
@@ -250,10 +251,7 @@ pub(crate) fn process_pipeline(
 }
 
 fn masked_pip(pip: &Pipeline, is_mask: bool, masking: bool) -> Option<Pipeline> {
-    match override_pipeline_options(pip, is_mask, masking) {
-        Some(overridden_pip) => Some(overridden_pip),
-        _ => None,
-    }
+    override_pipeline_options(pip, is_mask, masking)
 }
 
 fn blended_pip(pip: &Pipeline, blend_mode: BlendMode) -> Option<Pipeline> {

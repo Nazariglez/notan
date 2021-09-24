@@ -1,6 +1,6 @@
 use crate::batch::*;
 use crate::manager::process_pipeline;
-use glam::{Mat3, Mat4, Vec3};
+use glam::{Mat4, Vec3};
 use notan_glyph::{FontVertex, GlyphPipeline, GlyphPlugin};
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
@@ -60,8 +60,6 @@ pub(crate) struct TextPainter {
     count_chars: usize,
     count_vertices: usize,
     count_indices: usize,
-    ebo_len: usize,
-    matrix: Mat3,
     vertices: Vec<FontVertex>,
 }
 
@@ -76,13 +74,11 @@ impl TextPainter {
             pipeline,
             vbo,
             ebo,
-            ebo_len: 0,
             ubo,
 
             count_chars: 0,
             count_vertices: 0,
             count_indices: 0,
-            matrix: Mat3::IDENTITY,
             vertices: vec![],
         })
     }
@@ -143,7 +139,6 @@ impl TextPainter {
                 self.count_chars = end;
             });
 
-            let len = (self.count_vertices / self.pipeline.offset()) as u32;
             let offset = self.count_indices;
 
             {
