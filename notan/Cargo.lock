@@ -1414,6 +1414,7 @@ dependencies = [
  "glutin",
  "notan_app",
  "notan_glow",
+ "notan_log",
  "winit",
 ]
 

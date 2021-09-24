@@ -1,7 +1,7 @@
 use glutin::dpi::LogicalPosition;
 use notan_app::prelude::mouse::MouseButton;
 use notan_app::Event;
-use winit::dpi::PhysicalPosition;
+
 use winit::event::ElementState;
 use winit::event::{MouseButton as WMouseButton, MouseScrollDelta, WindowEvent};
 
