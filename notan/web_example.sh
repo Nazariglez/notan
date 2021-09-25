@@ -3,10 +3,10 @@ mkdir -p output/examples
 mkdir -p output/$1
 if [[ $2 == '--release' ]];
 then
-  cargo build --target wasm32-unknown-unknown --release --example $1
+  cargo build --target wasm32-unknown-unknown --release --example $1 --all-features
   wasm-bindgen ./target/wasm32-unknown-unknown/release/examples/$1.wasm --out-dir output/$1 --no-modules --browser
 else
-  cargo build --target wasm32-unknown-unknown --example $1
+  cargo build --target wasm32-unknown-unknown --example $1 --all-features
   wasm-bindgen ./target/wasm32-unknown-unknown/debug/examples/$1.wasm --out-dir output/$1 --no-modules --browser --keep-debug --debug
 fi
 
