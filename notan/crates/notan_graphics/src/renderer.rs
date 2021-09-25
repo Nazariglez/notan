@@ -61,6 +61,15 @@ impl Renderer {
         });
     }
 
+    pub fn set_scissors(&mut self, x: f32, y: f32, width: f32, height: f32) {
+        self.commands.push(Commands::Scissors {
+            x,
+            y,
+            width,
+            height,
+        });
+    }
+
     pub fn set_pipeline(&mut self, pipeline: &Pipeline) {
         self.commands.push(Commands::Pipeline {
             id: pipeline.id(),

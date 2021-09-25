@@ -155,6 +155,13 @@ impl GlowBackend {
         }
     }
 
+    #[inline]
+    fn scissors(&self, x: f32, y: f32, width: f32, height: f32) {
+        unsafe {
+            self.gl.scissor(x as _, y as _, width as _, height as _);
+        }
+    }
+
     fn end(&mut self) {
         unsafe {
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
@@ -165,7 +172,7 @@ impl GlowBackend {
 
         self.using_indices = false;
         self.current_vertex_attrs = None;
-        //TODO pipeline clean and stats
+        //TODO pipeline clean and stats?
     }
 
     fn clean_pipeline(&mut self, id: i32) {
@@ -383,6 +390,12 @@ impl DeviceBackend for GlowBackend {
                     width,
                     height,
                 } => self.viewport(*x, *y, *width, *height, self.dpi),
+                Scissors {
+                    x,
+                    y,
+                    width,
+                    height,
+                } => self.scissors(*x, *y, *width, *height),
             }
         });
     }

@@ -38,6 +38,12 @@ pub enum Commands {
         slot: u32,
         location: u32,
     },
+    Scissors {
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+    },
     Draw {
         offset: i32,
         count: i32,
