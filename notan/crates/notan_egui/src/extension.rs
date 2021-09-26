@@ -147,6 +147,11 @@ impl EguiExtension {
         let width = egui_tex.width;
         let height = egui_tex.height;
 
+        let pixels = egui_tex
+            .srgba_pixels(1.0)
+            .flat_map(|c| c.to_array())
+            .collect::<Vec<u8>>();
+
         let texture = device
             .create_texture(TextureInfo {
                 width: width as _,
@@ -155,7 +160,7 @@ impl EguiExtension {
                 internal_format: TextureFormat::Rgba,
                 min_filter: TextureFilter::Linear,
                 mag_filter: TextureFilter::Linear,
-                bytes: Some(egui_tex.pixels.clone()),
+                bytes: Some(pixels),
                 depth: false,
             })
             .unwrap();
@@ -174,10 +179,7 @@ impl EguiExtension {
         self.build_texture(device, egui_tex);
 
         let (width, height) = device.size();
-        let dpi = device.dpi() as f32;
-        let width_in_points = (width as f32) / dpi;
-        let height_in_points = (height as f32) / dpi;
-        self.ubo.set(&[width_in_points, height_in_points]); //todo pixels per point?
+        self.ubo.set(&[width as _, height as _]);
 
         meshes
             .iter()
@@ -225,6 +227,8 @@ impl EguiExtension {
         let clip_min_y = clip_min_y.round();
         let clip_max_x = clip_max_x.round();
         let clip_max_y = clip_max_y.round();
+        let width = clip_max_x - clip_min_x;
+        let height = clip_max_y - clip_min_y;
 
         let texture = self.texture.as_ref().unwrap();
 
@@ -235,12 +239,7 @@ impl EguiExtension {
         renderer.bind_vertex_buffer(&self.vbo);
         renderer.bind_uniform_buffer(&self.ubo);
         renderer.bind_texture(0, texture);
-        renderer.set_scissors(
-            clip_min_x,
-            clip_min_y,
-            clip_max_x - clip_min_x,
-            clip_max_y - clip_min_y,
-        );
+        renderer.set_scissors(clip_min_x, clip_min_y, width, height);
         renderer.draw(0, mesh.indices.len() as _);
         renderer.end();
 
@@ -276,8 +275,8 @@ impl GfxRenderer for EguiRenderer {
 impl GfxExtension<EguiRenderer> for EguiExtension {
     fn commands<'a>(
         &'a mut self,
-        device: &mut Device,
-        renderer: &'a EguiRenderer,
+        _device: &mut Device,
+        _renderer: &'a EguiRenderer,
     ) -> &'a [Commands] {
         &[]
     }
