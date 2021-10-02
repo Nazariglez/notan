@@ -1,5 +1,6 @@
 mod config;
 mod extension;
+mod input;
 mod plugin;
 
 pub use config::EguiConfig;

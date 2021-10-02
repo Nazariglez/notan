@@ -1,4 +1,4 @@
-use crate::plugin::{EguiPlugin, EguiRenderer};
+use crate::plugin::{EguiContext, EguiPlugin};
 use crate::TextureId;
 use egui::CtxRef;
 use notan_app::{
@@ -45,7 +45,7 @@ const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
             1.0
         );
 
-        // TODO a_srgb from float to bytes?
+        // notan only support f32 vbo (right now), we need to convert this to bytes
         vec4 norm_srgba = a_srgba * vec4(255, 255, 255, 255);
 
         // egui encodes vertex colors in gamma spaces, so we must decode the colors here:
@@ -147,8 +147,14 @@ impl EguiExtension {
         let width = egui_tex.width;
         let height = egui_tex.height;
 
+        let font_gamma = if cfg!(target_arch = "wasm32") {
+            1.0 / 2.2 // HACK due to non-linear framebuffer blending.
+        } else {
+            1.0
+        };
+
         let pixels = egui_tex
-            .srgba_pixels(1.0)
+            .srgba_pixels(font_gamma)
             .flat_map(|c| c.to_array())
             .collect::<Vec<u8>>();
 
@@ -258,25 +264,29 @@ impl EguiExtension {
     }
 }
 
-impl GfxRenderer for EguiRenderer {
+impl GfxRenderer for EguiContext {
     fn render(
         &self,
         device: &mut Device,
         extensions: &mut ExtContainer,
         target: Option<&RenderTexture>,
     ) {
-        let mut plugin = extensions.get_mut::<Self, EguiExtension>().unwrap();
-        let meshes = self.ctx.tessellate(self.shapes.clone());
+        let (_output, shapes) = self.ctx.end_frame();
+        // if output.needs_repaint { // FIXME this doesn't work if the user is doing a clear between frames
+        let meshes = self.ctx.tessellate(shapes);
         let texture = self.ctx.texture();
+
+        let mut plugin = extensions.get_mut::<Self, EguiExtension>().unwrap();
         plugin.paint_meshes(device, meshes, &texture, target);
+        // }
     }
 }
 
-impl GfxExtension<EguiRenderer> for EguiExtension {
+impl GfxExtension<EguiContext> for EguiExtension {
     fn commands<'a>(
         &'a mut self,
         _device: &mut Device,
-        _renderer: &'a EguiRenderer,
+        _renderer: &'a EguiContext,
     ) -> &'a [Commands] {
         &[]
     }

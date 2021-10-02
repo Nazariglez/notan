@@ -16,10 +16,9 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
     draw.triangle((400.0, 100.0), (100.0, 500.0), (700.0, 500.0));
     gfx.render(&draw);
 
-    let mut egui = plugins.get_mut::<EguiPlugin>().unwrap();
+    let egui_ctx = plugins.get_mut::<EguiPlugin>().unwrap().create_context();
 
-    egui.begin_frame();
-    egui::SidePanel::left("my_side_panel").show(&egui, |ui| {
+    egui::SidePanel::left("my_side_panel").show(&egui_ctx, |ui| {
         ui.heading("Hello World!");
         if ui.button("Quit").clicked() {
             app.exit();
@@ -36,7 +35,6 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
                     });
             });
     });
-    let renderer = egui.end_frame();
 
-    gfx.render(&renderer);
+    gfx.render(&egui_ctx);
 }

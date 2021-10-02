@@ -1,4 +1,6 @@
+use crate::input::{to_egui_key, to_egui_pointer};
 use crate::EguiExtension;
+use notan_app::keyboard::KeyCode;
 use notan_app::{
     App, AppBuilder, AppFlow, Device, Event, ExtContainer, GfxRenderer, Plugin, RenderTexture,
 };
@@ -11,73 +13,102 @@ pub struct EguiPlugin {
 }
 
 impl EguiPlugin {
-    pub fn ctx(&self) -> &egui::CtxRef {
+    pub fn raw_ctx(&self) -> &egui::CtxRef {
         &self.ctx
     }
 
-    pub fn begin_frame(&mut self) {
+    pub fn create_context(&mut self) -> EguiContext {
         self.ctx.begin_frame(self.raw_input.take());
-    }
-
-    pub fn end_frame(&self) -> EguiRenderer {
-        let ctx = self.ctx.clone();
-        let (output, shapes) = ctx.end_frame();
-        EguiRenderer {
-            ctx,
-            output,
-            shapes,
+        EguiContext {
+            ctx: self.ctx.clone(),
         }
     }
 
     #[inline]
-    fn add_event(&mut self, evt: egui::Event) {
+    pub(crate) fn add_event(&mut self, evt: egui::Event) {
         self.raw_input.events.push(evt);
-    }
-}
-
-impl Deref for EguiPlugin {
-    type Target = egui::CtxRef;
-
-    fn deref(&self) -> &Self::Target {
-        &self.ctx
-    }
-}
-
-impl DerefMut for EguiPlugin {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.ctx
     }
 }
 
 impl Plugin for EguiPlugin {
     fn event(&mut self, app: &mut App, event: &Event) -> Result<AppFlow, String> {
+        let command_modifier = if cfg!(target_arch = "macos") {
+            app.keyboard.logo()
+        } else {
+            app.keyboard.ctrl()
+        };
+
+        let modifiers = egui::Modifiers {
+            alt: app.keyboard.alt(),
+            ctrl: app.keyboard.ctrl(),
+            shift: app.keyboard.shift(),
+            mac_cmd: cfg!(target_os = "macos") && app.keyboard.logo(),
+            command: command_modifier,
+        };
+
         match event {
             Event::Exit => {}
             Event::WindowMove { .. } => {}
             Event::WindowResize { .. } => {}
             Event::ScreenAspectChange { .. } => {}
-            Event::MouseMove { x, y } => {
-                self.add_event(egui::Event::PointerMoved(egui::Pos2::new(*x as _, *y as _)))
+            Event::MouseMove { .. } => self.add_event(egui::Event::PointerMoved(egui::Pos2::new(
+                app.mouse.x,
+                app.mouse.y,
+            ))),
+            Event::MouseDown { button, .. } => {
+                if let Some(btn) = to_egui_pointer(button) {
+                    self.add_event(egui::Event::PointerButton {
+                        pos: egui::Pos2::new(app.mouse.x, app.mouse.y),
+                        button: btn,
+                        pressed: true,
+                        modifiers,
+                    })
+                }
             }
-            Event::MouseDown { button, x, y } => self.add_event(egui::Event::PointerButton {
-                pos: egui::Pos2::new(app.mouse.x, app.mouse.y),
-                button: egui::PointerButton::Primary, // TODO
-                pressed: true,
-                modifiers: Default::default(), // TODO fill this event
-            }),
-            Event::MouseUp { button, x, y } => self.add_event(egui::Event::PointerButton {
-                pos: egui::Pos2::new(app.mouse.x, app.mouse.y),
-                button: egui::PointerButton::Primary,
-                pressed: false,
-                modifiers: Default::default(),
-            }),
-            Event::MouseWheel { .. } => {}
+            Event::MouseUp { button, .. } => {
+                if let Some(btn) = to_egui_pointer(button) {
+                    self.add_event(egui::Event::PointerButton {
+                        pos: egui::Pos2::new(app.mouse.x, app.mouse.y),
+                        button: btn,
+                        pressed: false,
+                        modifiers,
+                    })
+                }
+            }
+            Event::MouseWheel { delta_x, delta_y } => {
+                if modifiers.ctrl || modifiers.command {
+                    self.raw_input.zoom_delta *= (delta_y / 200.0).exp();
+                } else {
+                    self.raw_input.scroll_delta += egui::vec2(*delta_x, *delta_y);
+                }
+            }
             Event::MouseEnter { .. } => {}
-            Event::MouseLeft { .. } => {}
-            Event::KeyDown { .. } => {}
-            Event::KeyUp { .. } => {}
-            Event::ReceivedCharacter(char) => self.add_event(egui::Event::Text(char.to_string())),
+            Event::MouseLeft { .. } => self.add_event(egui::Event::PointerGone),
+            Event::KeyDown { key } => {
+                if let Some(key) = to_egui_key(key) {
+                    self.add_event(egui::Event::Key {
+                        key,
+                        pressed: true,
+                        modifiers,
+                    })
+                }
+            }
+            Event::KeyUp { key } => {
+                if let Some(key) = to_egui_key(key) {
+                    self.add_event(egui::Event::Key {
+                        key,
+                        pressed: false,
+                        modifiers,
+                    })
+                }
+            }
+            Event::ReceivedCharacter(char) => {
+                if is_printable(*char, &modifiers) {
+                    self.add_event(egui::Event::Text(char.to_string()))
+                }
+            }
         }
+
         Ok(AppFlow::Next)
     }
 
@@ -88,8 +119,33 @@ impl Plugin for EguiPlugin {
     }
 }
 
-pub struct EguiRenderer {
+// impl code from here https://github.com/hasenbanck/egui_winit_platform/blob/master/src/lib.rs#L397
+fn is_printable(chr: char, modifiers: &egui::Modifiers) -> bool {
+    if modifiers.ctrl || modifiers.mac_cmd {
+        return false;
+    }
+
+    let is_in_private_use_area = '\u{e000}' <= chr && chr <= '\u{f8ff}'
+        || '\u{f0000}' <= chr && chr <= '\u{ffffd}'
+        || '\u{100000}' <= chr && chr <= '\u{10fffd}';
+
+    !is_in_private_use_area && !chr.is_ascii_control()
+}
+
+pub struct EguiContext {
     pub(crate) ctx: egui::CtxRef,
-    pub(crate) shapes: Vec<egui::paint::ClippedShape>,
-    pub(crate) output: egui::Output,
+}
+
+impl Deref for EguiContext {
+    type Target = egui::CtxRef;
+
+    fn deref(&self) -> &Self::Target {
+        &self.ctx
+    }
+}
+
+impl DerefMut for EguiContext {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.ctx
+    }
 }
