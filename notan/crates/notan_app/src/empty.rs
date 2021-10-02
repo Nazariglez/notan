@@ -25,6 +25,10 @@ impl WindowBackend for EmptyWindowBackend {
     fn is_fullscreen(&self) -> bool {
         self.is_fullscreen
     }
+
+    fn dpi(&self) -> f64 {
+        1.0
+    }
 }
 
 #[derive(Default)]

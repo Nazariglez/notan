@@ -40,6 +40,30 @@ impl Keyboard {
         self.pressed.contains(&key)
     }
 
+    #[inline]
+    /// returns true if any control key is down
+    pub fn ctrl(&self) -> bool {
+        self.is_down(KeyCode::RControl) || self.is_down(KeyCode::LControl)
+    }
+
+    #[inline]
+    /// returns true if any alt key is down
+    pub fn alt(&self) -> bool {
+        self.is_down(KeyCode::RAlt) || self.is_down(KeyCode::LAlt)
+    }
+
+    #[inline]
+    /// returns true if any shift key is down
+    pub fn shift(&self) -> bool {
+        self.is_down(KeyCode::RShift) || self.is_down(KeyCode::LShift)
+    }
+
+    #[inline]
+    /// returns true if any logo (win or command) key is down
+    pub fn logo(&self) -> bool {
+        self.is_down(KeyCode::RWin) || self.is_down(KeyCode::LWin)
+    }
+
     pub(crate) fn clear(&mut self) {
         self.pressed.clear();
         self.released.clear();

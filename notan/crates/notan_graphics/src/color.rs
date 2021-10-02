@@ -156,6 +156,12 @@ impl From<[f32; 3]> for Color {
     }
 }
 
+impl From<[u8; 4]> for Color {
+    fn from(color: [u8; 4]) -> Self {
+        Color::from_bytes(color[0], color[1], color[2], color[3])
+    }
+}
+
 impl std::fmt::Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(

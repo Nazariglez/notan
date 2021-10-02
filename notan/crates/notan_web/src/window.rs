@@ -126,6 +126,15 @@ impl WindowBackend for WebWindowBackend {
     fn is_fullscreen(&self) -> bool {
         self.document.fullscreen()
     }
+
+    fn dpi(&self) -> f64 {
+        1.0
+        // TODO allow real device pixel ratio needs to adjust the css size of the canvas (which can be very bad on mobile devices with high dpi).
+        // match web_sys::window() {
+        //     Some(win) => win.device_pixel_ratio(),
+        //     _ => 1.0
+        // }
+    }
 }
 
 unsafe impl Send for WebWindowBackend {}

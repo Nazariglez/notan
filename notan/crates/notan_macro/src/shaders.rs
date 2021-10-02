@@ -45,7 +45,7 @@ pub(crate) fn spirv_from_file(relative_path: &str, typ: ShaderType) -> Result<Ve
 pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
     let source = source.trim();
     let mut spirv_output = glsl_to_spirv::compile(source, typ.into())
-        .unwrap_or_else(|_| panic!("Invalid {:#?} shader.", typ));
+        .unwrap_or_else(|e| panic!("Invalid {:#?} shader: \n{}", typ, e));
 
     let mut spirv = vec![];
     spirv_output

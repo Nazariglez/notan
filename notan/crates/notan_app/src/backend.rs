@@ -72,7 +72,5 @@ pub trait WindowBackend {
     }
 
     /// Screen's DPI
-    fn dpi(&self) -> f64 {
-        1.0
-    }
+    fn dpi(&self) -> f64;
 }

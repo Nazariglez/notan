@@ -226,12 +226,17 @@ impl VertexAttr {
     }
 }
 
+// FIXME: VertexBuffer only support f32, add u8 support
 #[derive(Debug, Clone, Copy)]
 pub enum VertexFormat {
     Float1,
     Float2,
     Float3,
     Float4,
+    // Uint1,
+    // Uint2,
+    // Uint3,
+    // Uint4
 }
 
 impl VertexFormat {
@@ -241,14 +246,20 @@ impl VertexFormat {
             VertexFormat::Float2 => 2,
             VertexFormat::Float3 => 3,
             VertexFormat::Float4 => 4,
+            // VertexFormat::Uint1 => 1,
+            // VertexFormat::Uint2 => 2,
+            // VertexFormat::Uint3 => 3,
+            // VertexFormat::Uint4 => 4,
         }
     }
 
     pub fn bytes(&self) -> i32 {
         self.size() * 4
+        // TODO if Uint return self.size() if float return self.size() * 4
     }
 
     pub fn normalized(&self) -> bool {
         false //check type
+              // todo u8 = true, float = false
     }
 }
