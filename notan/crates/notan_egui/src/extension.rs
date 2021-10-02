@@ -1,10 +1,11 @@
-use crate::plugin::{EguiContext, EguiPlugin};
-use crate::TextureId;
-use egui::CtxRef;
+use crate::context::EguiContext;
+use crate::plugin::EguiPlugin;
+use crate::Color32;
+use egui::{CtxRef, TextureId};
 use notan_app::{
-    BlendFactor, BlendMode, BufferBuildImpl, Color, Commands, Device, ExtContainer, GfxExtension,
-    GfxRenderer, Graphics, IndexBuffer, Pipeline, RenderTexture, ShaderSource, Texture,
-    TextureFilter, TextureFormat, TextureInfo, UniformBuffer, VertexBuffer, VertexFormat,
+    BlendFactor, BlendMode, BufferBuildImpl, ClearOptions, Color, Commands, Device, ExtContainer,
+    GfxExtension, GfxRenderer, Graphics, IndexBuffer, Pipeline, RenderTexture, ShaderSource,
+    Texture, TextureFilter, TextureFormat, TextureInfo, UniformBuffer, VertexBuffer, VertexFormat,
 };
 use std::cell::RefMut;
 use std::ops::Deref;
@@ -272,9 +273,24 @@ impl GfxRenderer for EguiContext {
         target: Option<&RenderTexture>,
     ) {
         let (_output, shapes) = self.ctx.end_frame();
+
         // if output.needs_repaint { // FIXME this doesn't work if the user is doing a clear between frames
         let meshes = self.ctx.tessellate(shapes);
         let texture = self.ctx.texture();
+
+        if self.clear_color.is_some() {
+            let mut clear_renderer = device.create_renderer();
+            clear_renderer.begin(Some(&ClearOptions {
+                color: self.clear_color.clone(),
+                ..Default::default()
+            }));
+            clear_renderer.end();
+
+            match target {
+                Some(rt) => device.render_to(rt, clear_renderer.commands()),
+                _ => device.render(clear_renderer.commands()),
+            }
+        }
 
         let mut plugin = extensions.get_mut::<Self, EguiExtension>().unwrap();
         plugin.paint_meshes(device, meshes, &texture, target);
@@ -289,5 +305,31 @@ impl GfxExtension<EguiContext> for EguiExtension {
         _renderer: &'a EguiContext,
     ) -> &'a [Commands] {
         &[]
+    }
+}
+
+pub trait EguiColorConversion {
+    fn to_egui(&self) -> egui::Color32;
+    fn to_notan(&self) -> Color;
+}
+
+impl EguiColorConversion for Color {
+    fn to_egui(&self) -> Color32 {
+        let [r, g, b, a] = self.rgba_u8();
+        Color32::from_rgba_premultiplied(r, g, b, a)
+    }
+
+    fn to_notan(&self) -> Color {
+        self.clone()
+    }
+}
+
+impl EguiColorConversion for Color32 {
+    fn to_egui(&self) -> Color32 {
+        self.clone()
+    }
+
+    fn to_notan(&self) -> Color {
+        self.to_array().into()
     }
 }

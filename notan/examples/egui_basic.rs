@@ -3,38 +3,32 @@ use notan::prelude::*;
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    notan::init()
-        .set_config(EguiConfig)
-        .set_config(DrawConfig) // Simple way to add the draw extension
-        .draw(draw)
-        .build()
+    notan::init().set_config(EguiConfig).draw(draw).build()
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
-    let mut draw = gfx.create_draw();
-    draw.clear(Color::BLACK);
-    draw.triangle((400.0, 100.0), (100.0, 500.0), (700.0, 500.0));
-    gfx.render(&draw);
+    // Get the EGUI plugin that contains egui::CtxRef
+    let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
 
-    let egui_ctx = plugins.get_mut::<EguiPlugin>().unwrap().create_context();
+    // Create a EguiContext to render the frame. We can pass a color to clear the frame if we want
+    let egui_ctx = plugin.create_context(Some(Color::BLACK));
 
-    egui::SidePanel::left("my_side_panel").show(&egui_ctx, |ui| {
-        ui.heading("Hello World!");
+    // Use EGUI as usual passing the context
+    egui::SidePanel::left("side_panel").show(&egui_ctx, |ui| {
+        ui.heading("Egui Plugin Example");
+
+        ui.separator();
         if ui.button("Quit").clicked() {
             app.exit();
         }
 
-        egui::ComboBox::from_label("Version")
-            .width(150.0)
-            .selected_text("foo")
-            .show_ui(ui, |ui| {
-                egui::CollapsingHeader::new("Dev")
-                    .default_open(true)
-                    .show(ui, |ui| {
-                        ui.label("contents");
-                    });
-            });
+        ui.separator();
+        ui.label("Welcome to a basic example of how to use Egui with notan.");
+
+        ui.separator();
+        ui.label("Check the source code to learn more about how it works");
     });
 
+    // Draw the context to the screen or to a render texture
     gfx.render(&egui_ctx);
 }

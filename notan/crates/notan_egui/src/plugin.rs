@@ -1,8 +1,10 @@
+use crate::context::EguiContext;
 use crate::input::{to_egui_key, to_egui_pointer};
 use crate::EguiExtension;
 use notan_app::keyboard::KeyCode;
 use notan_app::{
-    App, AppBuilder, AppFlow, Device, Event, ExtContainer, GfxRenderer, Plugin, RenderTexture,
+    App, AppBuilder, AppFlow, Color, Device, Event, ExtContainer, GfxRenderer, Plugin,
+    RenderTexture,
 };
 use std::ops::{Deref, DerefMut};
 
@@ -17,10 +19,11 @@ impl EguiPlugin {
         &self.ctx
     }
 
-    pub fn create_context(&mut self) -> EguiContext {
+    pub fn create_context(&mut self, clear_color: Option<Color>) -> EguiContext {
         self.ctx.begin_frame(self.raw_input.take());
         EguiContext {
             ctx: self.ctx.clone(),
+            clear_color,
         }
     }
 
@@ -130,22 +133,4 @@ fn is_printable(chr: char, modifiers: &egui::Modifiers) -> bool {
         || '\u{100000}' <= chr && chr <= '\u{10fffd}';
 
     !is_in_private_use_area && !chr.is_ascii_control()
-}
-
-pub struct EguiContext {
-    pub(crate) ctx: egui::CtxRef,
-}
-
-impl Deref for EguiContext {
-    type Target = egui::CtxRef;
-
-    fn deref(&self) -> &Self::Target {
-        &self.ctx
-    }
-}
-
-impl DerefMut for EguiContext {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.ctx
-    }
 }
