@@ -37,7 +37,7 @@ fn main() -> Result<(), String> {
         .multisampling(8)
         .vsync();
 
-    notan::init_with(|| State::default())
+    notan::init_with(State::default)
         .set_config(win_config)
         .set_config(EguiConfig)
         .set_config(DrawConfig)

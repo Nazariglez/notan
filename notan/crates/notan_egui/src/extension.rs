@@ -1,14 +1,11 @@
 use crate::context::EguiContext;
-use crate::plugin::EguiPlugin;
 use crate::Color32;
-use egui::{CtxRef, TextureId};
+use egui::TextureId;
 use notan_app::{
     BlendFactor, BlendMode, BufferBuildImpl, ClearOptions, Color, Commands, Device, ExtContainer,
     GfxExtension, GfxRenderer, Graphics, IndexBuffer, Pipeline, RenderTexture, ShaderSource,
     Texture, TextureFilter, TextureFormat, TextureInfo, UniformBuffer, VertexBuffer, VertexFormat,
 };
-use std::cell::RefMut;
-use std::ops::Deref;
 
 //language=glsl
 const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
@@ -281,7 +278,7 @@ impl GfxRenderer for EguiContext {
         if self.clear_color.is_some() {
             let mut clear_renderer = device.create_renderer();
             clear_renderer.begin(Some(&ClearOptions {
-                color: self.clear_color.clone(),
+                color: self.clear_color,
                 ..Default::default()
             }));
             clear_renderer.end();
@@ -320,13 +317,13 @@ impl EguiColorConversion for Color {
     }
 
     fn to_notan(&self) -> Color {
-        self.clone()
+        *self
     }
 }
 
 impl EguiColorConversion for Color32 {
     fn to_egui(&self) -> Color32 {
-        self.clone()
+        *self
     }
 
     fn to_notan(&self) -> Color {

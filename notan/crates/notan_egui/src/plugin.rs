@@ -1,12 +1,6 @@
 use crate::context::EguiContext;
 use crate::input::{to_egui_key, to_egui_pointer};
-use crate::EguiExtension;
-use notan_app::keyboard::KeyCode;
-use notan_app::{
-    App, AppBuilder, AppFlow, Color, Device, Event, ExtContainer, GfxRenderer, Plugin,
-    RenderTexture,
-};
-use std::ops::{Deref, DerefMut};
+use notan_app::{App, AppFlow, Color, Event, Plugin};
 
 #[derive(Default)]
 pub struct EguiPlugin {
@@ -123,6 +117,7 @@ impl Plugin for EguiPlugin {
 }
 
 // impl code from here https://github.com/hasenbanck/egui_winit_platform/blob/master/src/lib.rs#L397
+#[allow(clippy::manual_range_contains)]
 fn is_printable(chr: char, modifiers: &egui::Modifiers) -> bool {
     if modifiers.ctrl || modifiers.mac_cmd {
         return false;
