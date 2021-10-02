@@ -14,6 +14,7 @@ pub struct App {
     pub keyboard: Keyboard,
     pub timer: AppTimer,
     pub delta: f32,
+    pub(crate) closed: bool,
 }
 
 impl App {
@@ -26,6 +27,7 @@ impl App {
             keyboard,
             timer: AppTimer::default(),
             delta: 0.0,
+            closed: false,
         }
     }
 
@@ -36,6 +38,7 @@ impl App {
 
     #[inline]
     pub fn exit(&mut self) {
+        self.closed = true;
         self.backend.exit();
     }
 

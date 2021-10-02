@@ -302,6 +302,11 @@ where
 
             // Clean possible dropped resources on the backend
             graphics.clean();
+
+            if app.closed {
+                log::info!("App Closed");
+            }
+
             Ok(())
         }) {
             log::error!("{}", e);
