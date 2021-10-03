@@ -1,4 +1,4 @@
-pub mod config;
+mod config;
 pub mod empty;
 pub mod keyboard;
 pub mod mouse;
@@ -24,3 +24,5 @@ pub use builder::*;
 pub use plugins::*;
 
 pub use graphics::*;
+
+pub use config::WindowConfig;
