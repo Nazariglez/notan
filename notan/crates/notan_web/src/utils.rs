@@ -73,10 +73,10 @@ pub fn canvas_position_from_global(
     canvas: &HtmlCanvasElement,
     evt: web_sys::MouseEvent,
 ) -> (i32, i32) {
-    let client_x = (1 + evt.x()) as f64;
-    let client_y = (1 + evt.y()) as f64;
+    let client_x = evt.client_x() as f32;
+    let client_y = evt.client_y() as f32;
     let rect = canvas.get_bounding_client_rect();
-    let x = (client_x - rect.left()) / (rect.right() - rect.left()) * (canvas.width() as f64);
-    let y = (client_y - rect.top()) / (rect.bottom() - rect.top()) * (canvas.height() as f64);
+    let x = client_x - rect.left() as f32;
+    let y = client_y - rect.top() as f32;
     (x as i32, y as i32)
 }
