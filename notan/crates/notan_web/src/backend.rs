@@ -1,6 +1,6 @@
 use crate::utils::request_animation_frame;
 use crate::window::WebWindowBackend;
-use notan_app::config::WindowConfig;
+use notan_app::WindowConfig;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 use notan_graphics::DeviceBackend;
 use notan_log as log;
@@ -68,10 +68,10 @@ impl BackendSystem for WebBackend {
 
                 let backend = backend(&mut app);
                 if !backend.exit_requested {
-                    request_animation_frame(
-                        &backend.window.as_ref().unwrap().window,
-                        inner_callback.borrow().as_ref().unwrap(),
-                    );
+                    let win = backend.window.as_mut().unwrap();
+                    win.check_dpi();
+
+                    request_animation_frame(&win.window, inner_callback.borrow().as_ref().unwrap());
                 }
             }) as Box<dyn FnMut()>));
 

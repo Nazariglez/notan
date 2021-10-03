@@ -15,7 +15,7 @@ pub enum Event {
     WindowResize { width: i32, height: i32 },
 
     /// Represents a change on the screen aspect ration
-    ScreenAspectChange { ratio: f32 },
+    ScreenAspectChange { ratio: f64 },
 
     /// Represents the current's mouse position after it was moved
     MouseMove { x: i32, y: i32 },

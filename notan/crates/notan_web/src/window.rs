@@ -1,7 +1,7 @@
 use crate::keyboard::{enable_keyboard, KeyboardCallbacks};
 use crate::mouse::{enable_mouse, MouseCallbacks};
 use crate::utils::{canvas_add_event_listener, get_or_create_canvas, window_add_event_listener};
-use notan_app::config::WindowConfig;
+use notan_app::WindowConfig;
 use notan_app::{Event, EventIterator, WindowBackend};
 use notan_log as log;
 use std::cell::RefCell;
@@ -14,6 +14,7 @@ pub struct WebWindowBackend {
     pub window: Window,
     pub document: Document,
     pub canvas_parent: Element,
+    pub dpi: f64,
 
     pub(crate) antialias: bool,
 
@@ -66,6 +67,8 @@ impl WebWindowBackend {
         let keyboard_callbacks = Default::default();
         let antialias = config.multisampling != 0;
 
+        let dpi = window.device_pixel_ratio();
+
         Ok(Self {
             window,
             document,
@@ -83,6 +86,7 @@ impl WebWindowBackend {
             _context_menu_callback_ref: context_menu_callback_ref,
             config,
             antialias,
+            dpi,
         })
     }
 
@@ -105,12 +109,32 @@ impl WebWindowBackend {
 
         Ok(())
     }
+
+    pub(crate) fn check_dpi(&mut self) {
+        let dpi = self.window.device_pixel_ratio();
+        if dpi != self.dpi {
+            self.dpi = dpi;
+            self.events
+                .borrow_mut()
+                .push(Event::ScreenAspectChange { ratio: dpi });
+            self.set_size(self.config.width, self.config.height);
+        }
+    }
 }
 
 impl WindowBackend for WebWindowBackend {
     fn set_size(&mut self, width: i32, height: i32) {
-        self.canvas.set_width(width as u32);
-        self.canvas.set_height(height as u32);
+        let dpi = self.dpi as f32;
+        let ww = width as f32 * dpi;
+        let hh = height as f32 * dpi;
+        self.canvas.set_width(ww as _);
+        self.canvas.set_height(hh as _);
+        self.canvas
+            .style()
+            .set_property("width", &format!("{}px", width));
+        self.canvas
+            .style()
+            .set_property("height", &format!("{}px", height));
         self.config.width = width;
         self.config.height = height;
     }
@@ -128,12 +152,7 @@ impl WindowBackend for WebWindowBackend {
     }
 
     fn dpi(&self) -> f64 {
-        1.0
-        // TODO allow real device pixel ratio needs to adjust the css size of the canvas (which can be very bad on mobile devices with high dpi).
-        // match web_sys::window() {
-        //     Some(win) => win.device_pixel_ratio(),
-        //     _ => 1.0
-        // }
+        self.dpi
     }
 }
 
