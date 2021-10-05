@@ -156,14 +156,21 @@ impl GlowBackend {
     }
 
     #[inline]
-    fn scissors(&self, x: f32, y: f32, width: f32, height: f32) {
+    fn scissors(&self, x: f32, y: f32, width: f32, height: f32, dpi: f32) {
+        let ww = width; //* dpi;
+        let hh = height; //* dpi;
+
+        // https://github.com/emilk/egui/blob/master/egui_web/src/webgl2.rs#L471
         unsafe {
-            self.gl.scissor(x as _, y as _, width as _, height as _);
+            // notan_log::info!("x:{} y:{} w:{} h:{} d:{}", x, y, width, height, dpi);
+            self.gl.enable(glow::SCISSOR_TEST);
+            self.gl.scissor(x as _, y as _, ww as _, hh as _);
         }
     }
 
     fn end(&mut self) {
         unsafe {
+            self.gl.disable(glow::SCISSOR_TEST);
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
             self.gl.bind_vertex_array(None);
@@ -395,7 +402,7 @@ impl DeviceBackend for GlowBackend {
                     y,
                     width,
                     height,
-                } => self.scissors(*x, *y, *width, *height),
+                } => self.scissors(*x, *y, *width, *height, self.dpi),
             }
         });
     }

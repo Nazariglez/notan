@@ -124,6 +124,10 @@ impl EguiExtension {
                 BlendFactor::One,
                 BlendFactor::InverseSourceAlpha,
             ))
+            .with_alpha_blend(BlendMode::new(
+                BlendFactor::InverseDestinationAlpha,
+                BlendFactor::One,
+            ))
             .build()?;
 
         let vbo = gfx.create_vertex_buffer().build()?;
@@ -250,7 +254,7 @@ impl EguiExtension {
         renderer.bind_vertex_buffer(&self.vbo);
         renderer.bind_uniform_buffer(&self.ubo);
         renderer.bind_texture(0, texture);
-        renderer.set_scissors(clip_min_x, clip_min_y, width, height);
+        // renderer.set_scissors(clip_min_x, clip_min_y, width, height); // TODO fix scissor impl
         renderer.draw(0, mesh.indices.len() as _);
         renderer.end();
 
