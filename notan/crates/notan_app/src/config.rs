@@ -38,6 +38,10 @@ pub struct WindowConfig {
     /// Antialias nultisamples level
     /// `Web: WebGL will use this as antialias = false if the value is 0 or true otherwise`
     pub multisampling: u16,
+
+    /// **Only Web:** By default a canvas will have the size set multiplied by the device_pixel_ratio
+    /// This can be disabled by setting this to `false`. This could be useful for mobile browsers.
+    pub canvas_auto_resolution: bool,
 }
 
 impl Default for WindowConfig {
@@ -53,6 +57,7 @@ impl Default for WindowConfig {
             resizable: false,
             vsync: false,
             multisampling: 0,
+            canvas_auto_resolution: true,
         }
     }
 }
@@ -115,6 +120,12 @@ impl WindowConfig {
     /// Enabled multisampling aliasing (opengl)
     pub fn multisampling(mut self, samples: u16) -> Self {
         self.multisampling = samples;
+        self
+    }
+
+    /// Enable or disable that the size of the canvas will automatically use the device pixel ratio
+    pub fn canvas_auto_resolution(mut self, enabled: bool) -> Self {
+        self.canvas_auto_resolution = enabled;
         self
     }
 }

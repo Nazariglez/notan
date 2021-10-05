@@ -1,6 +1,9 @@
 use crate::keyboard::{enable_keyboard, KeyboardCallbacks};
 use crate::mouse::{enable_mouse, MouseCallbacks};
-use crate::utils::{canvas_add_event_listener, get_or_create_canvas, window_add_event_listener};
+use crate::utils::{
+    canvas_add_event_listener, get_notan_size, get_or_create_canvas, set_size_dpi,
+    window_add_event_listener,
+};
 use notan_app::WindowConfig;
 use notan_app::{Event, EventIterator, WindowBackend};
 use notan_log as log;
@@ -91,7 +94,21 @@ impl WebWindowBackend {
     }
 
     pub(crate) fn init(&mut self) -> Result<(), String> {
-        self.set_size(self.config.width, self.config.height); //TODO maximized option?
+        self.canvas.set_attribute(
+            "notan-auto-res",
+            &self.config.canvas_auto_resolution.to_string(),
+        );
+
+        let (ww, hh) = if self.config.maximized {
+            (
+                self.canvas_parent.client_width(),
+                self.canvas_parent.client_height(),
+            )
+        } else {
+            (self.config.width, self.config.height)
+        };
+
+        self.set_size(ww, hh);
 
         let fullscreen_dispatcher = fullscreen_dispatcher_callback(self);
 
@@ -113,34 +130,25 @@ impl WebWindowBackend {
     pub(crate) fn check_dpi(&mut self) {
         let dpi = self.window.device_pixel_ratio();
         if dpi != self.dpi {
+            let (ww, hh) = get_notan_size(&self.canvas);
             self.dpi = dpi;
             self.events
                 .borrow_mut()
                 .push(Event::ScreenAspectChange { ratio: dpi });
-            self.set_size(self.config.width, self.config.height);
+            self.set_size(ww as _, hh as _);
         }
     }
 }
 
 impl WindowBackend for WebWindowBackend {
     fn set_size(&mut self, width: i32, height: i32) {
-        let dpi = self.dpi as f32;
-        let ww = width as f32 * dpi;
-        let hh = height as f32 * dpi;
-        self.canvas.set_width(ww as _);
-        self.canvas.set_height(hh as _);
-        self.canvas
-            .style()
-            .set_property("width", &format!("{}px", width));
-        self.canvas
-            .style()
-            .set_property("height", &format!("{}px", height));
+        set_size_dpi(&self.canvas, width as _, height as _);
         self.config.width = width;
         self.config.height = height;
     }
 
     fn size(&self) -> (i32, i32) {
-        (self.config.width, self.config.height)
+        get_notan_size(&self.canvas)
     }
 
     fn set_fullscreen(&mut self, enabled: bool) {
@@ -152,7 +160,11 @@ impl WindowBackend for WebWindowBackend {
     }
 
     fn dpi(&self) -> f64 {
-        self.dpi
+        if self.config.canvas_auto_resolution {
+            self.dpi
+        } else {
+            1.0
+        }
     }
 }
 
@@ -179,8 +191,8 @@ fn enable_fullscreen(win: &mut WebWindowBackend) -> Result<(), String> {
                     }
                 };
 
-                canvas.set_width(width as _);
-                canvas.set_height(height as _);
+                notan_log::info!("callback -> {:?} {} {}", last_size, width, height);
+                set_size_dpi(&canvas, width, height);
                 events
                     .borrow_mut()
                     .push(Event::WindowResize { width, height });
@@ -241,8 +253,7 @@ fn enable_resize(win: &mut WebWindowBackend) -> Result<(), String> {
             }
         }
 
-        canvas.set_width(p_width as _);
-        canvas.set_height(p_height as _);
+        set_size_dpi(&canvas, p_width as _, p_height as _);
         events.borrow_mut().push(Event::WindowResize {
             width: p_width,
             height: p_height,
