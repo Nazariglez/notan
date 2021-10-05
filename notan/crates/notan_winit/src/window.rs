@@ -1,12 +1,10 @@
-use notan_app::WindowBackend;
-// use winit::{WindowedContext, PossiblyCurrent};
 use glutin::window::Fullscreen::Borderless;
 use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
-use notan_app::config::WindowConfig;
+use notan_app::WindowBackend;
+use notan_app::WindowConfig;
 use winit::dpi::LogicalSize;
 use winit::event_loop::EventLoop;
 use winit::window::{Window, WindowBuilder};
-// use glutin::{WindowedContext, PossiblyCurrent};
 
 pub struct WinitWindowBackend {
     pub(crate) gl_ctx: ContextWrapper<PossiblyCurrent, Window>,

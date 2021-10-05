@@ -6,6 +6,7 @@ use notan_app::{
     GfxExtension, GfxRenderer, Graphics, IndexBuffer, Pipeline, RenderTexture, ShaderSource,
     Texture, TextureFilter, TextureFormat, TextureInfo, UniformBuffer, VertexBuffer, VertexFormat,
 };
+use std::collections::HashMap;
 
 //language=glsl
 const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
@@ -94,6 +95,13 @@ const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
 "#
 };
 
+#[derive(Default)]
+struct UserTexture {
+    size: (i32, i32),
+    pixels: Vec<u8>,
+    texture: Option<Texture>,
+}
+
 pub struct EguiExtension {
     pipeline: Pipeline,
     vbo: VertexBuffer,
@@ -101,7 +109,7 @@ pub struct EguiExtension {
     ubo: UniformBuffer,
     texture: Option<Texture>,
     texture_version: Option<u64>,
-    user_textures: Vec<Option<Texture>>,
+    user_textures: HashMap<i32, Texture>,
 }
 
 impl EguiExtension {
@@ -132,7 +140,7 @@ impl EguiExtension {
             ubo,
             texture: None,
             texture_version: None,
-            user_textures: vec![],
+            user_textures: HashMap::new(),
         })
     }
 
@@ -234,8 +242,7 @@ impl EguiExtension {
         let width = clip_max_x - clip_min_x;
         let height = clip_max_y - clip_min_y;
 
-        let texture = self.texture.as_ref().unwrap();
-
+        let texture = self.get_texture(mesh.texture_id).unwrap();
         let mut renderer = device.create_renderer();
         renderer.begin(None);
         renderer.set_pipeline(&self.pipeline);
@@ -253,12 +260,19 @@ impl EguiExtension {
         }
     }
 
-    // TODO https://github.com/emilk/egui/blob/master/egui_glium/src/painter.rs#L231
     pub fn get_texture(&self, tex_id: egui::TextureId) -> Option<&Texture> {
         match tex_id {
             TextureId::Egui => self.texture.as_ref(),
-            TextureId::User(id) => self.user_textures.get(id as usize)?.as_ref(),
+            TextureId::User(id) => self.user_textures.get(&(id as i32)),
         }
+    }
+
+    pub fn register_native_texture(&mut self, native: &Texture) -> egui::TextureId {
+        let id = native.id();
+        self.user_textures
+            .entry(id)
+            .or_insert_with(|| native.clone());
+        egui::TextureId::User(id as _)
     }
 }
 
@@ -328,5 +342,18 @@ impl EguiColorConversion for Color32 {
 
     fn to_notan(&self) -> Color {
         self.to_array().into()
+    }
+}
+
+pub trait EguiRegisterTexture {
+    fn egui_id(&self, gfx: &mut Graphics) -> Result<egui::TextureId, String>;
+}
+
+impl EguiRegisterTexture for Texture {
+    fn egui_id(&self, gfx: &mut Graphics) -> Result<TextureId, String> {
+        let mut ext = gfx
+            .get_ext_mut::<EguiContext, EguiExtension>()
+            .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
+        Ok(ext.register_native_texture(self))
     }
 }
