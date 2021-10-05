@@ -1,6 +1,5 @@
 use notan::egui::{self, *};
 use notan::prelude::*;
-use notan_app::config::WindowConfig;
 
 const WIDTH: i32 = 1200;
 const HEIGHT: i32 = 800;
