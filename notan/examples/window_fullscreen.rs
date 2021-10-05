@@ -1,4 +1,3 @@
-use notan::app::config::WindowConfig;
 use notan::app::keyboard::KeyCode;
 use notan::prelude::*;
 
@@ -9,10 +8,7 @@ struct State {
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win = WindowConfig::new().resizable().vsync();
-
     notan::init_with(setup)
-        .set_config(win)
         .set_config(DrawConfig)
         .update(update)
         .draw(draw)

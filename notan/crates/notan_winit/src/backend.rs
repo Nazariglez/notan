@@ -105,6 +105,8 @@ impl BackendSystem for WinitBackend {
 
                                 let logical_size = size.to_logical::<f64>(dpi_scale);
 
+                                b.events
+                                    .push(Event::ScreenAspectChange { ratio: dpi_scale });
                                 b.events.push(Event::WindowResize {
                                     width: logical_size.width as _,
                                     height: logical_size.height as _,

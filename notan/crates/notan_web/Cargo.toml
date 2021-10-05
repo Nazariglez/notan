@@ -36,4 +36,5 @@ features= [
     "MouseEvent",
     "WheelEvent",
     "KeyboardEvent",
+    "CssStyleDeclaration",
 ]

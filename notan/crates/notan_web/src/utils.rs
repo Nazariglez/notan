@@ -2,6 +2,35 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{Document, HtmlCanvasElement, Window};
 
+pub fn set_size_dpi(canvas: &HtmlCanvasElement, width: i32, height: i32) {
+    let auto_res = canvas
+        .get_attribute("notan-auto-res")
+        .unwrap_or_else(|| "false".to_string())
+        .parse::<bool>()
+        .unwrap_or(false);
+    let dpi = if auto_res {
+        web_sys::window().unwrap().device_pixel_ratio() as f32
+    } else {
+        1.0
+    };
+
+    let ww = width as f32 * dpi;
+    let hh = height as f32 * dpi;
+
+    canvas.set_width(ww as _);
+    canvas.set_height(hh as _);
+
+    canvas
+        .style()
+        .set_property("width", &format!("{}px", width));
+    canvas
+        .style()
+        .set_property("height", &format!("{}px", height));
+
+    canvas.set_attribute("notan-width", &width.to_string());
+    canvas.set_attribute("notan-height", &height.to_string());
+}
+
 pub fn request_animation_frame(win: &Window, f: &Closure<dyn FnMut()>) -> i32 {
     win.request_animation_frame(f.as_ref().unchecked_ref())
         .expect("should register `requestAnimationFrame` OK")
@@ -73,10 +102,26 @@ pub fn canvas_position_from_global(
     canvas: &HtmlCanvasElement,
     evt: web_sys::MouseEvent,
 ) -> (i32, i32) {
-    let client_x = (1 + evt.x()) as f64;
-    let client_y = (1 + evt.y()) as f64;
+    let client_x = evt.client_x() as f32;
+    let client_y = evt.client_y() as f32;
     let rect = canvas.get_bounding_client_rect();
-    let x = (client_x - rect.left()) / (rect.right() - rect.left()) * (canvas.width() as f64);
-    let y = (client_y - rect.top()) / (rect.bottom() - rect.top()) * (canvas.height() as f64);
+    let x = client_x - rect.left() as f32;
+    let y = client_y - rect.top() as f32;
     (x as i32, y as i32)
+}
+
+pub fn get_notan_size(canvas: &HtmlCanvasElement) -> (i32, i32) {
+    let width = canvas
+        .get_attribute("notan-width")
+        .unwrap_or_else(|| "0".to_string())
+        .parse::<i32>()
+        .unwrap_or_else(|_| 0);
+
+    let height = canvas
+        .get_attribute("notan-height")
+        .unwrap_or_else(|| "0".to_string())
+        .parse::<i32>()
+        .unwrap_or_else(|_| 0);
+
+    (width, height)
 }
