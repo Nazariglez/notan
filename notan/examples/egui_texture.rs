@@ -34,34 +34,14 @@ fn main() -> Result<(), String> {
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
-    // Get the EGUI plugin that contains egui::CtxRef
-    let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
+    let ctx = plugins
+        .get_mut::<EguiPlugin>()
+        .map(|mut plugin| plugin.create_context(Some(Color::BLACK)))
+        .unwrap();
 
-    // Create a EguiContext to render the frame. We can pass a color to clear the frame if we want
-    let egui_ctx = plugin.create_context(Some(Color::WHITE));
-
-    // Use EGUI as usual passing the context
-    egui::SidePanel::left("side_panel").show(&egui_ctx, |ui| {
-        ui.heading("Egui Plugin Example");
-
-        ui.separator();
-        if ui.button("Quit").clicked() {
-            app.exit();
-        }
-
-        ui.separator();
-        ui.label("Welcome to a basic example of how to use Egui with notan.");
-
-        ui.separator();
-        ui.label("Check the source code to learn more about how it works");
+    egui::Window::new("Notan Texture").show(&ctx, |ui| {
+        ui.image(state.egui_tex, state.img_size);
     });
 
-    egui::Window::new("NativeTextureDisplay")
-        .resizable(true)
-        .show(&egui_ctx, |ui| {
-            ui.image(state.egui_tex, state.img_size);
-        });
-
-    // Draw the context to the screen or to a render texture
-    gfx.render(&egui_ctx);
+    gfx.render(&ctx);
 }
