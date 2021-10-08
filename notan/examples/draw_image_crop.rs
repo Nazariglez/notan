@@ -16,7 +16,7 @@ fn main() -> Result<(), String> {
 fn init(gfx: &mut Graphics) -> State {
     let texture = gfx
         .create_texture()
-        .from_image(include_bytes!("assets/rust.png"))
+        .from_image(include_bytes!("assets/rust-logo-512x512.png"))
         .build()
         .unwrap();
     State { img: texture }

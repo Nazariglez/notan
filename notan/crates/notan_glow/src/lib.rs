@@ -157,14 +157,16 @@ impl GlowBackend {
 
     #[inline]
     fn scissors(&self, x: f32, y: f32, width: f32, height: f32, dpi: f32) {
-        let ww = width; //* dpi;
-        let hh = height; //* dpi;
+        let canvas_height = ((self.size.1 - (height + y) as i32) as f32 * dpi) as i32;
+        let x = x * dpi;
+        let y = y * dpi;
+        let width = width * dpi;
+        let height = height * dpi;
 
-        // https://github.com/emilk/egui/blob/master/egui_web/src/webgl2.rs#L471
         unsafe {
-            // notan_log::info!("x:{} y:{} w:{} h:{} d:{}", x, y, width, height, dpi);
             self.gl.enable(glow::SCISSOR_TEST);
-            self.gl.scissor(x as _, y as _, ww as _, hh as _);
+            self.gl
+                .scissor(x as _, canvas_height, width as _, height as _);
         }
     }
 
@@ -179,7 +181,6 @@ impl GlowBackend {
 
         self.using_indices = false;
         self.current_vertex_attrs = None;
-        //TODO pipeline clean and stats?
     }
 
     fn clean_pipeline(&mut self, id: i32) {

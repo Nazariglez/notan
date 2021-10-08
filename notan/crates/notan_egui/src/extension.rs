@@ -45,7 +45,7 @@ const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
         );
 
         // notan only support f32 vbo (right now), we need to convert this to bytes
-        vec4 norm_srgba = a_srgba * vec4(255, 255, 255, 255);
+        vec4 norm_srgba = vec4(floor(a_srgba.r * 256), floor(a_srgba.g * 256), floor(a_srgba.b * 256), floor(a_srgba.a * 256));
 
         // egui encodes vertex colors in gamma spaces, so we must decode the colors here:
         v_rgba = linear_from_srgba(norm_srgba);
@@ -225,13 +225,12 @@ impl EguiExtension {
         self.vbo.set(&vertices);
         self.ebo.set(&mesh.indices);
 
-        let pixels_per_point = device.dpi() as f32;
         let (width_in_pixels, height_in_pixels) = device.size();
 
-        let clip_min_x = pixels_per_point * clip_rect.min.x;
-        let clip_min_y = pixels_per_point * clip_rect.min.y;
-        let clip_max_x = pixels_per_point * clip_rect.max.x;
-        let clip_max_y = pixels_per_point * clip_rect.max.y;
+        let clip_min_x = clip_rect.min.x;
+        let clip_min_y = clip_rect.min.y;
+        let clip_max_x = clip_rect.max.x;
+        let clip_max_y = clip_rect.max.y;
 
         // Make sure clip rect can fit within a `u32`:
         let clip_min_x = clip_min_x.clamp(0.0, width_in_pixels as _);
@@ -243,18 +242,19 @@ impl EguiExtension {
         let clip_min_y = clip_min_y.round();
         let clip_max_x = clip_max_x.round();
         let clip_max_y = clip_max_y.round();
+
         let width = clip_max_x - clip_min_x;
         let height = clip_max_y - clip_min_y;
 
         let texture = self.get_texture(mesh.texture_id).unwrap();
         let mut renderer = device.create_renderer();
+        renderer.set_scissors(clip_min_x, clip_min_y, width, height);
         renderer.begin(None);
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_index_buffer(&self.ebo);
         renderer.bind_vertex_buffer(&self.vbo);
         renderer.bind_uniform_buffer(&self.ubo);
         renderer.bind_texture(0, texture);
-        // renderer.set_scissors(clip_min_x, clip_min_y, width, height); // TODO fix scissor impl
         renderer.draw(0, mesh.indices.len() as _);
         renderer.end();
 

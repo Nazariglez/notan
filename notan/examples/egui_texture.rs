@@ -11,7 +11,7 @@ impl State {
     fn new(gfx: &mut Graphics) -> State {
         let texture = gfx
             .create_texture()
-            .from_image(include_bytes!("assets/ferris.png"))
+            .from_image(include_bytes!("assets/rust-logo-256x256.png"))
             .build()
             .unwrap();
 

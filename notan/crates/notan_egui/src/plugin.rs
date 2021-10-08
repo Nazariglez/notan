@@ -112,6 +112,8 @@ impl Plugin for EguiPlugin {
     fn update(&mut self, app: &mut App) -> Result<AppFlow, String> {
         self.raw_input.pixels_per_point = Some(app.window().dpi() as _);
         self.raw_input.time = Some(app.timer.time_since_init() as _);
+        let (w, h) = app.window().size();
+        self.raw_input.screen_rect = Some(egui::Rect { min: egui::pos2(0.0, 0.0), max: egui::pos2(w as _, h as _)});
         Ok(AppFlow::Next)
     }
 }
