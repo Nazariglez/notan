@@ -1,6 +1,3 @@
-use notan::app::config::WindowConfig;
-use notan::draw::*;
-use notan::glyph::*;
 use notan::prelude::*;
 
 struct Bunny {

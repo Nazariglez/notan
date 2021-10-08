@@ -156,14 +156,22 @@ impl GlowBackend {
     }
 
     #[inline]
-    fn scissors(&self, x: f32, y: f32, width: f32, height: f32) {
+    fn scissors(&self, x: f32, y: f32, width: f32, height: f32, dpi: f32) {
+        let canvas_height = ((self.size.1 - (height + y) as i32) as f32 * dpi) as i32;
+        let x = x * dpi;
+        let width = width * dpi;
+        let height = height * dpi;
+
         unsafe {
-            self.gl.scissor(x as _, y as _, width as _, height as _);
+            self.gl.enable(glow::SCISSOR_TEST);
+            self.gl
+                .scissor(x as _, canvas_height, width as _, height as _);
         }
     }
 
     fn end(&mut self) {
         unsafe {
+            self.gl.disable(glow::SCISSOR_TEST);
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
             self.gl.bind_vertex_array(None);
@@ -172,7 +180,6 @@ impl GlowBackend {
 
         self.using_indices = false;
         self.current_vertex_attrs = None;
-        //TODO pipeline clean and stats?
     }
 
     fn clean_pipeline(&mut self, id: i32) {
@@ -395,7 +402,7 @@ impl DeviceBackend for GlowBackend {
                     y,
                     width,
                     height,
-                } => self.scissors(*x, *y, *width, *height),
+                } => self.scissors(*x, *y, *width, *height, self.dpi),
             }
         });
     }
