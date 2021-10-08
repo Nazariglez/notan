@@ -33,7 +33,7 @@ fn main() -> Result<(), String> {
         .build()
 }
 
-fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
+fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     let ctx = plugins
         .get_mut::<EguiPlugin>()
         .map(|mut plugin| plugin.create_context(Some(Color::BLACK)))

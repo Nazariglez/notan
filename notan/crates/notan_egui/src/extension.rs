@@ -95,13 +95,6 @@ const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
 "#
 };
 
-#[derive(Default)]
-struct UserTexture {
-    size: (i32, i32),
-    pixels: Vec<u8>,
-    texture: Option<Texture>,
-}
-
 pub struct EguiExtension {
     pipeline: Pipeline,
     vbo: VertexBuffer,

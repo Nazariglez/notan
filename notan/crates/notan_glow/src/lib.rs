@@ -159,7 +159,6 @@ impl GlowBackend {
     fn scissors(&self, x: f32, y: f32, width: f32, height: f32, dpi: f32) {
         let canvas_height = ((self.size.1 - (height + y) as i32) as f32 * dpi) as i32;
         let x = x * dpi;
-        let y = y * dpi;
         let width = width * dpi;
         let height = height * dpi;
 
