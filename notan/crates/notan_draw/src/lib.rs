@@ -11,8 +11,10 @@ mod shapes;
 mod texts;
 mod transform;
 
+mod atlas;
 pub mod prelude;
 
+pub use atlas::*;
 pub use config::*;
 pub use custom_pipeline::*;
 pub use draw::*;

@@ -1,3 +1,4 @@
+pub use crate::atlas::*;
 pub use crate::config::*;
 pub use crate::custom_pipeline::*;
 pub use crate::extension::*;

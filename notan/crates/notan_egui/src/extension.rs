@@ -151,7 +151,7 @@ impl EguiExtension {
         let width = egui_tex.width;
         let height = egui_tex.height;
 
-        let font_gamma = if device.dpi() != 2.0 { 2.5 } else { 1.0 };
+        let font_gamma = if device.dpi() != 2.0 { 0.5 } else { 1.0 };
 
         let pixels = egui_tex
             .srgba_pixels(font_gamma)
