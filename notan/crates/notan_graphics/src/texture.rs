@@ -5,6 +5,15 @@ use crate::Device;
 use notan_math::Rect;
 use std::sync::Arc;
 
+#[derive(Debug)]
+pub struct TextureRead {
+    pub x_offset: i32,
+    pub y_offset: i32,
+    pub width: i32,
+    pub height: i32,
+    pub format: TextureFormat,
+}
+
 #[derive(Debug, Clone)]
 pub struct TextureUpdate<'a> {
     pub x_offset: i32,
@@ -397,6 +406,82 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
         }
 
         device.create_texture(info)
+    }
+}
+
+pub struct TextureReader<'a> {
+    device: &'a mut Device,
+    texture: &'a Texture,
+    x_offset: i32,
+    y_offset: i32,
+    width: i32,
+    height: i32,
+    format: TextureFormat,
+}
+
+impl<'a> TextureReader<'a> {
+    pub fn new(device: &'a mut Device, texture: &'a Texture) -> Self {
+        let rect = texture.frame().clone();
+        let x_offset = rect.x as i32;
+        let y_offset = rect.y as i32;
+        let width = rect.width as i32;
+        let height = rect.height as i32;
+        let format = texture.format.clone();
+        Self {
+            device,
+            texture,
+            x_offset,
+            y_offset,
+            width,
+            height,
+            format,
+        }
+    }
+
+    /// Read pixels from the axis x offset
+    pub fn with_x_offset(mut self, offset: i32) -> Self {
+        self.x_offset = offset;
+        self
+    }
+
+    /// Read pixels from the axis y offset
+    pub fn with_y_offset(mut self, offset: i32) -> Self {
+        self.y_offset = offset;
+        self
+    }
+
+    /// Read pixels until this width from the x offset value
+    pub fn with_width(mut self, width: i32) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Read pixels until this height from the y offset value
+    pub fn with_height(mut self, height: i32) -> Self {
+        self.height = height;
+        self
+    }
+
+    pub fn read_to(self, bytes: &mut [u8]) -> Result<(), String> {
+        let Self {
+            device,
+            texture,
+            x_offset,
+            y_offset,
+            width,
+            height,
+            format,
+        } = self;
+
+        let info = TextureRead {
+            x_offset,
+            y_offset,
+            width,
+            height,
+            format,
+        };
+
+        device.read_pixels(texture, bytes, &info)
     }
 }
 
