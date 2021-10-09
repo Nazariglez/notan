@@ -150,8 +150,8 @@ impl EguiExtension {
         let width = egui_tex.width;
         let height = egui_tex.height;
 
-        let font_gamma = if cfg!(target_arch = "wasm32") {
-            1.0 / 2.2 // HACK due to non-linear framebuffer blending.
+        let font_gamma = if device.dpi() != 1.0 {
+            2.5
         } else {
             1.0
         };
