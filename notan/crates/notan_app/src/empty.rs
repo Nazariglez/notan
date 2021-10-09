@@ -143,7 +143,12 @@ impl DeviceBackend for EmptyDeviceBackend {
         Ok(())
     }
 
-    fn read_pixels(&mut self, _texture: i32, _bytes: &mut [u8], _opts: &TextureRead) -> Result<(), String> {
+    fn read_pixels(
+        &mut self,
+        _texture: i32,
+        _bytes: &mut [u8],
+        _opts: &TextureRead,
+    ) -> Result<(), String> {
         Ok(())
     }
 }

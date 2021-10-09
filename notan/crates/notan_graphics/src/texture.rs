@@ -485,7 +485,6 @@ impl<'a> TextureReader<'a> {
     }
 }
 
-
 pub struct TextureUpdater<'a> {
     device: &'a mut Device,
     texture: &'a mut Texture,

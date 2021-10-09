@@ -472,15 +472,22 @@ impl DeviceBackend for GlowBackend {
                 };
 
                 if can_read {
-                    self.gl.read_pixels(opts.x_offset, opts.y_offset, opts.width, opts.height, opts.format.to_glow(), glow::UNSIGNED_BYTE, glow::PixelPackData::Slice(bytes));
+                    self.gl.read_pixels(
+                        opts.x_offset,
+                        opts.y_offset,
+                        opts.width,
+                        opts.height,
+                        opts.format.to_glow(),
+                        glow::UNSIGNED_BYTE,
+                        glow::PixelPackData::Slice(bytes),
+                    );
                     clean();
                     Ok(())
                 } else {
                     clean();
                     Err("Framebuffer incomplete...".to_string())
                 }
-
-            }
+            },
             None => Err("Invalid texture id".to_string()),
         }
     }

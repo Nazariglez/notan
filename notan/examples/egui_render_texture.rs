@@ -21,7 +21,7 @@ impl State {
             .unwrap();
 
         let img_size = egui::vec2(render_texture.width(), render_texture.height());
-        let egui_texture_id = render_texture.egui_id(gfx).unwrap(); //gfx.register_egui_texture(&texture).unwrap();
+        let egui_texture_id = gfx.register_egui_texture(&render_texture).unwrap();
 
         Self {
             img_size,

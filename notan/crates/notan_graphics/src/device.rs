@@ -69,7 +69,12 @@ pub trait DeviceBackend {
     fn update_texture(&mut self, texture: i32, opts: &TextureUpdate) -> Result<(), String>;
 
     /// Read texture pixels
-    fn read_pixels(&mut self, texture: i32, bytes: &mut [u8], opts: &TextureRead) -> Result<(), String>;
+    fn read_pixels(
+        &mut self,
+        texture: i32,
+        bytes: &mut [u8],
+        opts: &TextureRead,
+    ) -> Result<(), String>;
 }
 
 /// Helper to drop resources on the backend
