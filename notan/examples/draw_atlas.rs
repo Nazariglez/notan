@@ -6,6 +6,7 @@ struct State {
     base_texture: Texture,
     atlas: HashMap<String, Texture>,
     font: Font,
+    count: f32,
 }
 
 #[notan_main]
@@ -39,10 +40,11 @@ fn setup(gfx: &mut Graphics) -> State {
         base_texture: texture,
         atlas,
         font,
+        count: 0.0,
     }
 }
 
-fn draw(gfx: &mut Graphics, state: &mut State) {
+fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
     draw.clear(Color::BLACK);
 
@@ -73,6 +75,14 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
         draw_texture_with_name(x, y, &mut draw, k, tex, &state.font);
         y += tex.height() + 30.0;
     });
+
+    // Draw a pattern using a texture from the atlas
+    draw.pattern(state.atlas.get("face-block").unwrap())
+        .position(520.0, 320.0)
+        .size(260.0, 260.0)
+        .image_offset(state.count, state.count);
+
+    state.count += app.timer.delta_f32() * 20.0;
 
     gfx.render(&draw);
 }
