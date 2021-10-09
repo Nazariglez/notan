@@ -105,6 +105,12 @@ impl Graphics {
         TextureUpdater::new(&mut self.device, texture)
     }
 
+    /// Read pixels from a texture
+    #[inline]
+    pub fn read_pixels<'a>(&'a mut self, texture: &'a Texture) -> TextureReader {
+        TextureReader::new(&mut self.device, texture)
+    }
+
     /// Render to the screen
     #[inline]
     pub fn render(&mut self, renderer: &dyn GfxRenderer) {

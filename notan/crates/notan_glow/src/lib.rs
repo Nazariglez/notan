@@ -449,6 +449,41 @@ impl DeviceBackend for GlowBackend {
             _ => Err("Invalid texture id".to_string()),
         }
     }
+
+    fn read_pixels(&mut self, id: i32, bytes: &mut [u8], opts: &TextureRead) -> Result<(), String> {
+        match self.textures.get(&id) {
+            Some(texture) => unsafe {
+                let fbo = self.gl.create_framebuffer()?;
+                self.gl.bind_framebuffer(glow::FRAMEBUFFER, Some(fbo));
+                self.gl.framebuffer_texture_2d(
+                    glow::FRAMEBUFFER,
+                    glow::COLOR_ATTACHMENT0,
+                    glow::TEXTURE_2D,
+                    Some(texture.texture),
+                    0,
+                );
+
+                let status = self.gl.check_framebuffer_status(glow::FRAMEBUFFER);
+                let can_read = status == glow::FRAMEBUFFER_COMPLETE;
+
+                let clean = || {
+                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+                    self.gl.delete_framebuffer(fbo);
+                };
+
+                if can_read {
+                    self.gl.read_pixels(opts.x_offset, opts.y_offset, opts.width, opts.height, opts.format.to_glow(), glow::UNSIGNED_BYTE, glow::PixelPackData::Slice(bytes));
+                    clean();
+                    Ok(())
+                } else {
+                    clean();
+                    Err("Framebuffer incomplete...".to_string())
+                }
+
+            }
+            None => Err("Invalid texture id".to_string()),
+        }
+    }
 }
 
 #[inline]

@@ -67,6 +67,9 @@ pub trait DeviceBackend {
 
     /// Update texture data
     fn update_texture(&mut self, texture: i32, opts: &TextureUpdate) -> Result<(), String>;
+
+    /// Read texture pixels
+    fn read_pixels(&mut self, texture: i32, bytes: &mut [u8], opts: &TextureRead) -> Result<(), String>;
 }
 
 /// Helper to drop resources on the backend
@@ -247,12 +250,23 @@ impl Device {
         self.backend.render(commands, Some(target.id()));
     }
 
+    #[inline]
     pub fn update_texture(
         &mut self,
         texture: &mut Texture,
         opts: &TextureUpdate,
     ) -> Result<(), String> {
         self.backend.update_texture(texture.id(), opts)
+    }
+
+    #[inline]
+    pub fn read_pixels(
+        &mut self,
+        texture: &Texture,
+        bytes: &mut [u8],
+        opts: &TextureRead,
+    ) -> Result<(), String> {
+        self.backend.read_pixels(texture.id(), bytes, opts)
     }
 
     #[inline]
