@@ -1,5 +1,3 @@
-use notan::app::config::WindowConfig;
-
 use notan::prelude::*;
 use std::convert::TryInto;
 
