@@ -9,11 +9,21 @@ impl AppState for () {}
 
 /// Represents the context of the application
 pub struct App {
+    /// Backend implamentation
     pub backend: Box<dyn Backend>,
+
+    /// Mouse data
     pub mouse: Mouse,
+
+    /// Keyboard data
     pub keyboard: Keyboard,
+
+    /// System timer
+    pub system_timer: AppTimer,
+
+    /// App timer
     pub timer: AppTimer,
-    pub delta: f32,
+
     pub(crate) closed: bool,
 }
 
@@ -25,8 +35,8 @@ impl App {
             backend,
             mouse,
             keyboard,
+            system_timer: AppTimer::default(),
             timer: AppTimer::default(),
-            delta: 0.0,
             closed: false,
         }
     }

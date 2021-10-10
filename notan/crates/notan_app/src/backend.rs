@@ -29,6 +29,12 @@ pub trait Backend: Downcast {
 
 impl_downcast!(Backend);
 
+/// Indicate to the backend if the frame was skipped or if it ended
+pub enum FrameState {
+    End,
+    Skip,
+}
+
 /// Backend initialization run
 pub trait BackendSystem: Backend {
     /// Returns a closure where the backend is initialized and the application loops is managed
@@ -36,7 +42,7 @@ pub trait BackendSystem: Backend {
     where
         Self: Backend,
         S: 'static,
-        R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static;
+        R: FnMut(&mut App, &mut S) -> Result<FrameState, String> + 'static;
 
     /// Returns a function that load files
     fn get_file_loader(&self) -> LoadFileFn {

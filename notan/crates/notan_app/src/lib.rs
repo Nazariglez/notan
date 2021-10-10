@@ -7,6 +7,7 @@ pub mod prelude;
 mod app;
 mod backend;
 mod builder;
+mod fps_plugin;
 pub mod graphics;
 mod handlers;
 mod parsers;
@@ -19,6 +20,7 @@ mod plugins;
 pub use app::*;
 pub use backend::*;
 pub use events::*;
+pub use fps_plugin::FpsPlugin;
 
 pub use builder::*;
 pub use plugins::*;

@@ -421,12 +421,12 @@ pub struct TextureReader<'a> {
 
 impl<'a> TextureReader<'a> {
     pub fn new(device: &'a mut Device, texture: &'a Texture) -> Self {
-        let rect = texture.frame().clone();
+        let rect = *texture.frame();
         let x_offset = rect.x as i32;
         let y_offset = rect.y as i32;
         let width = rect.width as i32;
         let height = rect.height as i32;
-        let format = texture.format.clone();
+        let format = texture.format;
         Self {
             device,
             texture,

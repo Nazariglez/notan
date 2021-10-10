@@ -1,8 +1,7 @@
 use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse};
-
 use glutin::event_loop::ControlFlow;
-use notan_app::WindowConfig;
+use notan_app::{FrameState, WindowConfig};
 
 use notan_app::{
     App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, WindowBackend,
@@ -52,7 +51,7 @@ impl BackendSystem for WinitBackend {
     fn initialize<S, R>(&mut self, window: WindowConfig) -> Result<Box<InitializeFn<S, R>>, String>
     where
         S: 'static,
-        R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static,
+        R: FnMut(&mut App, &mut S) -> Result<FrameState, String> + 'static,
     {
         let event_loop = EventLoop::new();
         let win = WinitWindowBackend::new(window, &event_loop)?;
@@ -122,11 +121,18 @@ impl BackendSystem for WinitBackend {
                         b.window.as_mut().unwrap().window().request_redraw();
                     }
                     WEvent::RedrawRequested(_) => {
-                        if let Err(e) = cb(&mut app, &mut state) {
-                            notan_log::error!("{}", e);
+                        match cb(&mut app, &mut state) {
+                            Ok(FrameState::End) => {
+                                backend(&mut app).window.as_mut().unwrap().swap_buffers();
+                            }
+                            Ok(FrameState::Skip) => {
+                                // notan_log::debug!("Frame skipped");
+                                // no-op
+                            }
+                            Err(e) => {
+                                notan_log::error!("{}", e);
+                            }
                         }
-
-                        backend(&mut app).window.as_mut().unwrap().swap_buffers();
                     }
                     _ => {}
                 }

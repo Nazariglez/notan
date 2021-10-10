@@ -1,6 +1,6 @@
 use crate::config::WindowConfig;
 // use crate::graphics::{Device, DeviceBackend, RenderTexture};
-use crate::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
+use crate::{App, Backend, BackendSystem, EventIterator, FrameState, InitializeFn, WindowBackend};
 use notan_graphics::prelude::*;
 
 #[derive(Default)]
@@ -62,11 +62,16 @@ impl BackendSystem for EmptyBackend {
     fn initialize<S, R>(&mut self, _config: WindowConfig) -> Result<Box<InitializeFn<S, R>>, String>
     where
         S: 'static,
-        R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static,
+        R: FnMut(&mut App, &mut S) -> Result<FrameState, String> + 'static,
     {
         Ok(Box::new(|mut app: App, mut state: S, mut cb: R| {
             // This function should block with a loop or raf in the platform specific backends
-            cb(&mut app, &mut state)
+            // while !app.closed {
+            if let Err(e) = cb(&mut app, &mut state) {
+                notan_log::error!("{}", e);
+            }
+            // }
+            Ok(())
         }))
     }
 
