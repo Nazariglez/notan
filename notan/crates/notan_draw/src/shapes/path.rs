@@ -2,12 +2,12 @@ use super::tess::{fill_lyon_path, stroke_lyon_path, TessMode};
 use crate::builder::DrawProcess;
 use crate::draw::{Draw, ShapeInfo};
 use crate::transform::DrawTransform;
-use glam::Mat3;
 use lyon::math::point;
 use lyon::path::path::Builder;
 use lyon::tessellation::*;
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
+use notan_math::glam::Mat3;
 
 pub struct Path {
     stroke_options: StrokeOptions,

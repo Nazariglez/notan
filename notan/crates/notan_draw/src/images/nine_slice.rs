@@ -2,10 +2,10 @@ use super::image::Image;
 use crate::builder::{DrawBuilder, DrawProcess};
 use crate::draw::Draw;
 use crate::transform::DrawTransform;
-use glam::Mat3;
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
 use notan_graphics::Texture;
+use notan_math::glam::Mat3;
 
 pub struct NineSlice<'a> {
     texture: &'a Texture,

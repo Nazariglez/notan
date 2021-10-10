@@ -4,9 +4,9 @@ use super::shapes::*;
 use super::texts::*;
 use crate::batch::*;
 use crate::draw::*;
-use glam::Mat4;
 use notan_glyph::GlyphPlugin;
 use notan_graphics::prelude::*;
+use notan_math::glam::Mat4;
 
 pub struct DrawManager {
     shape_painter: ShapePainter,

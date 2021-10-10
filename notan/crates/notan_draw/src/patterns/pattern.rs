@@ -1,10 +1,10 @@
 use crate::builder::DrawProcess;
 use crate::draw::{Draw, ImageInfo};
 use crate::transform::DrawTransform;
-use glam::Mat3;
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
 use notan_graphics::Texture;
+use notan_math::glam::Mat3;
 
 pub struct Pattern<'a> {
     matrix: Option<Mat3>,

@@ -769,24 +769,9 @@ dependencies = [
 
 [[package]]
 name = "glam"
-version = "0.10.2"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "579160312273c954cc51bd440f059dde741029ac8daf8c84fece76cb77f62c15"
-dependencies = [
- "version_check",
-]
-
-[[package]]
-name = "glam"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27e6eecbd94ac86b2e1f3b0065ed5f17c097c15d668dddb84208a141e271403b"
-
-[[package]]
-name = "glam"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4126c0479ccf7e8664c36a2d719f5f2c140fbb4f9090008098d2c291fa5b3f16"
+checksum = "2b8509e6791516e81c1a630d0bd7fbac36d2fa8712a9da8662e716b52d5051ca"
 
 [[package]]
 name = "glow"
@@ -1312,7 +1297,6 @@ dependencies = [
 name = "notan"
 version = "0.1.0"
 dependencies = [
- "glam 0.13.0",
  "js-sys",
  "notan_app",
  "notan_backend",
@@ -1355,7 +1339,6 @@ dependencies = [
 name = "notan_draw"
 version = "0.1.0"
 dependencies = [
- "glam 0.13.0",
  "lyon",
  "notan_app",
  "notan_glyph",
@@ -1395,11 +1378,11 @@ dependencies = [
 name = "notan_glyph"
 version = "0.1.0"
 dependencies = [
- "glam 0.16.0",
  "glyph_brush",
  "notan_app",
  "notan_log",
  "notan_macro",
+ "notan_math",
 ]
 
 [[package]]
@@ -1407,7 +1390,6 @@ name = "notan_graphics"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "glam 0.10.2",
  "image",
  "notan_log",
  "notan_macro",
@@ -1444,6 +1426,7 @@ name = "notan_math"
 version = "0.1.0"
 dependencies = [
  "getrandom 0.2.3",
+ "glam",
  "rand",
  "rand_pcg",
 ]

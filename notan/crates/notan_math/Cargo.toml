@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 rand_pcg = "0.2.1"
+glam = {version = "0.19", features = ["scalar-math"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rand = {version = "0.7.2"}

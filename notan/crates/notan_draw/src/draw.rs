@@ -1,8 +1,8 @@
 use crate::batch::*;
 pub(crate) use crate::custom_pipeline::CustomPipeline;
+use notan_math::glam::{Mat3, Mat4};
 
 use crate::transform::Transform;
-use glam::{Mat3, Mat4};
 use notan_glyph::{Font, Text};
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
@@ -36,7 +36,7 @@ impl Draw {
             batches: vec![],
             current_batch: None,
             transform: Transform::new(),
-            base_projection: glam::Mat4::orthographic_lh(
+            base_projection: notan_math::glam::Mat4::orthographic_lh(
                 0.0,
                 width as _,
                 height as _,
@@ -99,7 +99,8 @@ impl Draw {
 
     pub fn set_size(&mut self, width: f32, height: f32) {
         self.size = (width, height);
-        self.base_projection = glam::Mat4::orthographic_lh(0.0, width, height, 0.0, -1.0, 1.0);
+        self.base_projection =
+            notan_math::glam::Mat4::orthographic_lh(0.0, width, height, 0.0, -1.0, 1.0);
     }
 
     pub fn size(&self) -> (f32, f32) {

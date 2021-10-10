@@ -4,10 +4,10 @@ use super::tess::*;
 use crate::builder::DrawProcess;
 use crate::draw::{Draw, ShapeInfo};
 use crate::transform::DrawTransform;
-use glam::Mat3;
 use lyon::tessellation::*;
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
+use notan_math::glam::Mat3;
 
 pub struct Ellipse {
     color: Color,
