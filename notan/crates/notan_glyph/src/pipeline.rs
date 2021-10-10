@@ -1,6 +1,7 @@
 use crate::font_vertex::FontVertex;
 use notan_app::graphics::*;
 use notan_macro::{fragment_shader, vertex_shader};
+use notan_math::glam;
 
 /// Used to manage and render the vertices glyphs
 pub trait GlyphPipeline {

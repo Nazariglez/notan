@@ -11,7 +11,7 @@ glyph_brush = "0.7.2"
 notan_app = { path = "../notan_app" }
 notan_log = { path = "../notan_log" }
 notan_macro = { path = "../notan_macro" }
-glam = "0.16.0"
+notan_math = { path = "../notan_math" }
 
 [features]
 default = ["basic_pipeline"]

@@ -1,8 +1,8 @@
 use crate::batch::*;
 use crate::manager::process_pipeline;
-use glam::Mat4;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
+use notan_math::glam::Mat4;
 
 //language=glsl
 const IMAGE_VERTEX: ShaderSource = vertex_shader! {

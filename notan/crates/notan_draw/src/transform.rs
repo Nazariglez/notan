@@ -1,4 +1,4 @@
-use glam::{Mat3, Vec2, Vec3};
+use notan_math::glam::{Mat3, Vec2, Vec3};
 use std::ops::Deref;
 
 /// Helper methods to do matrix transformations
