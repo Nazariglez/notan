@@ -1,6 +1,7 @@
 mod constants;
 mod random;
 mod rect;
+mod utils;
 
 pub mod prelude;
 
@@ -11,3 +12,4 @@ pub use random::*;
 pub use rect::*;
 
 pub use glam;
+pub use utils::*;

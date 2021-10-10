@@ -1322,6 +1322,7 @@ dependencies = [
  "notan_graphics",
  "notan_log",
  "notan_macro",
+ "notan_math",
  "notan_utils",
  "parking_lot",
  "platter",
