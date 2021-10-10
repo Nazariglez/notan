@@ -7,7 +7,6 @@ use notan_app::{
     Texture, TextureFilter, TextureFormat, TextureInfo, UniformBuffer, VertexBuffer, VertexFormat,
 };
 use std::collections::HashMap;
-use std::ops::Deref;
 
 //language=glsl
 const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
@@ -151,7 +150,11 @@ impl EguiExtension {
         let width = egui_tex.width;
         let height = egui_tex.height;
 
-        let font_gamma = if device.dpi() != 2.0 { 0.5 } else { 1.0 };
+        let font_gamma = if (device.dpi() - 2.0).abs() > f64::EPSILON {
+            2.5
+        } else {
+            1.0
+        };
 
         let pixels = egui_tex
             .srgba_pixels(font_gamma)

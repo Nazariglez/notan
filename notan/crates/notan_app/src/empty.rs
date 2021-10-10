@@ -67,7 +67,9 @@ impl BackendSystem for EmptyBackend {
         Ok(Box::new(|mut app: App, mut state: S, mut cb: R| {
             // This function should block with a loop or raf in the platform specific backends
             // while !app.closed {
-            cb(&mut app, &mut state);
+            if let Err(e) = cb(&mut app, &mut state) {
+                notan_log::error!("{}", e);
+            }
             // }
             Ok(())
         }))

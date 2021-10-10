@@ -2,7 +2,7 @@ use crate::{App, AppFlow, Plugin};
 
 /// Limit the App frame rate to a maximum
 pub struct FpsPlugin {
-    fps: f64,
+    target: u8,
     seconds: f64,
     elapsed: f64,
 }
@@ -12,10 +12,14 @@ impl FpsPlugin {
         let fps = target as f64;
         let seconds = 1.0 / fps;
         Self {
-            fps,
+            target,
             seconds,
             elapsed: 0.0,
         }
+    }
+
+    pub fn target(&self) -> u8 {
+        self.target
     }
 }
 
