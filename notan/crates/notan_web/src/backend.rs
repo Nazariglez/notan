@@ -1,7 +1,7 @@
 use crate::utils::request_animation_frame;
 use crate::window::WebWindowBackend;
-use notan_app::WindowConfig;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
+use notan_app::{FrameState, WindowConfig};
 use notan_graphics::DeviceBackend;
 use notan_log as log;
 use std::cell::RefCell;
@@ -50,7 +50,7 @@ impl BackendSystem for WebBackend {
     fn initialize<S, R>(&mut self, window: WindowConfig) -> Result<Box<InitializeFn<S, R>>, String>
     where
         S: 'static,
-        R: FnMut(&mut App, &mut S) -> Result<(), String> + 'static,
+        R: FnMut(&mut App, &mut S) -> Result<FrameState, String> + 'static,
     {
         self.window = Some(WebWindowBackend::new(window, self.events.clone())?);
 

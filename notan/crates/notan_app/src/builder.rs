@@ -9,7 +9,7 @@ use crate::handlers::{
 };
 use crate::parsers::*;
 use crate::plugins::*;
-use crate::{App, Backend, BackendSystem, GfxExtension, GfxRenderer};
+use crate::{App, Backend, BackendSystem, FrameState, GfxExtension, GfxRenderer};
 use notan_log as log;
 
 pub use crate::handlers::SetupHandler;
@@ -240,20 +240,23 @@ where
                 graphics.set_dpi(win_dpi);
             }
 
+            // update system delta time and fps here
+            app.system_timer.update();
+
             // Manage pre frame events
             if let AppFlow::SkipFrame = plugins.pre_frame(&mut app)? {
-                return Ok(());
+                return Ok(FrameState::Skip);
             }
-
-            assets.tick((&mut app, &mut graphics, &mut plugins, &mut state))?;
 
             // update delta time and fps here
             app.timer.update();
 
+            assets.tick((&mut app, &mut graphics, &mut plugins, &mut state))?;
+
             // Manage each event
             for evt in app.backend.events_iter() {
-                app.keyboard.process_events(&evt, app.delta);
-                app.mouse.process_events(&evt, app.delta);
+                app.keyboard.process_events(&evt, app.timer.delta_f32());
+                app.mouse.process_events(&evt, app.timer.delta_f32());
 
                 match plugins.event(&mut app, &evt)? {
                     AppFlow::Skip => {}
@@ -262,7 +265,7 @@ where
                             cb.exec(&mut app, &mut assets, &mut plugins, &mut state, evt);
                         }
                     }
-                    AppFlow::SkipFrame => return Ok(()),
+                    AppFlow::SkipFrame => return Ok(FrameState::Skip),
                 }
             }
 
@@ -274,7 +277,7 @@ where
                         cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
                     }
                 }
-                AppFlow::SkipFrame => return Ok(()),
+                AppFlow::SkipFrame => return Ok(FrameState::Skip),
             }
 
             // Manage draw callback
@@ -291,7 +294,7 @@ where
                         );
                     }
                 }
-                AppFlow::SkipFrame => return Ok(()),
+                AppFlow::SkipFrame => return Ok(FrameState::Skip),
             }
 
             app.mouse.clear();
@@ -307,7 +310,7 @@ where
                 log::info!("App Closed");
             }
 
-            Ok(())
+            Ok(FrameState::End)
         }) {
             log::error!("{}", e);
         }
