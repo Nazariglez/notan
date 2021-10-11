@@ -20,15 +20,27 @@ pub fn set_size_dpi(canvas: &HtmlCanvasElement, width: i32, height: i32) {
     canvas.set_width(ww as _);
     canvas.set_height(hh as _);
 
-    canvas
+    if let Err(e) = canvas
         .style()
-        .set_property("width", &format!("{}px", width));
-    canvas
-        .style()
-        .set_property("height", &format!("{}px", height));
+        .set_property("width", &format!("{}px", width))
+    {
+        notan_log::error!("{:?}", e);
+    }
 
-    canvas.set_attribute("notan-width", &width.to_string());
-    canvas.set_attribute("notan-height", &height.to_string());
+    if let Err(e) = canvas
+        .style()
+        .set_property("height", &format!("{}px", height))
+    {
+        notan_log::error!("{:?}", e);
+    }
+
+    if let Err(e) = canvas.set_attribute("notan-width", &width.to_string()) {
+        notan_log::error!("{:?}", e);
+    }
+
+    if let Err(e) = canvas.set_attribute("notan-height", &height.to_string()) {
+        notan_log::error!("{:?}", e);
+    }
 }
 
 pub fn request_animation_frame(win: &Window, f: &Closure<dyn FnMut()>) -> i32 {
@@ -115,13 +127,13 @@ pub fn get_notan_size(canvas: &HtmlCanvasElement) -> (i32, i32) {
         .get_attribute("notan-width")
         .unwrap_or_else(|| "0".to_string())
         .parse::<i32>()
-        .unwrap_or_else(|_| 0);
+        .unwrap_or(0);
 
     let height = canvas
         .get_attribute("notan-height")
         .unwrap_or_else(|| "0".to_string())
         .parse::<i32>()
-        .unwrap_or_else(|_| 0);
+        .unwrap_or(0);
 
     (width, height)
 }
