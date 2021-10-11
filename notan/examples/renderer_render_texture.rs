@@ -36,7 +36,6 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 
 #[derive(AppState)]
 struct State {
-    clear_options: ClearOptions,
     pipeline: Pipeline,
     vertex_buffer: Buffer<f32>,
     index_buffer: Buffer<u32>,
@@ -52,8 +51,6 @@ fn main() -> Result<(), String> {
 }
 
 fn setup(gfx: &mut Graphics) -> State {
-    let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
-
     let pipeline = gfx
         .create_pipeline()
         .from(&VERT, &FRAG)
@@ -101,7 +98,6 @@ fn setup(gfx: &mut Graphics) -> State {
         .unwrap();
 
     State {
-        clear_options,
         pipeline,
         vertex_buffer,
         index_buffer,

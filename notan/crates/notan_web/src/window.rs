@@ -94,10 +94,12 @@ impl WebWindowBackend {
     }
 
     pub(crate) fn init(&mut self) -> Result<(), String> {
-        self.canvas.set_attribute(
+        if let Err(e) = self.canvas.set_attribute(
             "notan-auto-res",
             &self.config.canvas_auto_resolution.to_string(),
-        );
+        ) {
+            notan_log::error!("{:?}", e);
+        }
 
         let (ww, hh) = if self.config.maximized {
             (
@@ -129,7 +131,7 @@ impl WebWindowBackend {
 
     pub(crate) fn check_dpi(&mut self) {
         let dpi = self.window.device_pixel_ratio();
-        if dpi != self.dpi {
+        if (dpi - self.dpi).abs() > f64::EPSILON {
             let (ww, hh) = get_notan_size(&self.canvas);
             self.dpi = dpi;
             self.events
