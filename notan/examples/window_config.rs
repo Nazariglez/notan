@@ -1,4 +1,3 @@
-use notan::app::config::WindowConfig;
 use notan::prelude::*;
 
 #[notan_main]
