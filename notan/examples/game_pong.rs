@@ -203,7 +203,6 @@ impl BoundCalc for Paddle {
             min_y: self.y,
             max_x: self.x + PADDLE_WIDTH,
             max_y: self.y + PADDLE_HEIGHT,
-            center_x: self.x + PADDLE_WIDTH * 0.5,
             center_y: self.y + PADDLE_HEIGHT * 0.5,
         }
     }
@@ -264,7 +263,6 @@ impl BoundCalc for Ball {
             min_y: self.y,
             max_x: self.x + BALL_SIZE,
             max_y: self.y + BALL_SIZE,
-            center_x: self.x + BALL_SIZE * 0.5,
             center_y: self.y + BALL_SIZE * 0.5,
         }
     }
@@ -275,7 +273,6 @@ struct Bounds {
     min_y: f32,
     max_x: f32,
     max_y: f32,
-    center_x: f32,
     center_y: f32,
 }
 
