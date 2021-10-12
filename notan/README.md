@@ -108,7 +108,7 @@ but Notan should help with most of them.
 Adding `backends` for **iOS** and **Android** is something that will happen eventually because supporting them is a priority.
 
 The current graphics backend in place for these platforms is using [glow.rs](https://github.com/grovesNL/glow) which allow us to target WebGl2, GL and GL ES easily.
-Adding a [wgpu.rs](https://wgpu.rs/) would be great, but I don't have the knowledge to do that right now. Any help with that will be really appreciated.
+Adding [wgpu.rs](https://wgpu.rs/) would be great, but I don't have the knowledge to do that right now. Any help with that will be really appreciated.
 
 ## Performance
 
@@ -130,6 +130,17 @@ On my Macbook (2.3Hz i9 - 16GB RAM):
 
 Let's keep in mind that the conditions for `bunnymark` are very unlikely to see in a real project.
 However, it's widely used to test the performance in 2D Draw APIs.
+
+## Integration 
+
+Notan is designed to be as modular as possible. It's flexible enough to allow change how the event life cycle works with 
+a plugin (i.e: [FpsPlugin](crates/notan_app/src/fps_plugin.rs)), or to allow us to draw custom things easily on top of the 
+graphics API using *Graphic Extensions* (i.e: [egui](crates/notan_egui) or [draw](crates/notan_draw)).
+
+Even any backend can be easily *plugged-in* from the code just using `init_with_backend`.
+
+We include some of these plugins or graphics extensions behind feature flags, as a part of the project.
+However, everybody can create their own plugins or extension to extend Notan.
 
 ## Why?
 
