@@ -137,8 +137,8 @@ impl Transform {
         self
     }
 
-    /// Resets the base matrix to IDENTITY and remove the matrices on the stack
-    pub fn reset(&mut self) -> &mut Self {
+    /// Clear all the matrices on the stack and reset the base to IDENTITY
+    pub fn clear(&mut self) -> &mut Self {
         self.identity = Mat3::IDENTITY;
         self.stack.clear();
         self

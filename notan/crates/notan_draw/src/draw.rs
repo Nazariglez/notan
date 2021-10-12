@@ -55,6 +55,12 @@ impl Draw {
             text_batch_indices: None,
         }
     }
+
+    /// Returns the global matrix
+    #[inline]
+    pub fn matrix(&self) -> &Mat3 {
+        self.transform.matrix()
+    }
     //
     // pub fn round_pixels(&mut self, _round: bool) {
     //     //TODO round pixels to draw "2d pixel games"
