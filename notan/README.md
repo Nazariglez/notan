@@ -20,7 +20,7 @@ enforcing any structure or pattern, always trying to stay out of your way.
 ```rust
 use notan::prelude::*;
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
     notan::init().build()
 }
@@ -30,10 +30,13 @@ fn main() -> Result<(), String> {
 
 ```rust
 use notan::prelude::*;
+use notan::draw::*;
 
-#[notan::main]
+#[notan_main]
 fn main() -> Result<(), String> {
-    notan::init().draw(draw).build()
+    notan::init().draw(draw)
+        .set_config(DrawConfig)
+        .build()
 }
 
 fn draw(gfx: &mut Graphics) {
