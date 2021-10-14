@@ -15,7 +15,7 @@ pub struct AssetStorage {
 impl AssetStorage {
     pub(crate) fn register(&mut self, id: &str, type_id: TypeId) -> DoneSignal {
         let fut = Box::pin(platter::load_file(id.to_string()).map_err(|e| e.to_string()));
-        let state = LoadWrapper::new(fut, type_id);
+        let state = LoadWrapper::new(id, fut, type_id);
         let loaded = state.loaded.clone();
         notan_log::info!("to load -> {} {:?}", id, state.type_id);
         self.to_load.insert(id.to_string(), state);

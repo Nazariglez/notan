@@ -35,11 +35,17 @@ pub(crate) struct LoadWrapper {
     fut: LocalBoxFuture<'static, Result<Vec<u8>, String>>,
     pub loaded: DoneSignal,
     pub type_id: TypeId,
+    id: String,
 }
 
 impl LoadWrapper {
-    pub fn new(fut: LocalBoxFuture<'static, Result<Vec<u8>, String>>, type_id: TypeId) -> Self {
+    pub fn new(
+        id: &str,
+        fut: LocalBoxFuture<'static, Result<Vec<u8>, String>>,
+        type_id: TypeId,
+    ) -> Self {
         Self {
+            id: id.to_string(),
             fut,
             loaded: DoneSignal::new(),
             type_id,
@@ -53,7 +59,7 @@ impl LoadWrapper {
             Poll::Ready(r_buff) => match r_buff {
                 Ok(buff) => Some(buff),
                 Err(err) => {
-                    notan_log::error!("{}", err);
+                    notan_log::error!("File: {} -> {}", self.id, err);
                     None
                 }
             },
