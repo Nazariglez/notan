@@ -160,7 +160,25 @@ impl DrawProcess for ImageAnimation<'_> {
                     .color(color)
                     .alpha(alpha);
             }
-            TextureSource::List(list) => {}
+            TextureSource::List(list) => {
+                let i = match frames {
+                    None => (list.len() as f32 * time).floor() as usize,
+                    Some(f) => {
+                        debug_assert!(f.iter().max().map(|v| *v < list.len()).unwrap_or(false));
+
+                        let i = (f.len() as f32 * time).floor() as usize;
+                        f[i]
+                    }
+                };
+
+                let texture = list[i];
+                let size = size.unwrap_or_else(|| texture.size());
+                img(draw, texture, matrix, blend_mode)
+                    .size(size.0, size.1)
+                    .position(x, y)
+                    .color(color)
+                    .alpha(alpha);
+            }
         }
     }
 }

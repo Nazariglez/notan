@@ -282,6 +282,12 @@ impl std::cmp::PartialEq for Texture {
     }
 }
 
+impl AsRef<Texture> for Texture {
+    fn as_ref(&self) -> &Texture {
+        &self
+    }
+}
+
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TextureFormat {
