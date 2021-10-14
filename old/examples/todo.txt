@@ -1,5 +1,0 @@
-15puzzle
-primitives
-audio
-file_sandbox
-minesweeper
