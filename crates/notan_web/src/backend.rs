@@ -52,13 +52,12 @@ impl BackendSystem for WebBackend {
         S: 'static,
         R: FnMut(&mut App, &mut S) -> Result<FrameState, String> + 'static,
     {
-        self.window = Some(WebWindowBackend::new(window, self.events.clone())?);
+        let win = WebWindowBackend::new(window, self.events.clone())?;
+        self.window = Some(win);
 
         Ok(Box::new(move |mut app: App, mut state: S, mut cb: R| {
             let callback = Rc::new(RefCell::new(None));
             let inner_callback = callback.clone();
-
-            backend(&mut app).window.as_mut().unwrap().init()?;
 
             *callback.borrow_mut() = Some(Closure::wrap(Box::new(move || {
                 if let Err(e) = cb(&mut app, &mut state) {

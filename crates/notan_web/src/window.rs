@@ -72,7 +72,7 @@ impl WebWindowBackend {
 
         let dpi = window.device_pixel_ratio();
 
-        Ok(Self {
+        let win = Self {
             window,
             document,
             canvas,
@@ -90,10 +90,13 @@ impl WebWindowBackend {
             config,
             antialias,
             dpi,
-        })
+        };
+
+        win.init()
     }
 
-    pub(crate) fn init(&mut self) -> Result<(), String> {
+    #[inline]
+    pub(crate) fn init(mut self) -> Result<Self, String> {
         if let Err(e) = self.canvas.set_attribute(
             "notan-auto-res",
             &self.config.canvas_auto_resolution.to_string(),
@@ -112,21 +115,21 @@ impl WebWindowBackend {
 
         self.set_size(ww, hh);
 
-        let fullscreen_dispatcher = fullscreen_dispatcher_callback(self);
+        let fullscreen_dispatcher = fullscreen_dispatcher_callback(&mut self);
 
-        enable_mouse(self, fullscreen_dispatcher.clone())?;
-        enable_keyboard(self, fullscreen_dispatcher.clone())?;
+        enable_mouse(&mut self, fullscreen_dispatcher.clone())?;
+        enable_keyboard(&mut self, fullscreen_dispatcher.clone())?;
 
         if self.config.resizable {
-            enable_resize(self)?;
+            enable_resize(&mut self)?;
         }
 
-        enable_fullscreen(self)?;
+        enable_fullscreen(&mut self)?;
         if self.config.fullscreen {
             self.set_fullscreen(true);
         }
 
-        Ok(())
+        Ok(self)
     }
 
     pub(crate) fn check_dpi(&mut self) {
