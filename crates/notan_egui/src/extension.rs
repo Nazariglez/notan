@@ -102,7 +102,7 @@ pub struct EguiExtension {
     ubo: UniformBuffer,
     texture: Option<Texture>,
     texture_version: Option<u64>,
-    user_textures: HashMap<i32, Texture>,
+    user_textures: HashMap<u64, Texture>,
 }
 
 impl EguiExtension {
@@ -263,16 +263,16 @@ impl EguiExtension {
     pub fn get_texture(&self, tex_id: egui::TextureId) -> Option<&Texture> {
         match tex_id {
             TextureId::Egui => self.texture.as_ref(),
-            TextureId::User(id) => self.user_textures.get(&(id as i32)),
+            TextureId::User(id) => self.user_textures.get(&id),
         }
     }
 
-    pub(crate) fn register_native_texture(&mut self, id: i32, native: Texture) -> egui::TextureId {
+    pub(crate) fn register_native_texture(&mut self, id: u64, native: Texture) -> egui::TextureId {
         self.user_textures.entry(id).or_insert_with(|| native);
         egui::TextureId::User(id as _)
     }
 
-    pub(crate) fn unregister_native_texture(&mut self, id: i32) {
+    pub(crate) fn unregister_native_texture(&mut self, id: u64) {
         self.user_textures.remove(&id);
     }
 }
@@ -432,7 +432,7 @@ impl RegisterEguiTexture for Graphics {
                 .get_ext_mut::<EguiContext, EguiExtension>()
                 .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
 
-            ext.unregister_native_texture(id as _);
+            ext.unregister_native_texture(id);
             Ok(())
         } else {
             Err("Invalid EGUI Texture id".to_string())

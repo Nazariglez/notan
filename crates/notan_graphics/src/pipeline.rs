@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 struct PipelineId {
-    id: i32,
+    id: u64,
     drop_manager: Arc<DropManager>,
 }
 
@@ -31,7 +31,7 @@ impl std::cmp::PartialEq for Pipeline {
 
 impl Pipeline {
     pub(crate) fn new(
-        id: i32,
+        id: u64,
         stride: usize,
         options: PipelineOptions,
         drop_manager: Arc<DropManager>,
@@ -46,7 +46,7 @@ impl Pipeline {
     }
 
     #[inline(always)]
-    pub fn id(&self) -> i32 {
+    pub fn id(&self) -> u64 {
         self.id.id
     }
 

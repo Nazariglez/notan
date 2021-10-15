@@ -140,7 +140,7 @@ impl TextureInfo {
 
 #[derive(Debug)]
 struct TextureId {
-    id: i32,
+    id: u64,
     drop_manager: Arc<DropManager>,
 }
 
@@ -164,7 +164,7 @@ pub struct Texture {
 }
 //https://sotrh.github.io/learn-wgpu/beginner/tutorial5-textures/#getting-data-into-a-texture
 impl Texture {
-    pub(crate) fn new(id: i32, info: TextureInfo, drop_manager: Arc<DropManager>) -> Self {
+    pub(crate) fn new(id: u64, info: TextureInfo, drop_manager: Arc<DropManager>) -> Self {
         let id = Arc::new(TextureId { id, drop_manager });
 
         let TextureInfo {
@@ -199,7 +199,7 @@ impl Texture {
     }
 
     #[inline(always)]
-    pub fn id(&self) -> i32 {
+    pub fn id(&self) -> u64 {
         self.id.id
     }
 

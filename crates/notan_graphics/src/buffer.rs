@@ -17,7 +17,7 @@ pub type UniformBuffer = Buffer<f32>;
 
 #[derive(Debug)]
 struct BufferId {
-    id: i32,
+    id: u64,
     drop_manager: Arc<DropManager>,
 }
 
@@ -48,7 +48,7 @@ where
     T: BufferDataType + Copy,
 {
     pub(crate) fn new(
-        id: i32,
+        id: u64,
         data: Vec<T>,
         usage: BufferUsage,
         draw: Option<DrawType>,
@@ -66,7 +66,7 @@ where
     }
 
     #[inline(always)]
-    pub fn id(&self) -> i32 {
+    pub fn id(&self) -> u64 {
         self.id.id
     }
 

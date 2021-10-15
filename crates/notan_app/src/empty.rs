@@ -82,7 +82,7 @@ impl BackendSystem for EmptyBackend {
 
 #[derive(Default)]
 struct EmptyDeviceBackend {
-    id_count: i32,
+    id_count: u64,
 }
 
 impl DeviceBackend for EmptyDeviceBackend {
@@ -96,41 +96,27 @@ impl DeviceBackend for EmptyDeviceBackend {
         _fragment_source: &[u8],
         _vertex_attrs: &[VertexAttr],
         _options: PipelineOptions,
-    ) -> Result<i32, String> {
+    ) -> Result<u64, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }
 
-    fn create_vertex_buffer(&mut self) -> Result<i32, String> {
+    fn create_vertex_buffer(&mut self) -> Result<u64, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }
 
-    fn create_index_buffer(&mut self) -> Result<i32, String> {
+    fn create_index_buffer(&mut self) -> Result<u64, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }
 
-    fn create_uniform_buffer(&mut self, _slot: u32, _name: &str) -> Result<i32, String> {
+    fn create_uniform_buffer(&mut self, _slot: u32, _name: &str) -> Result<u64, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }
 
-    fn create_render_texture(
-        &mut self,
-        _texture_id: i32,
-        _info: &TextureInfo,
-    ) -> Result<i32, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn create_texture(&mut self, _info: &TextureInfo) -> Result<i32, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn render(&mut self, commands: &[Commands], _target: Option<i32>) {
+    fn render(&mut self, commands: &[Commands], _target: Option<u64>) {
         commands
             .iter()
             .for_each(|cmd| notan_log::info!("{:?}", cmd));
@@ -144,13 +130,27 @@ impl DeviceBackend for EmptyDeviceBackend {
 
     fn set_dpi(&mut self, _scale_factor: f64) {}
 
-    fn update_texture(&mut self, _texture: i32, _opts: &TextureUpdate) -> Result<(), String> {
+    fn create_texture(&mut self, _info: &TextureInfo) -> Result<u64, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn create_render_texture(
+        &mut self,
+        _texture_id: u64,
+        _info: &TextureInfo,
+    ) -> Result<u64, String> {
+        self.id_count += 1;
+        Ok(self.id_count)
+    }
+
+    fn update_texture(&mut self, _texture: u64, _opts: &TextureUpdate) -> Result<(), String> {
         Ok(())
     }
 
     fn read_pixels(
         &mut self,
-        _texture: i32,
+        _texture: u64,
         _bytes: &mut [u8],
         _opts: &TextureRead,
     ) -> Result<(), String> {

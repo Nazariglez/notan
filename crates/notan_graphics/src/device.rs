@@ -12,10 +12,10 @@ use std::sync::Arc;
 /// Device resource ID, used to know which resource was dropped
 #[derive(Debug)]
 pub enum ResourceId {
-    Buffer(i32),
-    Texture(i32),
-    Pipeline(i32),
-    RenderTexture(i32),
+    Buffer(u64),
+    Texture(u64),
+    Pipeline(u64),
+    RenderTexture(u64),
 }
 
 /// Represents a the implementation graphics backend like glow, wgpu or another
@@ -35,19 +35,19 @@ pub trait DeviceBackend {
         fragment_source: &[u8],
         vertex_attrs: &[VertexAttr],
         options: PipelineOptions,
-    ) -> Result<i32, String>;
+    ) -> Result<u64, String>;
 
     /// Create a new vertex buffer object and returns the id
-    fn create_vertex_buffer(&mut self) -> Result<i32, String>;
+    fn create_vertex_buffer(&mut self) -> Result<u64, String>;
 
     /// Create a new index buffer object and returns the id
-    fn create_index_buffer(&mut self) -> Result<i32, String>;
+    fn create_index_buffer(&mut self) -> Result<u64, String>;
 
     /// Create a new uniform buffer and returns the id
-    fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<i32, String>;
+    fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<u64, String>;
 
     /// Create a new renderer using the size of the graphics
-    fn render(&mut self, commands: &[Commands], target: Option<i32>);
+    fn render(&mut self, commands: &[Commands], target: Option<u64>);
 
     /// Clean all the dropped resources
     fn clean(&mut self, to_clean: &[ResourceId]);
@@ -59,19 +59,19 @@ pub trait DeviceBackend {
     fn set_dpi(&mut self, scale_factor: f64);
 
     /// Create a new texture and returns the id
-    fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String>;
+    fn create_texture(&mut self, info: &TextureInfo) -> Result<u64, String>;
 
     /// Create a new render target and returns the id
-    fn create_render_texture(&mut self, texture_id: i32, info: &TextureInfo)
-        -> Result<i32, String>;
+    fn create_render_texture(&mut self, texture_id: u64, info: &TextureInfo)
+        -> Result<u64, String>;
 
     /// Update texture data
-    fn update_texture(&mut self, texture: i32, opts: &TextureUpdate) -> Result<(), String>;
+    fn update_texture(&mut self, texture: u64, opts: &TextureUpdate) -> Result<(), String>;
 
     /// Read texture pixels
     fn read_pixels(
         &mut self,
-        texture: i32,
+        texture: u64,
         bytes: &mut [u8],
         opts: &TextureRead,
     ) -> Result<(), String>;
