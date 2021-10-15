@@ -18,21 +18,21 @@ use texture::InnerTexture;
 
 pub struct GlowBackend {
     gl: Context,
-    buffer_count: i32,
-    texture_count: i32,
-    pipeline_count: i32,
-    render_target_count: i32,
+    buffer_count: u64,
+    texture_count: u64,
+    pipeline_count: u64,
+    render_target_count: u64,
     size: (i32, i32),
     dpi: f32,
-    pipelines: HashMap<i32, InnerPipeline>,
-    buffers: HashMap<i32, InnerBuffer>,
-    textures: HashMap<i32, InnerTexture>,
-    render_targets: HashMap<i32, InnerRenderTexture>,
+    pipelines: HashMap<u64, InnerPipeline>,
+    buffers: HashMap<u64, InnerBuffer>,
+    textures: HashMap<u64, InnerTexture>,
+    render_targets: HashMap<u64, InnerRenderTexture>,
     current_vertex_attrs: Option<VertexAttributes>,
     gl_index_type: u32,
     using_indices: bool,
     api_name: String,
-    current_pipeline: i32,
+    current_pipeline: u64,
     limits: Limits,
 
     #[cfg(target_arch = "wasm32")]
@@ -117,7 +117,7 @@ impl GlowBackend {
 
     fn begin(
         &self,
-        target: Option<i32>,
+        target: Option<u64>,
         color: &Option<Color>,
         depth: &Option<f32>,
         stencil: &Option<i32>,
@@ -182,13 +182,13 @@ impl GlowBackend {
         self.current_vertex_attrs = None;
     }
 
-    fn clean_pipeline(&mut self, id: i32) {
+    fn clean_pipeline(&mut self, id: u64) {
         if let Some(pip) = self.pipelines.remove(&id) {
             pip.clean(&self.gl);
         }
     }
 
-    fn set_pipeline(&mut self, id: i32, options: &PipelineOptions) {
+    fn set_pipeline(&mut self, id: u64, options: &PipelineOptions) {
         if let Some(pip) = self.pipelines.get(&id) {
             pip.bind(&self.gl, options);
             self.current_vertex_attrs = Some(pip.attrs.clone());
@@ -204,7 +204,7 @@ impl GlowBackend {
 
     fn bind_buffer(
         &mut self,
-        id: i32,
+        id: u64,
         data_wrapper: BufferDataWrapper,
         usage: &BufferUsage,
         draw: &DrawType,
@@ -242,7 +242,7 @@ impl GlowBackend {
         }
     }
 
-    fn bind_texture(&mut self, id: i32, slot: u32, location: u32) {
+    fn bind_texture(&mut self, id: u64, slot: u32, location: u32) {
         if let Some(texture) = self.textures.get(&id) {
             texture.bind(&self.gl, slot, self.get_uniform_loc(&location));
         }
@@ -261,19 +261,19 @@ impl GlowBackend {
         }
     }
 
-    fn clean_buffer(&mut self, id: i32) {
+    fn clean_buffer(&mut self, id: u64) {
         if let Some(buffer) = self.buffers.remove(&id) {
             buffer.clean(&self.gl);
         }
     }
 
-    fn clean_texture(&mut self, id: i32) {
+    fn clean_texture(&mut self, id: u64) {
         if let Some(texture) = self.textures.remove(&id) {
             texture.clean(&self.gl);
         }
     }
 
-    fn clean_render_target(&mut self, id: i32) {
+    fn clean_render_target(&mut self, id: u64) {
         if let Some(rt) = self.render_targets.remove(&id) {
             rt.clean(&self.gl);
         }
@@ -306,7 +306,7 @@ impl DeviceBackend for GlowBackend {
         fragment_source: &[u8],
         vertex_attrs: &[VertexAttr],
         options: PipelineOptions,
-    ) -> Result<i32, String> {
+    ) -> Result<u64, String> {
         let vertex_source = std::str::from_utf8(vertex_source).map_err(|e| e.to_string())?;
         let fragment_source = std::str::from_utf8(fragment_source).map_err(|e| e.to_string())?;
 
@@ -321,7 +321,7 @@ impl DeviceBackend for GlowBackend {
         Ok(self.pipeline_count)
     }
 
-    fn create_vertex_buffer(&mut self) -> Result<i32, String> {
+    fn create_vertex_buffer(&mut self) -> Result<u64, String> {
         let inner_buffer = InnerBuffer::new(&self.gl, false)?;
         inner_buffer.bind_as_vbo(&self.gl, &self.current_vertex_attrs);
         self.buffer_count += 1;
@@ -329,7 +329,7 @@ impl DeviceBackend for GlowBackend {
         Ok(self.buffer_count)
     }
 
-    fn create_index_buffer(&mut self) -> Result<i32, String> {
+    fn create_index_buffer(&mut self) -> Result<u64, String> {
         let inner_buffer = InnerBuffer::new(&self.gl, false)?;
         inner_buffer.bind_as_ebo(&self.gl);
         self.buffer_count += 1;
@@ -337,7 +337,7 @@ impl DeviceBackend for GlowBackend {
         Ok(self.buffer_count)
     }
 
-    fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<i32, String> {
+    fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<u64, String> {
         let mut inner_buffer = InnerBuffer::new(&self.gl, true)?;
         inner_buffer.setup_as_ubo(&self.gl, slot, name);
         self.buffer_count += 1;
@@ -347,9 +347,9 @@ impl DeviceBackend for GlowBackend {
 
     fn create_render_texture(
         &mut self,
-        texture_id: i32,
+        texture_id: u64,
         info: &TextureInfo,
-    ) -> Result<i32, String> {
+    ) -> Result<u64, String> {
         let texture = self.textures.get(&texture_id).ok_or(format!(
             "Error creating render target: texture id '{}' not found.",
             texture_id
@@ -362,17 +362,17 @@ impl DeviceBackend for GlowBackend {
         Ok(self.render_target_count)
     }
 
-    fn create_texture(&mut self, info: &TextureInfo) -> Result<i32, String> {
+    fn create_texture(&mut self, info: &TextureInfo) -> Result<u64, String> {
         let inner_texture = InnerTexture::new(&self.gl, info)?;
         self.texture_count += 1;
         self.textures.insert(self.texture_count, inner_texture);
         Ok(self.texture_count)
     }
 
-    fn render(&mut self, commands: &[Commands], target: Option<i32>) {
+    fn render(&mut self, commands: &[Commands], target: Option<u64>) {
         commands.iter().for_each(|cmd| {
             use Commands::*;
-            // notan_log::info!("{:?}", cmd);
+            // notan_log::trace!("Render cmd: {:?}", cmd);
 
             match cmd {
                 Begin {
@@ -408,7 +408,7 @@ impl DeviceBackend for GlowBackend {
     }
 
     fn clean(&mut self, to_clean: &[ResourceId]) {
-        notan_log::info!("to_clean {:?}", to_clean);
+        notan_log::debug!("gpu resources to_clean {:?}", to_clean);
         to_clean.iter().for_each(|res| match &res {
             ResourceId::Pipeline(id) => self.clean_pipeline(*id),
             ResourceId::Buffer(id) => self.clean_buffer(*id),
@@ -425,8 +425,8 @@ impl DeviceBackend for GlowBackend {
         self.dpi = scale_factor as _;
     }
 
-    fn update_texture(&mut self, id: i32, opts: &TextureUpdate) -> Result<(), String> {
-        match self.textures.get(&id) {
+    fn update_texture(&mut self, texture: u64, opts: &TextureUpdate) -> Result<(), String> {
+        match self.textures.get(&texture) {
             Some(texture) => {
                 unsafe {
                     self.gl
@@ -450,8 +450,13 @@ impl DeviceBackend for GlowBackend {
         }
     }
 
-    fn read_pixels(&mut self, id: i32, bytes: &mut [u8], opts: &TextureRead) -> Result<(), String> {
-        match self.textures.get(&id) {
+    fn read_pixels(
+        &mut self,
+        texture: u64,
+        bytes: &mut [u8],
+        opts: &TextureRead,
+    ) -> Result<(), String> {
+        match self.textures.get(&texture) {
             Some(texture) => unsafe {
                 let fbo = self.gl.create_framebuffer()?;
                 self.gl.bind_framebuffer(glow::FRAMEBUFFER, Some(fbo));

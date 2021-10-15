@@ -11,7 +11,7 @@ pub struct Font {
 
 impl Font {
     /// Font id
-    pub fn id(&self) -> i32 {
+    pub fn id(&self) -> u64 {
         self.id.0 as _
     }
 

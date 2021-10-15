@@ -24,17 +24,17 @@ pub enum Commands {
     },
     End,
     Pipeline {
-        id: i32,
+        id: u64,
         options: PipelineOptions,
     },
     BindBuffer {
-        id: i32,
+        id: u64,
         data: BufferDataWrapper,
         usage: BufferUsage,
         draw: DrawType,
     },
     BindTexture {
-        id: i32,
+        id: u64,
         slot: u32,
         location: u32,
     },

@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 struct RenderTextureId {
-    id: i32,
+    id: u64,
     drop_manager: Arc<DropManager>,
 }
 
@@ -22,14 +22,14 @@ pub struct RenderTexture {
 }
 
 impl RenderTexture {
-    pub(crate) fn new(id: i32, texture: Texture, drop_manager: Arc<DropManager>) -> Self {
+    pub(crate) fn new(id: u64, texture: Texture, drop_manager: Arc<DropManager>) -> Self {
         let id = Arc::new(RenderTextureId { id, drop_manager });
 
         Self { id, texture }
     }
 
     #[inline(always)]
-    pub fn id(&self) -> i32 {
+    pub fn id(&self) -> u64 {
         self.id.id
     }
 
