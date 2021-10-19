@@ -1,6 +1,6 @@
 #![allow(clippy::wrong_self_convention, non_snake_case, clippy::type_complexity)]
 
-use super::manager::AssetManager;
+use super::manager::Assets;
 use super::storage::AssetStorage;
 use crate::app::App;
 use crate::graphics::Graphics;
@@ -26,13 +26,13 @@ impl Loader {
     }
 
     /// Set the file extension that will be parsed
-    pub fn from_extension(mut self, ext: &str) -> Self {
+    pub fn extension(mut self, ext: &str) -> Self {
         self.extensions.push(ext.to_string());
         self
     }
 
     /// Set the file extensions that will be parsed
-    pub fn from_extensions(mut self, exts: &[&str]) -> Self {
+    pub fn extensions(mut self, exts: &[&str]) -> Self {
         for ext in exts {
             self.extensions.push(ext.to_string());
         }
@@ -50,7 +50,7 @@ impl Loader {
         self
     }
 
-    pub(crate) fn apply(self, manager: &mut AssetManager) -> Result<(), String> {
+    pub(crate) fn apply(self, manager: &mut Assets) -> Result<(), String> {
         let Loader {
             extensions,
             parser,
@@ -76,7 +76,6 @@ impl Loader {
 
 #[derive(Clone)]
 pub enum LoaderCallback {
-    // TODO use a macro to add all this variants
     Basic(
         Option<TypeId>,
         Rc<dyn Fn(&mut AssetStorage, &str, Vec<u8>) -> Result<(), String>>,
@@ -84,6 +83,22 @@ pub enum LoaderCallback {
     G(
         Option<TypeId>,
         Rc<dyn Fn(&mut AssetStorage, &str, Vec<u8>, &mut Graphics) -> Result<(), String>>,
+    ),
+    GP(
+        Option<TypeId>,
+        Rc<
+            dyn Fn(
+                &mut AssetStorage,
+                &str,
+                Vec<u8>,
+                &mut Graphics,
+                &mut Plugins,
+            ) -> Result<(), String>,
+        >,
+    ),
+    P(
+        Option<TypeId>,
+        Rc<dyn Fn(&mut AssetStorage, &str, Vec<u8>, &mut Plugins) -> Result<(), String>>,
     ),
 }
 
@@ -115,6 +130,8 @@ macro_rules! loader_handler {
 
 loader_handler!(LoaderCallback::Basic,);
 loader_handler!(LoaderCallback::G, Graphics);
+loader_handler!(LoaderCallback::GP, Graphics, Plugins);
+loader_handler!(LoaderCallback::P, Plugins);
 
 impl LoaderCallback {
     pub(crate) fn exec<S>(
@@ -126,11 +143,13 @@ impl LoaderCallback {
     ) -> Result<(), String> {
         use LoaderCallback::*;
 
-        let (_app, graphics, _plugins, _state) = params;
+        let (_app, graphics, plugins, _state) = params;
 
         match self {
             Basic(_, cb) => cb(storage, id, data),
             G(_, cb) => cb(storage, id, data, graphics),
+            GP(_, cb) => cb(storage, id, data, graphics, plugins),
+            P(_, cb) => cb(storage, id, data, plugins),
         }
     }
 
@@ -139,6 +158,8 @@ impl LoaderCallback {
         let ty = match self {
             Basic(ref mut ty, _) => ty,
             G(ref mut ty, _) => ty,
+            GP(ref mut ty, _) => ty,
+            P(ref mut ty, _) => ty,
         };
 
         *ty = Some(type_id);
@@ -149,6 +170,8 @@ impl LoaderCallback {
         match self {
             Basic(ty, _) => *ty,
             G(ty, _) => *ty,
+            GP(ty, _) => *ty,
+            P(ty, _) => *ty,
         }
     }
 }

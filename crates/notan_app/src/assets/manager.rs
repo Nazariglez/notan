@@ -9,13 +9,13 @@ use std::any::TypeId;
 use std::path::Path;
 use std::rc::Rc;
 
-pub struct AssetManager {
+pub struct Assets {
     storage: AssetStorage,
     pub(crate) loaders: HashMap<String, LoaderCallback>,
     byte_loader: LoaderCallback,
 }
 
-impl AssetManager {
+impl Assets {
     pub(crate) fn new() -> Self {
         let bytes_id = TypeId::of::<Vec<u8>>();
         let byte_loader = LoaderCallback::Basic(

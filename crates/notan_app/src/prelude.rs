@@ -1,4 +1,5 @@
 pub use crate::app::{App, AppState};
+pub use crate::assets::{Asset, AssetList, Assets};
 pub use crate::backend::*;
 pub use crate::config::*;
 pub use crate::fps_plugin::FpsPlugin;

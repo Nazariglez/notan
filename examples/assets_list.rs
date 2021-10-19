@@ -1,4 +1,3 @@
-use notan::app::assets::{Asset, AssetList, AssetManager};
 use notan::prelude::*;
 
 #[derive(AppState)]
@@ -9,7 +8,7 @@ struct State {
 }
 
 impl State {
-    fn new(assets: &mut AssetManager, gfx: &mut Graphics) -> Self {
+    fn new(assets: &mut Assets, gfx: &mut Graphics) -> Self {
         // Define a list of assets to load asynchronously
         let list = assets
             .load_list(&[
