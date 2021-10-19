@@ -1,4 +1,4 @@
-use notan::app::assets::{Asset, AssetManager};
+use notan::app::assets::{Asset, Assets};
 use notan::prelude::*;
 
 #[derive(AppState)]
@@ -9,7 +9,7 @@ struct State {
 }
 
 impl State {
-    fn new(assets: &mut AssetManager, gfx: &mut Graphics) -> Self {
+    fn new(assets: &mut Assets, gfx: &mut Graphics) -> Self {
         // Start loading the texture
         let texture = assets
             .load_asset(&asset_path("rust-logo-512x512.png"))

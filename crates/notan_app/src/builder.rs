@@ -1,6 +1,6 @@
 #![allow(clippy::type_complexity)]
 
-use crate::assets::{AssetManager, Loader};
+use crate::assets::{Assets, Loader};
 use crate::config::*;
 use crate::graphics::Graphics;
 use crate::handlers::{
@@ -31,17 +31,15 @@ pub struct AppBuilder<S, B> {
     backend: B,
 
     plugins: Plugins,
-    assets: AssetManager,
+    assets: Assets,
 
     init_callback: Option<AppCallback<S>>,
     update_callback: Option<AppCallback<S>>,
     draw_callback: Option<DrawCallback<S>>,
     event_callback: Option<EventCallback<S>>,
 
-    plugin_callbacks:
-        Vec<Box<dyn FnOnce(&mut App, &mut AssetManager, &mut Graphics, &mut Plugins)>>,
-    extension_callbacks:
-        Vec<Box<dyn FnOnce(&mut App, &mut AssetManager, &mut Graphics, &mut Plugins)>>,
+    plugin_callbacks: Vec<Box<dyn FnOnce(&mut App, &mut Assets, &mut Graphics, &mut Plugins)>>,
+    extension_callbacks: Vec<Box<dyn FnOnce(&mut App, &mut Assets, &mut Graphics, &mut Plugins)>>,
 
     pub(crate) window: WindowConfig,
 }
@@ -59,7 +57,7 @@ where
         let builder = AppBuilder {
             backend,
             plugins: Default::default(),
-            assets: AssetManager::new(),
+            assets: Assets::new(),
             setup_callback: setup.callback(),
             init_callback: None,
             update_callback: None,
@@ -134,13 +132,11 @@ where
         P: Plugin + 'static,
         H: PluginHandler<P, Params> + 'static,
     {
-        let cb = move |app: &mut App,
-                       assets: &mut AssetManager,
-                       gfx: &mut Graphics,
-                       plugins: &mut Plugins| {
-            let p = handler.callback().exec(app, assets, gfx, plugins);
-            plugins.add(p);
-        };
+        let cb =
+            move |app: &mut App, assets: &mut Assets, gfx: &mut Graphics, plugins: &mut Plugins| {
+                let p = handler.callback().exec(app, assets, gfx, plugins);
+                plugins.add(p);
+            };
         self.plugin_callbacks.push(Box::new(cb));
         self
     }
@@ -152,13 +148,11 @@ where
         E: GfxExtension<R> + 'static,
         H: ExtensionHandler<R, E, Params> + 'static,
     {
-        let cb = move |app: &mut App,
-                       assets: &mut AssetManager,
-                       gfx: &mut Graphics,
-                       plugins: &mut Plugins| {
-            let e = handler.callback().exec(app, assets, gfx, plugins);
-            gfx.add_ext(e);
-        };
+        let cb =
+            move |app: &mut App, assets: &mut Assets, gfx: &mut Graphics, plugins: &mut Plugins| {
+                let e = handler.callback().exec(app, assets, gfx, plugins);
+                gfx.add_ext(e);
+            };
         self.extension_callbacks.push(Box::new(cb));
         self
     }
