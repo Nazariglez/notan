@@ -67,6 +67,11 @@ impl AssetList {
         loaded as f32 / self.count as f32
     }
 
+    /// Returns if the list contains the asset
+    pub fn contains(&self, id: &str) -> bool {
+        self.load_tracker.contains_key(id)
+    }
+
     /// Create an [Asset] clone and returns it
     pub fn get_clone<A>(&mut self, id: &str) -> Result<Asset<A>, String>
     where
