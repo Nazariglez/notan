@@ -12,7 +12,7 @@ const VERT: ShaderSource = notan::vertex_shader! {
 
     void main() {
         v_texcoord = a_texcoord;
-        gl_Position = a_position;
+        gl_Position = vec4(a_position.x, a_position.y * -1.0, a_position.z, 1.0);
     }
     "#
 };
