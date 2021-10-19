@@ -35,7 +35,7 @@ where
     }
 
     /// Consume the asset and returns the inner asset if it's already loaded and exists just one reference to it
-    pub fn unwrap(self) -> Result<A, String> {
+    pub fn try_unwrap(self) -> Result<A, String> {
         if !self.is_loaded() {
             return Err(format!(
                 "Asset: '{}' cannot be unwrapped because is still loading...",
