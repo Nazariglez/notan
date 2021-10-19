@@ -46,13 +46,13 @@ fn update(state: &mut State) {
         .as_ref()
         .map(|assets| assets.is_loaded())
         .unwrap_or(false);
-    
+
     if was_just_loaded {
         // Get ownership of the Asset inside the Option
         let asset = state.loading.take().unwrap();
 
         // Unwrap the asset reference to get the inner
-        let texture = asset.unwrap().unwrap();
+        let texture = asset.try_unwrap().unwrap();
         state.loaded = Some(texture);
     }
 }
