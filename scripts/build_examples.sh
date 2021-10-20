@@ -9,7 +9,7 @@ for f in ./examples/*.rs; do
   f=${f/.rs/""}
   ./scripts/web_example.sh $f --release --no-assets
 
-  url="/examples/${f}.html"
+  url="examples/${f}.html"
   doc_body="${doc_body}\n<li><a href=\"${url}\">${f}</a></li>"
 done
 
