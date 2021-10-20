@@ -4,7 +4,7 @@ use notan_glyph::{Font, GlyphPlugin};
 
 pub trait CreateDraw {
     fn create_draw(&self) -> Draw;
-    fn create_font(&self, data: &'static [u8]) -> Result<Font, String>;
+    fn create_font(&self, data: &[u8]) -> Result<Font, String>;
 }
 
 impl CreateDraw for Graphics {
@@ -13,7 +13,7 @@ impl CreateDraw for Graphics {
         Draw::new(width, height)
     }
 
-    fn create_font(&self, data: &'static [u8]) -> Result<Font, String> {
+    fn create_font(&self, data: &[u8]) -> Result<Font, String> {
         let mut ext = self
             .get_ext_mut::<Draw, DrawExtension>()
             .ok_or_else(|| "The DrawExtension is not in use.".to_string())?;

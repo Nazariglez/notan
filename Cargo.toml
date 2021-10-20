@@ -36,3 +36,15 @@ js-sys = "0.3"
 [[example]]
 name = "egui_basic"
 required-features = ["egui"]
+
+[[example]]
+name = "egui_render_texture"
+required-features = ["egui"]
+
+[[example]]
+name = "egui_shape_widget"
+required-features = ["egui"]
+
+[[example]]
+name = "egui_texture"
+required-features = ["egui"]
