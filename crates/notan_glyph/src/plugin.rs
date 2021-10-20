@@ -6,11 +6,16 @@ use glyph_brush::{ab_glyph::*, *};
 use notan_app::graphics::*;
 use std::sync::Arc;
 
+#[inline]
+fn data_to_font_vec(data: &[u8]) -> Result<FontVec, String> {
+    FontVec::try_from_vec(data.to_vec()).map_err(|e| e.to_string())
+}
+
 /// The FontManager take care of process the text and prepare them to renderer it on an inner texture
 #[derive(Debug)]
 pub struct GlyphPlugin {
     /// Glyph Brush cache
-    pub cache: GlyphBrush<FontVertex, Extra, FontRef<'static>>,
+    pub cache: GlyphBrush<FontVertex, Extra, FontVec>,
 
     /// Texture that contains the glyphs
     pub texture: Texture,
@@ -19,7 +24,7 @@ pub struct GlyphPlugin {
 impl GlyphPlugin {
     /// Creates a new manager using a custom Render
     pub fn new(device: &mut Device) -> Result<Self, String> {
-        let cache = GlyphBrushBuilder::using_fonts::<FontRef>(vec![]).build();
+        let cache = GlyphBrushBuilder::using_fonts::<FontVec>(vec![]).build();
         let (ww, hh) = cache.texture_dimensions();
         let texture = create_texture(device, ww, hh)?;
 
@@ -27,14 +32,14 @@ impl GlyphPlugin {
     }
 
     /// Loads a fonts into the manager and returns the Font object to be used on Text objects
-    pub fn create_font(&mut self, data: &'static [u8]) -> Result<Font, String> {
-        let font = FontRef::try_from_slice(data).map_err(|e| e.to_string())?;
-        let glyphs = GlyphCalculatorBuilder::using_font(font.clone()).build();
+    pub fn create_font(&mut self, data: &[u8]) -> Result<Font, String> {
+        // FIXME: avoid font duplication
+        let f1 = data_to_font_vec(data)?;
+        let glyphs = Arc::new(GlyphCalculatorBuilder::using_font(f1).build());
 
-        Ok(Font {
-            id: self.cache.add_font(font),
-            glyphs: Arc::new(glyphs),
-        })
+        let f2 = data_to_font_vec(data)?;
+        let id = self.cache.add_font(f2);
+        Ok(Font { id, glyphs })
     }
 
     /// Add a Text object to the process queue to be prepared to render

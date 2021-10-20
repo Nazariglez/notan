@@ -1,6 +1,6 @@
 #![allow(clippy::type_complexity)]
 
-use crate::assets::{Assets, Loader};
+use crate::assets::{AssetLoader, Assets};
 use crate::config::*;
 use crate::graphics::Graphics;
 use crate::handlers::{
@@ -158,7 +158,7 @@ where
     }
 
     /// Adds a new [AssetLoader]
-    pub fn add_loader(mut self, loader: Loader) -> Self {
+    pub fn add_loader(mut self, loader: AssetLoader) -> Self {
         self.assets.add_loader(loader);
         self
     }

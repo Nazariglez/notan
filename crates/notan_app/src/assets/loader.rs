@@ -13,13 +13,13 @@ pub(crate) type LoaderParams<'a, S> = (&'a mut App, &'a mut Graphics, &'a mut Pl
 
 /// Defines how parse files once they are loaded
 #[derive(Default, Clone)]
-pub struct Loader {
+pub struct AssetLoader {
     extensions: Vec<String>,
     parser: Option<LoaderCallback>,
     type_id: Option<TypeId>,
 }
 
-impl Loader {
+impl AssetLoader {
     /// Creates a new instance
     pub fn new() -> Self {
         Default::default()
@@ -51,7 +51,7 @@ impl Loader {
     }
 
     pub(crate) fn apply(self, manager: &mut Assets) -> Result<(), String> {
-        let Loader {
+        let AssetLoader {
             extensions,
             parser,
             type_id,

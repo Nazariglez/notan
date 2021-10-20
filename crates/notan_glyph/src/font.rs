@@ -6,7 +6,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone)]
 pub struct Font {
     pub(crate) id: FontId,
-    pub(crate) glyphs: Arc<GlyphCalculator<FontRef<'static>, Extra>>,
+    pub(crate) glyphs: Arc<GlyphCalculator<FontVec, Extra>>,
 }
 
 impl Font {

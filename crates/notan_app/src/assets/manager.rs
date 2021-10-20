@@ -59,7 +59,7 @@ impl Assets {
         Ok(())
     }
 
-    pub fn add_loader(&mut self, loader: Loader) {
+    pub fn add_loader(&mut self, loader: AssetLoader) {
         if let Err(e) = loader.apply(self) {
             notan_log::error!("{}", e);
         }
