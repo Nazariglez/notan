@@ -39,7 +39,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
     // Calculate the matrix that we use for each object
     let translation = Mat3::from_translation(Vec2::new(30.0, 20.0));
-    let rotation = Mat3::from_rotation_z(state.rot * DEG_TO_RAD);
+    let rotation = Mat3::from_angle(state.rot * DEG_TO_RAD);
     let matrix = translation * rotation;
 
     for (i, c) in COLORS.iter().enumerate() {

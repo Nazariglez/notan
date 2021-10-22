@@ -44,7 +44,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
     // Create a matrix that we can set to the next paint
     let translation = Mat3::from_translation(Vec2::new(200.0, 400.0));
-    let rotation = Mat3::from_rotation_z(state.rot * 0.5 * DEG_TO_RAD);
+    let rotation = Mat3::from_angle(state.rot * 0.5 * DEG_TO_RAD);
     let matrix = translation * rotation;
 
     draw.rect((0.0, 0.0), (100.0, 100.0))

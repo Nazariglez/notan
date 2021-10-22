@@ -49,8 +49,8 @@ fn setup(gfx: &mut Graphics) -> State {
     let pipeline = gfx
         .create_pipeline()
         .from(&VERT, &FRAG)
-        .vertex_attr(0, VertexFormat::Float2)
-        .vertex_attr(1, VertexFormat::Float3)
+        .vertex_attr(0, VertexFormat::Float2) // a_pos
+        .vertex_attr(1, VertexFormat::Float3) // a_color
         .build()
         .unwrap();
 
