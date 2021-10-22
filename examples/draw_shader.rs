@@ -1,4 +1,4 @@
-use notan::draw::create_image_pipeline;
+use notan::draw::*;
 use notan::prelude::*;
 
 //language=glsl

@@ -1,3 +1,4 @@
+use notan::draw::*;
 use notan::prelude::*;
 
 // Create a new asset loaded to load .txt files as strings
