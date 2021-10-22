@@ -1,3 +1,4 @@
+use notan::draw::*;
 use notan::egui::{self, *};
 use notan::prelude::*;
 

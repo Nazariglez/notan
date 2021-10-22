@@ -1,6 +1,7 @@
 // This example is a port of javascript code made by Ibon Tolosona (@hyperandroid)
 // https://codepen.io/hyperandroid/full/yLyRQmw
 
+use notan::draw::*;
 use notan::prelude::*;
 
 const CENTER_X: f32 = 400.0;

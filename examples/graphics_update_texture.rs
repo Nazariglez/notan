@@ -1,3 +1,4 @@
+use notan::draw::*;
 use notan::prelude::*;
 
 const COLORS: [Color; 6] = [

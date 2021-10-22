@@ -1,3 +1,4 @@
+use notan::draw::*;
 use notan::prelude::*;
 use std::convert::TryInto;
 

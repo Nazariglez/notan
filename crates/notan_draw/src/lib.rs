@@ -12,7 +12,6 @@ mod texts;
 mod transform;
 
 mod atlas;
-pub mod prelude;
 
 pub use atlas::*;
 pub use config::*;

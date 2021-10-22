@@ -1,4 +1,5 @@
 use notan::app::Event;
+use notan::draw::*;
 use notan::prelude::*;
 
 #[derive(AppState)]

@@ -1,4 +1,4 @@
-use notan::app::assets::{Asset, Assets};
+use notan::draw::*;
 use notan::prelude::*;
 
 #[derive(AppState)]
