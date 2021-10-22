@@ -1,3 +1,4 @@
+use notan::glyph::*;
 use notan::prelude::*;
 
 const TEXT: &str = include_str!("assets/lorem.txt");
