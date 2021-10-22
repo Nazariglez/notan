@@ -22,7 +22,7 @@ notan_egui = { path = "crates/notan_egui", optional = true }
 members = ["crates/*"]
 
 [features]
-default = ["default_backend", "log_enabled", "draw", "glyphs"]
+default = ["default_backend", "log_enabled", "draw"]
 log_enabled = []
 default_backend = ["notan_backend"]
 glyphs = ["notan_glyph"]
@@ -184,6 +184,10 @@ required-features = ["draw"]
 [[example]]
 name = "input_mouse_wheel"
 required-features = ["draw"]
+
+[[example]]
+name = "renderer_font"
+required-features = ["glyphs"]
 
 [[example]]
 name = "window_fullscreen"

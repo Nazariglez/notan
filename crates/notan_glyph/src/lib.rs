@@ -1,5 +1,3 @@
-pub mod prelude;
-
 mod config;
 mod font;
 mod font_vertex;
