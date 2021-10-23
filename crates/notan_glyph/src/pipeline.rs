@@ -1,6 +1,9 @@
 use crate::font_vertex::FontVertex;
 use notan_app::graphics::*;
+
+#[cfg(feature = "basic_pipeline")]
 use notan_macro::{fragment_shader, vertex_shader};
+#[cfg(feature = "basic_pipeline")]
 use notan_math::glam;
 
 /// Used to manage and render the vertices glyphs
