@@ -186,6 +186,10 @@ name = "input_mouse_wheel"
 required-features = ["draw"]
 
 [[example]]
+name = "log_basic"
+required-features = ["log"]
+
+[[example]]
 name = "renderer_font"
 required-features = ["glyphs"]
 
