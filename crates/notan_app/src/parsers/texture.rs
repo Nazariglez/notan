@@ -10,6 +10,6 @@ pub fn create_texture_parser() -> AssetLoader {
 
 fn parse_image(id: &str, data: Vec<u8>, gfx: &mut Graphics) -> Result<Texture, String> {
     let texture = gfx.create_texture().from_image(&data).build()?;
-    notan_log::debug!("Asset '{}' parsed as Texture", id);
+    log::debug!("Asset '{}' parsed as Texture", id);
     Ok(texture)
 }

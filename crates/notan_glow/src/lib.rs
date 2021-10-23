@@ -71,7 +71,7 @@ impl GlowBackend {
     }
 
     fn from(gl: Context, api: &str) -> Result<Self, String> {
-        notan_log::info!("Using {} graphics api", api);
+        log::info!("Using {} graphics api", api);
 
         let gl_index_type = match api {
             "webgl" => glow::UNSIGNED_SHORT,
@@ -372,7 +372,7 @@ impl DeviceBackend for GlowBackend {
     fn render(&mut self, commands: &[Commands], target: Option<u64>) {
         commands.iter().for_each(|cmd| {
             use Commands::*;
-            // notan_log::trace!("Render cmd: {:?}", cmd);
+            // log::trace!("Render cmd: {:?}", cmd);
 
             match cmd {
                 Begin {
@@ -408,7 +408,7 @@ impl DeviceBackend for GlowBackend {
     }
 
     fn clean(&mut self, to_clean: &[ResourceId]) {
-        notan_log::debug!("gpu resources to_clean {:?}", to_clean);
+        log::debug!("gpu resources to_clean {:?}", to_clean);
         to_clean.iter().for_each(|res| match &res {
             ResourceId::Pipeline(id) => self.clean_pipeline(*id),
             ResourceId::Buffer(id) => self.clean_buffer(*id),

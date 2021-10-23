@@ -17,7 +17,7 @@ impl AssetStorage {
         let fut = Box::pin(platter::load_file(id.to_string()).map_err(|e| e.to_string()));
         let state = LoadWrapper::new(id, fut, type_id);
         let loaded = state.loaded.clone();
-        notan_log::info!("to load -> {} {:?}", id, state.type_id);
+        log::info!("to load -> {} {:?}", id, state.type_id);
         self.to_load.insert(id.to_string(), state);
         loaded
     }
@@ -33,7 +33,7 @@ impl AssetStorage {
                 stored_asset.loaded.done();
             })
             .map_err(|e| {
-                notan_log::error!("{}", e);
+                log::error!("{}", e);
                 e
             })
     }

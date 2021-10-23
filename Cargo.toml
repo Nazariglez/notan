@@ -7,12 +7,12 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-notan_log = { path = "crates/notan_log" }
 notan_app = { path = "crates/notan_app" }
 notan_macro = { path = "crates/notan_macro" }
 notan_math = { path = "crates/notan_math" }
 notan_graphics = { path = "crates/notan_graphics" }
 notan_utils = { path = "crates/notan_utils" }
+notan_log = { path = "crates/notan_log", optional = true }
 notan_glyph = { path = "crates/notan_glyph", optional = true }
 notan_draw = { path = "crates/notan_draw", optional = true }
 notan_backend = { path = "crates/notan_backend", optional = true }
@@ -22,8 +22,8 @@ notan_egui = { path = "crates/notan_egui", optional = true }
 members = ["crates/*"]
 
 [features]
-default = ["default_backend", "log_enabled", "draw"]
-log_enabled = []
+default = ["default_backend", "log", "draw"]
+log = ["notan_log"]
 default_backend = ["notan_backend"]
 glyphs = ["notan_glyph"]
 draw = ["notan_draw"]

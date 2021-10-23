@@ -149,7 +149,7 @@ fn process_glyphs(
         });
 
         if let Err(e) = glyphs.update(device, &mut manager.text_painter) {
-            notan_log::error!("{}", e);
+            log::error!("{}", e);
         }
     }
 }

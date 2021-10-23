@@ -237,7 +237,7 @@ fn create_pipeline(
                     _ => {
                         // inform about uniforms outside of blocks that are missing
                         if !u.name.contains("") {
-                            notan_log::debug!("Cannot get uniform location for: {}", u.name);
+                            log::debug!("Cannot get uniform location for: {}", u.name);
                         }
                         None
                     }

@@ -3,7 +3,6 @@ use crate::window::WebWindowBackend;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 use notan_app::{FrameState, WindowConfig};
 use notan_graphics::DeviceBackend;
-use notan_log as log;
 use std::cell::RefCell;
 use std::panic;
 use std::rc::Rc;

@@ -59,7 +59,7 @@ impl LoadWrapper {
             Poll::Ready(r_buff) => match r_buff {
                 Ok(buff) => Some(buff),
                 Err(err) => {
-                    notan_log::error!("File: {} -> {}", self.id, err);
+                    log::error!("File: {} -> {}", self.id, err);
                     None
                 }
             },

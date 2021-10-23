@@ -22,6 +22,6 @@ where
 
 fn parse_font(id: &str, data: Vec<u8>, gfx: &mut Graphics) -> Result<Font, String> {
     let font = gfx.create_font(&data)?;
-    notan_log::debug!("Asset '{}' parsed as Draw Font", id);
+    log::debug!("Asset '{}' parsed as Draw Font", id);
     Ok(font)
 }
