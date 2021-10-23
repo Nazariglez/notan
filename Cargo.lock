@@ -1419,7 +1419,6 @@ dependencies = [
  "fern",
  "log",
  "notan_app",
- "simple_logger",
  "wasm-bindgen",
 ]
 
@@ -2016,19 +2015,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd5ac56c121948b4879bba9e519852c211bcdd8f014efff766441deff0b91bdb"
 dependencies = [
  "num-traits 0.2.14",
-]
-
-[[package]]
-name = "simple_logger"
-version = "1.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7de33c687404ec3045d4a0d437580455257c0436f858d702f244e7d652f9f07"
-dependencies = [
- "atty",
- "chrono",
- "colored",
- "log",
- "winapi",
 ]
 
 [[package]]
