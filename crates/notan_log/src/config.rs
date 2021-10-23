@@ -16,7 +16,7 @@ pub struct LogConfig {
 impl Default for LogConfig {
     fn default() -> Self {
         let level = if cfg!(debug_assertions) {
-            log::LevelFilter::Trace
+            log::LevelFilter::Debug
         } else {
             log::LevelFilter::Warn
         };
