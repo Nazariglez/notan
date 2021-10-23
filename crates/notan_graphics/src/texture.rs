@@ -284,7 +284,7 @@ impl std::cmp::PartialEq for Texture {
 
 impl AsRef<Texture> for Texture {
     fn as_ref(&self) -> &Texture {
-        &self
+        self
     }
 }
 

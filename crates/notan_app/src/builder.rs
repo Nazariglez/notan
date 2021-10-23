@@ -10,7 +10,6 @@ use crate::handlers::{
 use crate::parsers::*;
 use crate::plugins::*;
 use crate::{App, Backend, BackendSystem, FrameState, GfxExtension, GfxRenderer};
-use notan_log as log;
 
 pub use crate::handlers::SetupHandler;
 

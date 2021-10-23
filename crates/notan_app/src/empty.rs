@@ -68,7 +68,7 @@ impl BackendSystem for EmptyBackend {
             // This function should block with a loop or raf in the platform specific backends
             // while !app.closed {
             if let Err(e) = cb(&mut app, &mut state) {
-                notan_log::error!("{}", e);
+                log::error!("{}", e);
             }
             // }
             Ok(())
@@ -117,13 +117,11 @@ impl DeviceBackend for EmptyDeviceBackend {
     }
 
     fn render(&mut self, commands: &[Commands], _target: Option<u64>) {
-        commands
-            .iter()
-            .for_each(|cmd| notan_log::info!("{:?}", cmd));
+        commands.iter().for_each(|cmd| log::info!("{:?}", cmd));
     }
 
     fn clean(&mut self, to_clean: &[ResourceId]) {
-        notan_log::info!("{:?}", to_clean);
+        log::info!("{:?}", to_clean);
     }
 
     fn set_size(&mut self, _width: i32, _height: i32) {}

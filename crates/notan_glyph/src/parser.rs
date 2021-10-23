@@ -13,6 +13,6 @@ fn parse_font(id: &str, data: Vec<u8>, plugins: &mut Plugins) -> Result<Font, St
         .get_mut::<GlyphPlugin>()
         .ok_or_else(|| "Glyph plugin not found".to_string())?;
     let font = plugin.create_font(&data)?;
-    notan_log::debug!("Asset '{}' parsed as Font", id);
+    log::debug!("Asset '{}' parsed as Font", id);
     Ok(font)
 }

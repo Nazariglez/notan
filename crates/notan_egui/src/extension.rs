@@ -256,7 +256,7 @@ impl EguiExtension {
                 _ => device.render(renderer.commands()),
             }
         } else {
-            notan_log::error!("Invalid EGUI Texture id: {:?}", mesh.texture_id);
+            log::error!("Invalid EGUI Texture id: {:?}", mesh.texture_id);
         }
     }
 

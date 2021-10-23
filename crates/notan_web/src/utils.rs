@@ -24,22 +24,22 @@ pub fn set_size_dpi(canvas: &HtmlCanvasElement, width: i32, height: i32) {
         .style()
         .set_property("width", &format!("{}px", width))
     {
-        notan_log::error!("{:?}", e);
+        log::error!("{:?}", e);
     }
 
     if let Err(e) = canvas
         .style()
         .set_property("height", &format!("{}px", height))
     {
-        notan_log::error!("{:?}", e);
+        log::error!("{:?}", e);
     }
 
     if let Err(e) = canvas.set_attribute("notan-width", &width.to_string()) {
-        notan_log::error!("{:?}", e);
+        log::error!("{:?}", e);
     }
 
     if let Err(e) = canvas.set_attribute("notan-height", &height.to_string()) {
-        notan_log::error!("{:?}", e);
+        log::error!("{:?}", e);
     }
 }
 

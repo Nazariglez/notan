@@ -8,10 +8,14 @@ edition = "2018"
 
 [dependencies]
 log = "0.4"
+fern = { version = "0.6", features = ["colored"] }
+notan_app = { path = "../notan_app" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 simple_logger = "1.13"
+chrono = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_log = "0.2"
 wasm-bindgen = "0.2"
+chrono = { version = "0.4", features = ["wasmbind"] }

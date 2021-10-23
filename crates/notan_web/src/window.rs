@@ -6,7 +6,6 @@ use crate::utils::{
 };
 use notan_app::WindowConfig;
 use notan_app::{Event, EventIterator, WindowBackend};
-use notan_log as log;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
@@ -101,7 +100,7 @@ impl WebWindowBackend {
             "notan-auto-res",
             &self.config.canvas_auto_resolution.to_string(),
         ) {
-            notan_log::error!("{:?}", e);
+            log::error!("{:?}", e);
         }
 
         let (ww, hh) = if self.config.maximized {
@@ -196,7 +195,7 @@ fn enable_fullscreen(win: &mut WebWindowBackend) -> Result<(), String> {
                     }
                 };
 
-                notan_log::info!("callback -> {:?} {} {}", last_size, width, height);
+                log::info!("callback -> {:?} {} {}", last_size, width, height);
                 set_size_dpi(&canvas, width, height);
                 events
                     .borrow_mut()

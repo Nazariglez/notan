@@ -126,11 +126,11 @@ impl BackendSystem for WinitBackend {
                                 backend(&mut app).window.as_mut().unwrap().swap_buffers();
                             }
                             Ok(FrameState::Skip) => {
-                                // notan_log::debug!("Frame skipped");
+                                // log::debug!("Frame skipped");
                                 // no-op
                             }
                             Err(e) => {
-                                notan_log::error!("{}", e);
+                                log::error!("{}", e);
                             }
                         }
                     }
