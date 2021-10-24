@@ -16,12 +16,12 @@ pub type IndexBuffer = Buffer<u32>;
 pub type UniformBuffer = Buffer<f32>;
 
 #[derive(Debug)]
-struct BufferId {
+struct BufferIdRef {
     id: u64,
     drop_manager: Arc<DropManager>,
 }
 
-impl Drop for BufferId {
+impl Drop for BufferIdRef {
     fn drop(&mut self) {
         self.drop_manager.push(ResourceId::Buffer(self.id));
     }
@@ -33,7 +33,8 @@ pub struct Buffer<T>
 where
     T: BufferDataType + Copy,
 {
-    id: Arc<BufferId>,
+    id: u64,
+    id_ref: Arc<BufferIdRef>,
     pub(crate) usage: BufferUsage,
     pub draw: Option<DrawType>,
     data: Arc<RwLock<Vec<T>>>,
@@ -54,11 +55,12 @@ where
         draw: Option<DrawType>,
         drop_manager: Arc<DropManager>,
     ) -> Self {
-        let id = Arc::new(BufferId { id, drop_manager });
+        let id_ref = Arc::new(BufferIdRef { id, drop_manager });
         let data = Arc::new(RwLock::new(data));
 
         Self {
             id,
+            id_ref,
             usage,
             draw,
             data,
@@ -67,7 +69,7 @@ where
 
     #[inline(always)]
     pub fn id(&self) -> u64 {
-        self.id.id
+        self.id
     }
 
     /// Read only reference for the inner buffer data

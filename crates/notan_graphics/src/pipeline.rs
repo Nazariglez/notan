@@ -5,12 +5,12 @@ use crate::{Device, ShaderSource};
 use std::sync::Arc;
 
 #[derive(Debug)]
-struct PipelineId {
+struct PipelineIdRef {
     id: u64,
     drop_manager: Arc<DropManager>,
 }
 
-impl Drop for PipelineId {
+impl Drop for PipelineIdRef {
     fn drop(&mut self) {
         self.drop_manager.push(ResourceId::Pipeline(self.id));
     }
@@ -18,7 +18,8 @@ impl Drop for PipelineId {
 
 #[derive(Debug, Clone)]
 pub struct Pipeline {
-    id: Arc<PipelineId>,
+    id: u64,
+    id_ref: Arc<PipelineIdRef>,
     stride: usize,
     pub options: PipelineOptions,
 }
@@ -36,10 +37,11 @@ impl Pipeline {
         options: PipelineOptions,
         drop_manager: Arc<DropManager>,
     ) -> Self {
-        let id = Arc::new(PipelineId { id, drop_manager });
+        let id_ref = Arc::new(PipelineIdRef { id, drop_manager });
 
         Self {
             id,
+            id_ref,
             stride,
             options,
         }
@@ -47,7 +49,7 @@ impl Pipeline {
 
     #[inline(always)]
     pub fn id(&self) -> u64 {
-        self.id.id
+        self.id
     }
 
     #[inline(always)]

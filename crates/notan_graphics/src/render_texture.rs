@@ -4,12 +4,12 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 #[derive(Debug)]
-struct RenderTextureId {
+struct RenderTextureIdRef {
     id: u64,
     drop_manager: Arc<DropManager>,
 }
 
-impl Drop for RenderTextureId {
+impl Drop for RenderTextureIdRef {
     fn drop(&mut self) {
         self.drop_manager.push(ResourceId::RenderTexture(self.id));
     }
@@ -17,20 +17,25 @@ impl Drop for RenderTextureId {
 
 #[derive(Debug, Clone)]
 pub struct RenderTexture {
-    id: Arc<RenderTextureId>,
+    id: u64,
+    id_ref: Arc<RenderTextureIdRef>,
     texture: Texture,
 }
 
 impl RenderTexture {
     pub(crate) fn new(id: u64, texture: Texture, drop_manager: Arc<DropManager>) -> Self {
-        let id = Arc::new(RenderTextureId { id, drop_manager });
+        let id_ref = Arc::new(RenderTextureIdRef { id, drop_manager });
 
-        Self { id, texture }
+        Self {
+            id,
+            id_ref,
+            texture,
+        }
     }
 
     #[inline(always)]
     pub fn id(&self) -> u64 {
-        self.id.id
+        self.id
     }
 
     /// Returns a reference to the inner texture

@@ -139,12 +139,12 @@ impl TextureInfo {
 }
 
 #[derive(Debug)]
-struct TextureId {
+struct TextureIdRef {
     id: u64,
     drop_manager: Arc<DropManager>,
 }
 
-impl Drop for TextureId {
+impl Drop for TextureIdRef {
     fn drop(&mut self) {
         self.drop_manager.push(ResourceId::Texture(self.id));
     }
@@ -152,8 +152,8 @@ impl Drop for TextureId {
 
 #[derive(Debug, Clone)]
 pub struct Texture {
-    id: Arc<TextureId>,
-    // data: Arc<Vec<u8>>,
+    id: u64,
+    id_ref: Arc<TextureIdRef>,
     width: i32,
     height: i32,
     format: TextureFormat,
@@ -162,10 +162,11 @@ pub struct Texture {
     mag_filter: TextureFilter,
     frame: Rect,
 }
+
 //https://sotrh.github.io/learn-wgpu/beginner/tutorial5-textures/#getting-data-into-a-texture
 impl Texture {
     pub(crate) fn new(id: u64, info: TextureInfo, drop_manager: Arc<DropManager>) -> Self {
-        let id = Arc::new(TextureId { id, drop_manager });
+        let id_ref = Arc::new(TextureIdRef { id, drop_manager });
 
         let TextureInfo {
             width,
@@ -187,6 +188,7 @@ impl Texture {
 
         Self {
             id,
+            id_ref,
             // data,
             width,
             height,
@@ -200,7 +202,7 @@ impl Texture {
 
     #[inline(always)]
     pub fn id(&self) -> u64 {
-        self.id.id
+        self.id
     }
 
     #[inline(always)]
