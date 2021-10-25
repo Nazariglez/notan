@@ -13,9 +13,9 @@ without worrying too much about platform-specific code.
 The main goal is to provide a set of APIs and tools that can be used to create your project in an ergonomic manner without
 enforcing any structure or pattern, always trying to stay out of your way.
 
-## Quick Example
+## Examples
 
-Check the [live demos](https://nazariglez.github.io/notan-web/).
+* [Online demos](https://nazariglez.github.io/notan-web/).
 
 #### Do you want to open a window?
 
@@ -153,12 +153,7 @@ Sure! Check the [examples folder](examples). You will find there a few of them f
 
 ## Installation
 
-Make sure that you have `CMake` installed, because the shaders are compiled at compilation time. And we need CMake to convert them from `glsl 450`
-to any version needed.
-
-And then, just add `notan` to your project from [crates.io](https://crates.io). The `main` branch should always be the latest version on `crates.io`.
-
-Eventually we'll use [naga](https://github.com/gfx-rs/naga) to compile shaders avoiding *non-Rust* dependencies.
+Add `notan` to your project from [crates.io](https://crates.io). The `main` branch should always be the latest version on `crates.io`.
 
 ## WebAssembly
 
@@ -203,12 +198,8 @@ but Notan should help with most of them.
 - Web Browsers (`wasm32`) - WebGL2
 - Window - OpenGL 3.3
 - MacOS - OpenGL 3.3
-- Linux - OpenGL 3.3 (Untested, but should work)
-
-Adding `backends` for **iOS** and **Android** is something that will happen eventually because supporting them is a priority.
 
 The current graphics backend in place for these platforms is using [glow.rs](https://github.com/grovesNL/glow) which allow us to target WebGl2, GL and GL ES easily.
-Adding [wgpu.rs](https://wgpu.rs/) would be great, but I don't have the knowledge to do that right now. Any help with that will be really appreciated.
 
 ## Performance
 
@@ -249,10 +240,11 @@ not been too much opinionated about how to do it, with multiple platforms suppor
 
 I felt that it was a tricky thing to find until I found [Haxe](https://haxe.org/) and [Kha](https://kha.tech/), the perfect match.
 However, I did not like a few things about the build system, the lack of tools and IDEs, and how the language itself does some things.
-So, after a while I decided to start looking again, and I saw that **Rust** had a great **WebAssembly** compiler among other targets.
+So, after a while I decided to start looking again, and I saw that **Rust** had a great **WebAssembly** compiler among other targets, 
+and check all those boxes.
 
 For the last three years, I have been working on this project in different repositories with different names and multiple "start-over" times.
-It was my place to learn Rust and OpenGL, my hobby and my sandbox.
+It was my place to learn Rust and OpenGL, my hobby and sandbox.
 
 However, I feel that it could be useful for more people than me in the current state.
 
