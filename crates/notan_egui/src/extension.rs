@@ -165,8 +165,7 @@ impl EguiExtension {
             .create_texture(TextureInfo {
                 width: width as _,
                 height: height as _,
-                format: TextureFormat::Rgba,
-                internal_format: TextureFormat::Rgba,
+                format: TextureFormat::Rgba32,
                 min_filter: TextureFilter::Linear,
                 mag_filter: TextureFilter::Linear,
                 bytes: Some(pixels),

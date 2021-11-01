@@ -96,7 +96,7 @@ pub(crate) unsafe fn create_texture(
     let depth = TextureFormat::Depth == info.format;
     let mut data = info.bytes.as_deref();
     let mut typ = glow::UNSIGNED_BYTE;
-    let mut format = info.format.to_glow();
+    let mut format = texture_format(&info.format);
     if depth {
         format = glow::DEPTH_COMPONENT;
         typ = glow::UNSIGNED_SHORT;
@@ -125,7 +125,7 @@ pub(crate) unsafe fn create_texture(
     gl.tex_image_2d(
         glow::TEXTURE_2D,
         0,
-        info.internal_format.to_glow() as _,
+        texture_internal_format(&info.format) as _,
         info.width,
         info.height,
         0,
@@ -137,4 +137,19 @@ pub(crate) unsafe fn create_texture(
     //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
     gl.bind_texture(glow::TEXTURE_2D, None);
     Ok(texture)
+}
+
+pub(crate) fn texture_format(tf: &TextureFormat) -> u32 {
+    match tf {
+        TextureFormat::Rgba32 => glow::RGBA,
+        TextureFormat::R8 => glow::RED,
+        TextureFormat::Depth => glow::DEPTH_COMPONENT16,
+    }
+}
+
+pub(crate) fn texture_internal_format(tf: &TextureFormat) -> u32 {
+    match tf {
+        TextureFormat::R8 => glow::R8,
+        _ => texture_format(tf),
+    }
 }

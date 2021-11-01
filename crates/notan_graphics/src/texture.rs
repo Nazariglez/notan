@@ -29,7 +29,6 @@ pub struct TextureInfo {
     pub width: i32,
     pub height: i32,
     pub format: TextureFormat,
-    pub internal_format: TextureFormat,
     pub min_filter: TextureFilter,
     pub mag_filter: TextureFilter,
     pub bytes: Option<Vec<u8>>,
@@ -41,8 +40,7 @@ pub struct TextureInfo {
 impl Default for TextureInfo {
     fn default() -> Self {
         Self {
-            format: TextureFormat::Rgba,
-            internal_format: TextureFormat::Rgba,
+            format: TextureFormat::Rgba32,
             mag_filter: TextureFilter::Nearest,
             min_filter: TextureFilter::Nearest,
             width: 1,
@@ -66,8 +64,7 @@ impl TextureInfo {
     pub fn from_image(bytes: &[u8]) -> Result<Self, String> {
         Self::from_image_with_options(
             bytes,
-            TextureFormat::Rgba,
-            TextureFormat::Rgba,
+            TextureFormat::Rgba32,
             TextureFilter::Nearest,
             TextureFilter::Nearest,
         )
@@ -76,7 +73,6 @@ impl TextureInfo {
     pub fn from_image_with_options(
         bytes: &[u8],
         format: TextureFormat,
-        internal_format: TextureFormat,
         mag_filter: TextureFilter,
         min_filter: TextureFilter,
     ) -> Result<Self, String> {
@@ -89,7 +85,6 @@ impl TextureInfo {
             height: data.height() as _,
             bytes: Some(data.to_vec()),
             format,
-            internal_format,
             mag_filter,
             min_filter,
             depth: false,
@@ -101,8 +96,7 @@ impl TextureInfo {
             bytes,
             width,
             height,
-            TextureFormat::Rgba,
-            TextureFormat::Rgba,
+            TextureFormat::Rgba32,
             TextureFilter::Nearest,
             TextureFilter::Nearest,
         )
@@ -113,7 +107,6 @@ impl TextureInfo {
         width: i32,
         height: i32,
         format: TextureFormat,
-        internal_format: TextureFormat,
         mag_filter: TextureFilter,
         min_filter: TextureFilter,
     ) -> Result<Self, String> {
@@ -122,7 +115,6 @@ impl TextureInfo {
             height,
             bytes: Some(bytes.to_vec()),
             format,
-            internal_format,
             mag_filter,
             min_filter,
             depth: false,
@@ -131,9 +123,9 @@ impl TextureInfo {
 
     pub fn bytes_per_pixel(&self) -> u8 {
         use TextureFormat::*;
-        match (self.format, self.internal_format) {
-            (Red, R8) => 1,
-            _ => 4, //TODO
+        match self.format {
+            R8 => 1,
+            _ => 4,
         }
     }
 }
@@ -157,7 +149,6 @@ pub struct Texture {
     width: i32,
     height: i32,
     format: TextureFormat,
-    internal_format: TextureFormat,
     min_filter: TextureFilter,
     mag_filter: TextureFilter,
     frame: Rect,
@@ -172,7 +163,6 @@ impl Texture {
             width,
             height,
             format,
-            internal_format,
             min_filter,
             mag_filter,
             ..
@@ -189,11 +179,9 @@ impl Texture {
         Self {
             id,
             id_ref,
-            // data,
             width,
             height,
             format,
-            internal_format,
             min_filter,
             mag_filter,
             frame,
@@ -211,11 +199,6 @@ impl Texture {
     }
 
     #[inline(always)]
-    pub fn internal_format(&self) -> &TextureFormat {
-        &self.internal_format
-    }
-
-    #[inline(always)]
     pub fn min_filter(&self) -> &TextureFilter {
         &self.min_filter
     }
@@ -224,11 +207,6 @@ impl Texture {
     pub fn mag_filter(&self) -> &TextureFilter {
         &self.mag_filter
     }
-
-    // #[inline(always)]
-    // pub fn data(&self) -> &[u8] {
-    //     &self.data
-    // }
 
     #[inline(always)]
     pub fn frame(&self) -> &Rect {
@@ -293,8 +271,7 @@ impl AsRef<Texture> for Texture {
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TextureFormat {
-    Rgba, //rgba32
-    Red,  //r32
+    Rgba32,
     R8,
     Depth,
 }
@@ -362,7 +339,6 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
     /// Set the Texture format (ignored if used with `from_image`, Rgba will be used instead )
     pub fn with_format(mut self, format: TextureFormat) -> Self {
         self.info.format = format;
-        self.info.internal_format = format; // todo check this, worth to allow set the internal_format independently?
         self
     }
 
@@ -392,8 +368,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
                     .to_rgba8();
 
                 info.bytes = Some(data.to_vec());
-                info.format = TextureFormat::Rgba;
-                info.internal_format = TextureFormat::Rgba;
+                info.format = TextureFormat::Rgba32;
                 info.width = data.width() as _;
                 info.height = data.height() as _;
             }

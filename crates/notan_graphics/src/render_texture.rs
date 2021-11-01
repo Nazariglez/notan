@@ -86,7 +86,6 @@ impl<'a> RenderTextureBuilder<'a> {
     /// Set the Texture format
     pub fn with_format(mut self, format: TextureFormat) -> Self {
         self.info.format = format;
-        self.info.internal_format = format;
         self
     }
 

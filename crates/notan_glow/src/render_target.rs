@@ -68,7 +68,6 @@ unsafe fn create_fbo(
                 width: info.width,
                 height: info.height,
                 format: TextureFormat::Depth,
-                internal_format: TextureFormat::Depth,
                 min_filter: TextureFilter::Linear,
                 mag_filter: TextureFilter::Linear,
                 ..Default::default()

@@ -73,7 +73,7 @@ impl GlyphPlugin {
                             y_offset,
                             width,
                             height,
-                            format: TextureFormat::Red,
+                            format: TextureFormat::R8,
                             bytes: data,
                         },
                     );
@@ -123,7 +123,6 @@ fn create_texture(device: &mut Device, ww: u32, hh: u32) -> Result<Texture, Stri
         &vec![0; size],
         ww as _,
         hh as _,
-        TextureFormat::Red,
         TextureFormat::R8,
         TextureFilter::Linear,
         TextureFilter::Linear,
