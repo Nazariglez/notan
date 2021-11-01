@@ -93,7 +93,7 @@ pub(crate) unsafe fn create_texture(
         glow::CLAMP_TO_EDGE as _,
     );
 
-    let depth = TextureFormat::Depth == info.format;
+    let depth = TextureFormat::Depth16 == info.format;
     let mut data = info.bytes.as_deref();
     let mut typ = glow::UNSIGNED_BYTE;
     let mut format = texture_format(&info.format);
@@ -143,7 +143,7 @@ pub(crate) fn texture_format(tf: &TextureFormat) -> u32 {
     match tf {
         TextureFormat::Rgba32 => glow::RGBA,
         TextureFormat::R8 => glow::RED,
-        TextureFormat::Depth => glow::DEPTH_COMPONENT16,
+        TextureFormat::Depth16 => glow::DEPTH_COMPONENT16,
     }
 }
 
