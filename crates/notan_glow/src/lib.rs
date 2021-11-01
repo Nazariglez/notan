@@ -11,11 +11,11 @@ mod texture;
 mod to_glow;
 mod utils;
 
+use crate::texture::texture_format;
 use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
 use render_target::InnerRenderTexture;
 use texture::InnerTexture;
-use crate::texture::texture_format;
 
 pub struct GlowBackend {
     gl: Context,
@@ -440,7 +440,7 @@ impl DeviceBackend for GlowBackend {
                         opts.width,
                         opts.height,
                         texture_format(&opts.format), // 3d texture needs another value?
-                        glow::UNSIGNED_BYTE,   // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
+                        glow::UNSIGNED_BYTE,          // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
                         PixelUnpackData::Slice(opts.bytes),
                     );
                     // todo unbind texture?

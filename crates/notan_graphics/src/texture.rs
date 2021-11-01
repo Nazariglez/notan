@@ -273,7 +273,7 @@ impl AsRef<Texture> for Texture {
 pub enum TextureFormat {
     Rgba32,
     R8,
-    Depth,
+    Depth16,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
