@@ -108,18 +108,6 @@ impl ToGlow for VertexFormat {
     }
 }
 
-impl ToGlow for TextureFormat {
-    fn to_glow(&self) -> u32 {
-        use TextureFormat::*;
-        match self {
-            Rgba => glow::RGBA,
-            Red => glow::RED,
-            R8 => glow::R8,
-            Depth => glow::DEPTH_COMPONENT16,
-        }
-    }
-}
-
 impl ToGlow for TextureFilter {
     fn to_glow(&self) -> u32 {
         use TextureFilter::*;

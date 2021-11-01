@@ -15,6 +15,7 @@ use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
 use render_target::InnerRenderTexture;
 use texture::InnerTexture;
+use crate::texture::texture_format;
 
 pub struct GlowBackend {
     gl: Context,
@@ -438,7 +439,7 @@ impl DeviceBackend for GlowBackend {
                         opts.y_offset,
                         opts.width,
                         opts.height,
-                        opts.format.to_glow(), // 3d texture needs another value?
+                        texture_format(&opts.format), // 3d texture needs another value?
                         glow::UNSIGNED_BYTE,   // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
                         PixelUnpackData::Slice(opts.bytes),
                     );
@@ -482,7 +483,7 @@ impl DeviceBackend for GlowBackend {
                         opts.y_offset,
                         opts.width,
                         opts.height,
-                        opts.format.to_glow(),
+                        texture_format(&opts.format),
                         glow::UNSIGNED_BYTE,
                         glow::PixelPackData::Slice(bytes),
                     );
