@@ -132,7 +132,7 @@ where
 pub struct VertexBufferBuilder<'a> {
     device: &'a mut Device,
     data: Option<Vec<f32>>,
-    vertex_attrs: Option<Vec<VertexAttr>>,
+    vertex_attrs: Vec<VertexAttr>,
     vertex_step_mode: Option<VertexStepMode>,
 }
 
@@ -141,7 +141,7 @@ impl<'a> VertexBufferBuilder<'a> {
         Self {
             device,
             data: None,
-            vertex_attrs: None,
+            vertex_attrs: vec![],
             vertex_step_mode: None,
         }
     }
@@ -153,15 +153,7 @@ impl<'a> VertexBufferBuilder<'a> {
 
     pub fn attr(mut self, location: u32, format: VertexFormat) -> Self {
         let attr = VertexAttr::new(location, format);
-        match &mut self.vertex_attrs {
-            None => {
-                let attrs = vec![attr];
-                self.vertex_attrs = Some(attrs);
-            }
-            Some(attrs) => {
-                attrs.push(attr);
-            }
-        }
+        self.vertex_attrs.push(attr);
 
         self
     }
@@ -179,10 +171,17 @@ impl<'a> VertexBufferBuilder<'a> {
             vertex_step_mode,
         } = self;
 
-        let attrs = vertex_attrs.ok_or_else(|| "Missing vertex attributes for a VertexBuffer")?;
-        let step_mode = vertex_step_mode.unwrap_or(VertexStepMode::Vertex);
+        debug_assert!(
+            !vertex_attrs.is_empty(),
+            "Missing vertex attributes for a VertexBuffer"
+        );
 
-        device.create_vertex_buffer(data.unwrap_or_else(std::vec::Vec::new), &attrs, step_mode)
+        let step_mode = vertex_step_mode.unwrap_or(VertexStepMode::Vertex);
+        device.create_vertex_buffer(
+            data.unwrap_or_else(std::vec::Vec::new),
+            &vertex_attrs,
+            step_mode,
+        )
     }
 }
 

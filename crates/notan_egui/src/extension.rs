@@ -2,9 +2,9 @@ use crate::context::EguiContext;
 use crate::Color32;
 use egui::TextureId;
 use notan_app::{
-    BlendFactor, BlendMode, ClearOptions, Color, Commands, Device, ExtContainer,
-    GfxExtension, GfxRenderer, Graphics, IndexBuffer, Pipeline, RenderTexture, ShaderSource,
-    Texture, TextureFilter, TextureFormat, TextureInfo, UniformBuffer, VertexBuffer, VertexFormat,
+    BlendFactor, BlendMode, ClearOptions, Color, Commands, Device, ExtContainer, GfxExtension,
+    GfxRenderer, Graphics, IndexBuffer, Pipeline, RenderTexture, ShaderSource, Texture,
+    TextureFilter, TextureFormat, TextureInfo, UniformBuffer, VertexBuffer, VertexFormat,
 };
 use std::collections::HashMap;
 
@@ -123,7 +123,13 @@ impl EguiExtension {
             ))
             .build()?;
 
-        let vbo = gfx.create_vertex_buffer().build()?;
+        let vbo = gfx
+            .create_vertex_buffer()
+            .attr(0, VertexFormat::Float2)
+            .attr(1, VertexFormat::Float2)
+            .attr(2, VertexFormat::Float4)
+            .build()?;
+
         let ebo = gfx.create_index_buffer().build()?;
         let ubo = gfx
             .create_uniform_buffer(0, "Locals")
