@@ -83,8 +83,8 @@ impl Graphics {
 
     /// Creates a vertex buffer builder
     #[inline]
-    pub fn create_vertex_buffer(&mut self) -> BufferBuilder<f32> {
-        BufferBuilder::new(&mut self.device, BufferUsage::Vertex, None)
+    pub fn create_vertex_buffer(&mut self) -> VertexBufferBuilder {
+        VertexBufferBuilder::new(&mut self.device)
     }
 
     /// Creates a index buffer builder

@@ -7,10 +7,24 @@ pub(crate) struct InnerPipeline {
     pub fragment: Shader,
     pub program: Program,
     pub vao: VertexArray,
-    pub attrs: VertexAttributes,
-
+    // pub attrs: VertexAttributes,
     #[cfg(target_arch = "wasm32")]
     pub uniform_locations: Vec<UniformLocation>,
+}
+
+#[inline]
+pub(crate) fn get_inner_attrs(attrs: &[VertexAttr]) -> (i32, Vec<InnerAttr>) {
+    let mut stride = 0;
+    let attrs = attrs
+        .iter()
+        .map(|attr| {
+            let inner_attr = InnerAttr::from(attr, stride);
+            stride += attr.format.bytes();
+            inner_attr
+        })
+        .collect::<Vec<_>>();
+
+    (stride, attrs)
 }
 
 impl InnerPipeline {
@@ -21,15 +35,7 @@ impl InnerPipeline {
         fragment_source: &str,
         attrs: &[VertexAttr],
     ) -> Result<Self, String> {
-        let mut stride = 0;
-        let attrs = attrs
-            .iter()
-            .map(|attr| {
-                let inner_attr = InnerAttr::from(attr, stride);
-                stride += attr.format.bytes();
-                inner_attr
-            })
-            .collect::<Vec<_>>();
+        let (stride, attrs) = get_inner_attrs(attrs);
 
         create_pipeline(gl, vertex_source, fragment_source, stride, attrs)
     }
@@ -58,17 +64,27 @@ impl InnerPipeline {
 pub(crate) struct VertexAttributes {
     pub stride: i32,
     attrs: Vec<InnerAttr>,
+    vertex_step_mode: VertexStepMode,
 }
 
 impl VertexAttributes {
-    pub fn new(stride: i32, attrs: Vec<InnerAttr>) -> Self {
-        Self { stride, attrs }
+    pub fn new(stride: i32, attrs: Vec<InnerAttr>, vertex_step_mode: VertexStepMode) -> Self {
+        Self {
+            stride,
+            attrs,
+            vertex_step_mode,
+        }
     }
 
     pub unsafe fn enable(&self, gl: &Context) {
+        let step_mode = match self.vertex_step_mode {
+            VertexStepMode::Vertex => 0,
+            VertexStepMode::Instance => 1,
+        };
+
         self.attrs
             .iter()
-            .for_each(|attr| attr.enable(gl, self.stride));
+            .for_each(|attr| attr.enable(gl, self.stride, step_mode));
     }
 }
 
@@ -94,7 +110,7 @@ impl InnerAttr {
     }
 
     #[inline(always)]
-    unsafe fn enable(&self, gl: &Context, stride: i32) {
+    unsafe fn enable(&self, gl: &Context, stride: i32, vertex_step_mode: u32) {
         gl.enable_vertex_attrib_array(self.location);
         gl.vertex_attrib_pointer_f32(
             self.location,
@@ -104,6 +120,7 @@ impl InnerAttr {
             stride,
             self.offset,
         );
+        gl.vertex_attrib_divisor(self.location, vertex_step_mode);
     }
 }
 
@@ -253,15 +270,14 @@ fn create_pipeline(
         vao
     };
 
-    let attrs = VertexAttributes::new(stride, attrs);
+    // let attrs = VertexAttributes::new(stride, attrs, vertex_step_mode);
 
     Ok(InnerPipeline {
         vertex,
         fragment,
         program,
         vao,
-        attrs,
-
+        // attrs,
         #[cfg(target_arch = "wasm32")]
         uniform_locations,
     })

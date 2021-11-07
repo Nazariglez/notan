@@ -65,6 +65,7 @@ pub fn create_pattern_pipeline(
             VertexAttr::new(2, VertexFormat::Float4),
             VertexAttr::new(3, VertexFormat::Float4),
         ],
+        VertexStepMode::Vertex,
         PipelineOptions {
             color_blend: Some(BlendMode::NORMAL),
             ..Default::default()

@@ -129,6 +129,63 @@ where
     }
 }
 
+pub struct VertexBufferBuilder<'a> {
+    device: &'a mut Device,
+    data: Option<Vec<f32>>,
+    vertex_attrs: Option<Vec<VertexAttr>>,
+    vertex_step_mode: Option<VertexStepMode>,
+}
+
+impl<'a> VertexBufferBuilder<'a> {
+    pub fn new(device: &'a mut Device) -> Self {
+        Self {
+            device,
+            data: None,
+            vertex_attrs: None,
+            vertex_step_mode: None,
+        }
+    }
+
+    pub fn with_data(mut self, data: Vec<f32>) -> Self {
+        self.data = Some(data);
+        self
+    }
+
+    pub fn attr(mut self, location: u32, format: VertexFormat) -> Self {
+        let attr = VertexAttr::new(location, format);
+        match &mut self.vertex_attrs {
+            None => {
+                let attrs = vec![attr];
+                self.vertex_attrs = Some(attrs);
+            }
+            Some(attrs) => {
+                attrs.push(attr);
+            }
+        }
+
+        self
+    }
+
+    pub fn step_mode(mut self, mode: VertexStepMode) -> Self {
+        self.vertex_step_mode = Some(mode);
+        self
+    }
+
+    pub fn build(self) -> Result<VertexBuffer, String> {
+        let Self {
+            device,
+            data,
+            vertex_attrs,
+            vertex_step_mode,
+        } = self;
+
+        let attrs = vertex_attrs.ok_or_else(|| "Missing vertex attributes for a VertexBuffer")?;
+        let step_mode = vertex_step_mode.unwrap_or(VertexStepMode::Vertex);
+
+        device.create_vertex_buffer(data.unwrap_or_else(std::vec::Vec::new), &attrs, step_mode)
+    }
+}
+
 pub struct BufferBuilder<'a, T>
 where
     T: BufferDataType + Copy,
@@ -137,6 +194,8 @@ where
     usage: BufferUsage,
     data: Option<Vec<T>>,
     ubo_name: Option<String>,
+    vertex_attrs: Option<Vec<VertexAttr>>,
+    vertex_step_mode: Option<VertexStepMode>,
 }
 
 impl<'a, T> BufferBuilder<'a, T>
@@ -149,6 +208,8 @@ where
             usage,
             data: None,
             ubo_name: ubo_name.map(|v| v.to_string()),
+            vertex_attrs: None,
+            vertex_step_mode: None,
         }
     }
 
@@ -172,11 +233,21 @@ impl BufferBuildImpl<f32> for BufferBuilder<'_, f32> {
             usage,
             data,
             ubo_name,
+            vertex_attrs,
+            vertex_step_mode,
         } = self;
 
         match usage {
             BufferUsage::Vertex => {
-                device.create_vertex_buffer(data.unwrap_or_else(std::vec::Vec::new))
+                let attrs =
+                    vertex_attrs.ok_or_else(|| "Missing vertex attributes for a VertexBuffer")?;
+                let step_mode = vertex_step_mode.unwrap_or(VertexStepMode::Vertex);
+
+                device.create_vertex_buffer(
+                    data.unwrap_or_else(std::vec::Vec::new),
+                    &attrs,
+                    step_mode,
+                )
             }
             BufferUsage::Uniform(loc) => device.create_uniform_buffer(
                 loc,
@@ -226,6 +297,12 @@ impl VertexAttr {
             format: vertex_data,
         }
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum VertexStepMode {
+    Vertex,
+    Instance,
 }
 
 // FIXME: VertexBuffer only support f32, add u8 support

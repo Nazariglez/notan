@@ -48,6 +48,11 @@ pub enum Commands {
         offset: i32,
         count: i32,
     },
+    DrawInstanced {
+        offset: i32,
+        count: i32,
+        length: i32,
+    },
 }
 
 impl From<&Buffer<u32>> for Commands {

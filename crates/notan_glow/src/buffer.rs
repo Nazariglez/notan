@@ -16,6 +16,8 @@ pub(crate) struct InnerBuffer {
     uniform_block_name: Option<String>,
 
     pub block_binded: bool,
+
+    gpu_buff_size: usize,
 }
 
 impl InnerBuffer {
@@ -41,6 +43,8 @@ impl InnerBuffer {
             uniform_block_name: None,
 
             block_binded: false,
+
+            gpu_buff_size: 0,
         })
     }
 
@@ -63,13 +67,14 @@ impl InnerBuffer {
         }
     }
 
+    #[inline]
     pub fn setup_as_ubo(&mut self, gl: &Context, slot: u32, name: &str) {
         self.uniform_block_name = Some(name.to_string());
         self.bind_as_ubo(gl, slot);
     }
 
     #[inline(always)]
-    pub fn bind_as_ubo(&self, gl: &Context, slot: u32) {
+    pub fn bind_as_ubo(&mut self, gl: &Context, slot: u32) {
         unsafe {
             gl.bind_buffer(glow::UNIFORM_BUFFER, Some(self.buffer));
             gl.bind_buffer_base(glow::UNIFORM_BUFFER, slot, Some(self.buffer));
@@ -91,56 +96,82 @@ impl InnerBuffer {
                     ubo.as_slice()
                 })
                 .unwrap_or_else(|| data);
-            gl.buffer_data_u8_slice(glow::UNIFORM_BUFFER, ubo, draw.to_glow());
+            // gl.buffer_data_u8_slice(glow::UNIFORM_BUFFER, ubo, draw.to_glow());
+
+            let len = data.len();
+            if self.gpu_buff_size != len {
+                self.gpu_buff_size = len;
+                gl.buffer_data_u8_slice(glow::UNIFORM_BUFFER, ubo, draw.to_glow());
+            } else {
+                gl.buffer_sub_data_u8_slice(glow::UNIFORM_BUFFER, 0, ubo);
+            }
         }
 
         #[cfg(not(target_arch = "wasm32"))]
         unsafe {
             //https://webgl2fundamentals.org/webgl/lessons/webgl2-whats-new.html#:~:text=A%20Uniform%20Buffer%20Object%20is,blocks%20defined%20in%20a%20shader.
             //https://stackoverflow.com/questions/44629165/bind-multiple-uniform-buffer-objects
-            gl.buffer_data_u8_slice(glow::UNIFORM_BUFFER, data, draw.to_glow());
+            let len = data.len();
+            if self.gpu_buff_size != len {
+                self.gpu_buff_size = len;
+                gl.buffer_data_u8_slice(glow::UNIFORM_BUFFER, data, draw.to_glow());
+            } else {
+                gl.buffer_sub_data_u8_slice(glow::UNIFORM_BUFFER, 0, data);
+            }
         }
     }
 
     #[inline(always)]
-    pub fn bind_as_ebo(&self, gl: &Context) {
+    pub fn bind_as_ebo(&mut self, gl: &Context) {
         unsafe {
             gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.buffer));
         }
     }
 
     #[inline(always)]
-    pub fn bind_as_ebo_with_data(&self, gl: &Context, draw: &DrawType, data: &[u8]) {
+    pub fn bind_as_ebo_with_data(&mut self, gl: &Context, draw: &DrawType, data: &[u8]) {
         self.bind_as_ebo(gl);
 
         unsafe {
-            gl.buffer_data_u8_slice(glow::ELEMENT_ARRAY_BUFFER, data, draw.to_glow());
-        }
-    }
-
-    #[inline(always)]
-    pub fn bind_as_vbo(&self, gl: &Context, attrs: &Option<VertexAttributes>) {
-        unsafe {
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.buffer));
-
-            if let Some(vertex_attrs) = attrs {
-                vertex_attrs.enable(gl);
+            let len = data.len();
+            if self.gpu_buff_size != len {
+                self.gpu_buff_size = len;
+                gl.buffer_data_u8_slice(glow::ELEMENT_ARRAY_BUFFER, data, draw.to_glow());
+            } else {
+                gl.buffer_sub_data_u8_slice(glow::ELEMENT_ARRAY_BUFFER, 0, data);
             }
         }
     }
 
+    #[inline]
+    pub fn setup_as_vbo(&mut self, gl: &Context, attrs: VertexAttributes) {
+        self.bind_as_vbo(gl);
+        unsafe {
+            attrs.enable(gl);
+        }
+    }
+
     #[inline(always)]
-    pub fn bind_as_vbo_with_data(
-        &self,
-        gl: &Context,
-        attrs: &Option<VertexAttributes>,
-        draw: &DrawType,
-        data: &[u8],
-    ) {
-        self.bind_as_vbo(gl, attrs);
+    pub fn bind_as_vbo(&mut self, gl: &Context) {
+        unsafe {
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.buffer));
+        }
+    }
+
+    #[inline(always)]
+    pub fn bind_as_vbo_with_data(&mut self, gl: &Context, draw: &DrawType, data: &[u8]) {
+        self.bind_as_vbo(gl);
 
         unsafe {
-            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, data, draw.to_glow());
+            // TODO use buffer_sub_data_u8_slice
+            // TODO https://community.khronos.org/t/bufferdata-or-buffersubdata-vbo/61674/2
+            let len = data.len();
+            if self.gpu_buff_size != len {
+                self.gpu_buff_size = len;
+                gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, data, draw.to_glow());
+            } else {
+                gl.buffer_sub_data_u8_slice(glow::ARRAY_BUFFER, 0, data);
+            }
         }
     }
 }

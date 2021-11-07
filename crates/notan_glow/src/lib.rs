@@ -11,6 +11,7 @@ mod texture;
 mod to_glow;
 mod utils;
 
+use crate::pipeline::get_inner_attrs;
 use crate::texture::texture_format;
 use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
@@ -29,8 +30,7 @@ pub struct GlowBackend {
     buffers: HashMap<u64, InnerBuffer>,
     textures: HashMap<u64, InnerTexture>,
     render_targets: HashMap<u64, InnerRenderTexture>,
-    current_vertex_attrs: Option<VertexAttributes>,
-    gl_index_type: u32,
+    // current_vertex_attrs: Option<VertexAttributes>,
     using_indices: bool,
     api_name: String,
     current_pipeline: u64,
@@ -74,11 +74,6 @@ impl GlowBackend {
     fn from(gl: Context, api: &str) -> Result<Self, String> {
         log::info!("Using {} graphics api", api);
 
-        let gl_index_type = match api {
-            "webgl" => glow::UNSIGNED_SHORT,
-            _ => glow::UNSIGNED_INT,
-        };
-
         let limits = unsafe {
             Limits {
                 max_texture_size: gl.get_parameter_i32(glow::MAX_TEXTURE_SIZE) as _,
@@ -94,11 +89,10 @@ impl GlowBackend {
             size: (0, 0),
             dpi: 1.0,
             pipelines: HashMap::new(),
-            current_vertex_attrs: None,
+            // current_vertex_attrs: None,
             buffers: HashMap::new(),
             textures: HashMap::new(),
             render_targets: HashMap::new(),
-            gl_index_type,
             using_indices: false,
             api_name: api.to_string(),
             current_pipeline: 0,
@@ -180,7 +174,7 @@ impl GlowBackend {
         }
 
         self.using_indices = false;
-        self.current_vertex_attrs = None;
+        // self.current_vertex_attrs = None;
     }
 
     fn clean_pipeline(&mut self, id: u64) {
@@ -192,7 +186,7 @@ impl GlowBackend {
     fn set_pipeline(&mut self, id: u64, options: &PipelineOptions) {
         if let Some(pip) = self.pipelines.get(&id) {
             pip.bind(&self.gl, options);
-            self.current_vertex_attrs = Some(pip.attrs.clone());
+            // self.current_vertex_attrs = Some(pip.attrs.clone());
             self.using_indices = false;
             self.current_pipeline = id;
 
@@ -216,7 +210,7 @@ impl GlowBackend {
                     let inner_data = data_wrapper.unwrap_f32().unwrap();
                     let data = inner_data.read();
                     let ptr = bytemuck::cast_slice(&data);
-                    buffer.bind_as_vbo_with_data(&self.gl, &self.current_vertex_attrs, draw, ptr)
+                    buffer.bind_as_vbo_with_data(&self.gl, draw, ptr)
                 }
                 BufferUsage::Index => {
                     self.using_indices = true;
@@ -284,10 +278,22 @@ impl GlowBackend {
         unsafe {
             if self.using_indices {
                 self.gl
-                    .draw_elements(glow::TRIANGLES, count, self.gl_index_type, offset * 4);
+                    .draw_elements(glow::TRIANGLES, count, glow::UNSIGNED_INT, offset * 4);
             } else {
                 self.gl.draw_arrays(glow::TRIANGLES, offset, count);
             }
+        }
+    }
+    fn draw_instanced(&mut self, offset: i32, count: i32, length: i32) {
+        debug_assert!(self.using_indices, "Cannot draw instanced without indices");
+        unsafe {
+            self.gl.draw_elements_instanced(
+                glow::TRIANGLES,
+                count,
+                glow::UNSIGNED_INT,
+                offset,
+                length,
+            );
         }
     }
 }
@@ -322,16 +328,24 @@ impl DeviceBackend for GlowBackend {
         Ok(self.pipeline_count)
     }
 
-    fn create_vertex_buffer(&mut self) -> Result<u64, String> {
-        let inner_buffer = InnerBuffer::new(&self.gl, false)?;
-        inner_buffer.bind_as_vbo(&self.gl, &self.current_vertex_attrs);
+    fn create_vertex_buffer(
+        &mut self,
+        attrs: &[VertexAttr],
+        step_mode: VertexStepMode,
+    ) -> Result<u64, String> {
+        let mut inner_buffer = InnerBuffer::new(&self.gl, false)?;
+        let (stride, inner_attrs) = get_inner_attrs(attrs);
+        inner_buffer.setup_as_vbo(
+            &self.gl,
+            VertexAttributes::new(stride, inner_attrs, step_mode),
+        );
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
     }
 
     fn create_index_buffer(&mut self) -> Result<u64, String> {
-        let inner_buffer = InnerBuffer::new(&self.gl, false)?;
+        let mut inner_buffer = InnerBuffer::new(&self.gl, false)?;
         inner_buffer.bind_as_ebo(&self.gl);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
@@ -344,30 +358,6 @@ impl DeviceBackend for GlowBackend {
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
-    }
-
-    fn create_render_texture(
-        &mut self,
-        texture_id: u64,
-        info: &TextureInfo,
-    ) -> Result<u64, String> {
-        let texture = self.textures.get(&texture_id).ok_or(format!(
-            "Error creating render target: texture id '{}' not found.",
-            texture_id
-        ))?;
-
-        let inner_rt = InnerRenderTexture::new(&self.gl, texture, info)?;
-        self.render_target_count += 1;
-        self.render_targets
-            .insert(self.render_target_count, inner_rt);
-        Ok(self.render_target_count)
-    }
-
-    fn create_texture(&mut self, info: &TextureInfo) -> Result<u64, String> {
-        let inner_texture = InnerTexture::new(&self.gl, info)?;
-        self.texture_count += 1;
-        self.textures.insert(self.texture_count, inner_texture);
-        Ok(self.texture_count)
     }
 
     fn render(&mut self, commands: &[Commands], target: Option<u64>) {
@@ -390,6 +380,11 @@ impl DeviceBackend for GlowBackend {
                     draw,
                 } => self.bind_buffer(*id, data.clone(), usage, draw),
                 Draw { offset, count } => self.draw(*offset, *count),
+                DrawInstanced {
+                    offset,
+                    count,
+                    length,
+                } => self.draw_instanced(*offset, *count, *length),
                 BindTexture { id, slot, location } => self.bind_texture(*id, *slot, *location),
                 Size { width, height } => self.set_size(*width, *height),
                 Viewport {
@@ -424,6 +419,30 @@ impl DeviceBackend for GlowBackend {
 
     fn set_dpi(&mut self, scale_factor: f64) {
         self.dpi = scale_factor as _;
+    }
+
+    fn create_texture(&mut self, info: &TextureInfo) -> Result<u64, String> {
+        let inner_texture = InnerTexture::new(&self.gl, info)?;
+        self.texture_count += 1;
+        self.textures.insert(self.texture_count, inner_texture);
+        Ok(self.texture_count)
+    }
+
+    fn create_render_texture(
+        &mut self,
+        texture_id: u64,
+        info: &TextureInfo,
+    ) -> Result<u64, String> {
+        let texture = self.textures.get(&texture_id).ok_or(format!(
+            "Error creating render target: texture id '{}' not found.",
+            texture_id
+        ))?;
+
+        let inner_rt = InnerRenderTexture::new(&self.gl, texture, info)?;
+        self.render_target_count += 1;
+        self.render_targets
+            .insert(self.render_target_count, inner_rt);
+        Ok(self.render_target_count)
     }
 
     fn update_texture(&mut self, texture: u64, opts: &TextureUpdate) -> Result<(), String> {

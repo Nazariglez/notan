@@ -45,19 +45,21 @@ impl Batch {
 
         //compute indices
         let last_index = (self.vertices.len() / offset) as u32;
-        self.indices.reserve(self.indices.len() + indices.len());
         self.indices.extend(indices.iter().map(|i| i + last_index));
 
         //compute vertices
-        self.vertices.reserve(self.vertices.len() + vertices.len());
-        (0..vertices.len()).step_by(offset).for_each(|i| {
-            let start = i + 2;
-            let end = i + offset - 1;
-            let xyz = matrix * Vec3::new(vertices[i], vertices[i + 1], 1.0);
-            self.vertices.extend(&[xyz.x, xyz.y]); //pos
-            self.vertices.extend(&vertices[start..end]); //pipeline attrs and rgb
-            self.vertices.push(vertices[i + offset - 1] * alpha); //alpha
-        });
+        vertices
+            .iter()
+            .enumerate()
+            .step_by(offset)
+            .for_each(|(i, _)| {
+                let start = i + 2;
+                let end = i + offset - 1;
+                let xyz = matrix * Vec3::new(vertices[i], vertices[i + 1], 1.0);
+                self.vertices.extend(&[xyz.x, xyz.y]); //pos
+                self.vertices.extend(&vertices[start..end]); //pipeline attrs and rgb
+                self.vertices.push(vertices[i + offset - 1] * alpha); //alpha
+            });
     }
 
     fn offset(&self) -> usize {
