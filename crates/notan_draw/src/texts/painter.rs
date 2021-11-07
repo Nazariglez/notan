@@ -66,7 +66,15 @@ pub(crate) struct TextPainter {
 impl TextPainter {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let pipeline = create_text_pipeline(device, None)?;
-        let vbo = device.create_vertex_buffer(vec![])?;
+        let vbo = device.create_vertex_buffer(
+            vec![],
+            &[
+                VertexAttr::new(0, VertexFormat::Float2),
+                VertexAttr::new(1, VertexFormat::Float2),
+                VertexAttr::new(2, VertexFormat::Float4),
+            ],
+            VertexStepMode::Vertex,
+        )?;
         let ebo = device.create_index_buffer(vec![])?;
         let ubo = device.create_uniform_buffer(0, "Locals", vec![0.0; 16])?;
 
@@ -195,7 +203,6 @@ pub fn create_text_pipeline(
             VertexAttr::new(1, VertexFormat::Float2),
             VertexAttr::new(2, VertexFormat::Float4),
         ],
-        VertexStepMode::Vertex,
         PipelineOptions {
             color_blend: Some(BlendMode::NORMAL),
             ..Default::default()

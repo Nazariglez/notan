@@ -58,7 +58,6 @@ pub fn create_image_pipeline(
             VertexAttr::new(1, VertexFormat::Float2),
             VertexAttr::new(2, VertexFormat::Float4),
         ],
-        VertexStepMode::Vertex,
         PipelineOptions {
             color_blend: Some(BlendMode::NORMAL),
             ..Default::default()
@@ -80,7 +79,15 @@ impl ImagePainter {
         let pipeline = create_image_pipeline(device, None)?;
 
         Ok(Self {
-            vbo: device.create_vertex_buffer(vec![])?,
+            vbo: device.create_vertex_buffer(
+                vec![],
+                &[
+                    VertexAttr::new(0, VertexFormat::Float2),
+                    VertexAttr::new(1, VertexFormat::Float2),
+                    VertexAttr::new(2, VertexFormat::Float4),
+                ],
+                VertexStepMode::Vertex,
+            )?,
             ebo: device.create_index_buffer(vec![])?,
             ubo: device.create_uniform_buffer(0, "Locals", vec![0.0; 16])?,
             pipeline,
