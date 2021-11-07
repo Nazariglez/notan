@@ -2,7 +2,7 @@ use crate::context::EguiContext;
 use crate::Color32;
 use egui::TextureId;
 use notan_app::{
-    BlendFactor, BlendMode, BufferBuildImpl, ClearOptions, Color, Commands, Device, ExtContainer,
+    BlendFactor, BlendMode, ClearOptions, Color, Commands, Device, ExtContainer,
     GfxExtension, GfxRenderer, Graphics, IndexBuffer, Pipeline, RenderTexture, ShaderSource,
     Texture, TextureFilter, TextureFormat, TextureInfo, UniformBuffer, VertexBuffer, VertexFormat,
 };

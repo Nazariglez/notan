@@ -186,94 +186,59 @@ impl<'a> VertexBufferBuilder<'a> {
     }
 }
 
-pub struct BufferBuilder<'a, T>
-where
-    T: BufferDataType + Copy,
-{
+pub struct IndexBufferBuilder<'a> {
     device: &'a mut Device,
-    usage: BufferUsage,
-    data: Option<Vec<T>>,
-    ubo_name: Option<String>,
-    vertex_attrs: Option<Vec<VertexAttr>>,
-    vertex_step_mode: Option<VertexStepMode>,
+    data: Option<Vec<u32>>,
 }
 
-impl<'a, T> BufferBuilder<'a, T>
-where
-    T: BufferDataType + Copy,
-{
-    pub fn new(device: &'a mut Device, usage: BufferUsage, ubo_name: Option<&str>) -> Self {
-        Self {
-            device,
-            usage,
-            data: None,
-            ubo_name: ubo_name.map(|v| v.to_string()),
-            vertex_attrs: None,
-            vertex_step_mode: None,
-        }
+impl<'a> IndexBufferBuilder<'a> {
+    pub fn new(device: &'a mut Device) -> Self {
+        Self { device, data: None }
     }
 
-    pub fn with_data(mut self, data: Vec<T>) -> Self {
+    pub fn with_data(mut self, data: Vec<u32>) -> Self {
         self.data = Some(data);
         self
     }
-}
 
-pub trait BufferBuildImpl<T>
-where
-    T: BufferDataType + Copy,
-{
-    fn build(self) -> Result<Buffer<T>, String>;
-}
+    pub fn build(self) -> Result<IndexBuffer, String> {
+        let Self { device, data } = self;
 
-impl BufferBuildImpl<f32> for BufferBuilder<'_, f32> {
-    fn build(self) -> Result<Buffer<f32>, String> {
-        let Self {
-            device,
-            usage,
-            data,
-            ubo_name,
-            vertex_attrs,
-            vertex_step_mode,
-        } = self;
-
-        match usage {
-            BufferUsage::Vertex => {
-                let attrs =
-                    vertex_attrs.ok_or_else(|| "Missing vertex attributes for a VertexBuffer")?;
-                let step_mode = vertex_step_mode.unwrap_or(VertexStepMode::Vertex);
-
-                device.create_vertex_buffer(
-                    data.unwrap_or_else(std::vec::Vec::new),
-                    &attrs,
-                    step_mode,
-                )
-            }
-            BufferUsage::Uniform(loc) => device.create_uniform_buffer(
-                loc,
-                &ubo_name.ok_or_else(|| "Missing UBO name".to_string())?,
-                data.unwrap_or_else(std::vec::Vec::new),
-            ),
-            _ => Err("Invalid Buffer Type...".to_string()),
-        }
+        device.create_index_buffer(data.unwrap_or_else(std::vec::Vec::new))
     }
 }
 
-impl BufferBuildImpl<u32> for BufferBuilder<'_, u32> {
-    fn build(self) -> Result<Buffer<u32>, String> {
+pub struct UniformBufferBuilder<'a> {
+    device: &'a mut Device,
+    data: Option<Vec<f32>>,
+    name: String,
+    loc: u32,
+}
+
+impl<'a> UniformBufferBuilder<'a> {
+    pub fn new(device: &'a mut Device, location: u32, name: &str) -> Self {
+        Self {
+            device,
+            data: None,
+            name: name.to_string(),
+            loc: location,
+        }
+    }
+
+    pub fn with_data(mut self, data: Vec<f32>) -> Self {
+        self.data = Some(data);
+        self
+    }
+
+    pub fn build(self) -> Result<UniformBuffer, String> {
         let Self {
             device,
-            usage,
             data,
-            ..
+            name,
+            loc,
         } = self;
 
-        match usage {
-            BufferUsage::Index => {
-                device.create_index_buffer(data.unwrap_or_else(std::vec::Vec::new))
-            }
-            _ => Err("Invalid Buffer Type...".to_string()),
-        }
+        device.create_uniform_buffer(loc, &name, data.unwrap_or_else(std::vec::Vec::new))
     }
 }
 
