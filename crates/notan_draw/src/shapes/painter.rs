@@ -49,7 +49,6 @@ pub fn create_shape_pipeline(
             VertexAttr::new(0, VertexFormat::Float2),
             VertexAttr::new(1, VertexFormat::Float4),
         ],
-        VertexStepMode::Vertex,
         PipelineOptions {
             color_blend: Some(BlendMode::NORMAL),
             ..Default::default()
@@ -71,7 +70,14 @@ impl ShapePainter {
         let pipeline = create_shape_pipeline(device, None)?;
 
         Ok(Self {
-            vbo: device.create_vertex_buffer(vec![])?,
+            vbo: device.create_vertex_buffer(
+                vec![],
+                &[
+                    VertexAttr::new(0, VertexFormat::Float2),
+                    VertexAttr::new(1, VertexFormat::Float4),
+                ],
+                VertexStepMode::Vertex,
+            )?,
             ebo: device.create_index_buffer(vec![])?,
             ubo: device.create_uniform_buffer(0, "Locals", vec![0.0; 16])?,
             pipeline,
