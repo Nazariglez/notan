@@ -103,9 +103,13 @@ impl Renderer {
         self.commands.push(Commands::Draw { offset, count })
     }
 
-    /*pub fn draw_instanced(&mut self) {
-
-    }*/
+    pub fn draw_instanced(&mut self, offset: i32, count: i32, length: i32) {
+        self.commands.push(Commands::DrawInstanced {
+            offset,
+            count,
+            length,
+        })
+    }
 
     pub fn bind_texture(&mut self, location: u32, texture: &Texture) {
         self.bind_texture_slot(0, location, texture);

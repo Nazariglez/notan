@@ -173,6 +173,7 @@ pub fn create_glyph_pipeline(
             VertexAttr::new(1, VertexFormat::Float2),
             VertexAttr::new(2, VertexFormat::Float4),
         ],
+        VertexStepMode::Vertex,
         PipelineOptions {
             color_blend: Some(BlendMode::NORMAL),
             ..Default::default()

@@ -38,7 +38,11 @@ pub trait DeviceBackend {
     ) -> Result<u64, String>;
 
     /// Create a new vertex buffer object and returns the id
-    fn create_vertex_buffer(&mut self) -> Result<u64, String>;
+    fn create_vertex_buffer(
+        &mut self,
+        attrs: &[VertexAttr],
+        step_mode: VertexStepMode,
+    ) -> Result<u64, String>;
 
     /// Create a new index buffer object and returns the id
     fn create_index_buffer(&mut self) -> Result<u64, String>;
@@ -189,8 +193,13 @@ impl Device {
     }
 
     #[inline(always)]
-    pub fn create_vertex_buffer(&mut self, data: Vec<f32>) -> Result<Buffer<f32>, String> {
-        let id = self.backend.create_vertex_buffer()?;
+    pub fn create_vertex_buffer(
+        &mut self,
+        data: Vec<f32>,
+        attrs: &[VertexAttr],
+        step_mode: VertexStepMode,
+    ) -> Result<Buffer<f32>, String> {
+        let id = self.backend.create_vertex_buffer(attrs, step_mode)?;
         Ok(Buffer::new(
             id,
             data,

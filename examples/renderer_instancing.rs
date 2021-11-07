@@ -10,8 +10,9 @@ const VERT: ShaderSource = notan::vertex_shader! {
     layout(location = 0) out vec3 v_color;
 
     void main() {
+        vec2 pos = a_pos + gl_InstanceIndex * vec2(0.2, 0.2);
         v_color = a_color;
-        gl_Position = vec4(a_pos - 0.5, 0.0, 1.0);
+        gl_Position = vec4(pos - 0.5, 0.0, 1.0);
     }
     "#
 };
@@ -35,7 +36,9 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vertex_buffer: Buffer<f32>,
+    pos_vbo: VertexBuffer,
+    color_vbo: VertexBuffer,
+    index_buffer: IndexBuffer,
 }
 
 #[notan_main]
@@ -55,24 +58,48 @@ fn setup(gfx: &mut Graphics) -> State {
         .unwrap();
 
     #[rustfmt::skip]
-    let vertices = vec![
-        0.5, 1.0,   1.0, 0.2, 0.3,
-        0.0, 0.0,   0.1, 1.0, 0.3,
-        1.0, 0.0,   0.1, 0.2, 1.0,
+    let pos = vec![
+        0.5, 1.0,
+        0.0, 0.0,
+        1.0, 0.0,
     ];
 
-    let vertex_buffer = gfx
+    #[rustfmt::skip]
+    let colors = vec![
+        0.5, 1.0, 0.0,
+        0.0, 1.0, 0.0,
+        1.0, 0.0, 1.0,
+    ];
+
+    let indices = vec![0, 1, 2];
+
+    let pos_vbo = gfx
         .create_vertex_buffer()
-        .with_data(vertices)
+        .with_data(pos)
         .attr(0, VertexFormat::Float2)
+        .build()
+        .unwrap();
+
+    let color_vbo = gfx
+        .create_vertex_buffer()
+        .with_data(colors)
         .attr(1, VertexFormat::Float3)
+        .step_mode(VertexStepMode::Instance)
+        .build()
+        .unwrap();
+
+    let index_buffer = gfx
+        .create_index_buffer()
+        .with_data(indices)
         .build()
         .unwrap();
 
     State {
         clear_options,
         pipeline,
-        vertex_buffer,
+        pos_vbo,
+        color_vbo,
+        index_buffer,
     }
 }
 
@@ -81,8 +108,11 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_vertex_buffer(&state.vertex_buffer);
-    renderer.draw(0, 3);
+    renderer.bind_vertex_buffer(&state.pos_vbo);
+    renderer.bind_vertex_buffer(&state.color_vbo);
+    renderer.bind_index_buffer(&state.index_buffer);
+    renderer.draw_instanced(0, 3, 3);
+    // renderer.draw(0, 3);
     renderer.end();
 
     gfx.render(&renderer);

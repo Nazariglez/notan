@@ -101,7 +101,11 @@ impl DeviceBackend for EmptyDeviceBackend {
         Ok(self.id_count)
     }
 
-    fn create_vertex_buffer(&mut self) -> Result<u64, String> {
+    fn create_vertex_buffer(
+        &mut self,
+        _attrs: &[VertexAttr],
+        _step_mode: VertexStepMode,
+    ) -> Result<u64, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }

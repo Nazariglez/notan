@@ -80,8 +80,8 @@ impl Draw {
                 }
 
                 //Reserve the space for the mask batches
-                let new_capacity = self.batches.len() + m.batches.len() + 1;
-                self.batches.reserve(new_capacity);
+                // let new_capacity = self.batches.len() + m.batches.len() + 1;
+                // self.batches.reserve(new_capacity);
                 self.batches.extend(m.batches.iter().map(|batch| {
                     let mut b = batch.clone();
                     b.is_mask = true;
@@ -390,6 +390,13 @@ fn needs_new_batch<I: DrawInfo, F: Fn(&Batch, &I) -> bool>(
                     return true; // different blend mode
                 }
             }
+
+            // TODO check this... windows drop fps dramatically without this limit
+            // if cfg!(not(target_os = "osx")) {
+            //     if b.indices.len() + info.indices().len() >= u16::MAX as usize {
+            //         return true;
+            //     }
+            // }
 
             check_type(b, info)
         }

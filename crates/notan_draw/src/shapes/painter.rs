@@ -49,6 +49,7 @@ pub fn create_shape_pipeline(
             VertexAttr::new(0, VertexFormat::Float2),
             VertexAttr::new(1, VertexFormat::Float4),
         ],
+        VertexStepMode::Vertex,
         PipelineOptions {
             color_blend: Some(BlendMode::NORMAL),
             ..Default::default()
