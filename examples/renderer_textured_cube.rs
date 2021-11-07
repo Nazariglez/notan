@@ -129,6 +129,8 @@ fn setup(gfx: &mut Graphics) -> State {
 
     let vertex_buffer = gfx
         .create_vertex_buffer()
+        .attr(0, VertexFormat::Float3)
+        .attr(1, VertexFormat::Float2)
         .with_data(vertices)
         .build()
         .unwrap();
