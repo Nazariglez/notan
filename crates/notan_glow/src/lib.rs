@@ -285,15 +285,18 @@ impl GlowBackend {
         }
     }
     fn draw_instanced(&mut self, offset: i32, count: i32, length: i32) {
-        debug_assert!(self.using_indices, "Cannot draw instanced without indices");
         unsafe {
-            self.gl.draw_elements_instanced(
-                glow::TRIANGLES,
-                count,
-                glow::UNSIGNED_INT,
-                offset,
-                length,
-            );
+            if self.using_indices {
+                self.gl.draw_elements_instanced(
+                    glow::TRIANGLES,
+                    count,
+                    glow::UNSIGNED_INT,
+                    offset,
+                    length,
+                );
+            } else {
+                self.gl.draw_arrays_instanced(glow::TRIANGLES, offset, count, length);
+            }
         }
     }
 }
