@@ -59,8 +59,7 @@ impl BackendSystem for WinitBackend {
             .window()
             .current_monitor()
             .as_ref()
-            .unwrap()
-            .scale_factor();
+            .map_or(1.0, |m| m.scale_factor());
         self.window = Some(win);
 
         Ok(Box::new(move |mut app: App, mut state: S, mut cb: R| {

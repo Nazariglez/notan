@@ -72,7 +72,7 @@ impl WinitWindowBackend {
         let gl_ctx = unsafe { windowed_context.make_current().unwrap() };
 
         let monitor = gl_ctx.window().current_monitor();
-        let scale_factor = monitor.as_ref().map_or(1.0, |m| { m.scale_factor() });
+        let scale_factor = monitor.as_ref().map_or(1.0, |m| m.scale_factor());
         if config.fullscreen {
             gl_ctx.window().set_fullscreen(Some(Borderless(monitor)));
         }
