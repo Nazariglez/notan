@@ -30,13 +30,10 @@ pub struct GlowBackend {
     buffers: HashMap<u64, InnerBuffer>,
     textures: HashMap<u64, InnerTexture>,
     render_targets: HashMap<u64, InnerRenderTexture>,
-    // current_vertex_attrs: Option<VertexAttributes>,
     using_indices: bool,
     api_name: String,
     current_pipeline: u64,
     limits: Limits,
-
-    #[cfg(target_arch = "wasm32")]
     current_uniforms: Vec<UniformLocation>,
 }
 
@@ -89,7 +86,6 @@ impl GlowBackend {
             size: (0, 0),
             dpi: 1.0,
             pipelines: HashMap::new(),
-            // current_vertex_attrs: None,
             buffers: HashMap::new(),
             textures: HashMap::new(),
             render_targets: HashMap::new(),
@@ -97,8 +93,6 @@ impl GlowBackend {
             api_name: api.to_string(),
             current_pipeline: 0,
             limits,
-
-            #[cfg(target_arch = "wasm32")]
             current_uniforms: vec![],
         })
     }
@@ -174,7 +168,6 @@ impl GlowBackend {
         }
 
         self.using_indices = false;
-        // self.current_vertex_attrs = None;
     }
 
     fn clean_pipeline(&mut self, id: u64) {
@@ -186,14 +179,9 @@ impl GlowBackend {
     fn set_pipeline(&mut self, id: u64, options: &PipelineOptions) {
         if let Some(pip) = self.pipelines.get(&id) {
             pip.bind(&self.gl, options);
-            // self.current_vertex_attrs = Some(pip.attrs.clone());
             self.using_indices = false;
             self.current_pipeline = id;
-
-            #[cfg(target_arch = "wasm32")]
-            {
-                self.current_uniforms = pip.uniform_locations.clone();
-            }
+            self.current_uniforms = pip.uniform_locations.clone();
         }
     }
 
@@ -245,15 +233,7 @@ impl GlowBackend {
 
     #[inline(always)]
     fn get_uniform_loc<'a>(&'a self, location: &'a u32) -> &'a UniformLocation {
-        #[cfg(target_arch = "wasm32")]
-        {
-            &self.current_uniforms[*location as usize]
-        }
-
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            location
-        }
+        &self.current_uniforms[*location as usize]
     }
 
     fn clean_buffer(&mut self, id: u64) {
@@ -295,7 +275,8 @@ impl GlowBackend {
                     length,
                 );
             } else {
-                self.gl.draw_arrays_instanced(glow::TRIANGLES, offset, count, length);
+                self.gl
+                    .draw_arrays_instanced(glow::TRIANGLES, offset, count, length);
             }
         }
     }

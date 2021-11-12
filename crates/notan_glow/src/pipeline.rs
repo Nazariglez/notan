@@ -7,8 +7,6 @@ pub(crate) struct InnerPipeline {
     pub fragment: Shader,
     pub program: Program,
     pub vao: VertexArray,
-    // pub attrs: VertexAttributes,
-    #[cfg(target_arch = "wasm32")]
     pub uniform_locations: Vec<UniformLocation>,
 }
 
@@ -243,7 +241,6 @@ fn create_pipeline(
     let fragment = create_shader(gl, glow::FRAGMENT_SHADER, fragment_source)?;
     let program = create_program(gl, vertex, fragment)?;
 
-    #[cfg(target_arch = "wasm32")]
     let uniform_locations = unsafe {
         let count = gl.get_active_uniforms(program);
         (0..count)
@@ -270,15 +267,11 @@ fn create_pipeline(
         vao
     };
 
-    // let attrs = VertexAttributes::new(stride, attrs, vertex_step_mode);
-
     Ok(InnerPipeline {
         vertex,
         fragment,
         program,
         vao,
-        // attrs,
-        #[cfg(target_arch = "wasm32")]
         uniform_locations,
     })
 }
