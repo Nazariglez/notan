@@ -96,7 +96,6 @@ impl InnerBuffer {
                     ubo.as_slice()
                 })
                 .unwrap_or_else(|| data);
-            // gl.buffer_data_u8_slice(glow::UNIFORM_BUFFER, ubo, draw.to_glow());
 
             let len = data.len();
             if self.gpu_buff_size != len {
@@ -163,8 +162,6 @@ impl InnerBuffer {
         self.bind_as_vbo(gl);
 
         unsafe {
-            // TODO use buffer_sub_data_u8_slice
-            // TODO https://community.khronos.org/t/bufferdata-or-buffersubdata-vbo/61674/2
             let len = data.len();
             if self.gpu_buff_size != len {
                 self.gpu_buff_size = len;
