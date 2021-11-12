@@ -1,7 +1,8 @@
 use notan::prelude::*;
+use notan_log::LevelFilter;
 
 // Number of triangles to draw
-const INSTANCES: usize = 1000;
+const INSTANCES: usize = 50000;
 
 //language=glsl
 const VERT: ShaderSource = notan::vertex_shader! {
@@ -51,7 +52,8 @@ struct State {
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).draw(draw).build()
+    let lc = notan::log::LogConfig::new(LevelFilter::Debug);
+    notan::init_with(setup).set_config(lc).draw(draw).build()
 }
 
 fn setup(gfx: &mut Graphics) -> State {
@@ -91,6 +93,7 @@ fn setup(gfx: &mut Graphics) -> State {
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
+    notan::log::info!("fps {}", app.timer.fps());
     // Renderer pass as usual but instead of .draw uses .draw_instanced
     let mut renderer = gfx.create_renderer();
     renderer.begin(Some(&ClearOptions::new(Color::BLACK)));
