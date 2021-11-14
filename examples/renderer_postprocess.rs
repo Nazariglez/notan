@@ -9,7 +9,10 @@ struct State {
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    notan::init_with(setup).draw(draw).build()
+    notan::init_with(setup)
+        .set_config(WindowConfig::default().vsync())
+        .draw(draw)
+        .build()
 }
 
 fn setup(gfx: &mut Graphics) -> State {
@@ -36,14 +39,14 @@ const IMAGE_VERTEX: ShaderSource = notan::vertex_shader! {
     r#"
     #version 450
 
-    layout(location = 0) in vec4 a_position;
+    layout(location = 0) in vec3 a_position;
     layout(location = 1) in vec2 a_texcoord;
 
     layout(location = 0) out vec2 v_texcoord;
 
     void main() {
         v_texcoord = a_texcoord;
-        gl_Position = a_position;
+        gl_Position = vec4(a_position, 1.0);
     }
     "#
 };
@@ -80,9 +83,9 @@ const PIXEL_INVERT_FRAGMENT: ShaderSource = notan::fragment_shader! {
 struct PostProcessTarget {
     render_texture: RenderTexture,
     pipeline: Pipeline,
-    vertex_buffer: Buffer<f32>,
-    index_buffer: Buffer<u32>,
-    uniform_buffer: Buffer<f32>,
+    vertex_buffer: Buffer,
+    index_buffer: Buffer,
+    uniform_buffer: Buffer,
     value: f32,
 }
 
@@ -94,17 +97,20 @@ impl PostProcessTarget {
             .build()
             .unwrap();
 
+        let vertex_info = VertexInfo::new()
+            .attr(0, VertexFormat::Float3)
+            .attr(1, VertexFormat::Float2);
+
         let pipeline = gfx
             .create_pipeline()
             .from(&IMAGE_VERTEX, &PIXEL_INVERT_FRAGMENT)
-            .vertex_attr(0, VertexFormat::Float3)
-            .vertex_attr(1, VertexFormat::Float2)
             .with_color_blend(BlendMode::NORMAL)
+            .vertex_info(&vertex_info)
             .build()
             .unwrap();
 
         #[rustfmt::skip]
-        let vertices = vec![
+        let vertices = [
             //pos               //coords
             1.0,  1.0, 0.0,     1.0, 1.0,
             1.0, -1.0, 0.0,     1.0, 0.0,
@@ -113,28 +119,29 @@ impl PostProcessTarget {
         ];
 
         #[rustfmt::skip]
-        let indices = vec![
+        let indices = [
             0, 1, 3,
             1, 2, 3,
         ];
 
-        let uniforms = vec![800.0, 600.0, 0.0];
+        let uniforms = [800.0, 600.0, 0.0];
 
         let vertex_buffer = gfx
             .create_vertex_buffer()
-            .with_data(vertices)
+            .with_info(&vertex_info)
+            .with_data(&vertices)
             .build()
             .unwrap();
 
         let index_buffer = gfx
             .create_index_buffer()
-            .with_data(indices)
+            .with_data(&indices)
             .build()
             .unwrap();
 
         let uniform_buffer = gfx
             .create_uniform_buffer(0, "Locals")
-            .with_data(uniforms)
+            .with_data(&uniforms)
             .build()
             .unwrap();
 
@@ -149,7 +156,10 @@ impl PostProcessTarget {
     }
 
     fn create_renderer(&mut self, gfx: &mut Graphics, delta: f32) -> Renderer {
-        (*self.uniform_buffer.data_mut())[2] = 5.5 + self.value.sin();
+        gfx.set_buffer_data(
+            &self.uniform_buffer,
+            &[800.0, 600.0, 5.5 + self.value.sin()],
+        );
         self.value += 0.3 * delta;
 
         let mut renderer = gfx.create_renderer();
@@ -173,7 +183,7 @@ impl PostProcessTarget {
 const COLOR_VERTEX: ShaderSource = notan::vertex_shader! {
     r#"
     #version 450
-    layout(location = 0) in vec4 a_position;
+    layout(location = 0) in vec3 a_position;
     layout(location = 1) in vec4 a_color;
 
     layout(location = 0) out vec4 v_color;
@@ -184,7 +194,7 @@ const COLOR_VERTEX: ShaderSource = notan::vertex_shader! {
 
     void main() {
         v_color = a_color;
-        gl_Position = u_matrix * a_position;
+        gl_Position = u_matrix * vec4(a_position, 1.0);
     }
     "#
 };
@@ -206,20 +216,23 @@ const COLOR_FRAGMENT: ShaderSource = notan::fragment_shader! {
 
 struct Cube {
     pipeline: Pipeline,
-    vertex_buffer: Buffer<f32>,
-    index_buffer: Buffer<u32>,
-    uniform_buffer: Buffer<f32>,
+    vertex_buffer: Buffer,
+    index_buffer: Buffer,
+    uniform_buffer: Buffer,
     mvp: glam::Mat4,
     angle: f32,
 }
 
 impl Cube {
     fn new(gfx: &mut Graphics) -> Self {
+        let vertex_info = VertexInfo::new()
+            .attr(0, VertexFormat::Float3)
+            .attr(1, VertexFormat::Float4);
+
         let pipeline = gfx
             .create_pipeline()
             .from(&COLOR_VERTEX, &COLOR_FRAGMENT)
-            .vertex_attr(0, VertexFormat::Float3)
-            .vertex_attr(1, VertexFormat::Float4)
+            .vertex_info(&vertex_info)
             .with_depth_stencil(DepthStencil {
                 write: true,
                 compare: CompareMode::Less,
@@ -228,7 +241,7 @@ impl Cube {
             .unwrap();
 
         #[rustfmt::skip]
-        let vertices = vec![
+        let vertices = [
             -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
             1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
             1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
@@ -261,7 +274,7 @@ impl Cube {
         ];
 
         #[rustfmt::skip]
-        let indices = vec![
+        let indices = [
             0, 1, 2,  0, 2, 3,
             6, 5, 4,  7, 6, 4,
             8, 9, 10,  8, 10, 11,
@@ -280,19 +293,20 @@ impl Cube {
 
         let vertex_buffer = gfx
             .create_vertex_buffer()
-            .with_data(vertices)
+            .with_info(&vertex_info)
+            .with_data(&vertices)
             .build()
             .unwrap();
 
         let index_buffer = gfx
             .create_index_buffer()
-            .with_data(indices)
+            .with_data(&indices)
             .build()
             .unwrap();
 
         let uniform_buffer = gfx
             .create_uniform_buffer(0, "Locals")
-            .with_data(mvp.to_cols_array().to_vec())
+            .with_data(&mvp.to_cols_array())
             .build()
             .unwrap();
 
@@ -307,9 +321,7 @@ impl Cube {
     }
 
     fn create_renderer(&mut self, gfx: &mut Graphics, delta: f32) -> Renderer {
-        self.uniform_buffer
-            .data_mut()
-            .copy_from_slice(&rotated_matrix(self.mvp, self.angle));
+        gfx.set_buffer_data(&self.uniform_buffer, &rotated_matrix(self.mvp, self.angle));
 
         let mut renderer = gfx.create_renderer();
         renderer.begin(Some(&ClearOptions {

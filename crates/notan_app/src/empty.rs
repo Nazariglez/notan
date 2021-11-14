@@ -120,6 +120,8 @@ impl DeviceBackend for EmptyDeviceBackend {
         Ok(self.id_count)
     }
 
+    fn set_buffer_data(&mut self, _id: u64, _data: &[u8]) {}
+
     fn render(&mut self, commands: &[Commands], _target: Option<u64>) {
         commands.iter().for_each(|cmd| log::info!("{:?}", cmd));
     }
