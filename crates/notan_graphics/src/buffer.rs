@@ -1,19 +1,7 @@
 use crate::device::{DropManager, ResourceId};
 use crate::pipeline::*;
 use crate::Device;
-use parking_lot::{
-    MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
-};
 use std::sync::Arc;
-
-/// Alias for the common used type for Vertex Buffer
-pub type VertexBuffer = Buffer<f32>;
-
-/// Alias for the common used type for Index Buffer
-pub type IndexBuffer = Buffer<u32>;
-
-/// Alias for the common used type for the Uniform Buffer
-pub type UniformBuffer = Buffer<f32>;
 
 #[derive(Debug)]
 struct BufferIdRef {
@@ -27,43 +15,29 @@ impl Drop for BufferIdRef {
     }
 }
 
-/// GPU buffer, it works as a thread-safe wrapper of a Vector
+/// GPU buffer
 #[derive(Debug, Clone)]
-pub struct Buffer<T>
-where
-    T: BufferDataType + Copy,
-{
+pub struct Buffer {
     id: u64,
     id_ref: Arc<BufferIdRef>,
-    pub(crate) usage: BufferUsage,
+    pub usage: BufferUsage,
     pub draw: Option<DrawType>,
-    data: Arc<RwLock<Vec<T>>>,
 }
 
-pub trait BufferDataType {}
-impl BufferDataType for f32 {}
-impl BufferDataType for u32 {}
-
-impl<T> Buffer<T>
-where
-    T: BufferDataType + Copy,
-{
+impl Buffer {
     pub(crate) fn new(
         id: u64,
-        data: Vec<T>,
         usage: BufferUsage,
         draw: Option<DrawType>,
         drop_manager: Arc<DropManager>,
     ) -> Self {
         let id_ref = Arc::new(BufferIdRef { id, drop_manager });
-        let data = Arc::new(RwLock::new(data));
 
         Self {
             id,
             id_ref,
             usage,
             draw,
-            data,
         }
     }
 
@@ -71,59 +45,9 @@ where
     pub fn id(&self) -> u64 {
         self.id
     }
-
-    /// Read only reference for the inner buffer data
-    pub fn data(&mut self) -> MappedRwLockReadGuard<'_, [T]> {
-        RwLockReadGuard::map(self.data.read(), |data| data.as_slice())
-    }
-
-    /// Mutable reference for the inner buffer data
-    pub fn data_mut(&mut self) -> MappedRwLockWriteGuard<'_, [T]> {
-        RwLockWriteGuard::map(self.data.write(), |data| data.as_mut())
-    }
-
-    /// Replace the inner buffer data with the data from the passed data if both are the same length. It will panic otherwise
-    pub fn copy(&mut self, data: &[T]) {
-        self.data.write().copy_from_slice(data);
-    }
-
-    /// Clear and replace the innner buffer data no matter the length
-    pub fn set(&mut self, data: &[T]) {
-        let mut d = self.data.write();
-        d.clear();
-        d.extend(data);
-    }
-
-    /// It will clear the inner buffer data
-    pub fn clear(&mut self) {
-        self.data.write().clear();
-    }
-
-    /// It will extend the inner buffer data
-    pub fn extend(&mut self, data: &[T]) {
-        self.data.write().extend(data);
-    }
-
-    /// Returns the Arc reference for the inner data,
-    /// useful if we need to do more than one action with the buffer
-    /// we can acquire the mut with write and do all actions with that reference
-    pub fn data_ptr(&self) -> &Arc<RwLock<Vec<T>>> {
-        &self.data
-    }
-
-    pub fn len(&self) -> usize {
-        self.data.read().len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
 }
 
-impl<T> std::cmp::PartialEq for Buffer<T>
-where
-    T: BufferDataType + Copy,
-{
+impl std::cmp::PartialEq for Buffer {
     fn eq(&self, other: &Self) -> bool {
         self.id() == other.id()
     }
@@ -131,9 +55,9 @@ where
 
 pub struct VertexBufferBuilder<'a> {
     device: &'a mut Device,
-    data: Option<Vec<f32>>,
+    data: Option<&'a [f32]>,
     vertex_attrs: Vec<VertexAttr>,
-    vertex_step_mode: Option<VertexStepMode>,
+    vertex_step_mode: VertexStepMode,
 }
 
 impl<'a> VertexBufferBuilder<'a> {
@@ -142,28 +66,22 @@ impl<'a> VertexBufferBuilder<'a> {
             device,
             data: None,
             vertex_attrs: vec![],
-            vertex_step_mode: None,
+            vertex_step_mode: VertexStepMode::Vertex,
         }
     }
 
-    pub fn with_data(mut self, data: Vec<f32>) -> Self {
+    pub fn with_data(mut self, data: &'a [f32]) -> Self {
         self.data = Some(data);
         self
     }
 
-    pub fn attr(mut self, location: u32, format: VertexFormat) -> Self {
-        let attr = VertexAttr::new(location, format);
-        self.vertex_attrs.push(attr);
-
+    pub fn with_info(mut self, info: &VertexInfo) -> Self {
+        self.vertex_attrs = info.attrs.clone();
+        self.vertex_step_mode = info.step_mode;
         self
     }
 
-    pub fn step_mode(mut self, mode: VertexStepMode) -> Self {
-        self.vertex_step_mode = Some(mode);
-        self
-    }
-
-    pub fn build(self) -> Result<VertexBuffer, String> {
+    pub fn build(self) -> Result<Buffer, String> {
         let Self {
             device,
             data,
@@ -176,18 +94,13 @@ impl<'a> VertexBufferBuilder<'a> {
             "Missing vertex attributes for a VertexBuffer"
         );
 
-        let step_mode = vertex_step_mode.unwrap_or(VertexStepMode::Vertex);
-        device.create_vertex_buffer(
-            data.unwrap_or_else(std::vec::Vec::new),
-            &vertex_attrs,
-            step_mode,
-        )
+        device.create_vertex_buffer(data, &vertex_attrs, vertex_step_mode)
     }
 }
 
 pub struct IndexBufferBuilder<'a> {
     device: &'a mut Device,
-    data: Option<Vec<u32>>,
+    data: Option<&'a [u32]>,
 }
 
 impl<'a> IndexBufferBuilder<'a> {
@@ -195,21 +108,21 @@ impl<'a> IndexBufferBuilder<'a> {
         Self { device, data: None }
     }
 
-    pub fn with_data(mut self, data: Vec<u32>) -> Self {
+    pub fn with_data(mut self, data: &'a [u32]) -> Self {
         self.data = Some(data);
         self
     }
 
-    pub fn build(self) -> Result<IndexBuffer, String> {
+    pub fn build(self) -> Result<Buffer, String> {
         let Self { device, data } = self;
 
-        device.create_index_buffer(data.unwrap_or_else(std::vec::Vec::new))
+        device.create_index_buffer(data)
     }
 }
 
 pub struct UniformBufferBuilder<'a> {
     device: &'a mut Device,
-    data: Option<Vec<f32>>,
+    data: Option<&'a [f32]>,
     name: String,
     loc: u32,
 }
@@ -224,12 +137,12 @@ impl<'a> UniformBufferBuilder<'a> {
         }
     }
 
-    pub fn with_data(mut self, data: Vec<f32>) -> Self {
+    pub fn with_data(mut self, data: &'a [f32]) -> Self {
         self.data = Some(data);
         self
     }
 
-    pub fn build(self) -> Result<UniformBuffer, String> {
+    pub fn build(self) -> Result<Buffer, String> {
         let Self {
             device,
             data,
@@ -237,7 +150,29 @@ impl<'a> UniformBufferBuilder<'a> {
             loc,
         } = self;
 
-        device.create_uniform_buffer(loc, &name, data.unwrap_or_else(std::vec::Vec::new))
+        device.create_uniform_buffer(loc, &name, data)
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct VertexInfo {
+    pub(crate) attrs: Vec<VertexAttr>,
+    pub(crate) step_mode: VertexStepMode,
+}
+
+impl VertexInfo {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn attr(mut self, location: u32, format: VertexFormat) -> Self {
+        self.attrs.push(VertexAttr::new(location, format));
+        self
+    }
+
+    pub fn step_mode(mut self, mode: VertexStepMode) -> Self {
+        self.step_mode = mode;
+        self
     }
 }
 
@@ -248,7 +183,7 @@ pub enum BufferUsage {
     Uniform(u32),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct VertexAttr {
     pub location: u32,
     pub format: VertexFormat,
@@ -267,6 +202,12 @@ impl VertexAttr {
 pub enum VertexStepMode {
     Vertex,
     Instance,
+}
+
+impl Default for VertexStepMode {
+    fn default() -> Self {
+        VertexStepMode::Vertex
+    }
 }
 
 // FIXME: VertexBuffer only support f32, add u8 support
