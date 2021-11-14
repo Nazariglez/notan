@@ -77,25 +77,23 @@ impl Renderer {
         });
     }
 
-    pub fn bind_vertex_buffer(&mut self, buffer: &Buffer<f32>) {
+    pub fn bind_vertex_buffer(&mut self, buffer: &Buffer) {
         self.commands.push(Commands::BindBuffer {
             id: buffer.id(),
-            data: BufferDataWrapper::Float32(buffer.data_ptr().clone()),
             usage: BufferUsage::Vertex,
             draw: buffer.draw.unwrap_or(DrawType::Dynamic),
         });
     }
 
-    pub fn bind_index_buffer(&mut self, buffer: &Buffer<u32>) {
+    pub fn bind_index_buffer(&mut self, buffer: &Buffer) {
         self.commands.push(Commands::BindBuffer {
             id: buffer.id(),
-            data: BufferDataWrapper::Uint32(buffer.data_ptr().clone()),
             usage: BufferUsage::Index,
             draw: buffer.draw.unwrap_or(DrawType::Dynamic),
         });
     }
 
-    pub fn bind_uniform_buffer(&mut self, buffer: &Buffer<f32>) {
+    pub fn bind_uniform_buffer(&mut self, buffer: &Buffer) {
         self.commands.push(buffer.into());
     }
 

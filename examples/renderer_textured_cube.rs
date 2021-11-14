@@ -42,8 +42,8 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vertex_buffer: Buffer<f32>,
-    uniform_buffer: Buffer<f32>,
+    vertex_buffer: Buffer,
+    uniform_buffer: Buffer,
     mvp: glam::Mat4,
     angle: f32,
     texture: Texture,
@@ -61,11 +61,14 @@ fn setup(gfx: &mut Graphics) -> State {
         stencil: None,
     };
 
+    let vertex_info = VertexInfo::new()
+        .attr(0, VertexFormat::Float3)
+        .attr(1, VertexFormat::Float2);
+
     let pipeline = gfx
         .create_pipeline()
         .from(&VERT, &FRAG)
-        .vertex_attr(0, VertexFormat::Float3)
-        .vertex_attr(1, VertexFormat::Float2)
+        .vertex_info(&vertex_info)
         .with_depth_stencil(DepthStencil {
             write: true,
             compare: CompareMode::Less,
@@ -80,7 +83,7 @@ fn setup(gfx: &mut Graphics) -> State {
         .unwrap();
 
     #[rustfmt::skip]
-    let vertices = vec![
+    let vertices = [
         -1.0,-1.0,-1.0,     0.000059,0.000004,
         -1.0,-1.0,1.0,      0.000103,0.336048,
         -1.0,1.0,1.0,       0.335973,0.335903,
@@ -129,15 +132,14 @@ fn setup(gfx: &mut Graphics) -> State {
 
     let vertex_buffer = gfx
         .create_vertex_buffer()
-        .attr(0, VertexFormat::Float3)
-        .attr(1, VertexFormat::Float2)
-        .with_data(vertices)
+        .with_info(&vertex_info)
+        .with_data(&vertices)
         .build()
         .unwrap();
 
     let uniform_buffer = gfx
         .create_uniform_buffer(0, "Locals")
-        .with_data(mvp.to_cols_array().to_vec())
+        .with_data(&mvp.to_cols_array())
         .build()
         .unwrap();
 
@@ -153,12 +155,15 @@ fn setup(gfx: &mut Graphics) -> State {
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
+    gfx.set_buffer_data(
+        &state.uniform_buffer,
+        &rotated_matrix(state.mvp, state.angle),
+    );
+
     let mut renderer = gfx.create_renderer();
 
-    let count = state.vertex_buffer.data().len() / state.pipeline.offset();
-    state
-        .uniform_buffer
-        .copy(&rotated_matrix(state.mvp, state.angle));
+    let vertices_count = 180;
+    let count = vertices_count / state.pipeline.offset();
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);

@@ -40,9 +40,9 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vbo: VertexBuffer,
-    ebo: IndexBuffer,
-    ubo: UniformBuffer,
+    vbo: Buffer,
+    ebo: Buffer,
+    ubo: Buffer,
     mvp: glam::Mat4,
     angle: f32,
 }
@@ -64,17 +64,20 @@ fn setup(gfx: &mut Graphics) -> State {
         compare: CompareMode::Less,
     };
 
+    let vertex_info = VertexInfo::new()
+        .attr(0, VertexFormat::Float3)
+        .attr(1, VertexFormat::Float4);
+
     let pipeline = gfx
         .create_pipeline()
         .from(&VERT, &FRAG)
-        .vertex_attr(0, VertexFormat::Float3)
-        .vertex_attr(1, VertexFormat::Float4)
+        .vertex_info(&vertex_info)
         .with_depth_stencil(depth_stencil)
         .build()
         .unwrap();
 
     #[rustfmt::skip]
-    let vertices = vec![
+    let vertices = [
         -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
         1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
         1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
@@ -107,7 +110,7 @@ fn setup(gfx: &mut Graphics) -> State {
     ];
 
     #[rustfmt::skip]
-    let indices = vec![
+    let indices = [
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
         8, 9, 10,  8, 10, 11,
@@ -126,19 +129,20 @@ fn setup(gfx: &mut Graphics) -> State {
 
     let vertex_buffer = gfx
         .create_vertex_buffer()
-        .with_data(vertices)
+        .with_info(&vertex_info)
+        .with_data(&vertices)
         .build()
         .unwrap();
 
     let index_buffer = gfx
         .create_index_buffer()
-        .with_data(indices)
+        .with_data(&indices)
         .build()
         .unwrap();
 
     let uniform_buffer = gfx
         .create_uniform_buffer(0, "Locals")
-        .with_data(mvp.to_cols_array().to_vec())
+        .with_data(&mvp.to_cols_array())
         .build()
         .unwrap();
 
@@ -156,7 +160,7 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    state.ubo.copy(&rotated_matrix(state.mvp, state.angle));
+    gfx.set_buffer_data(&state.ubo, &rotated_matrix(state.mvp, state.angle));
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);

@@ -50,6 +50,10 @@ impl WinitWindowBackend {
             .with_maximized(config.maximized)
             .with_resizable(config.resizable);
 
+        /* TODO: this should be exposed to notan to be enabled/disabled but
+        seems like is not working on mac I think... */
+        // .with_disallow_hidpi(true);
+
         if let Some((w, h)) = config.min_size {
             builder = builder.with_min_inner_size(LogicalSize::new(w, h));
         }

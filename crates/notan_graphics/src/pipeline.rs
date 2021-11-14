@@ -1,4 +1,4 @@
-use crate::buffer::{VertexAttr, VertexFormat, VertexStepMode};
+use crate::buffer::{VertexAttr, VertexFormat, VertexInfo, VertexStepMode};
 use crate::color::Color;
 use crate::device::{DropManager, ResourceId};
 use crate::{Device, ShaderSource};
@@ -106,9 +106,9 @@ impl<'a, 'b> PipelineBuilder<'a, 'b> {
         self
     }
 
-    /// Set the format and location for a vertex attribute
-    pub fn vertex_attr(mut self, location: u32, data: VertexFormat) -> Self {
-        self.attrs.push(VertexAttr::new(location, data));
+    /// Set the vertex structure info for a vertex buffer
+    pub fn vertex_info(mut self, info: &VertexInfo) -> Self {
+        self.attrs.extend(&info.attrs);
         self
     }
 

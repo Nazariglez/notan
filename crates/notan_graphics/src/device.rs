@@ -50,6 +50,9 @@ pub trait DeviceBackend {
     /// Create a new uniform buffer and returns the id
     fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<u64, String>;
 
+    /// Upload to the GPU the buffer data slice
+    fn set_buffer_data(&mut self, buffer: u64, data: &[u8]);
+
     /// Create a new renderer using the size of the graphics
     fn render(&mut self, commands: &[Commands], target: Option<u64>);
 
@@ -195,30 +198,31 @@ impl Device {
     #[inline(always)]
     pub fn create_vertex_buffer(
         &mut self,
-        data: Vec<f32>,
+        data: Option<&[f32]>,
         attrs: &[VertexAttr],
         step_mode: VertexStepMode,
-    ) -> Result<Buffer<f32>, String> {
+    ) -> Result<Buffer, String> {
         let id = self.backend.create_vertex_buffer(attrs, step_mode)?;
-        Ok(Buffer::new(
-            id,
-            data,
-            BufferUsage::Vertex,
-            None,
-            self.drop_manager.clone(),
-        ))
+
+        let buffer = Buffer::new(id, BufferUsage::Vertex, None, self.drop_manager.clone());
+
+        if let Some(d) = data {
+            self.set_buffer_data(&buffer, d);
+        }
+
+        Ok(buffer)
     }
 
     #[inline(always)]
-    pub fn create_index_buffer(&mut self, data: Vec<u32>) -> Result<Buffer<u32>, String> {
+    pub fn create_index_buffer(&mut self, data: Option<&[u32]>) -> Result<Buffer, String> {
         let id = self.backend.create_index_buffer()?;
-        Ok(Buffer::new(
-            id,
-            data,
-            BufferUsage::Index,
-            None,
-            self.drop_manager.clone(),
-        ))
+
+        let buffer = Buffer::new(id, BufferUsage::Index, None, self.drop_manager.clone());
+
+        if let Some(d) = data {
+            self.set_buffer_data(&buffer, d);
+        }
+        Ok(buffer)
     }
 
     #[inline(always)]
@@ -226,17 +230,22 @@ impl Device {
         &mut self,
         slot: u32,
         name: &str,
-        data: Vec<f32>,
-    ) -> Result<Buffer<f32>, String> {
+        data: Option<&[f32]>,
+    ) -> Result<Buffer, String> {
         //debug_assert!(current_pipeline.is_some()) //pipeline should be already binded
         let id = self.backend.create_uniform_buffer(slot, name)?;
-        Ok(Buffer::new(
+        let buffer = Buffer::new(
             id,
-            data,
             BufferUsage::Uniform(slot),
             None,
             self.drop_manager.clone(),
-        ))
+        );
+
+        if let Some(d) = data {
+            self.set_buffer_data(&buffer, d);
+        }
+
+        Ok(buffer)
     }
 
     #[inline(always)]
@@ -292,4 +301,14 @@ impl Device {
         self.backend.clean(&self.drop_manager.dropped.read());
         self.drop_manager.clean();
     }
+
+    #[inline]
+    pub fn set_buffer_data<T: BufferDataType>(&mut self, buffer: &Buffer, data: &[T]) {
+        self.backend
+            .set_buffer_data(buffer.id(), bytemuck::cast_slice(data));
+    }
 }
+
+pub trait BufferDataType: bytemuck::Pod {}
+impl BufferDataType for u32 {}
+impl BufferDataType for f32 {}
