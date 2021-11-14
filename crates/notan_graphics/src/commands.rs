@@ -29,7 +29,6 @@ pub enum Commands {
     },
     BindBuffer {
         id: u64,
-        data: BufferDataWrapper,
         usage: BufferUsage,
         draw: DrawType,
     },
@@ -55,22 +54,10 @@ pub enum Commands {
     },
 }
 
-impl From<&Buffer<u32>> for Commands {
-    fn from(buffer: &Buffer<u32>) -> Commands {
+impl From<&Buffer> for Commands {
+    fn from(buffer: &Buffer) -> Commands {
         Commands::BindBuffer {
             id: buffer.id(),
-            data: BufferDataWrapper::Uint32(buffer.data_ptr().clone()),
-            usage: buffer.usage,
-            draw: buffer.draw.unwrap_or(DrawType::Dynamic),
-        }
-    }
-}
-
-impl From<&Buffer<f32>> for Commands {
-    fn from(buffer: &Buffer<f32>) -> Commands {
-        Commands::BindBuffer {
-            id: buffer.id(),
-            data: BufferDataWrapper::Float32(buffer.data_ptr().clone()),
             usage: buffer.usage,
             draw: buffer.draw.unwrap_or(DrawType::Dynamic),
         }

@@ -7,6 +7,12 @@ use notan_graphics::prelude::*;
 //https://sotrh.github.io/learn-wgpu/beginner/tutorial6-uniforms/#a-perspective-camera
 //https://wgld.org/d/webgl2/w009.html
 
+pub(crate) enum Kind {
+    Vertex,
+    Index,
+    Uniform,
+}
+
 pub(crate) struct InnerBuffer {
     buffer: glow::Buffer,
 
@@ -18,20 +24,28 @@ pub(crate) struct InnerBuffer {
     pub block_binded: bool,
 
     gpu_buff_size: usize,
+    draw_type: u32,
+    kind: Kind,
 }
 
 impl InnerBuffer {
     #[allow(unused_variables)] // ubo is used only on wasm32 builds
-    pub fn new(gl: &Context, ubo: bool) -> Result<Self, String> {
+    pub fn new(gl: &Context, kind: Kind, dynamic: bool) -> Result<Self, String> {
         let buffer = unsafe { gl.create_buffer()? };
 
         #[cfg(target_arch = "wasm32")]
-        let global_ubo = if ubo {
+        let global_ubo = if matches(kind, Kind::Uniform) {
             let max = unsafe { gl.get_parameter_i32(glow::MAX_UNIFORM_BLOCK_SIZE) } as usize;
 
             Some(vec![0; max])
         } else {
             None
+        };
+
+        let draw_type = if dynamic {
+            glow::DYNAMIC_DRAW
+        } else {
+            glow::STATIC_DRAW
         };
 
         Ok(InnerBuffer {
@@ -45,7 +59,27 @@ impl InnerBuffer {
             block_binded: false,
 
             gpu_buff_size: 0,
+            draw_type,
+            kind,
         })
+    }
+
+    #[inline]
+    pub fn update(&mut self, gl: &Context, data: &[u8]) {
+        let needs_alloc = self.gpu_buff_size != data.len();
+        let typ = match self.kind {
+            Kind::Vertex => glow::ARRAY_BUFFER,
+            Kind::Index => glow::ELEMENT_ARRAY_BUFFER,
+            Kind::Uniform => glow::UNIFORM_BUFFER,
+        };
+
+        unsafe {
+            if needs_alloc {
+                gl.buffer_data_u8_slice(typ, data, self.draw_type);
+            } else {
+                gl.buffer_sub_data_u8_slice(typ, 0, data);
+            }
+        }
     }
 
     pub fn bind_block(&mut self, gl: &Context, pipeline: &InnerPipeline, slot: u32) {

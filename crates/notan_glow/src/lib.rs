@@ -11,6 +11,7 @@ mod texture;
 mod to_glow;
 mod utils;
 
+use crate::buffer::Kind;
 use crate::pipeline::get_inner_attrs;
 use crate::texture::texture_format;
 use buffer::InnerBuffer;
@@ -74,6 +75,7 @@ impl GlowBackend {
         let limits = unsafe {
             Limits {
                 max_texture_size: gl.get_parameter_i32(glow::MAX_TEXTURE_SIZE) as _,
+                max_uniform_blocks: gl.get_parameter_i32(glow::MAX_UNIFORM_BLOCK_SIZE) as _,
             }
         };
 
@@ -185,44 +187,51 @@ impl GlowBackend {
         }
     }
 
-    fn bind_buffer(
-        &mut self,
-        id: u64,
-        data_wrapper: BufferDataWrapper,
-        usage: &BufferUsage,
-        draw: &DrawType,
-    ) {
+    fn bind_buffer(&mut self, id: u64, usage: &BufferUsage, draw: &DrawType) {
         if let Some(buffer) = self.buffers.get_mut(&id) {
             match usage {
                 BufferUsage::Vertex => {
-                    let inner_data = data_wrapper.unwrap_f32().unwrap();
-                    let data = inner_data.read();
-                    let ptr = bytemuck::cast_slice(&data);
-                    buffer.bind_as_vbo_with_data(&self.gl, draw, ptr)
+                    buffer.bind_as_vbo(&self.gl);
                 }
                 BufferUsage::Index => {
-                    self.using_indices = true;
-                    let inner_data = data_wrapper.unwrap_u32().unwrap();
-                    let data = inner_data.read();
-                    let ptr = bytemuck::cast_slice(&data);
-                    buffer.bind_as_ebo_with_data(&self.gl, draw, ptr)
+                    buffer.bind_as_ebo(&self.gl);
                 }
                 BufferUsage::Uniform(slot) => {
-                    if !buffer.block_binded {
-                        buffer.bind_block(
-                            &self.gl,
-                            self.pipelines.get(&self.current_pipeline).as_ref().unwrap(),
-                            *slot,
-                        );
-                    }
-
-                    let inner_data = data_wrapper.unwrap_f32().unwrap();
-                    let data = inner_data.read();
-                    let ptr = bytemuck::cast_slice(&data);
-                    buffer.bind_as_ubo_with_data(&self.gl, *slot, draw, ptr);
+                    buffer.bind_as_ubo(&self.gl, *slot);
                 }
             }
         }
+        // if let Some(buffer) = self.buffers.get_mut(&id) {
+        //     match usage {
+        //         BufferUsage::Vertex => {
+        //             let inner_data = data_wrapper.unwrap_f32().unwrap();
+        //             let data = inner_data.read();
+        //             let ptr = bytemuck::cast_slice(&data);
+        //             buffer.bind_as_vbo_with_data(&self.gl, draw, ptr)
+        //         }
+        //         BufferUsage::Index => {
+        //             self.using_indices = true;
+        //             let inner_data = data_wrapper.unwrap_u32().unwrap();
+        //             let data = inner_data.read();
+        //             let ptr = bytemuck::cast_slice(&data);
+        //             buffer.bind_as_ebo_with_data(&self.gl, draw, ptr)
+        //         }
+        //         BufferUsage::Uniform(slot) => {
+        //             if !buffer.block_binded {
+        //                 buffer.bind_block(
+        //                     &self.gl,
+        //                     self.pipelines.get(&self.current_pipeline).as_ref().unwrap(),
+        //                     *slot,
+        //                 );
+        //             }
+        //
+        //             let inner_data = data_wrapper.unwrap_f32().unwrap();
+        //             let data = inner_data.read();
+        //             let ptr = bytemuck::cast_slice(&data);
+        //             buffer.bind_as_ubo_with_data(&self.gl, *slot, draw, ptr);
+        //         }
+        //     }
+        // }
     }
 
     fn bind_texture(&mut self, id: u64, slot: u32, location: u32) {
@@ -317,7 +326,7 @@ impl DeviceBackend for GlowBackend {
         attrs: &[VertexAttr],
         step_mode: VertexStepMode,
     ) -> Result<u64, String> {
-        let mut inner_buffer = InnerBuffer::new(&self.gl, false)?;
+        let mut inner_buffer = InnerBuffer::new(&self.gl, Kind::Vertex, true)?;
         let (stride, inner_attrs) = get_inner_attrs(attrs);
         inner_buffer.setup_as_vbo(
             &self.gl,
@@ -329,7 +338,7 @@ impl DeviceBackend for GlowBackend {
     }
 
     fn create_index_buffer(&mut self) -> Result<u64, String> {
-        let mut inner_buffer = InnerBuffer::new(&self.gl, false)?;
+        let mut inner_buffer = InnerBuffer::new(&self.gl, Kind::Index, true)?;
         inner_buffer.bind_as_ebo(&self.gl);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
@@ -337,11 +346,17 @@ impl DeviceBackend for GlowBackend {
     }
 
     fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<u64, String> {
-        let mut inner_buffer = InnerBuffer::new(&self.gl, true)?;
+        let mut inner_buffer = InnerBuffer::new(&self.gl, Kind::Uniform, true)?;
         inner_buffer.setup_as_ubo(&self.gl, slot, name);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
+    }
+
+    fn set_buffer_data(&mut self, id: u64, data: &[u8]) {
+        if let Some(buffer) = self.buffers.get_mut(&id) {
+            buffer.update(&self.gl, data);
+        }
     }
 
     fn render(&mut self, commands: &[Commands], target: Option<u64>) {
@@ -357,12 +372,7 @@ impl DeviceBackend for GlowBackend {
                 } => self.begin(target, color, depth, stencil),
                 End => self.end(),
                 Pipeline { id, options } => self.set_pipeline(*id, options),
-                BindBuffer {
-                    id,
-                    data,
-                    usage,
-                    draw,
-                } => self.bind_buffer(*id, data.clone(), usage, draw),
+                BindBuffer { id, usage, draw } => self.bind_buffer(*id, usage, draw),
                 Draw { offset, count } => self.draw(*offset, *count),
                 DrawInstanced {
                     offset,

@@ -122,6 +122,12 @@ impl Graphics {
     pub fn render_to(&mut self, target: &RenderTexture, renderer: &dyn GfxRenderer) {
         renderer.render(&mut self.device, &mut self.extensions, Some(target));
     }
+
+    /// Upload the buffer data to the GPU
+    #[inline]
+    pub fn set_buffer_data<T: BufferDataType>(&mut self, buffer: &Buffer, data: &[T]) {
+        self.device.set_buffer_data(buffer, data);
+    }
 }
 
 impl std::ops::Deref for Graphics {
