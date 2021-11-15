@@ -35,8 +35,8 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vertex_buffer: Buffer<f32>,
-    index_buffer: Buffer<u32>,
+    vertex_buffer: Buffer,
+    index_buffer: Buffer,
 }
 
 #[notan_main]
@@ -47,33 +47,37 @@ fn main() -> Result<(), String> {
 fn setup(gfx: &mut Graphics) -> State {
     let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
 
-    let pipeline = gfx
-        .create_pipeline()
-        .from(&VERT, &FRAG)
-        .vertex_attr(0, VertexFormat::Float2)
-        .vertex_attr(1, VertexFormat::Float3)
-        .build()
-        .unwrap();
-
     #[rustfmt::skip]
-    let vertices = vec![
+        let vertices = [
         0.0, 1.0,   1.0, 0.2, 0.3,
         0.0, 0.0,   0.1, 1.0, 0.3,
         1.0, 0.0,   0.1, 0.2, 1.0,
         1.0, 1.0,   1.0, 1.0, 0.1,
     ];
 
-    let indices = vec![0, 1, 2, 0, 2, 3];
+    let indices = [0, 1, 2, 0, 2, 3];
+
+    let vertex_info = VertexInfo::new()
+        .attr(0, VertexFormat::Float2)
+        .attr(1, VertexFormat::Float3);
+
+    let pipeline = gfx
+        .create_pipeline()
+        .from(&VERT, &FRAG)
+        .vertex_info(&vertex_info)
+        .build()
+        .unwrap();
 
     let vertex_buffer = gfx
         .create_vertex_buffer()
-        .with_data(vertices)
+        .with_info(&vertex_info)
+        .with_data(&vertices)
         .build()
         .unwrap();
 
     let index_buffer = gfx
         .create_index_buffer()
-        .with_data(indices)
+        .with_data(&indices)
         .build()
         .unwrap();
 

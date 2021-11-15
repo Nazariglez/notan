@@ -44,8 +44,8 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 #[derive(AppState)]
 struct State {
     pipeline: Pipeline,
-    vbo: VertexBuffer,
-    ubo: UniformBuffer,
+    vbo: Buffer,
+    ubo: Buffer,
     count: f32,
 }
 
@@ -55,15 +55,17 @@ fn main() -> Result<(), String> {
 }
 
 fn setup(gfx: &mut Graphics) -> State {
+    let vertex_info = VertexInfo::new().attr(0, VertexFormat::Float2);
+
     let pipeline = gfx
         .create_pipeline()
         .from(&VERT, &FRAG)
-        .vertex_attr(0, VertexFormat::Float2) // a_pos
+        .vertex_info(&vertex_info)
         .build()
         .unwrap();
 
     #[rustfmt::skip]
-    let pos = vec![
+    let pos = [
        -0.2, -0.2,
         0.2, -0.2,
         0.0, 0.2
@@ -71,14 +73,14 @@ fn setup(gfx: &mut Graphics) -> State {
 
     let vbo = gfx
         .create_vertex_buffer()
-        .with_data(pos)
-        .attr(0, VertexFormat::Float2)
+        .with_info(&vertex_info)
+        .with_data(&pos)
         .build()
         .unwrap();
 
     let ubo = gfx
         .create_uniform_buffer(0, "Locals")
-        .with_data(vec![0.0])
+        .with_data(&[0.0])
         .build()
         .unwrap();
 
@@ -105,5 +107,5 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
     // Update the uniform to animate the triangles
     state.count += 0.05 * app.timer.delta_f32();
-    state.ubo.set(&[state.count]);
+    gfx.set_buffer_data(&state.ubo, &[state.count]);
 }
