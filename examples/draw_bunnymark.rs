@@ -50,7 +50,7 @@ impl State {
 
 fn init(gfx: &mut Graphics) -> State {
     let mut state = State::new(gfx);
-    state.spawn(70000);
+    state.spawn(1);
     state
 }
 
