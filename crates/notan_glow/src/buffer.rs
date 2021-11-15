@@ -8,7 +8,7 @@ use notan_graphics::prelude::*;
 //https://wgld.org/d/webgl2/w009.html
 
 pub(crate) enum Kind {
-    Vertex,
+    Vertex(VertexAttributes),
     Index,
     Uniform(u32, String),
 }
@@ -25,6 +25,7 @@ pub(crate) struct InnerBuffer {
     draw_usage: u32,
     draw_target: u32,
     kind: Kind,
+    last_pipeline: Option<u64>,
 }
 
 impl InnerBuffer {
@@ -48,7 +49,7 @@ impl InnerBuffer {
         };
 
         let draw_target = match kind {
-            Kind::Vertex => glow::ARRAY_BUFFER,
+            Kind::Vertex(_) => glow::ARRAY_BUFFER,
             Kind::Index => glow::ELEMENT_ARRAY_BUFFER,
             Kind::Uniform(_, _) => glow::UNIFORM_BUFFER,
         };
@@ -65,16 +66,31 @@ impl InnerBuffer {
             draw_usage,
             draw_target,
             kind,
+            last_pipeline: None,
         })
     }
 
     #[inline]
-    pub fn bind(&self, gl: &Context) {
+    pub fn bind(&mut self, gl: &Context, pipeline_id: u64) {
+        let pip = Some(pipeline_id);
+        let pipeline_changed = pip != self.last_pipeline;
+        if pipeline_changed {
+            self.last_pipeline = pip;
+        };
+
         unsafe {
             gl.bind_buffer(self.draw_target, Some(self.buffer));
 
-            if let Kind::Uniform(slot, _name) = &self.kind {
-                gl.bind_buffer_base(glow::UNIFORM_BUFFER, *slot, Some(self.buffer));
+            match &self.kind {
+                Kind::Vertex(attrs) => {
+                    if pipeline_changed {
+                        attrs.enable(gl);
+                    }
+                }
+                Kind::Uniform(slot, _) => {
+                    gl.bind_buffer_base(glow::UNIFORM_BUFFER, *slot, Some(self.buffer));
+                }
+                _ => {}
             }
         }
     }
@@ -122,14 +138,6 @@ impl InnerBuffer {
     pub fn clean(self, gl: &Context) {
         unsafe {
             gl.delete_buffer(self.buffer);
-        }
-    }
-
-    #[inline]
-    pub fn setup_as_vbo(&mut self, gl: &Context, attrs: VertexAttributes) {
-        self.bind(gl);
-        unsafe {
-            attrs.enable(gl);
         }
     }
 }

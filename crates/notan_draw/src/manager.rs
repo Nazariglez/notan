@@ -181,6 +181,11 @@ fn process_draw(
     }
 
     manager.renderer.end();
+
+    manager.image_painter.upload_buffers(device);
+    manager.shape_painter.upload_buffers(device);
+    manager.pattern_painter.upload_buffers(device);
+    manager.text_painter.upload_buffers(device);
 }
 
 fn override_pipeline_options(

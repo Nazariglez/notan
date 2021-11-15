@@ -96,20 +96,23 @@ const COLOR_FRAGMENT: ShaderSource = notan::fragment_shader! {
 
 struct Cube {
     pipeline: Pipeline,
-    vertex_buffer: Buffer<f32>,
-    index_buffer: Buffer<u32>,
-    uniform_buffer: Buffer<f32>,
+    vertex_buffer: Buffer,
+    index_buffer: Buffer,
+    uniform_buffer: Buffer,
     mvp: glam::Mat4,
     angle: f32,
 }
 
 impl Cube {
     fn new(gfx: &mut Graphics) -> Self {
+        let vertex_info = VertexInfo::new()
+            .attr(0, VertexFormat::Float3)
+            .attr(1, VertexFormat::Float4);
+
         let pipeline = gfx
             .create_pipeline()
             .from(&COLOR_VERTEX, &COLOR_FRAGMENT)
-            .vertex_attr(0, VertexFormat::Float3)
-            .vertex_attr(1, VertexFormat::Float4)
+            .vertex_info(&vertex_info)
             .with_depth_stencil(DepthStencil {
                 write: true,
                 compare: CompareMode::Less,
@@ -118,7 +121,7 @@ impl Cube {
             .unwrap();
 
         #[rustfmt::skip]
-        let vertices = vec![
+        let vertices = [
             -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
             1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
             1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
@@ -151,7 +154,7 @@ impl Cube {
         ];
 
         #[rustfmt::skip]
-        let indices = vec![
+        let indices = [
             0, 1, 2,  0, 2, 3,
             6, 5, 4,  7, 6, 4,
             8, 9, 10,  8, 10, 11,
@@ -170,19 +173,20 @@ impl Cube {
 
         let vertex_buffer = gfx
             .create_vertex_buffer()
-            .with_data(vertices)
+            .with_info(&vertex_info)
+            .with_data(&vertices)
             .build()
             .unwrap();
 
         let index_buffer = gfx
             .create_index_buffer()
-            .with_data(indices)
+            .with_data(&indices)
             .build()
             .unwrap();
 
         let uniform_buffer = gfx
             .create_uniform_buffer(0, "Locals")
-            .with_data(mvp.to_cols_array().to_vec())
+            .with_data(&mvp.to_cols_array())
             .build()
             .unwrap();
 
@@ -197,9 +201,7 @@ impl Cube {
     }
 
     fn create_renderer(&mut self, gfx: &mut Graphics, delta: f32) -> Renderer {
-        self.uniform_buffer
-            .data_mut()
-            .copy_from_slice(&rotated_matrix(self.mvp, self.angle));
+        gfx.set_buffer_data(&self.uniform_buffer, &rotated_matrix(self.mvp, self.angle));
 
         let mut renderer = gfx.create_renderer();
         renderer.begin(Some(&ClearOptions {
