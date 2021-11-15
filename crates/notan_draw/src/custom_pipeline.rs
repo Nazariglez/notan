@@ -4,7 +4,7 @@ use notan_graphics::prelude::*;
 #[derive(Default, Clone, Debug)]
 pub(crate) struct CustomPipeline {
     pub pipeline: Option<Pipeline>,
-    pub uniforms: Option<Vec<Buffer<f32>>>,
+    pub uniforms: Option<Vec<Buffer>>,
 }
 
 impl CustomPipeline {
@@ -57,7 +57,7 @@ pub struct CustomPipelineBuilder<'a> {
     draw: &'a mut Draw,
     typ: CustomPipelineType,
     pipeline: Option<&'a Pipeline>,
-    uniforms: Option<Vec<&'a Buffer<f32>>>,
+    uniforms: Option<Vec<&'a Buffer>>,
     removing: bool,
 }
 
@@ -77,7 +77,7 @@ impl<'a> CustomPipelineBuilder<'a> {
         self
     }
 
-    pub fn uniform_buffer(&mut self, buffer: &'a Buffer<f32>) -> &mut Self {
+    pub fn uniform_buffer(&mut self, buffer: &'a Buffer) -> &mut Self {
         let uniforms = self.uniforms.get_or_insert(vec![]);
         uniforms.push(buffer);
         self

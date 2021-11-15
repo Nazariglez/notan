@@ -31,7 +31,7 @@ const FRAGMENT: ShaderSource = notan::fragment_shader! {
 struct State {
     texture: Texture,
     pipeline: Pipeline,
-    uniforms: Buffer<f32>,
+    uniforms: Buffer,
     count: f32,
     multi: f32,
 }
@@ -55,7 +55,7 @@ fn init(gfx: &mut Graphics) -> State {
     let pipeline = create_image_pipeline(gfx, Some(&FRAGMENT)).unwrap();
     let uniforms = gfx
         .create_uniform_buffer(1, "TextureInfo")
-        .with_data(vec![5.0])
+        .with_data(&[5.0])
         .build()
         .unwrap();
 
@@ -70,13 +70,6 @@ fn init(gfx: &mut Graphics) -> State {
 
 // Change the size of the pixel effect
 fn update(app: &mut App, state: &mut State) {
-    let pixel_size = 5.0 + state.count;
-
-    {
-        let mut data = state.uniforms.data_mut();
-        data[0] = pixel_size;
-    }
-
     if state.count > 5.0 || state.count < 0.0 {
         state.multi *= -1.0;
     }
@@ -85,6 +78,9 @@ fn update(app: &mut App, state: &mut State) {
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
+    let pixel_size = 5.0 + state.count;
+    gfx.set_buffer_data(&state.uniforms, &[pixel_size]);
+
     let mut draw = gfx.create_draw();
     draw.clear(Color::BLACK);
 

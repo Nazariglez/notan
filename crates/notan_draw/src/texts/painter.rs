@@ -53,21 +53,27 @@ const TEXT_FRAGMENT: ShaderSource = fragment_shader! {
 
 pub(crate) struct TextPainter {
     pub pipeline: Pipeline,
-    pub vbo: VertexBuffer,
-    pub ebo: IndexBuffer,
-    pub ubo: UniformBuffer,
+    pub vbo: Buffer,
+    pub ebo: Buffer,
+    pub ubo: Buffer,
 
     count_chars: usize,
+    vertices: Vec<f32>,
+    indices: Vec<u32>,
+    uniforms: [f32; 16],
     count_vertices: usize,
     count_indices: usize,
-    vertices: Vec<FontVertex>,
+    font_vertices: Vec<FontVertex>,
+    dirty_buffer: bool,
 }
 
 impl TextPainter {
     pub fn new(device: &mut Device) -> Result<Self, String> {
+        let uniforms = [0.0; 16];
+
         let pipeline = create_text_pipeline(device, None)?;
         let vbo = device.create_vertex_buffer(
-            vec![],
+            None,
             &[
                 VertexAttr::new(0, VertexFormat::Float2),
                 VertexAttr::new(1, VertexFormat::Float2),
@@ -75,8 +81,8 @@ impl TextPainter {
             ],
             VertexStepMode::Vertex,
         )?;
-        let ebo = device.create_index_buffer(vec![])?;
-        let ubo = device.create_uniform_buffer(0, "Locals", vec![0.0; 16])?;
+        let ebo = device.create_index_buffer(None)?;
+        let ubo = device.create_uniform_buffer(0, "Locals", Some(&uniforms))?;
 
         Ok(Self {
             pipeline,
@@ -85,9 +91,13 @@ impl TextPainter {
             ubo,
 
             count_chars: 0,
+            vertices: vec![],
+            indices: vec![],
+            uniforms,
             count_vertices: 0,
             count_indices: 0,
-            vertices: vec![],
+            font_vertices: vec![],
+            dirty_buffer: false,
         })
     }
 
@@ -108,7 +118,7 @@ impl TextPainter {
                 let count = d.count;
                 let start = self.count_chars;
                 let end = start + count;
-                let vert = &self.vertices[start..end];
+                let vert = &self.font_vertices[start..end];
                 vert.iter().enumerate().for_each(|(i, fv)| {
                     let FontVertex {
                         pos: (x1, y1, _),
@@ -149,25 +159,30 @@ impl TextPainter {
 
             let offset = self.count_indices;
 
-            {
-                let mut data = self.ebo.data_ptr().write();
-                data.extend(&indices);
-                self.count_indices = data.len();
-            }
+            self.indices.extend(&indices);
+            self.count_indices = self.indices.len();
 
-            {
-                let mut data = self.vbo.data_ptr().write();
-                data.extend(&vertices);
-                self.count_vertices = data.len();
-            }
+            self.vertices.extend(&vertices);
+            self.count_vertices = self.vertices.len();
 
-            self.ubo.copy(&projection.to_cols_array());
+            self.uniforms.copy_from_slice(&projection.to_cols_array());
 
             renderer.bind_texture(0, &glyphs.texture);
             renderer.bind_vertex_buffer(&self.vbo);
             renderer.bind_index_buffer(&self.ebo);
             renderer.bind_uniform_buffer(&self.ubo);
             renderer.draw(offset as _, indices.len() as _);
+            self.dirty_buffer = true;
+        }
+    }
+
+    #[inline]
+    pub fn upload_buffers(&mut self, device: &mut Device) {
+        if self.dirty_buffer {
+            self.dirty_buffer = false;
+            device.set_buffer_data(&self.vbo, &self.vertices);
+            device.set_buffer_data(&self.ebo, &self.indices);
+            device.set_buffer_data(&self.ubo, &self.uniforms);
         }
     }
 
@@ -175,15 +190,15 @@ impl TextPainter {
         self.count_chars = 0;
         self.count_vertices = 0;
         self.count_indices = 0;
-        self.vbo.clear();
-        self.ebo.clear();
+        self.vertices.clear();
+        self.indices.clear();
     }
 }
 
 impl GlyphPipeline for TextPainter {
     fn update(&mut self, _device: &mut Device, vertices: Option<&[FontVertex]>) {
         if let Some(vert) = vertices {
-            self.vertices = vert.to_vec();
+            self.font_vertices = vert.to_vec();
         }
     }
 

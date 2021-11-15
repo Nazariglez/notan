@@ -73,21 +73,27 @@ pub fn create_pattern_pipeline(
 }
 
 pub(crate) struct PatternPainter {
-    vbo: Buffer<f32>,
-    ebo: Buffer<u32>,
-    ubo: Buffer<f32>,
+    vbo: Buffer,
+    ebo: Buffer,
+    ubo: Buffer,
     pipeline: Pipeline,
+    vertices: Vec<f32>,
+    indices: Vec<u32>,
+    uniforms: [f32; 16],
     count_vertices: usize,
     count_indices: usize,
+    dirty_buffer: bool,
 }
 
 impl PatternPainter {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let pipeline = create_pattern_pipeline(device, None)?;
 
+        let uniforms = [0.0; 16];
+
         Ok(Self {
             vbo: device.create_vertex_buffer(
-                vec![],
+                None,
                 &[
                     VertexAttr::new(0, VertexFormat::Float2),
                     VertexAttr::new(1, VertexFormat::Float2),
@@ -96,11 +102,15 @@ impl PatternPainter {
                 ],
                 VertexStepMode::Vertex,
             )?,
-            ebo: device.create_index_buffer(vec![])?,
-            ubo: device.create_uniform_buffer(0, "Locals", vec![0.0; 16])?,
+            ebo: device.create_index_buffer(None)?,
+            ubo: device.create_uniform_buffer(0, "Locals", Some(&uniforms))?,
             pipeline,
+            vertices: vec![],
+            indices: vec![],
+            uniforms,
             count_indices: 0,
             count_vertices: 0,
+            dirty_buffer: false,
         })
     }
 
@@ -111,36 +121,37 @@ impl PatternPainter {
             let len = (self.count_vertices / self.pipeline.offset()) as u32;
             let offset = self.count_indices;
 
-            {
-                let mut data = self.ebo.data_ptr().write();
-                data.extend(batch.indices.iter().map(|i| i + len));
-                self.count_indices = data.len();
-            }
+            self.indices.extend(batch.indices.iter().map(|i| i + len));
+            self.count_indices = self.indices.len();
 
-            {
-                let mut data = self.vbo.data_ptr().write();
-                data.extend(&batch.vertices);
-                self.count_vertices = data.len();
-            }
+            self.vertices.extend(&batch.vertices);
+            self.count_vertices = self.vertices.len();
 
-            {
-                self.ubo
-                    .data_mut()
-                    .copy_from_slice(&projection.to_cols_array());
-            }
+            self.uniforms.copy_from_slice(&projection.to_cols_array());
 
             renderer.bind_texture(0, texture);
             renderer.bind_vertex_buffer(&self.vbo);
             renderer.bind_index_buffer(&self.ebo);
             renderer.bind_uniform_buffer(&self.ubo);
             renderer.draw(offset as _, batch.indices.len() as _);
+            self.dirty_buffer = true;
+        }
+    }
+
+    #[inline]
+    pub fn upload_buffers(&mut self, device: &mut Device) {
+        if self.dirty_buffer {
+            self.dirty_buffer = false;
+            device.set_buffer_data(&self.vbo, &self.vertices);
+            device.set_buffer_data(&self.ebo, &self.indices);
+            device.set_buffer_data(&self.ubo, &self.uniforms);
         }
     }
 
     pub fn clear(&mut self) {
         self.count_vertices = 0;
         self.count_indices = 0;
-        self.vbo.data_ptr().write().clear();
-        self.ebo.data_ptr().write().clear();
+        self.vertices.clear();
+        self.indices.clear();
     }
 }

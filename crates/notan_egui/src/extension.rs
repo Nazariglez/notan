@@ -2,9 +2,9 @@ use crate::context::EguiContext;
 use crate::Color32;
 use egui::TextureId;
 use notan_app::{
-    BlendFactor, BlendMode, ClearOptions, Color, Commands, Device, ExtContainer, GfxExtension,
-    GfxRenderer, Graphics, IndexBuffer, Pipeline, RenderTexture, ShaderSource, Texture,
-    TextureFilter, TextureFormat, TextureInfo, UniformBuffer, VertexBuffer, VertexFormat,
+    BlendFactor, BlendMode, Buffer, ClearOptions, Color, Commands, Device, ExtContainer,
+    GfxExtension, GfxRenderer, Graphics, Pipeline, RenderTexture, ShaderSource, Texture,
+    TextureFilter, TextureFormat, TextureInfo, VertexFormat, VertexInfo,
 };
 use std::collections::HashMap;
 
@@ -97,9 +97,9 @@ const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
 
 pub struct EguiExtension {
     pipeline: Pipeline,
-    vbo: VertexBuffer,
-    ebo: IndexBuffer,
-    ubo: UniformBuffer,
+    vbo: Buffer,
+    ebo: Buffer,
+    ubo: Buffer,
     texture: Option<Texture>,
     texture_version: Option<u64>,
     user_textures: HashMap<u64, Texture>,
@@ -107,12 +107,15 @@ pub struct EguiExtension {
 
 impl EguiExtension {
     pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
+        let vertex_info = VertexInfo::new()
+            .attr(0, VertexFormat::Float2)
+            .attr(1, VertexFormat::Float2)
+            .attr(2, VertexFormat::Float4);
+
         let pipeline = gfx
             .create_pipeline()
             .from(&EGUI_VERTEX, &EGUI_FRAGMENT)
-            .vertex_attr(0, VertexFormat::Float2)
-            .vertex_attr(1, VertexFormat::Float2)
-            .vertex_attr(2, VertexFormat::Float4)
+            .vertex_info(&vertex_info)
             .with_color_blend(BlendMode::new(
                 BlendFactor::One,
                 BlendFactor::InverseSourceAlpha,
@@ -123,17 +126,12 @@ impl EguiExtension {
             ))
             .build()?;
 
-        let vbo = gfx
-            .create_vertex_buffer()
-            .attr(0, VertexFormat::Float2)
-            .attr(1, VertexFormat::Float2)
-            .attr(2, VertexFormat::Float4)
-            .build()?;
+        let vbo = gfx.create_vertex_buffer().with_info(&vertex_info).build()?;
 
         let ebo = gfx.create_index_buffer().build()?;
         let ubo = gfx
             .create_uniform_buffer(0, "Locals")
-            .with_data(vec![0.0; 2])
+            .with_data(&[0.0; 2])
             .build()?;
 
         Ok(Self {
@@ -193,7 +191,7 @@ impl EguiExtension {
         self.build_texture(device, egui_tex);
 
         let (width, height) = device.size();
-        self.ubo.set(&[width as _, height as _]);
+        device.set_buffer_data(&self.ubo, &[width as f32, height as f32]);
 
         meshes
             .iter()
@@ -220,8 +218,8 @@ impl EguiExtension {
             })
             .collect();
 
-        self.vbo.set(&vertices);
-        self.ebo.set(&mesh.indices);
+        device.set_buffer_data(&self.vbo, &vertices);
+        device.set_buffer_data(&self.ebo, &mesh.indices);
 
         let (width_in_pixels, height_in_pixels) = device.size();
 
