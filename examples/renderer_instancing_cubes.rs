@@ -144,7 +144,7 @@ fn setup(gfx: &mut Graphics) -> State {
     let mut rng = Random::default();
     let colors = (0..INSTANCES)
         .into_iter()
-        .flat_map(|n| {
+        .flat_map(|_| {
             [
                 rng.gen_range(0.0, 1.0),
                 rng.gen_range(0.0, 1.0),

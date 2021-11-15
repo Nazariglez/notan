@@ -234,8 +234,8 @@ fn create_pipeline(
     gl: &Context,
     vertex_source: &str,
     fragment_source: &str,
-    stride: i32,
-    attrs: Vec<InnerAttr>,
+    _stride: i32,
+    _attrs: Vec<InnerAttr>,
 ) -> Result<InnerPipeline, String> {
     let vertex = create_shader(gl, glow::VERTEX_SHADER, vertex_source)?;
     let fragment = create_shader(gl, glow::FRAGMENT_SHADER, fragment_source)?;
