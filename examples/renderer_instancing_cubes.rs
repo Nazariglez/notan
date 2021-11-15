@@ -2,13 +2,13 @@ use glam::{Mat4, Vec3};
 use notan::prelude::*;
 
 // Number of instances to draw
-const INSTANCES: usize = 15;
+const INSTANCES: usize = 100;
 
 //language=glsl
 const VERT: ShaderSource = notan::vertex_shader! {
     r#"
     #version 450
-    layout(location = 0) in vec4 a_position;
+    layout(location = 0) in vec3 a_position;
     layout(location = 1) in vec4 a_color;
 
     layout(location = 0) out vec4 v_color;
@@ -30,7 +30,7 @@ const VERT: ShaderSource = notan::vertex_shader! {
         int i = gl_InstanceIndex;
         float n = i % 2 == 0 ? i : 0;
         float j = i % 3 == 0 ? i : 0;
-        vec4 pos = vec4(a_position.x - n * 2, a_position.y - i * 2, a_position.z - j * 2, a_position.w);
+        vec4 pos = vec4(a_position.x - n * 2, a_position.y - i * 2, a_position.z - j * 2, 1.0);
 
         v_color = a_color;
         gl_Position = u_matrix * pos;
@@ -56,10 +56,10 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 #[derive(AppState)]
 struct State {
     pipeline: Pipeline,
-    pos_vbo: VertexBuffer,
-    color_vbo: VertexBuffer,
-    ubo: UniformBuffer,
-    ebo: IndexBuffer,
+    pos_vbo: Buffer,
+    color_vbo: Buffer,
+    ubo: Buffer,
+    ebo: Buffer,
     angle: f32,
     mvp: glam::Mat4,
     clear_options: ClearOptions,
@@ -82,17 +82,23 @@ fn setup(gfx: &mut Graphics) -> State {
         compare: CompareMode::Less,
     };
 
+    let vertex_pos_info = VertexInfo::new().attr(0, VertexFormat::Float3);
+
+    let vertex_color_info = VertexInfo::new()
+        .attr(1, VertexFormat::Float4)
+        .step_mode(VertexStepMode::Instance);
+
     let pipeline = gfx
         .create_pipeline()
         .from(&VERT, &FRAG)
-        .vertex_attr(0, VertexFormat::Float3)
-        .vertex_attr(1, VertexFormat::Float4)
+        .vertex_info(&vertex_pos_info)
+        .vertex_info(&vertex_color_info)
         .with_depth_stencil(depth_stencil)
         .build()
         .unwrap();
 
     #[rustfmt::skip]
-    let vertices = vec![
+    let vertices = [
         -1.0, -1.0, -1.0,
         1.0, -1.0, -1.0,
         1.0,  1.0, -1.0,
@@ -125,7 +131,7 @@ fn setup(gfx: &mut Graphics) -> State {
     ];
 
     #[rustfmt::skip]
-    let indices = vec![
+    let indices = [
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
         8, 9, 10,  8, 10, 11,
@@ -143,6 +149,7 @@ fn setup(gfx: &mut Graphics) -> State {
                 rng.gen_range(0.0, 1.0),
                 rng.gen_range(0.0, 1.0),
                 rng.gen_range(0.0, 1.0),
+                1.0,
             ]
         })
         .collect::<Vec<f32>>();
@@ -158,29 +165,28 @@ fn setup(gfx: &mut Graphics) -> State {
     // Postion buffer, Step mode by default is per Vertex
     let pos_vbo = gfx
         .create_vertex_buffer()
-        .attr(0, VertexFormat::Float3)
-        .with_data(vertices)
+        .with_info(&vertex_pos_info)
+        .with_data(&vertices)
         .build()
         .unwrap();
 
     // Color buffer, step mode changed to Instance to use 1 color of the buffer per instance
     let color_vbo = gfx
         .create_vertex_buffer()
-        .attr(1, VertexFormat::Float4)
-        .step_mode(VertexStepMode::Instance)
-        .with_data(colors)
+        .with_info(&vertex_color_info)
+        .with_data(&colors)
         .build()
         .unwrap();
 
     let ebo = gfx
         .create_index_buffer()
-        .with_data(indices)
+        .with_data(&indices)
         .build()
         .unwrap();
 
     let ubo = gfx
         .create_uniform_buffer(0, "Locals")
-        .with_data(mvp.to_cols_array().to_vec())
+        .with_data(&mvp.to_cols_array())
         .build()
         .unwrap();
 
@@ -199,7 +205,7 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    state.ubo.copy(&rotated_matrix(state.mvp, state.angle));
+    gfx.set_buffer_data(&state.ubo, &rotated_matrix(state.mvp, state.angle));
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
@@ -207,7 +213,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     renderer.bind_vertex_buffer(&state.pos_vbo);
     renderer.bind_vertex_buffer(&state.color_vbo);
     renderer.bind_index_buffer(&state.ebo);
-    renderer.draw_instanced(0, 36, 10);
+    renderer.draw_instanced(0, 36, INSTANCES as _);
     renderer.end();
 
     gfx.render(&renderer);

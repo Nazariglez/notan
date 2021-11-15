@@ -67,9 +67,9 @@ const GLYPH_FRAGMENT: ShaderSource = fragment_shader! {
 #[cfg(feature = "basic_pipeline")]
 pub struct BasicPipeline {
     pub pipeline: Pipeline,
-    pub vbo: VertexBuffer,
-    pub ebo: IndexBuffer,
-    pub ubo: UniformBuffer,
+    pub vbo: Buffer,
+    pub ebo: Buffer,
+    pub ubo: Buffer,
 
     ebo_len: usize,
     cached_size: (i32, i32),
@@ -80,7 +80,7 @@ impl BasicPipeline {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let pipeline = create_glyph_pipeline(device, None)?;
         let vbo = device.create_vertex_buffer(
-            vec![],
+            None,
             &[
                 VertexAttr::new(0, VertexFormat::Float3),
                 VertexAttr::new(1, VertexFormat::Float2),
@@ -88,8 +88,8 @@ impl BasicPipeline {
             ],
             VertexStepMode::Vertex,
         )?;
-        let ebo = device.create_index_buffer(vec![])?;
-        let ubo = device.create_uniform_buffer(0, "Locals", vec![0.0; 16])?;
+        let ebo = device.create_index_buffer(None)?;
+        let ubo = device.create_uniform_buffer(0, "Locals", Some(&[0.0; 16]))?;
 
         Ok(Self {
             pipeline,
@@ -110,7 +110,7 @@ impl GlyphPipeline for BasicPipeline {
             let ubo_data =
                 glam::Mat4::orthographic_lh(0.0, size.0 as _, size.1 as _, 0.0, -1.0, 1.0)
                     .to_cols_array();
-            self.ubo.copy(&ubo_data);
+            device.set_buffer_data(&self.ubo, &ubo_data);
             self.cached_size = size;
         }
 
@@ -152,8 +152,8 @@ impl GlyphPipeline for BasicPipeline {
             let vbo_data = vbo_data.concat();
             let ebo_data = ebo_data.concat();
             self.ebo_len = ebo_data.len();
-            self.vbo.set(&vbo_data);
-            self.ebo.set(&ebo_data);
+            device.set_buffer_data(&self.vbo, &vbo_data);
+            device.set_buffer_data(&self.ebo, &ebo_data);
         }
     }
 
