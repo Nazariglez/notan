@@ -134,7 +134,7 @@ fn spirv_to(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
 fn spirv_to_glsl(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
     let spv = read_spirv(Cursor::new(spirv)).map_err(|e| e.to_string())?;
     let glsl = compile_spirv_to_glsl(&spv, output)?;
-    println!("{:?} \n{}", output, glsl);
+    // println!("{:?} \n{}", output, glsl);
     Ok(ShaderBytes(glsl.as_bytes().to_vec()))
 }
 

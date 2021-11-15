@@ -1,4 +1,3 @@
-use crate::to_glow::ToGlow;
 use glow::*;
 use hashbrown::HashMap;
 use notan_graphics::prelude::*;
@@ -194,7 +193,7 @@ impl GlowBackend {
                 BufferUsage::Index => {
                     self.using_indices = true;
                 }
-                BufferUsage::Uniform(slot) => {
+                BufferUsage::Uniform(_slot) => {
                     if !buffer.block_binded {
                         buffer.bind_ubo_block(
                             &self.gl,

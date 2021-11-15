@@ -1,4 +1,4 @@
-use crate::buffer::{VertexAttr, VertexFormat, VertexInfo, VertexStepMode};
+use crate::buffer::{VertexAttr, VertexInfo};
 use crate::color::Color;
 use crate::device::{DropManager, ResourceId};
 use crate::{Device, ShaderSource};

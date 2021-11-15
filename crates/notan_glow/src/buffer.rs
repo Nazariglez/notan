@@ -1,8 +1,6 @@
 use crate::pipeline::VertexAttributes;
 use crate::pipeline::*;
-use crate::to_glow::*;
 use glow::*;
-use notan_graphics::prelude::*;
 
 //https://sotrh.github.io/learn-wgpu/beginner/tutorial6-uniforms/#a-perspective-camera
 //https://wgld.org/d/webgl2/w009.html
