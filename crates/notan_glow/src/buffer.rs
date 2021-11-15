@@ -48,7 +48,7 @@ impl InnerBuffer {
             glow::STATIC_DRAW
         };
 
-        let draw_target = match kind {
+        let draw_target = match &kind {
             Kind::Vertex(_) => glow::ARRAY_BUFFER,
             Kind::Index => glow::ELEMENT_ARRAY_BUFFER,
             Kind::Uniform(_, _) => glow::UNIFORM_BUFFER,
@@ -71,11 +71,10 @@ impl InnerBuffer {
     }
 
     #[inline]
-    pub fn bind(&mut self, gl: &Context, pipeline_id: u64) {
-        let pip = Some(pipeline_id);
-        let pipeline_changed = pip != self.last_pipeline;
+    pub fn bind(&mut self, gl: &Context, pipeline_id: Option<u64>) {
+        let pipeline_changed = pipeline_id.is_some() && pipeline_id != self.last_pipeline;
         if pipeline_changed {
-            self.last_pipeline = pip;
+            self.last_pipeline = pipeline_id;
         };
 
         unsafe {
