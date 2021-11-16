@@ -1,6 +1,8 @@
 use crate::app::App;
+use crate::assets::Assets;
 use crate::builder::AppBuilder;
 use crate::events::Event;
+use crate::Graphics;
 use downcast_rs::{impl_downcast, Downcast};
 use indexmap::IndexMap;
 use std::any::{Any, TypeId};
@@ -32,43 +34,93 @@ trait PluginCell
 where
     Self: Any + Downcast,
 {
-    fn run_init(&mut self, app: &mut App) -> Result<AppFlow, String>;
-    fn run_pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String>;
-    fn run_event(&mut self, app: &mut App, event: &Event) -> Result<AppFlow, String>;
-    fn run_update(&mut self, app: &mut App) -> Result<AppFlow, String>;
-    fn run_draw(&mut self, app: &mut App) -> Result<AppFlow, String>;
-    fn run_post_frame(&mut self, app: &mut App) -> Result<AppFlow, String>;
+    fn run_init(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String>;
+    fn run_pre_frame(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String>;
+    fn run_event(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        event: &Event,
+    ) -> Result<AppFlow, String>;
+    fn run_update(&mut self, app: &mut App, assets: &mut Assets) -> Result<AppFlow, String>;
+    fn run_draw(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String>;
+    fn run_post_frame(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String>;
 }
 
 impl<T: Plugin + 'static> PluginCell for RefCell<T> {
     #[inline(always)]
-    fn run_init(&mut self, app: &mut App) -> Result<AppFlow, String> {
-        self.borrow_mut().init(app)
+    fn run_init(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
+        self.borrow_mut().init(app, assets, gfx)
     }
 
     #[inline(always)]
-    fn run_pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
-        self.borrow_mut().pre_frame(app)
+    fn run_pre_frame(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
+        self.borrow_mut().pre_frame(app, assets, gfx)
     }
 
     #[inline(always)]
-    fn run_event(&mut self, app: &mut App, event: &Event) -> Result<AppFlow, String> {
-        self.borrow_mut().event(app, event)
+    fn run_event(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        event: &Event,
+    ) -> Result<AppFlow, String> {
+        self.borrow_mut().event(app, assets, event)
     }
 
     #[inline(always)]
-    fn run_update(&mut self, app: &mut App) -> Result<AppFlow, String> {
-        self.borrow_mut().update(app)
+    fn run_update(&mut self, app: &mut App, assets: &mut Assets) -> Result<AppFlow, String> {
+        self.borrow_mut().update(app, assets)
     }
 
     #[inline(always)]
-    fn run_draw(&mut self, app: &mut App) -> Result<AppFlow, String> {
-        self.borrow_mut().draw(app)
+    fn run_draw(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
+        self.borrow_mut().draw(app, assets, gfx)
     }
 
     #[inline(always)]
-    fn run_post_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
-        self.borrow_mut().post_frame(app)
+    fn run_post_frame(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
+        self.borrow_mut().post_frame(app, assets, gfx)
     }
 }
 
@@ -109,55 +161,80 @@ impl Plugins {
     }
 
     #[inline]
-    pub(crate) fn init(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    pub(crate) fn init(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
         self.map
             .iter_mut()
-            .map(|(_, p)| p.run_init(app))
+            .map(|(_, p)| p.run_init(app, assets, gfx))
             .max()
             .unwrap_or_else(|| Ok(Default::default()))
     }
 
     #[inline]
-    pub(crate) fn pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    pub(crate) fn pre_frame(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
         self.map
             .iter_mut()
-            .map(|(_, p)| p.run_pre_frame(app))
+            .map(|(_, p)| p.run_pre_frame(app, assets, gfx))
             .max()
             .unwrap_or_else(|| Ok(Default::default()))
     }
 
     #[inline]
-    pub(crate) fn event(&mut self, app: &mut App, event: &Event) -> Result<AppFlow, String> {
+    pub(crate) fn event(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        event: &Event,
+    ) -> Result<AppFlow, String> {
         self.map
             .iter_mut()
-            .map(|(_, p)| p.run_event(app, event))
+            .map(|(_, p)| p.run_event(app, assets, event))
             .max()
             .unwrap_or_else(|| Ok(Default::default()))
     }
 
     #[inline]
-    pub(crate) fn update(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    pub(crate) fn update(&mut self, app: &mut App, assets: &mut Assets) -> Result<AppFlow, String> {
         self.map
             .iter_mut()
-            .map(|(_, p)| p.run_update(app))
+            .map(|(_, p)| p.run_update(app, assets))
             .max()
             .unwrap_or_else(|| Ok(Default::default()))
     }
 
     #[inline]
-    pub(crate) fn draw(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    pub(crate) fn draw(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
         self.map
             .iter_mut()
-            .map(|(_, p)| p.run_draw(app))
+            .map(|(_, p)| p.run_draw(app, assets, gfx))
             .max()
             .unwrap_or_else(|| Ok(Default::default()))
     }
 
     #[inline]
-    pub(crate) fn post_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    pub(crate) fn post_frame(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
         self.map
             .iter_mut()
-            .map(|(_, p)| p.run_post_frame(app))
+            .map(|(_, p)| p.run_post_frame(app, assets, gfx))
             .max()
             .unwrap_or_else(|| Ok(Default::default()))
     }
@@ -170,32 +247,57 @@ where
     Self: Send + Sync,
 {
     /// Executed before the application loop
-    fn init(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    fn init(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
         Ok(Default::default())
     }
 
     /// Executed a the beginning of each iteration
-    fn pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    fn pre_frame(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
         Ok(Default::default())
     }
 
     /// Executed for each event received
-    fn event(&mut self, app: &mut App, event: &Event) -> Result<AppFlow, String> {
+    fn event(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        event: &Event,
+    ) -> Result<AppFlow, String> {
         Ok(Default::default())
     }
 
     /// Executed for each frame before the update method
-    fn update(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    fn update(&mut self, app: &mut App, assets: &mut Assets) -> Result<AppFlow, String> {
         Ok(Default::default())
     }
 
     /// Executed for each frame before the draw method
-    fn draw(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    fn draw(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
         Ok(Default::default())
     }
 
     /// Executed at the end of the frame
-    fn post_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    fn post_frame(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
         Ok(Default::default())
     }
 

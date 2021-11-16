@@ -1,5 +1,6 @@
 use crate::context::EguiContext;
 use crate::input::{to_egui_key, to_egui_pointer};
+use notan_app::assets::Assets;
 use notan_app::{App, AppFlow, Color, Event, Plugin};
 
 #[derive(Default)]
@@ -28,7 +29,12 @@ impl EguiPlugin {
 }
 
 impl Plugin for EguiPlugin {
-    fn event(&mut self, app: &mut App, event: &Event) -> Result<AppFlow, String> {
+    fn event(
+        &mut self,
+        app: &mut App,
+        _assets: &mut Assets,
+        event: &Event,
+    ) -> Result<AppFlow, String> {
         let command_modifier = if cfg!(target_arch = "macos") {
             app.keyboard.logo()
         } else {
@@ -109,7 +115,7 @@ impl Plugin for EguiPlugin {
         Ok(AppFlow::Next)
     }
 
-    fn update(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    fn update(&mut self, app: &mut App, _assets: &mut Assets) -> Result<AppFlow, String> {
         self.raw_input.pixels_per_point = Some(app.window().dpi() as _);
         self.raw_input.time = Some(app.timer.time_since_init() as _);
         self.raw_input.predicted_dt = app.timer.delta_f32();

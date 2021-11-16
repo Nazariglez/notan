@@ -208,7 +208,7 @@ where
         let mut state = setup_callback.exec(&mut app, &mut assets, &mut graphics, &mut plugins);
 
         // init callback from plugins
-        let _ = plugins.init(&mut app).map(|flow| match flow {
+        let _ = plugins.init(&mut app, &mut assets, &mut graphics).map(|flow| match flow {
             AppFlow::Next => Ok(()),
             _ => Err(format!(
                 "Aborted application loop because a plugin returns on the init method AppFlow::{:?} instead of AppFlow::Next",
@@ -237,7 +237,7 @@ where
             app.system_timer.update();
 
             // Manage pre frame events
-            if let AppFlow::SkipFrame = plugins.pre_frame(&mut app)? {
+            if let AppFlow::SkipFrame = plugins.pre_frame(&mut app, &mut assets, &mut graphics)? {
                 return Ok(FrameState::Skip);
             }
 
@@ -251,7 +251,7 @@ where
                 app.keyboard.process_events(&evt, app.timer.delta_f32());
                 app.mouse.process_events(&evt, app.timer.delta_f32());
 
-                match plugins.event(&mut app, &evt)? {
+                match plugins.event(&mut app, &mut assets, &evt)? {
                     AppFlow::Skip => {}
                     AppFlow::Next => {
                         if let Some(cb) = &event_callback {
@@ -263,7 +263,7 @@ where
             }
 
             // Manage update callback
-            match plugins.update(&mut app)? {
+            match plugins.update(&mut app, &mut assets)? {
                 AppFlow::Skip => {}
                 AppFlow::Next => {
                     if let Some(cb) = &update_callback {
@@ -274,7 +274,7 @@ where
             }
 
             // Manage draw callback
-            match plugins.draw(&mut app)? {
+            match plugins.draw(&mut app, &mut assets, &mut graphics)? {
                 AppFlow::Skip => {}
                 AppFlow::Next => {
                     if let Some(cb) = &draw_callback {
@@ -294,7 +294,7 @@ where
             app.keyboard.clear();
 
             // Manage post frame event
-            let _ = plugins.post_frame(&mut app)?;
+            let _ = plugins.post_frame(&mut app, &mut assets, &mut graphics)?;
 
             // Clean possible dropped resources on the backend
             graphics.clean();

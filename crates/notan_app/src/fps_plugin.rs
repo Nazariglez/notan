@@ -1,4 +1,5 @@
-use crate::{App, AppFlow, Plugin};
+use crate::assets::Assets;
+use crate::{App, AppFlow, Graphics, Plugin};
 
 /// Limit the App frame rate to a maximum
 pub struct FpsPlugin {
@@ -24,7 +25,12 @@ impl FpsPlugin {
 }
 
 impl Plugin for FpsPlugin {
-    fn pre_frame(&mut self, app: &mut App) -> Result<AppFlow, String> {
+    fn pre_frame(
+        &mut self,
+        app: &mut App,
+        _assets: &mut Assets,
+        _gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
         self.elapsed += app.system_timer.delta().as_secs_f64();
         if self.elapsed >= self.seconds {
             self.elapsed = 0.0;
