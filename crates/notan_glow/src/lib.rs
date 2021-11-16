@@ -187,13 +187,13 @@ impl GlowBackend {
         }
     }
 
-    fn bind_buffer(&mut self, id: u64, usage: &BufferUsage) {
+    fn bind_buffer(&mut self, id: u64) {
         if let Some(buffer) = self.buffers.get_mut(&id) {
-            match usage {
-                BufferUsage::Index => {
+            match &buffer.kind {
+                Kind::Index => {
                     self.using_indices = true;
                 }
-                BufferUsage::Uniform(_slot) => {
+                Kind::Uniform(_slot, _name) => {
                     if !buffer.block_binded {
                         buffer.bind_ubo_block(
                             &self.gl,
@@ -346,7 +346,7 @@ impl DeviceBackend for GlowBackend {
                 } => self.begin(target, color, depth, stencil),
                 End => self.end(),
                 Pipeline { id, options } => self.set_pipeline(*id, options),
-                BindBuffer { id, usage, .. } => self.bind_buffer(*id, usage),
+                BindBuffer { id } => self.bind_buffer(*id),
                 Draw { offset, count } => self.draw(*offset, *count),
                 DrawInstanced {
                     offset,

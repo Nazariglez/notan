@@ -22,7 +22,7 @@ pub(crate) struct InnerBuffer {
     gpu_buff_size: usize,
     draw_usage: u32,
     draw_target: u32,
-    kind: Kind,
+    pub(crate) kind: Kind,
     last_pipeline: Option<u64>,
 }
 

@@ -159,8 +159,7 @@ fn render_texture(
     }));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_texture(0, texture);
-    renderer.bind_vertex_buffer(&state.vertex_buffer);
-    renderer.bind_index_buffer(&state.index_buffer);
+    renderer.bind_buffers(&[&state.vertex_buffer, &state.index_buffer]);
     renderer.draw(0, 6);
     renderer.end();
 

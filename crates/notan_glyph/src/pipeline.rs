@@ -160,9 +160,7 @@ impl GlyphPipeline for BasicPipeline {
     fn render(&mut self, texture: &Texture, renderer: &mut Renderer) {
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_texture(0, texture);
-        renderer.bind_vertex_buffer(&self.vbo);
-        renderer.bind_index_buffer(&self.ebo);
-        renderer.bind_uniform_buffer(&self.ubo);
+        renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
         renderer.draw(0, self.ebo_len as _);
     }
 }

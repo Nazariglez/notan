@@ -247,9 +247,7 @@ impl EguiExtension {
             renderer.set_scissors(clip_min_x, clip_min_y, width, height);
             renderer.begin(None);
             renderer.set_pipeline(&self.pipeline);
-            renderer.bind_index_buffer(&self.ebo);
-            renderer.bind_vertex_buffer(&self.vbo);
-            renderer.bind_uniform_buffer(&self.ubo);
+            renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
             renderer.bind_texture(0, texture);
             renderer.draw(0, mesh.indices.len() as _);
             renderer.end();

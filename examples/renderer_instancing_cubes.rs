@@ -209,10 +209,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_uniform_buffer(&state.ubo);
-    renderer.bind_vertex_buffer(&state.pos_vbo);
-    renderer.bind_vertex_buffer(&state.color_vbo);
-    renderer.bind_index_buffer(&state.ebo);
+    renderer.bind_buffers(&[&state.ubo, &state.pos_vbo, &state.color_vbo, &state.ebo]);
     renderer.draw_instanced(0, 36, INSTANCES as _);
     renderer.end();
 

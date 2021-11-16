@@ -112,8 +112,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_texture(0, &state.texture);
-    renderer.bind_vertex_buffer(&state.vertex_buffer);
-    renderer.bind_index_buffer(&state.index_buffer);
+    renderer.bind_buffers(&[&state.vertex_buffer, &state.index_buffer]);
     renderer.draw(0, 6);
     renderer.end();
 

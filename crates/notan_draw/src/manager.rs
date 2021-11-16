@@ -242,7 +242,7 @@ pub(crate) fn process_pipeline(
             renderer.set_pipeline(final_pip);
 
             if let Some(buffers) = &batch.uniform_buffers {
-                buffers.iter().for_each(|u| renderer.bind_uniform_buffer(u));
+                buffers.iter().for_each(|u| renderer.bind_buffer(u));
             }
         }
         _ => {

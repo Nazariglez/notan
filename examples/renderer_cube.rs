@@ -164,9 +164,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_uniform_buffer(&state.ubo);
-    renderer.bind_vertex_buffer(&state.vbo);
-    renderer.bind_index_buffer(&state.ebo);
+    renderer.bind_buffers(&[&state.vbo, &state.ebo, &state.ubo]);
     renderer.draw(0, 36);
     renderer.end();
 

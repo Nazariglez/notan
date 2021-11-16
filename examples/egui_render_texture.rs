@@ -211,9 +211,11 @@ impl Cube {
         }));
 
         renderer.set_pipeline(&self.pipeline);
-        renderer.bind_uniform_buffer(&self.uniform_buffer);
-        renderer.bind_vertex_buffer(&self.vertex_buffer);
-        renderer.bind_index_buffer(&self.index_buffer);
+        renderer.bind_buffers(&[
+            &self.vertex_buffer,
+            &self.index_buffer,
+            &self.uniform_buffer,
+        ]);
         renderer.draw(0, 36);
         renderer.end();
 

@@ -139,7 +139,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_vertex_buffer(&state.vertex_buffer);
+    renderer.bind_buffer(&state.vertex_buffer);
     renderer.draw(0, 3);
     renderer.end();
 

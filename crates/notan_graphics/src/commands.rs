@@ -1,8 +1,5 @@
-use crate::buffer::*;
 use crate::color::Color;
 use crate::pipeline::*;
-use parking_lot::RwLock;
-use std::sync::Arc;
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
@@ -29,8 +26,6 @@ pub enum Commands {
     },
     BindBuffer {
         id: u64,
-        usage: BufferUsage,
-        draw: DrawType,
     },
     BindTexture {
         id: u64,
@@ -52,36 +47,4 @@ pub enum Commands {
         count: i32,
         length: i32,
     },
-}
-
-impl From<&Buffer> for Commands {
-    fn from(buffer: &Buffer) -> Commands {
-        Commands::BindBuffer {
-            id: buffer.id(),
-            usage: buffer.usage,
-            draw: buffer.draw.unwrap_or(DrawType::Dynamic),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum BufferDataWrapper {
-    Float32(Arc<RwLock<Vec<f32>>>),
-    Uint32(Arc<RwLock<Vec<u32>>>),
-}
-
-impl BufferDataWrapper {
-    pub fn unwrap_f32(self) -> Result<Arc<RwLock<Vec<f32>>>, String> {
-        match self {
-            BufferDataWrapper::Float32(d) => Ok(d),
-            _ => Err("Invalid data type".to_string()),
-        }
-    }
-
-    pub fn unwrap_u32(self) -> Result<Arc<RwLock<Vec<u32>>>, String> {
-        match self {
-            BufferDataWrapper::Uint32(d) => Ok(d),
-            _ => Err("Invalid data type".to_string()),
-        }
-    }
 }

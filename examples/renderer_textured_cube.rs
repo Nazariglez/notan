@@ -167,8 +167,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_uniform_buffer(&state.uniform_buffer);
-    renderer.bind_vertex_buffer(&state.vertex_buffer);
+    renderer.bind_buffers(&[&state.vertex_buffer, &state.uniform_buffer]);
     renderer.bind_texture(0, &state.texture);
     renderer.draw(0, count as _);
     renderer.end();

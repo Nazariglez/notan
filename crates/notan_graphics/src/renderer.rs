@@ -77,24 +77,13 @@ impl Renderer {
         });
     }
 
-    pub fn bind_vertex_buffer(&mut self, buffer: &Buffer) {
-        self.commands.push(Commands::BindBuffer {
-            id: buffer.id(),
-            usage: BufferUsage::Vertex,
-            draw: buffer.draw.unwrap_or(DrawType::Dynamic),
-        });
+    pub fn bind_buffer(&mut self, buffer: &Buffer) {
+        self.commands.push(Commands::BindBuffer { id: buffer.id() });
     }
 
-    pub fn bind_index_buffer(&mut self, buffer: &Buffer) {
-        self.commands.push(Commands::BindBuffer {
-            id: buffer.id(),
-            usage: BufferUsage::Index,
-            draw: buffer.draw.unwrap_or(DrawType::Dynamic),
-        });
-    }
-
-    pub fn bind_uniform_buffer(&mut self, buffer: &Buffer) {
-        self.commands.push(buffer.into());
+    pub fn bind_buffers(&mut self, buffers: &[&Buffer]) {
+        self.commands
+            .extend(buffers.iter().map(|b| Commands::BindBuffer { id: b.id() }));
     }
 
     pub fn draw(&mut self, offset: i32, count: i32) {

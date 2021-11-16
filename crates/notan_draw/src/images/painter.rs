@@ -122,9 +122,7 @@ impl ImagePainter {
             self.uniforms.copy_from_slice(&projection.to_cols_array());
 
             renderer.bind_texture(0, texture);
-            renderer.bind_vertex_buffer(&self.vbo);
-            renderer.bind_index_buffer(&self.ebo);
-            renderer.bind_uniform_buffer(&self.ubo);
+            renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
             renderer.draw(offset as _, batch.indices.len() as _);
 
             self.dirty_buffer = true;

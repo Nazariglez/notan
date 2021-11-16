@@ -97,8 +97,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
     renderer.begin(Some(&ClearOptions::new(Color::BLACK)));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_vertex_buffer(&state.vbo);
-    renderer.bind_uniform_buffer(&state.ubo);
+    renderer.bind_buffers(&[&state.vbo, &state.ubo]);
     renderer.draw_instanced(0, 3, INSTANCES as _);
     renderer.end();
 
