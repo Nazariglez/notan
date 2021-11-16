@@ -117,3 +117,12 @@ impl ToGlow for TextureFilter {
         }
     }
 }
+
+impl ToGlow for DrawPrimitive {
+    fn to_glow(&self) -> u32 {
+        match self {
+            DrawPrimitive::Triangles => glow::TRIANGLES,
+            DrawPrimitive::TriangleStrip => glow::TRIANGLE_STRIP,
+        }
+    }
+}

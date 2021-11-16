@@ -8,6 +8,7 @@ use crate::texture::*;
 pub struct Renderer {
     commands: Vec<Commands>,
     size: (i32, i32),
+    primitive: DrawPrimitive,
 }
 
 impl Renderer {
@@ -15,6 +16,7 @@ impl Renderer {
         Self {
             size: (width, height),
             commands: vec![Commands::Size { width, height }],
+            primitive: DrawPrimitive::Triangles,
         }
     }
 
@@ -29,6 +31,10 @@ impl Renderer {
             stencil,
             depth,
         });
+    }
+
+    pub fn set_primitive(&mut self, primitive: DrawPrimitive) {
+        self.primitive = primitive;
     }
 
     pub fn end(&mut self) {
@@ -87,11 +93,16 @@ impl Renderer {
     }
 
     pub fn draw(&mut self, offset: i32, count: i32) {
-        self.commands.push(Commands::Draw { offset, count })
+        self.commands.push(Commands::Draw {
+            primitive: self.primitive,
+            offset,
+            count,
+        })
     }
 
     pub fn draw_instanced(&mut self, offset: i32, count: i32, length: i32) {
         self.commands.push(Commands::DrawInstanced {
+            primitive: self.primitive,
             offset,
             count,
             length,
