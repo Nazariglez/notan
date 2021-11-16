@@ -555,7 +555,18 @@ version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b403f29d592b5c2267279bfdf2cd3fe3ba0e7a8738d03203a6f1536e8e9d26bd"
 dependencies = [
- "epaint",
+ "epaint 0.14.0",
+]
+
+[[package]]
+name = "egui"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c8d416a3343cbfc6f4d17bb1cba46b4d7efecb9ee541967763e0b5e04e5fae7"
+dependencies = [
+ "ahash 0.7.4",
+ "epaint 0.15.0",
+ "nohash-hasher",
 ]
 
 [[package]]
@@ -571,6 +582,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cca5179aa9d15128cebb79bb56dda73a79cc66b402056ff19a992e54b365e15c"
 
 [[package]]
+name = "emath"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24a1aaa922d55da6a2bf32957c3d153e7fb9d52ed8d69777a75092240172eb6e"
+
+[[package]]
 name = "epaint"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -579,8 +596,21 @@ dependencies = [
  "ab_glyph",
  "ahash 0.7.4",
  "atomic_refcell",
- "emath",
+ "emath 0.14.0",
  "ordered-float",
+]
+
+[[package]]
+name = "epaint"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16bb4d3b8bbbd132c99d2a5efec8567e8b6d09b742f758ae6cf1e4b104fe0231"
+dependencies = [
+ "ab_glyph",
+ "ahash 0.7.4",
+ "atomic_refcell",
+ "emath 0.15.0",
+ "nohash-hasher",
 ]
 
 [[package]]
@@ -1296,6 +1326,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "nohash-hasher"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
+
+[[package]]
 name = "nom"
 version = "5.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1367,7 +1403,8 @@ dependencies = [
 name = "notan_egui"
 version = "0.1.0"
 dependencies = [
- "egui",
+ "egui 0.14.2",
+ "egui 0.15.0",
  "log",
  "notan_app",
  "notan_macro",
