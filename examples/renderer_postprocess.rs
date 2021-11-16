@@ -105,7 +105,7 @@ impl PostProcessTarget {
             .create_pipeline()
             .from(&IMAGE_VERTEX, &PIXEL_INVERT_FRAGMENT)
             .with_color_blend(BlendMode::NORMAL)
-            .vertex_info(&vertex_info)
+            .with_vertex_info(&vertex_info)
             .build()
             .unwrap();
 
@@ -234,7 +234,7 @@ impl Cube {
         let pipeline = gfx
             .create_pipeline()
             .from(&COLOR_VERTEX, &COLOR_FRAGMENT)
-            .vertex_info(&vertex_info)
+            .with_vertex_info(&vertex_info)
             .with_depth_stencil(DepthStencil {
                 write: true,
                 compare: CompareMode::Less,

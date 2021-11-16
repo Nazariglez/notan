@@ -107,7 +107,7 @@ impl<'a, 'b> PipelineBuilder<'a, 'b> {
     }
 
     /// Set the vertex structure info for a vertex buffer
-    pub fn vertex_info(mut self, info: &VertexInfo) -> Self {
+    pub fn with_vertex_info(mut self, info: &VertexInfo) -> Self {
         self.attrs.extend(&info.attrs);
         self
     }

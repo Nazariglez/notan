@@ -68,7 +68,7 @@ fn setup(gfx: &mut Graphics) -> State {
     let pipeline = gfx
         .create_pipeline()
         .from(&VERT, &FRAG)
-        .vertex_info(&vertex_info)
+        .with_vertex_info(&vertex_info)
         .with_depth_stencil(DepthStencil {
             write: true,
             compare: CompareMode::Less,

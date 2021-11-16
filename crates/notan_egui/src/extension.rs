@@ -115,7 +115,7 @@ impl EguiExtension {
         let pipeline = gfx
             .create_pipeline()
             .from(&EGUI_VERTEX, &EGUI_FRAGMENT)
-            .vertex_info(&vertex_info)
+            .with_vertex_info(&vertex_info)
             .with_color_blend(BlendMode::new(
                 BlendFactor::One,
                 BlendFactor::InverseSourceAlpha,

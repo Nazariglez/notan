@@ -112,7 +112,7 @@ impl Cube {
         let pipeline = gfx
             .create_pipeline()
             .from(&COLOR_VERTEX, &COLOR_FRAGMENT)
-            .vertex_info(&vertex_info)
+            .with_vertex_info(&vertex_info)
             .with_depth_stencil(DepthStencil {
                 write: true,
                 compare: CompareMode::Less,

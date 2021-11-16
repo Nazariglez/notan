@@ -91,8 +91,8 @@ fn setup(gfx: &mut Graphics) -> State {
     let pipeline = gfx
         .create_pipeline()
         .from(&VERT, &FRAG)
-        .vertex_info(&vertex_pos_info)
-        .vertex_info(&vertex_color_info)
+        .with_vertex_info(&vertex_pos_info)
+        .with_vertex_info(&vertex_color_info)
         .with_depth_stencil(depth_stencil)
         .build()
         .unwrap();

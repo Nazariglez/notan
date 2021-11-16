@@ -95,7 +95,7 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct State {
     clear_options: ClearOptions,
     pipeline: Pipeline,
-    vertex_buffer: Buffer<f32>,
+    vbo: Buffer,
 }
 
 #[notan_main]
@@ -106,31 +106,35 @@ fn main() -> Result<(), String> {
 fn setup(gfx: &mut Graphics) -> State {
     let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
 
+    let vertex_info = VertexInfo::new()
+        .attr(0, VertexFormat::Float2)
+        .attr(1, VertexFormat::Float3);
+
     let pipeline = gfx
         .create_pipeline()
         .from(&VERT, &FRAG)
-        .vertex_attr(0, VertexFormat::Float2) // a_pos
-        .vertex_attr(1, VertexFormat::Float3) // a_color
+        .with_vertex_info(&vertex_info)
         .build()
         .unwrap();
 
     #[rustfmt::skip]
-    let vertices = vec![
+        let vertices = [
         0.5, 1.0,   1.0, 0.2, 0.3,
         0.0, 0.0,   0.1, 1.0, 0.3,
         1.0, 0.0,   0.1, 0.2, 1.0,
     ];
 
-    let vertex_buffer = gfx
+    let vbo = gfx
         .create_vertex_buffer()
-        .with_data(vertices)
+        .with_info(&vertex_info)
+        .with_data(&vertices)
         .build()
         .unwrap();
 
     State {
         clear_options,
         pipeline,
-        vertex_buffer,
+        vbo,
     }
 }
 
@@ -139,7 +143,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
     renderer.begin(Some(&state.clear_options));
     renderer.set_pipeline(&state.pipeline);
-    renderer.bind_buffer(&state.vertex_buffer);
+    renderer.bind_buffer(&state.vbo);
     renderer.draw(0, 3);
     renderer.end();
 
@@ -198,6 +202,7 @@ but Notan should help with most of them.
 - Web Browsers (`wasm32`) - WebGL2
 - Window - OpenGL 3.3
 - MacOS - OpenGL 3.3
+- Linux - OpenGL 3.3
 
 The current graphics backend in place for these platforms is using [glow.rs](https://github.com/grovesNL/glow) which allow us to target WebGl2, GL and GL ES easily.
 
@@ -216,8 +221,8 @@ Let's see a simple example, the 2D Draw API is built on top of the Graphics API,
 but I got some decent numbers on my machine running the example [draw_bunnymark](examples/draw_bunnymark.rs).
 
 On my Macbook (2.3Hz i9 - 16GB RAM):
-- Native: 62000 Bunnies at 60FPS
-- Chrome: 40000 Bunnies at 60FPS
+- Native: 66000 Bunnies at 60FPS
+- Chrome: 42000 Bunnies at 60FPS
 
 Let's keep in mind that the conditions for `bunnymark` are very unlikely to see in a real project.
 However, it's widely used to test the performance in 2D Draw APIs.
