@@ -153,9 +153,9 @@ checksum = "560c32574a12a89ecd91f5e742165893f86e3ab98d21f8ea548658eb9eef5f40"
 
 [[package]]
 name = "bytemuck"
-version = "1.5.1"
+version = "1.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bed57e2090563b83ba8f83366628ce535a7584c9afa4c9fc0612a03925c6df58"
+checksum = "72957246c41db82b8ef88a5486143830adeb8227ef9837740bdec67724cf2c5b"
 
 [[package]]
 name = "byteorder"
@@ -1322,6 +1322,7 @@ dependencies = [
  "notan_backend",
  "notan_draw",
  "notan_egui",
+ "notan_gly",
  "notan_glyph",
  "notan_graphics",
  "notan_log",
@@ -1393,6 +1394,18 @@ dependencies = [
  "notan_graphics",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "notan_gly"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "glyph_brush",
+ "log",
+ "notan_app",
+ "notan_graphics",
+ "notan_math",
 ]
 
 [[package]]
