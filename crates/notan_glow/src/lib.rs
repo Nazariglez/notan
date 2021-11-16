@@ -13,6 +13,7 @@ mod utils;
 use crate::buffer::Kind;
 use crate::pipeline::get_inner_attrs;
 use crate::texture::texture_format;
+use crate::to_glow::ToGlow;
 use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
 use render_target::InnerRenderTexture;
@@ -237,21 +238,21 @@ impl GlowBackend {
         }
     }
 
-    fn draw(&mut self, offset: i32, count: i32) {
+    fn draw(&mut self, primitive: &DrawPrimitive, offset: i32, count: i32) {
         unsafe {
             if self.using_indices {
                 self.gl
-                    .draw_elements(glow::TRIANGLES, count, glow::UNSIGNED_INT, offset * 4);
+                    .draw_elements(primitive.to_glow(), count, glow::UNSIGNED_INT, offset * 4);
             } else {
-                self.gl.draw_arrays(glow::TRIANGLES, offset, count);
+                self.gl.draw_arrays(primitive.to_glow(), offset, count);
             }
         }
     }
-    fn draw_instanced(&mut self, offset: i32, count: i32, length: i32) {
+    fn draw_instanced(&mut self, primitive: &DrawPrimitive, offset: i32, count: i32, length: i32) {
         unsafe {
             if self.using_indices {
                 self.gl.draw_elements_instanced(
-                    glow::TRIANGLES,
+                    primitive.to_glow(),
                     count,
                     glow::UNSIGNED_INT,
                     offset,
@@ -259,7 +260,7 @@ impl GlowBackend {
                 );
             } else {
                 self.gl
-                    .draw_arrays_instanced(glow::TRIANGLES, offset, count, length);
+                    .draw_arrays_instanced(primitive.to_glow(), offset, count, length);
             }
         }
     }
@@ -347,12 +348,17 @@ impl DeviceBackend for GlowBackend {
                 End => self.end(),
                 Pipeline { id, options } => self.set_pipeline(*id, options),
                 BindBuffer { id } => self.bind_buffer(*id),
-                Draw { offset, count } => self.draw(*offset, *count),
+                Draw {
+                    primitive,
+                    offset,
+                    count,
+                } => self.draw(primitive, *offset, *count),
                 DrawInstanced {
+                    primitive,
                     offset,
                     count,
                     length,
-                } => self.draw_instanced(*offset, *count, *length),
+                } => self.draw_instanced(primitive, *offset, *count, *length),
                 BindTexture { id, slot, location } => self.bind_texture(*id, *slot, *location),
                 Size { width, height } => self.set_size(*width, *height),
                 Viewport {
