@@ -1,4 +1,3 @@
-use crate::cache::Cache;
 use crate::instance::Instance;
 use notan_app::graphics::*;
 use notan_math::glam::{Mat3, Mat4};
@@ -6,6 +5,10 @@ use notan_math::Rect;
 
 // TODO CHECK THIS https://github.com/hecrj/glow_glyph/blob/master/src/pipeline.rs
 // TODO CHECK THIS https://github.com/hecrj/wgpu_glyph/blob/master/src/pipeline.rs
+
+pub trait GlyphPipeline {
+    fn update(&mut self, gfx: &mut Graphics, instances: &[Instance]);
+}
 
 //language=glsl
 const GLYPH_VERTEX: ShaderSource = vertex_shader! {
@@ -86,24 +89,18 @@ const GLYPH_FRAGMENT: ShaderSource = fragment_shader! {
     "#
 };
 
-pub struct GlyPipeline {
+pub struct BasicGlyphPipeline {
     pub pipeline: Pipeline,
     pub vbo: Buffer,
     pub ebo: Buffer,
     pub ubo: Buffer,
-    cache: Cache,
     current_instances: usize,
     supported_instances: usize,
     current_transform: Mat4,
 }
 
-impl GlyPipeline {
-    pub fn new(
-        gfx: &mut Graphics,
-        texture_width: u32,
-        texture_height: u32,
-    ) -> Result<Self, String> {
-        let cache = Cache::new(gfx, texture_width, texture_height)?;
+impl BasicGlyphPipeline {
+    pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
         let vertex_info = VertexInfo::new()
             .attr(0, VertexFormat::Float3)
             .attr(1, VertexFormat::Float2)
@@ -125,14 +122,54 @@ impl GlyPipeline {
             vbo,
             ebo,
             ubo,
-            cache,
             current_instances: 0,
             supported_instances: 50000,
             current_transform: Mat4::IDENTITY,
         })
     }
 
-    pub fn draw(&mut self, gfx: &mut Graphics, transform: Mat4, region: Option<Rect>) {
+    pub fn process_renderer(
+        &mut self,
+        gfx: &mut Graphics,
+        texture: &Texture,
+        target_width: i32,
+        target_height: i32,
+        region: Option<Rect>,
+    ) -> Renderer {
+        let transform =
+            Mat4::orthographic_lh(0.0, target_width as _, target_height as _, 0.0, -1.0, 1.0);
+        if self.current_transform != transform {
+            gfx.set_buffer_data(&self.ubo, &transform.to_cols_array());
+        }
+
+        let mut renderer = gfx.create_renderer();
+        renderer.set_size(target_width as _, target_height as _);
+        renderer.set_primitive(DrawPrimitive::TriangleStrip);
+
+        if let Some(region) = region {
+            renderer.set_scissors(region.x, region.y, region.width, region.height);
+        }
+
+        renderer.begin(Some(&ClearOptions::new(Color::BLACK))); // TODO clear should be public to be managed by the user
+        renderer.set_pipeline(&self.pipeline);
+        renderer.bind_texture(0, texture);
+        renderer.bind_buffers(&[&self.vbo, &self.ubo]);
+        // TODO https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext/drawElementsInstanced
+        // TODO https://github.com/Kode/Kha/blob/0296e6d576332eacafa923a9de2b6354a39a2f9b/Backends/HTML5/kha/js/graphics4/Graphics.hx#L692
+        // TODO https://github.com/hecrj/wgpu_glyph/blob/master/src/pipeline.rs#L403
+        // TODO https://github.com/hecrj/glow_glyph/blob/master/src/pipeline.rs#L118-L123
+        renderer.draw_instanced(0, 4, self.current_instances as _);
+        renderer.end();
+        renderer
+    }
+
+    pub fn draw(
+        &mut self,
+        gfx: &mut Graphics,
+        texture: &Texture,
+        transform: Mat4,
+        region: Option<Rect>,
+    ) {
         if self.current_transform != transform {
             gfx.set_buffer_data(&self.ubo, &transform.to_cols_array());
         }
@@ -146,7 +183,7 @@ impl GlyPipeline {
 
         renderer.begin(Some(&ClearOptions::new(Color::BLACK))); // TODO clear should be public to be managed by the user
         renderer.set_pipeline(&self.pipeline);
-        renderer.bind_texture(0, self.cache.texture());
+        renderer.bind_texture(0, texture);
         renderer.bind_buffers(&[&self.vbo, &self.ubo]);
         // TODO https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext/drawElementsInstanced
         // TODO https://github.com/Kode/Kha/blob/0296e6d576332eacafa923a9de2b6354a39a2f9b/Backends/HTML5/kha/js/graphics4/Graphics.hx#L692
@@ -158,20 +195,6 @@ impl GlyPipeline {
         // gfx.render and render_to?
 
         gfx.render(&renderer);
-    }
-
-    pub fn increase_cache_size(&mut self, gfx: &mut Graphics, width: u32, height: u32) {
-        self.cache = Cache::new(gfx, width, height).unwrap();
-    }
-
-    pub fn update_cache(
-        &mut self,
-        gfx: &mut Graphics,
-        offset: [u16; 2],
-        size: [u16; 2],
-        data: &[u8],
-    ) -> Result<(), String> {
-        self.cache.update(gfx, offset, size, data)
     }
 
     // TODO https://github.com/hecrj/glow_glyph/blob/master/src/pipeline.rs#L157
