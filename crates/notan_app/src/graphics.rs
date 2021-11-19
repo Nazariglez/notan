@@ -113,13 +113,13 @@ impl Graphics {
 
     /// Render to the screen
     #[inline]
-    pub fn render(&mut self, renderer: &dyn GfxRenderer) {
+    pub fn render<G: GfxRenderer>(&mut self, renderer: &G) {
         renderer.render(&mut self.device, &mut self.extensions, None);
     }
 
     /// Render to a custom target
     #[inline]
-    pub fn render_to(&mut self, target: &RenderTexture, renderer: &dyn GfxRenderer) {
+    pub fn render_to<G: GfxRenderer>(&mut self, target: &RenderTexture, renderer: &G) {
         renderer.render(&mut self.device, &mut self.extensions, Some(target));
     }
 
