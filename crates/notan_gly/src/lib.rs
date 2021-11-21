@@ -2,6 +2,7 @@ mod builder;
 mod cache;
 mod instance;
 mod pipeline;
+mod extension;
 
 use cache::Cache;
 use instance::Instance;
@@ -13,7 +14,8 @@ pub use glyph_brush::{
     LineBreak, LineBreaker, Section, SectionGeometry, SectionGlyph, SectionGlyphIter, SectionText,
     Text, VerticalAlign,
 };
-pub use pipeline::BasicGlyphPipeline;
+pub use pipeline::DefaultGlyphPipeline;
+pub use extension::{GlyphExtension, Glyph};
 
 use ab_glyph::{Font, FontArc, Rect};
 
@@ -26,20 +28,6 @@ use notan_app::Graphics;
 use notan_graphics::Renderer;
 use notan_math::glam::Mat4;
 
-#[derive(Default)]
-pub struct Glyph<'a>
-{
-    sections: Vec<Cow<'a, Section<'a, Extra>>>,
-}
-
-impl<'a> Glyph<'a> {
-    pub fn queue<S>(&mut self, section: S)
-        where
-            S: Into<Cow<'a, Section<'a, Extra>>>,
-    {
-        self.sections.push(section.into());
-    }
-}
 
 /// Object allowing glyph drawing, containing cache state. Manages glyph positioning cacheing,
 /// glyph draw caching & efficient GPU texture cache updating and re-sizing on demand.
@@ -205,20 +193,22 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
     //     Ok(())
     // }
 
-    pub fn renderer_queue(
+    pub fn gen_renderer(
         &mut self,
         gfx: &mut Graphics,
-        pipeline: &mut BasicGlyphPipeline,
+        pipeline: &mut DefaultGlyphPipeline,
     ) -> Renderer {
         self.process_queued(gfx, pipeline);
         let (width, height) = gfx.size();
-        return pipeline.process_renderer(gfx, self.cache.texture(), width, height, None);
+        let transform =
+            Mat4::orthographic_lh(0.0, width as _, height as _, 0.0, -1.0, 1.0);
+        return pipeline.gen_renderer(gfx, self.cache.texture(), transform, width, height, None);
     }
 
     pub fn draw_queued(
         &mut self,
         gfx: &mut Graphics,
-        pipeline: &mut BasicGlyphPipeline,
+        pipeline: &mut DefaultGlyphPipeline,
         target_width: u32,
         target_height: u32,
     ) {
@@ -231,7 +221,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
         );
     }
 
-    fn process_queued(&mut self, gfx: &mut Graphics, pipeline: &mut BasicGlyphPipeline) {
+    fn process_queued(&mut self, gfx: &mut Graphics, pipeline: &mut DefaultGlyphPipeline) {
         // let pipeline = &mut self.pipeline;
 
         let mut brush_action;
