@@ -7,6 +7,16 @@ use notan_math::Rect;
 // TODO CHECK THIS https://github.com/hecrj/wgpu_glyph/blob/master/src/pipeline.rs
 
 pub trait GlyphPipeline {
+    fn gen_renderer(
+        &mut self,
+        gfx: &mut Graphics,
+        texture: &Texture,
+        transform: Mat4,
+        target_width: i32,
+        target_height: i32,
+        region: Option<Rect>,
+    ) -> Renderer;
+
     fn update(&mut self, gfx: &mut Graphics, instances: &[Instance]);
 }
 
@@ -89,7 +99,7 @@ const GLYPH_FRAGMENT: ShaderSource = fragment_shader! {
     "#
 };
 
-pub struct BasicGlyphPipeline {
+pub struct DefaultGlyphPipeline {
     pub pipeline: Pipeline,
     pub vbo: Buffer,
     pub ebo: Buffer,
@@ -99,7 +109,7 @@ pub struct BasicGlyphPipeline {
     current_transform: Mat4,
 }
 
-impl BasicGlyphPipeline {
+impl DefaultGlyphPipeline {
     pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
         let vertex_info = VertexInfo::new()
             .attr(0, VertexFormat::Float3)
@@ -128,16 +138,15 @@ impl BasicGlyphPipeline {
         })
     }
 
-    pub fn process_renderer(
+    pub fn gen_renderer(
         &mut self,
         gfx: &mut Graphics,
         texture: &Texture,
+        transform: Mat4,
         target_width: i32,
         target_height: i32,
         region: Option<Rect>,
     ) -> Renderer {
-        let transform =
-            Mat4::orthographic_lh(0.0, target_width as _, target_height as _, 0.0, -1.0, 1.0);
         if self.current_transform != transform {
             gfx.set_buffer_data(&self.ubo, &transform.to_cols_array());
         }
