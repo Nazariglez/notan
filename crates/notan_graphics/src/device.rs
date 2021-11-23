@@ -118,40 +118,88 @@ impl Device {
         })
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn limits(&self) -> Limits {
         self.backend.limits()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn size(&self) -> (i32, i32) {
         self.size
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn set_size(&mut self, width: i32, height: i32) {
         self.size = (width, height);
         self.backend.set_size(width, height);
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn dpi(&self) -> f64 {
         self.dpi
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn set_dpi(&mut self, scale_factor: f64) {
         self.dpi = scale_factor;
         self.backend.set_dpi(scale_factor);
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn create_renderer(&self) -> Renderer {
         Renderer::new(self.size.0, self.size.1)
     }
 
-    #[inline(always)]
-    pub fn create_pipeline_from_raw(
+    /// Creates a Pipeline builder
+    #[inline]
+    pub fn create_pipeline(&mut self) -> PipelineBuilder {
+        PipelineBuilder::new(self)
+    }
+
+    /// Creates a texture builder
+    #[inline]
+    pub fn create_texture(&mut self) -> TextureBuilder {
+        TextureBuilder::new(self)
+    }
+
+    /// Creates a render texture builder
+    #[inline]
+    pub fn create_render_texture(&mut self, width: i32, height: i32) -> RenderTextureBuilder {
+        RenderTextureBuilder::new(self, width, height)
+    }
+
+    /// Creates a vertex buffer builder
+    #[inline]
+    pub fn create_vertex_buffer(&mut self) -> VertexBufferBuilder {
+        VertexBufferBuilder::new(self)
+    }
+
+    /// Creates a index buffer builder
+    #[inline]
+    pub fn create_index_buffer(&mut self) -> IndexBufferBuilder {
+        IndexBufferBuilder::new(self)
+    }
+
+    /// Creates a uniform buffer builder
+    #[inline]
+    pub fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> UniformBufferBuilder {
+        UniformBufferBuilder::new(self, slot, name)
+    }
+
+    /// Update the texture data
+    #[inline]
+    pub fn update_texture<'a>(&'a mut self, texture: &'a mut Texture) -> TextureUpdater {
+        TextureUpdater::new(self, texture)
+    }
+
+    /// Read pixels from a texture
+    #[inline]
+    pub fn read_pixels<'a>(&'a mut self, texture: &'a Texture) -> TextureReader {
+        TextureReader::new(self, texture)
+    }
+
+    #[inline]
+    pub(crate) fn inner_create_pipeline_from_raw(
         &mut self,
         vertex_source: &[u8],
         fragment_source: &[u8],
@@ -177,8 +225,8 @@ impl Device {
         ))
     }
 
-    #[inline(always)]
-    pub fn create_pipeline(
+    #[inline]
+    pub(crate) fn inner_create_pipeline(
         &mut self,
         vertex_source: &ShaderSource,
         fragment_source: &ShaderSource,
@@ -192,11 +240,11 @@ impl Device {
         let fragment = fragment_source
             .get_source(api)
             .ok_or(format!("Fragment shader for api '{}' not available.", api))?;
-        self.create_pipeline_from_raw(vertex, fragment, vertex_attrs, options)
+        self.inner_create_pipeline_from_raw(vertex, fragment, vertex_attrs, options)
     }
 
     #[inline(always)]
-    pub fn create_vertex_buffer(
+    pub(crate) fn inner_create_vertex_buffer(
         &mut self,
         data: Option<&[f32]>,
         attrs: &[VertexAttr],
@@ -213,8 +261,11 @@ impl Device {
         Ok(buffer)
     }
 
-    #[inline(always)]
-    pub fn create_index_buffer(&mut self, data: Option<&[u32]>) -> Result<Buffer, String> {
+    #[inline]
+    pub(crate) fn inner_create_index_buffer(
+        &mut self,
+        data: Option<&[u32]>,
+    ) -> Result<Buffer, String> {
         let id = self.backend.create_index_buffer()?;
 
         let buffer = Buffer::new(id, BufferUsage::Index, None, self.drop_manager.clone());
@@ -225,8 +276,8 @@ impl Device {
         Ok(buffer)
     }
 
-    #[inline(always)]
-    pub fn create_uniform_buffer(
+    #[inline]
+    pub(crate) fn inner_create_uniform_buffer(
         &mut self,
         slot: u32,
         name: &str,
@@ -248,14 +299,17 @@ impl Device {
         Ok(buffer)
     }
 
-    #[inline(always)]
-    pub fn create_texture(&mut self, info: TextureInfo) -> Result<Texture, String> {
+    #[inline]
+    pub(crate) fn inner_create_texture(&mut self, info: TextureInfo) -> Result<Texture, String> {
         let id = self.backend.create_texture(&info)?;
         Ok(Texture::new(id, info, self.drop_manager.clone()))
     }
 
     #[inline]
-    pub fn create_render_texture(&mut self, info: TextureInfo) -> Result<RenderTexture, String> {
+    pub(crate) fn inner_create_render_texture(
+        &mut self,
+        info: TextureInfo,
+    ) -> Result<RenderTexture, String> {
         let tex_id = self.backend.create_texture(&info)?;
 
         let id = self.backend.create_render_texture(tex_id, &info)?;
@@ -263,7 +317,7 @@ impl Device {
         Ok(RenderTexture::new(id, texture, self.drop_manager.clone()))
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn render(&mut self, commands: &[Commands]) {
         self.backend.render(commands, None);
     }
@@ -274,7 +328,7 @@ impl Device {
     }
 
     #[inline]
-    pub fn update_texture(
+    pub(crate) fn inner_update_texture(
         &mut self,
         texture: &mut Texture,
         opts: &TextureUpdate,
@@ -283,7 +337,7 @@ impl Device {
     }
 
     #[inline]
-    pub fn read_pixels(
+    pub(crate) fn inner_read_pixels(
         &mut self,
         texture: &Texture,
         bytes: &mut [u8],

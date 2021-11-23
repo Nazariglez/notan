@@ -1,13 +1,14 @@
 mod builder;
 mod cache;
+mod extension;
 mod instance;
 mod pipeline;
-mod extension;
 
 use cache::Cache;
 use instance::Instance;
 
 pub use builder::GlyphBrushBuilder;
+pub use extension::{Glyph, GlyphExtension};
 pub use glyph_brush::ab_glyph;
 pub use glyph_brush::{
     BuiltInLineBreaker, Extra, FontId, GlyphCruncher, GlyphPositioner, HorizontalAlign, Layout,
@@ -15,7 +16,6 @@ pub use glyph_brush::{
     Text, VerticalAlign,
 };
 pub use pipeline::DefaultGlyphPipeline;
-pub use extension::{GlyphExtension, Glyph};
 
 use ab_glyph::{Font, FontArc, Rect};
 
@@ -27,7 +27,6 @@ use log::{log_enabled, warn};
 use notan_app::Graphics;
 use notan_graphics::Renderer;
 use notan_math::glam::Mat4;
-
 
 /// Object allowing glyph drawing, containing cache state. Manages glyph positioning cacheing,
 /// glyph draw caching & efficient GPU texture cache updating and re-sizing on demand.
@@ -55,7 +54,7 @@ impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
 
     pub fn process<'a>(&mut self, glyphs: &Glyph<'a>) {
         glyphs.sections.iter().for_each(|s| {
-            let n : &Section = s.as_ref();
+            let n: &Section = s.as_ref();
             self.queue(n);
         });
     }
@@ -200,8 +199,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
     ) -> Renderer {
         self.process_queued(gfx, pipeline);
         let (width, height) = gfx.size();
-        let transform =
-            Mat4::orthographic_lh(0.0, width as _, height as _, 0.0, -1.0, 1.0);
+        let transform = Mat4::orthographic_lh(0.0, width as _, height as _, 0.0, -1.0, 1.0);
         return pipeline.gen_renderer(gfx, self.cache.texture(), transform, width, height, None);
     }
 

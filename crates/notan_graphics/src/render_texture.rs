@@ -99,6 +99,6 @@ impl<'a> RenderTextureBuilder<'a> {
     pub fn build(self) -> Result<RenderTexture, String> {
         let Self { device, info } = self;
 
-        device.create_render_texture(info)
+        device.inner_create_render_texture(info)
     }
 }

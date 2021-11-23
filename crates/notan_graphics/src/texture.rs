@@ -388,7 +388,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             _ => {}
         }
 
-        device.create_texture(info)
+        device.inner_create_texture(info)
     }
 }
 
@@ -464,7 +464,7 @@ impl<'a> TextureReader<'a> {
             format,
         };
 
-        device.read_pixels(texture, bytes, &info)
+        device.inner_read_pixels(texture, bytes, &info)
     }
 }
 
@@ -552,6 +552,6 @@ impl<'a> TextureUpdater<'a> {
             bytes,
         };
 
-        device.update_texture(texture, &info)
+        device.inner_update_texture(texture, &info)
     }
 }

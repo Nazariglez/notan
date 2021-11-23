@@ -94,7 +94,7 @@ impl<'a> VertexBufferBuilder<'a> {
             "Missing vertex attributes for a VertexBuffer"
         );
 
-        device.create_vertex_buffer(data, &vertex_attrs, vertex_step_mode)
+        device.inner_create_vertex_buffer(data, &vertex_attrs, vertex_step_mode)
     }
 }
 
@@ -116,7 +116,7 @@ impl<'a> IndexBufferBuilder<'a> {
     pub fn build(self) -> Result<Buffer, String> {
         let Self { device, data } = self;
 
-        device.create_index_buffer(data)
+        device.inner_create_index_buffer(data)
     }
 }
 
@@ -150,7 +150,7 @@ impl<'a> UniformBufferBuilder<'a> {
             loc,
         } = self;
 
-        device.create_uniform_buffer(loc, &name, data)
+        device.inner_create_uniform_buffer(loc, &name, data)
     }
 }
 

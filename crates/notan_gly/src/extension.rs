@@ -1,11 +1,13 @@
+use crate::{GlyphBrush, GlyphBrushBuilder};
+use glyph_brush::{Extra, Section};
+use notan_app::{
+    Commands, Device, ExtContainer, GfxExtension, GfxRenderer, Graphics, RenderTexture,
+};
 use std::borrow::Cow;
 use std::ops::{Deref, DerefMut};
-use glyph_brush::{Extra, Section};
-use notan_app::{Commands, Device, ExtContainer, GfxExtension, GfxRenderer, Graphics, RenderTexture};
-use crate::{GlyphBrush, GlyphBrushBuilder};
 
 pub struct GlyphExtension {
-    g: GlyphBrush
+    g: GlyphBrush,
 }
 
 impl GlyphExtension {
@@ -37,22 +39,26 @@ impl GfxExtension<Glyph<'_>> for GlyphExtension {
 }
 
 #[derive(Default)]
-pub struct Glyph<'a>
-{
+pub struct Glyph<'a> {
     pub(crate) sections: Vec<Cow<'a, Section<'a, Extra>>>,
 }
 
 impl<'a> Glyph<'a> {
     pub fn queue<S>(&mut self, section: S)
-        where
-            S: Into<Cow<'a, Section<'a, Extra>>>,
+    where
+        S: Into<Cow<'a, Section<'a, Extra>>>,
     {
         self.sections.push(section.into());
     }
 }
 
 impl GfxRenderer for Glyph<'_> {
-    fn render(&self, device: &mut Device, extensions: &mut ExtContainer, target: Option<&RenderTexture>) {
+    fn render(
+        &self,
+        device: &mut Device,
+        extensions: &mut ExtContainer,
+        target: Option<&RenderTexture>,
+    ) {
         todo!()
     }
 }

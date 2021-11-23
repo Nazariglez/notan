@@ -79,7 +79,7 @@ pub struct BasicPipeline {
 impl BasicPipeline {
     pub fn new(device: &mut Device) -> Result<Self, String> {
         let pipeline = create_glyph_pipeline(device, None)?;
-        let vbo = device.create_vertex_buffer(
+        let vbo = device.inner_create_vertex_buffer(
             None,
             &[
                 VertexAttr::new(0, VertexFormat::Float3),
@@ -88,8 +88,8 @@ impl BasicPipeline {
             ],
             VertexStepMode::Vertex,
         )?;
-        let ebo = device.create_index_buffer(None)?;
-        let ubo = device.create_uniform_buffer(0, "Locals", Some(&[0.0; 16]))?;
+        let ebo = device.inner_create_index_buffer(None)?;
+        let ubo = device.inner_create_uniform_buffer(0, "Locals", Some(&[0.0; 16]))?;
 
         Ok(Self {
             pipeline,
@@ -171,7 +171,7 @@ pub fn create_glyph_pipeline(
     fragment: Option<&ShaderSource>,
 ) -> Result<Pipeline, String> {
     let fragment = fragment.unwrap_or(&GLYPH_FRAGMENT);
-    device.create_pipeline(
+    device.inner_create_pipeline(
         &GLYPH_VERTEX,
         fragment,
         &[

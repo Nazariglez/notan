@@ -66,17 +66,26 @@ impl GlyphPlugin {
                     let width = (rect.max[0] - rect.min[0]) as _;
                     let height = (rect.max[1] - rect.min[1]) as _;
 
-                    result = device.update_texture(
-                        texture,
-                        &TextureUpdate {
-                            x_offset,
-                            y_offset,
-                            width,
-                            height,
-                            format: TextureFormat::R8,
-                            bytes: data,
-                        },
-                    );
+                    result = device
+                        .update_texture(texture)
+                        .with_x_offset(x_offset)
+                        .with_y_offset(y_offset)
+                        .with_width(width)
+                        .with_height(height)
+                        .with_data(data)
+                        .update();
+
+                    // result = device.inner_update_texture(
+                    //     texture,
+                    //     &TextureUpdate {
+                    //         x_offset,
+                    //         y_offset,
+                    //         width,
+                    //         height,
+                    //         format: TextureFormat::R8,
+                    //         bytes: data,
+                    //     },
+                    // );
                 },
                 to_vertex,
             );
@@ -128,5 +137,10 @@ fn create_texture(device: &mut Device, ww: u32, hh: u32) -> Result<Texture, Stri
         TextureFilter::Linear,
     )?;
 
-    device.create_texture(image)
+    device
+        .create_texture()
+        .with_size(ww as _, hh as _)
+        .with_format(TextureFormat::R8)
+        .with_filter(TextureFilter::Linear, TextureFilter::Linear)
+        .build()
 }

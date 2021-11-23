@@ -153,12 +153,11 @@ impl<'a, 'b> PipelineBuilder<'a, 'b> {
         match self.shaders {
             Some(ShaderKind::Source { vertex, fragment }) => {
                 self.device
-                    .create_pipeline(vertex, fragment, &self.attrs, self.options)
+                    .inner_create_pipeline(vertex, fragment, &self.attrs, self.options)
             }
-            Some(ShaderKind::Raw { vertex, fragment }) => {
-                self.device
-                    .create_pipeline_from_raw(vertex, fragment, &self.attrs, self.options)
-            }
+            Some(ShaderKind::Raw { vertex, fragment }) => self
+                .device
+                .inner_create_pipeline_from_raw(vertex, fragment, &self.attrs, self.options),
             _ => Err("Vertex and Fragment shaders should be present".to_string()),
         }
     }
