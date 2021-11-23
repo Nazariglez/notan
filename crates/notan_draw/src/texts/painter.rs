@@ -51,6 +51,13 @@ const TEXT_FRAGMENT: ShaderSource = fragment_shader! {
     "#
 };
 
+fn vertex_info() -> VertexInfo {
+    VertexInfo::new()
+        .attr(0, VertexFormat::Float2)
+        .attr(1, VertexFormat::Float2)
+        .attr(2, VertexFormat::Float4)
+}
+
 pub(crate) struct TextPainter {
     pub pipeline: Pipeline,
     pub vbo: Buffer,
@@ -72,17 +79,17 @@ impl TextPainter {
         let uniforms = [0.0; 16];
 
         let pipeline = create_text_pipeline(device, None)?;
-        let vbo = device.create_vertex_buffer(
-            None,
-            &[
-                VertexAttr::new(0, VertexFormat::Float2),
-                VertexAttr::new(1, VertexFormat::Float2),
-                VertexAttr::new(2, VertexFormat::Float4),
-            ],
-            VertexStepMode::Vertex,
-        )?;
-        let ebo = device.create_index_buffer(None)?;
-        let ubo = device.create_uniform_buffer(0, "Locals", Some(&uniforms))?;
+        let vbo = device
+            .create_vertex_buffer()
+            .with_info(&vertex_info())
+            .build()?;
+
+        let ebo = device.create_index_buffer().build()?;
+
+        let ubo = device
+            .create_uniform_buffer(0, "Locals")
+            .with_data(&uniforms)
+            .build()?;
 
         Ok(Self {
             pipeline,
@@ -208,17 +215,10 @@ pub fn create_text_pipeline(
     fragment: Option<&ShaderSource>,
 ) -> Result<Pipeline, String> {
     let fragment = fragment.unwrap_or(&TEXT_FRAGMENT);
-    device.create_pipeline(
-        &TEXT_VERTEX,
-        fragment,
-        &[
-            VertexAttr::new(0, VertexFormat::Float2),
-            VertexAttr::new(1, VertexFormat::Float2),
-            VertexAttr::new(2, VertexFormat::Float4),
-        ],
-        PipelineOptions {
-            color_blend: Some(BlendMode::NORMAL),
-            ..Default::default()
-        },
-    )
+    device
+        .create_pipeline()
+        .from(&TEXT_VERTEX, fragment)
+        .with_vertex_info(&vertex_info())
+        .with_color_blend(BlendMode::NORMAL)
+        .build()
 }

@@ -166,7 +166,7 @@ impl EguiExtension {
             .collect::<Vec<u8>>();
 
         let texture = device
-            .create_texture(TextureInfo {
+            .inner_create_texture(TextureInfo {
                 width: width as _,
                 height: height as _,
                 format: TextureFormat::Rgba32,
