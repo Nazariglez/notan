@@ -15,4 +15,4 @@ notan_macro = { path = "../notan_macro" }
 egui = "0.15"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-egui = { version = "0.14", default-features = false, features = ["single_threaded"] }
+egui = { version = "0.15", default-features = false, features = ["single_threaded"] }
