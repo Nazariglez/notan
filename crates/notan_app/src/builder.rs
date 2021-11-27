@@ -150,7 +150,7 @@ where
         let cb =
             move |app: &mut App, assets: &mut Assets, gfx: &mut Graphics, plugins: &mut Plugins| {
                 let e = handler.callback().exec(app, assets, gfx, plugins);
-                gfx.add_ext(e);
+                gfx.add_extension(e);
             };
         self.extension_callbacks.push(Box::new(cb));
         self

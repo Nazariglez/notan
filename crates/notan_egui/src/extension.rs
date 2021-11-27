@@ -358,7 +358,7 @@ impl AsEguiTexture for RenderTexture {
         let id = self.texture().id();
 
         let already_registered = gfx
-            .get_ext::<EguiContext, EguiExtension>()
+            .extension::<EguiContext, EguiExtension>()
             .ok_or_else(|| "EGUI Plugin not found.".to_string())?
             .user_textures
             .contains_key(&id);
@@ -368,7 +368,7 @@ impl AsEguiTexture for RenderTexture {
         }
 
         let mut ext = gfx
-            .get_ext_mut::<EguiContext, EguiExtension>()
+            .extension_mut::<EguiContext, EguiExtension>()
             .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
 
         Ok(ext.register_native_texture(id, self.texture().clone()))
@@ -380,7 +380,7 @@ impl AsEguiTexture for Texture {
         let id = self.id();
 
         let already_registered = gfx
-            .get_ext::<EguiContext, EguiExtension>()
+            .extension::<EguiContext, EguiExtension>()
             .ok_or_else(|| "EGUI Plugin not found.".to_string())?
             .user_textures
             .contains_key(&id);
@@ -407,7 +407,7 @@ impl AsEguiTexture for Texture {
             .build()?;
 
         let mut ext = gfx
-            .get_ext_mut::<EguiContext, EguiExtension>()
+            .extension_mut::<EguiContext, EguiExtension>()
             .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
 
         Ok(ext.register_native_texture(id, texture))
@@ -430,7 +430,7 @@ impl RegisterEguiTexture for Graphics {
     fn unregister_egui_texture(&mut self, id: egui::TextureId) -> Result<(), String> {
         if let egui::TextureId::User(id) = id {
             let mut ext = self
-                .get_ext_mut::<EguiContext, EguiExtension>()
+                .extension_mut::<EguiContext, EguiExtension>()
                 .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
 
             ext.unregister_native_texture(id);
