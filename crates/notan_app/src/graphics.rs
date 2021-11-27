@@ -11,7 +11,7 @@ pub struct Graphics {
     /// Graphic raw implementation
     pub device: Device,
 
-    extensions: ExtContainer,
+    pub extensions: ExtContainer,
 }
 
 impl Graphics {
@@ -27,7 +27,7 @@ impl Graphics {
 
     /// Adds a new graphic extensions
     #[inline]
-    pub fn add_ext<R, T>(&mut self, extension: T)
+    pub fn add_extension<R, T>(&mut self, extension: T)
     where
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
@@ -37,7 +37,7 @@ impl Graphics {
 
     /// Remove a graphic extensions
     #[inline]
-    pub fn remove_ext<R, T>(&mut self)
+    pub fn remove_extension<R, T>(&mut self)
     where
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
@@ -47,7 +47,7 @@ impl Graphics {
 
     /// Returns the extension as mutable reference
     #[inline]
-    pub fn get_ext_mut<R, T>(&self) -> Option<RefMut<T>>
+    pub fn extension_mut<R, T>(&self) -> Option<RefMut<T>>
     where
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
@@ -57,7 +57,7 @@ impl Graphics {
 
     /// Returns the extension as reference
     #[inline]
-    pub fn get_ext<R, T>(&self) -> Option<Ref<T>>
+    pub fn extension<R, T>(&self) -> Option<Ref<T>>
     where
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
