@@ -248,10 +248,7 @@ pub trait GfxRenderer {
     );
 }
 
-pub trait GfxExtension<T: ?Sized>
-where
-    Self: Send + Sync,
-{
+pub trait GfxExtension<T: ?Sized> {
     /// Process and returns the commands
     fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a T) -> &'a [Commands];
 }
