@@ -1,5 +1,6 @@
 mod builder;
 mod cache;
+mod config;
 mod extension;
 mod instance;
 mod pipeline;
@@ -8,6 +9,7 @@ use cache::Cache;
 use instance::Instance;
 
 pub use builder::GlyphBrushBuilder;
+pub use config::GlyConfig;
 pub use extension::{Glyph, GlyphExtension};
 pub use glyph_brush::ab_glyph;
 pub use glyph_brush::{
@@ -22,11 +24,11 @@ use ab_glyph::{Font, FontArc, Rect};
 use core::hash::BuildHasher;
 use std::borrow::Cow;
 
-use crate::pipeline::{GlyphPipeline, PipelineContainer};
+use crate::pipeline::GlyphPipeline;
 use glyph_brush::{BrushAction, BrushError, DefaultSectionHasher};
 use log::{log_enabled, warn};
 use notan_app::Graphics;
-use notan_graphics::Renderer;
+use notan_graphics::{Device, Renderer};
 use notan_math::glam::Mat4;
 
 /// Object allowing glyph drawing, containing cache state. Manages glyph positioning cacheing,
@@ -137,17 +139,24 @@ impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
 impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
     pub fn create_renderer_from_queue<T: GlyphPipeline>(
         &mut self,
-        gfx: &mut Graphics,
+        device: &mut Device,
         pipeline: &mut T,
     ) -> Renderer {
         // TODO pattern builder to add size, scissor/region and clear options
-        self.process_queued(gfx, pipeline);
-        let (width, height) = gfx.size();
+        self.process_queued(device, pipeline);
+        let (width, height) = device.size();
         let transform = Mat4::orthographic_lh(0.0, width as _, height as _, 0.0, -1.0, 1.0);
-        return pipeline.create_renderer(gfx, self.cache.texture(), transform, width, height, None);
+        return pipeline.create_renderer(
+            device,
+            self.cache.texture(),
+            transform,
+            width,
+            height,
+            None,
+        );
     }
 
-    fn process_queued<T: GlyphPipeline>(&mut self, gfx: &mut Graphics, pipeline: &mut T) {
+    fn process_queued<T: GlyphPipeline>(&mut self, device: &mut Device, pipeline: &mut T) {
         let mut brush_action;
 
         loop {
@@ -156,7 +165,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
                     let offset = [rect.min[0] as u16, rect.min[1] as u16];
                     let size = [rect.width() as u16, rect.height() as u16];
 
-                    self.cache.update(gfx, offset, size, tex_data);
+                    self.cache.update(device, offset, size, tex_data);
                 },
                 Instance::from_vertex,
             );
@@ -164,7 +173,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
             match brush_action {
                 Ok(_) => break,
                 Err(BrushError::TextureTooSmall { suggested }) => {
-                    let max_image_dimension = gfx.limits().max_texture_size;
+                    let max_image_dimension = device.limits().max_texture_size;
 
                     let (new_width, new_height) = if (suggested.0 > max_image_dimension
                         || suggested.1 > max_image_dimension)
@@ -186,7 +195,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
                         );
                     }
 
-                    self.cache = Cache::new(gfx, new_width, new_height).unwrap();
+                    self.cache = Cache::new(device, new_width, new_height).unwrap();
                     self.glyph_brush.resize_texture(new_width, new_height);
                 }
             }
@@ -194,7 +203,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
 
         match brush_action.unwrap() {
             BrushAction::Draw(verts) => {
-                pipeline.upload(gfx, &verts);
+                pipeline.upload(device, &verts);
             }
             BrushAction::ReDraw => {}
         };
@@ -209,17 +218,6 @@ impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
 
         GlyphBrush { cache, glyph_brush }
     }
-}
-
-/// Helper function to generate a generate a transform matrix.
-pub fn orthographic_projection(width: u32, height: u32) -> [f32; 16] {
-    #[cfg_attr(rustfmt, rustfmt_skip)]
-    [
-        2.0 / width as f32, 0.0, 0.0, 0.0,
-        0.0, -2.0 / height as f32, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        -1.0, 1.0, 0.0, 1.0,
-    ]
 }
 
 impl<F: Font, H: BuildHasher> GlyphCruncher<F> for GlyphBrush<F, H> {

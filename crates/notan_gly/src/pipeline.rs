@@ -9,7 +9,7 @@ use std::collections::HashMap;
 pub trait GlyphPipeline {
     fn create_renderer(
         &mut self,
-        gfx: &mut Graphics,
+        device: &mut Device,
         texture: &Texture,
         transform: Mat4,
         target_width: i32,
@@ -17,7 +17,7 @@ pub trait GlyphPipeline {
         region: Option<Rect>,
     ) -> Renderer;
 
-    fn upload(&mut self, gfx: &mut Graphics, instances: &[Instance]);
+    fn upload(&mut self, device: &mut Device, instances: &[Instance]);
 }
 
 //language=glsl
@@ -142,7 +142,7 @@ impl DefaultGlyphPipeline {
 impl GlyphPipeline for DefaultGlyphPipeline {
     fn create_renderer(
         &mut self,
-        gfx: &mut Graphics,
+        device: &mut Device,
         texture: &Texture,
         transform: Mat4,
         target_width: i32,
@@ -150,10 +150,10 @@ impl GlyphPipeline for DefaultGlyphPipeline {
         region: Option<Rect>,
     ) -> Renderer {
         if self.current_transform != transform {
-            gfx.set_buffer_data(&self.ubo, &transform.to_cols_array());
+            device.set_buffer_data(&self.ubo, &transform.to_cols_array());
         }
 
-        let mut renderer = gfx.create_renderer();
+        let mut renderer = device.create_renderer();
         renderer.set_size(target_width as _, target_height as _);
         renderer.set_primitive(DrawPrimitive::TriangleStrip);
 
@@ -170,14 +170,14 @@ impl GlyphPipeline for DefaultGlyphPipeline {
         renderer
     }
 
-    fn upload(&mut self, gfx: &mut Graphics, instances: &[Instance]) {
+    fn upload(&mut self, device: &mut Device, instances: &[Instance]) {
         if instances.is_empty() {
             self.current_instances = 0;
             return;
         }
 
         let data: &[f32] = bytemuck::cast_slice(instances);
-        gfx.set_buffer_data(&self.vbo, data);
+        device.set_buffer_data(&self.vbo, data);
         self.current_instances = instances.len();
     }
 }
@@ -194,54 +194,4 @@ fn create_pipeline(gfx: &mut Graphics, info: &VertexInfo) -> Result<Pipeline, St
         })
         // TODO depth stencil and culling
         .build()
-}
-
-#[derive(Default)]
-pub(crate) struct PipelineContainer {
-    map: HashMap<TypeId, Box<dyn Any>>,
-}
-
-impl PipelineContainer {
-    /// Adds a graphics extension
-    #[inline]
-    pub fn add<T>(&mut self, value: T)
-    where
-        T: GlyphPipeline + 'static,
-    {
-        self.map
-            .insert(TypeId::of::<T>(), Box::new(RefCell::new(value)));
-    }
-
-    /// Returns the extension as mutable reference
-    #[inline]
-    pub fn get_mut<T>(&self) -> Option<RefMut<'_, T>>
-    where
-        T: GlyphPipeline + 'static,
-    {
-        self.map
-            .get(&TypeId::of::<T>())?
-            .downcast_ref::<RefCell<T>>()
-            .map(|value| value.borrow_mut())
-    }
-
-    /// Returns the extension
-    #[inline]
-    pub fn get<T>(&self) -> Option<Ref<'_, T>>
-    where
-        T: GlyphPipeline + 'static,
-    {
-        self.map
-            .get(&TypeId::of::<T>())?
-            .downcast_ref::<RefCell<T>>()
-            .map(|value| value.borrow())
-    }
-
-    /// Remove the extension
-    #[inline]
-    pub fn remove<T>(&mut self)
-    where
-        T: GlyphPipeline + 'static,
-    {
-        self.map.remove(&TypeId::of::<T>());
-    }
 }
