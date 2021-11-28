@@ -1,11 +1,7 @@
-/*
-   This example shows how to use GlyphBrush directly without the GlyphExtension
-*/
-
 use notan::gly::{ab_glyph, GlyphBrushBuilder, Section, Text};
 use notan::prelude::*;
 use notan_gly::ab_glyph::FontArc;
-use notan_gly::{DefaultGlyphPipeline, GlyConfig, Glyph, GlyphBrush, GlyphExtension};
+use notan_gly::{DefaultGlyphPipeline, GlyConfig, Glyphs, GlyphBrush, GlyphExtension};
 
 #[derive(AppState)]
 struct State {}
@@ -19,7 +15,7 @@ fn main() -> Result<(), String> {
 }
 
 fn setup(gfx: &mut Graphics) -> State {
-    let mut ext = gfx.extension_mut::<Glyph, GlyphExtension>().unwrap();
+    let mut ext = gfx.extension_mut::<Glyphs, GlyphExtension>().unwrap();
     ext.create_font(include_bytes!("./assets/Ubuntu-B.ttf"));
 
     State {}
@@ -28,7 +24,7 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let (width, height) = gfx.size();
 
-    let mut glyph = Glyph::default();
+    let mut glyph = Glyphs::default();
     // Queue sections to draw
     glyph.queue(Section {
         screen_position: (30.0, 30.0),
@@ -49,12 +45,6 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
             .with_scale(40.0)],
         ..Section::default()
     });
-    //
-    // // Process the sections queued and create a renderer
-    // let renderer = state
-    //     .glyph_brush
-    //     .create_renderer_from_queue(gfx, &mut state.pipeline);
 
-    // Draw the renderer to the screen
     gfx.render(&glyph);
 }

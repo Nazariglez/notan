@@ -5,7 +5,7 @@
 use notan::gly::{ab_glyph, GlyphBrushBuilder, Section, Text};
 use notan::prelude::*;
 use notan_gly::ab_glyph::FontArc;
-use notan_gly::{DefaultGlyphPipeline, Glyph, GlyphBrush, GlyphExtension};
+use notan_gly::{DefaultGlyphPipeline, Glyphs, GlyphBrush, GlyphExtension};
 
 #[derive(AppState)]
 struct State {

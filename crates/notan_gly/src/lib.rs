@@ -10,7 +10,7 @@ use instance::Instance;
 
 pub use builder::GlyphBrushBuilder;
 pub use config::GlyConfig;
-pub use extension::{Glyph, GlyphExtension};
+pub use extension::{Glyphs, GlyphExtension};
 pub use glyph_brush::ab_glyph;
 pub use glyph_brush::{
     BuiltInLineBreaker, Extra, FontId, GlyphCruncher, GlyphPositioner, HorizontalAlign, Layout,
@@ -54,7 +54,7 @@ impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
         self.glyph_brush.queue(section)
     }
 
-    pub fn process<'a>(&mut self, glyphs: &Glyph<'a>) {
+    pub fn process<'a>(&mut self, glyphs: &Glyphs<'a>) {
         glyphs.sections.iter().for_each(|s| {
             let n: &Section = s.as_ref();
             self.queue(n);
@@ -137,10 +137,10 @@ impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
 }
 
 impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
-    pub fn create_renderer_from_queue<T: GlyphPipeline>(
+    pub fn create_renderer_from_queue(
         &mut self,
         device: &mut Device,
-        pipeline: &mut T,
+        pipeline: &mut dyn GlyphPipeline,
     ) -> Renderer {
         // TODO pattern builder to add size, scissor/region and clear options
         self.process_queued(device, pipeline);
@@ -156,7 +156,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
         );
     }
 
-    fn process_queued<T: GlyphPipeline>(&mut self, device: &mut Device, pipeline: &mut T) {
+    fn process_queued(&mut self, device: &mut Device, pipeline: &mut dyn GlyphPipeline) {
         let mut brush_action;
 
         loop {
