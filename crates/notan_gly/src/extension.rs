@@ -13,7 +13,7 @@ use std::ops::{Deref, DerefMut};
 
 pub struct GlyphExtension {
     glyph_brush: GlyphBrush,
-    pipelines: HashMap<TypeId, Box<dyn Any>>,
+    pipelines: HashMap<TypeId, Box<dyn GlyphPipeline>>,
 }
 
 impl GlyphExtension {
@@ -39,8 +39,7 @@ impl GlyphExtension {
     where
         T: GlyphPipeline + 'static,
     {
-        self.pipelines
-            .insert(TypeId::of::<T>(), Box::new(RefCell::new(value)));
+        self.pipelines.insert(TypeId::of::<T>(), Box::new(value));
     }
 
     #[inline]
@@ -51,24 +50,16 @@ impl GlyphExtension {
         self.pipelines.remove(&TypeId::of::<T>());
     }
 
-    fn create_renderer(&mut self, device: &mut Device, glyphs: &Glyph) -> Renderer {
+    fn create_renderer(&mut self, device: &mut Device, glyphs: &Glyphs) -> Renderer {
         let mut glyph_brush = &mut self.glyph_brush;
         glyph_brush.process(glyphs);
 
-        let mut pipeline = pipeline_mut::<DefaultGlyphPipeline>(&self.pipelines).unwrap();
+        let mut pipeline = self
+            .pipelines
+            .get_mut(&TypeId::of::<DefaultGlyphPipeline>())
+            .unwrap();
         glyph_brush.create_renderer_from_queue(device, pipeline.deref_mut())
     }
-}
-
-#[inline]
-fn pipeline_mut<T>(pipelines: &HashMap<TypeId, Box<dyn Any>>) -> Option<RefMut<'_, T>>
-where
-    T: GlyphPipeline + 'static,
-{
-    pipelines
-        .get(&TypeId::of::<T>())?
-        .downcast_ref::<RefCell<T>>()
-        .map(|value| value.borrow_mut())
 }
 
 impl Deref for GlyphExtension {
@@ -85,20 +76,20 @@ impl DerefMut for GlyphExtension {
     }
 }
 
-impl GfxExtension<Glyph<'_>> for GlyphExtension {
-    fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a Glyph) -> &'a [Commands] {
-        &[]
+impl GfxExtension<Glyphs<'_>> for GlyphExtension {
+    fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a Glyphs) -> &'a [Commands] {
+        &[] // no-op
     }
 }
 
 #[derive(Default)]
-pub struct Glyph<'a> {
+pub struct Glyphs<'a> {
     pub(crate) sections: Vec<Cow<'a, Section<'a, Extra>>>,
     pipeline: Option<TypeId>,
     clear: Option<ClearOptions>,
 }
 
-impl<'a> Glyph<'a> {
+impl<'a> Glyphs<'a> {
     pub fn queue<S>(&mut self, section: S)
     where
         S: Into<Cow<'a, Section<'a, Extra>>>,
@@ -107,7 +98,7 @@ impl<'a> Glyph<'a> {
     }
 }
 
-impl GfxRenderer for Glyph<'_> {
+impl GfxRenderer for Glyphs<'_> {
     fn render(
         &self,
         device: &mut Device,
