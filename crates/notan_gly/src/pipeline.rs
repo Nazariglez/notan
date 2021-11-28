@@ -2,12 +2,12 @@ use crate::instance::Instance;
 use notan_app::graphics::*;
 use notan_math::glam::{Mat3, Mat4};
 use notan_math::Rect;
-
-// TODO CHECK THIS https://github.com/hecrj/glow_glyph/blob/master/src/pipeline.rs
-// TODO CHECK THIS https://github.com/hecrj/wgpu_glyph/blob/master/src/pipeline.rs
+use std::any::{Any, TypeId};
+use std::cell::{Ref, RefCell, RefMut};
+use std::collections::HashMap;
 
 pub trait GlyphPipeline {
-    fn gen_renderer(
+    fn create_renderer(
         &mut self,
         gfx: &mut Graphics,
         texture: &Texture,
@@ -17,7 +17,7 @@ pub trait GlyphPipeline {
         region: Option<Rect>,
     ) -> Renderer;
 
-    fn update(&mut self, gfx: &mut Graphics, instances: &[Instance]);
+    fn upload(&mut self, gfx: &mut Graphics, instances: &[Instance]);
 }
 
 //language=glsl
@@ -137,8 +137,10 @@ impl DefaultGlyphPipeline {
             current_transform: Mat4::IDENTITY,
         })
     }
+}
 
-    pub fn gen_renderer(
+impl GlyphPipeline for DefaultGlyphPipeline {
+    fn create_renderer(
         &mut self,
         gfx: &mut Graphics,
         texture: &Texture,
@@ -163,51 +165,12 @@ impl DefaultGlyphPipeline {
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_texture(0, texture);
         renderer.bind_buffers(&[&self.vbo, &self.ubo]);
-        // TODO https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext/drawElementsInstanced
-        // TODO https://github.com/Kode/Kha/blob/0296e6d576332eacafa923a9de2b6354a39a2f9b/Backends/HTML5/kha/js/graphics4/Graphics.hx#L692
-        // TODO https://github.com/hecrj/wgpu_glyph/blob/master/src/pipeline.rs#L403
-        // TODO https://github.com/hecrj/glow_glyph/blob/master/src/pipeline.rs#L118-L123
         renderer.draw_instanced(0, 4, self.current_instances as _);
         renderer.end();
         renderer
     }
 
-    pub fn draw(
-        &mut self,
-        gfx: &mut Graphics,
-        texture: &Texture,
-        transform: Mat4,
-        region: Option<Rect>,
-    ) {
-        if self.current_transform != transform {
-            gfx.set_buffer_data(&self.ubo, &transform.to_cols_array());
-        }
-
-        let mut renderer = gfx.create_renderer();
-        renderer.set_primitive(DrawPrimitive::TriangleStrip);
-
-        if let Some(region) = region {
-            renderer.set_scissors(region.x, region.y, region.width, region.height);
-        }
-
-        renderer.begin(Some(&ClearOptions::new(Color::BLACK))); // TODO clear should be public to be managed by the user
-        renderer.set_pipeline(&self.pipeline);
-        renderer.bind_texture(0, texture);
-        renderer.bind_buffers(&[&self.vbo, &self.ubo]);
-        // TODO https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext/drawElementsInstanced
-        // TODO https://github.com/Kode/Kha/blob/0296e6d576332eacafa923a9de2b6354a39a2f9b/Backends/HTML5/kha/js/graphics4/Graphics.hx#L692
-        // TODO https://github.com/hecrj/wgpu_glyph/blob/master/src/pipeline.rs#L403
-        // TODO https://github.com/hecrj/glow_glyph/blob/master/src/pipeline.rs#L118-L123
-        renderer.draw_instanced(0, 4, self.current_instances as _);
-        renderer.end();
-
-        // gfx.render and render_to?
-
-        gfx.render(&renderer);
-    }
-
-    // TODO https://github.com/hecrj/glow_glyph/blob/master/src/pipeline.rs#L157
-    pub fn upload(&mut self, gfx: &mut Graphics, instances: &[Instance]) {
+    fn upload(&mut self, gfx: &mut Graphics, instances: &[Instance]) {
         if instances.is_empty() {
             self.current_instances = 0;
             return;
@@ -231,4 +194,54 @@ fn create_pipeline(gfx: &mut Graphics, info: &VertexInfo) -> Result<Pipeline, St
         })
         // TODO depth stencil and culling
         .build()
+}
+
+#[derive(Default)]
+pub(crate) struct PipelineContainer {
+    map: HashMap<TypeId, Box<dyn Any>>,
+}
+
+impl PipelineContainer {
+    /// Adds a graphics extension
+    #[inline]
+    pub fn add<T>(&mut self, value: T)
+    where
+        T: GlyphPipeline + 'static,
+    {
+        self.map
+            .insert(TypeId::of::<T>(), Box::new(RefCell::new(value)));
+    }
+
+    /// Returns the extension as mutable reference
+    #[inline]
+    pub fn get_mut<T>(&self) -> Option<RefMut<'_, T>>
+    where
+        T: GlyphPipeline + 'static,
+    {
+        self.map
+            .get(&TypeId::of::<T>())?
+            .downcast_ref::<RefCell<T>>()
+            .map(|value| value.borrow_mut())
+    }
+
+    /// Returns the extension
+    #[inline]
+    pub fn get<T>(&self) -> Option<Ref<'_, T>>
+    where
+        T: GlyphPipeline + 'static,
+    {
+        self.map
+            .get(&TypeId::of::<T>())?
+            .downcast_ref::<RefCell<T>>()
+            .map(|value| value.borrow())
+    }
+
+    /// Remove the extension
+    #[inline]
+    pub fn remove<T>(&mut self)
+    where
+        T: GlyphPipeline + 'static,
+    {
+        self.map.remove(&TypeId::of::<T>());
+    }
 }
