@@ -1,4 +1,4 @@
-use crate::{GlyphBrush, GlyphBrushBuilder};
+use crate::{GlyphBrush, GlyphBrushBuilder, GlyphPipeline, PipelineContainer};
 use glyph_brush::{Extra, Section};
 use notan_app::{
     Commands, Device, ExtContainer, GfxExtension, GfxRenderer, Graphics, RenderTexture,
@@ -7,14 +7,25 @@ use std::borrow::Cow;
 use std::ops::{Deref, DerefMut};
 
 pub struct GlyphExtension {
-    g: GlyphBrush,
+    glyph_brush: GlyphBrush,
+    pipelines: PipelineContainer,
 }
 
 impl GlyphExtension {
     pub fn new(gfx: &mut Graphics) -> Self {
+        let glyph_brush = GlyphBrushBuilder::using_fonts(vec![]).build(gfx);
         Self {
-            g: GlyphBrushBuilder::using_fonts(vec![]).build(gfx),
+            glyph_brush,
+            pipelines: Default::default(),
         }
+    }
+
+    pub fn add_pipeline<T: GlyphPipeline + 'static>(&mut self, pipeline: T) {
+        self.pipelines.add(pipeline);
+    }
+
+    pub fn remove_pipeline<T: GlyphPipeline + 'static>(&mut self) {
+        self.pipelines.remove::<T>();
     }
 }
 
@@ -22,13 +33,13 @@ impl Deref for GlyphExtension {
     type Target = GlyphBrush;
 
     fn deref(&self) -> &Self::Target {
-        &self.g
+        &self.glyph_brush
     }
 }
 
 impl DerefMut for GlyphExtension {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.g
+        &mut self.glyph_brush
     }
 }
 

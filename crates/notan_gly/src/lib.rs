@@ -34,8 +34,6 @@ use notan_math::glam::Mat4;
 ///
 /// Build using a [`GlyphBrushBuilder`](struct.GlyphBrushBuilder.html).
 pub struct GlyphBrush<F = FontArc, H = DefaultSectionHasher> {
-    pipeline: DefaultGlyphPipeline,
-    pipelines: PipelineContainer,
     cache: Cache,
     glyph_brush: glyph_brush::GlyphBrush<Instance, Extra, F, H>,
 }
@@ -134,111 +132,22 @@ impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
     pub fn add_font(&mut self, font: F) -> FontId {
         self.glyph_brush.add_font(font)
     }
-
-    pub fn add_pipeline<T: GlyphPipeline + 'static>(&mut self, pipeline: T) {
-        self.pipelines.add(pipeline);
-    }
-
-    pub fn remove_pipeline<T: GlyphPipeline + 'static>(&mut self) {
-        self.pipelines.remove::<T>();
-    }
 }
 
 impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
-    // /// Draws all queued sections onto a render target.
-    // /// See [`queue`](struct.GlyphBrush.html#method.queue).
-    // ///
-    // /// Trims the cache, see [caching behaviour](#caching-behaviour).
-    // ///
-    // /// # Panics
-    // /// Panics if the provided `target` has a texture format that does not match
-    // /// the `render_format` provided on creation of the `GlyphBrush`.
-    // #[inline]
-    // pub fn draw_queued(
-    //     &mut self,
-    //     gfx: &mut Graphics,
-    //     target_width: u32,
-    //     target_height: u32,
-    // ) -> Result<(), String> {
-    //     self.draw_queued_with_transform(
-    //         gfx,
-    //         Mat4::orthographic_lh(0.0, target_width as _, target_height as _, 0.0, -1.0, 1.0),
-    //     )
-    // }
-    //
-    // /// Draws all queued sections onto a render target, applying a position
-    // /// transform (e.g. a projection).
-    // /// See [`queue`](struct.GlyphBrush.html#method.queue).
-    // ///
-    // /// Trims the cache, see [caching behaviour](#caching-behaviour).
-    // ///
-    // /// # Panics
-    // /// Panics if the provided `target` has a texture format that does not match
-    // /// the `render_format` provided on creation of the `GlyphBrush`.
-    // #[inline]
-    // pub fn draw_queued_with_transform(
-    //     &mut self,
-    //     gfx: &mut Graphics,
-    //     transform: Mat4,
-    // ) -> Result<(), String> {
-    //     self.process_queued(gfx);
-    //     self.pipeline
-    //         .draw(gfx, &self.cache.texture(), transform, None);
-    //
-    //     Ok(())
-    // }
-    //
-    // #[inline]
-    // pub fn draw_queued_with_transform_and_scissoring(
-    //     &mut self,
-    //     gfx: &mut Graphics,
-    //     transform: Mat4,
-    //     rect: notan_math::Rect,
-    // ) -> Result<(), String> {
-    //     self.process_queued(gfx);
-    //     self.pipeline
-    //         .draw(gfx, &self.cache.texture(), transform, Some(rect));
-    //
-    //     Ok(())
-    // }
-
     pub fn create_renderer_from_queue<T: GlyphPipeline>(
         &mut self,
         gfx: &mut Graphics,
         pipeline: &mut T,
     ) -> Renderer {
+        // TODO pattern builder to add size, scissor/region and clear options
         self.process_queued(gfx, pipeline);
         let (width, height) = gfx.size();
         let transform = Mat4::orthographic_lh(0.0, width as _, height as _, 0.0, -1.0, 1.0);
-        return self.pipeline.create_renderer(
-            gfx,
-            self.cache.texture(),
-            transform,
-            width,
-            height,
-            None,
-        );
+        return pipeline.create_renderer(gfx, self.cache.texture(), transform, width, height, None);
     }
-    //
-    // pub fn draw_queued(
-    //     &mut self,
-    //     gfx: &mut Graphics,
-    //     pipeline: &mut DefaultGlyphPipeline,
-    //     target_width: u32,
-    //     target_height: u32,
-    // ) {
-    //     self.process_queued(gfx, pipeline);
-    //     pipeline.draw(
-    //         gfx,
-    //         &self.cache.texture(),
-    //         Mat4::orthographic_lh(0.0, target_width as _, target_height as _, 0.0, -1.0, 1.0),
-    //         None,
-    //     );
-    // }
 
     fn process_queued<T: GlyphPipeline>(&mut self, gfx: &mut Graphics, pipeline: &mut T) {
-        let pipeline = &mut self.pipeline;
-
         let mut brush_action;
 
         loop {
@@ -298,13 +207,7 @@ impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
         let (cache_width, cache_height) = glyph_brush.texture_dimensions();
         let cache = Cache::new(gfx, cache_width as _, cache_height as _).unwrap();
 
-        GlyphBrush {
-            // pipeline: GlyPipeline::new(gfx).unwrap(),
-            pipeline: DefaultGlyphPipeline::new(gfx).unwrap(),
-            pipelines: PipelineContainer::default(),
-            cache,
-            glyph_brush,
-        }
+        GlyphBrush { cache, glyph_brush }
     }
 }
 
