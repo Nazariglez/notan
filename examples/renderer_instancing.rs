@@ -95,7 +95,7 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     // Renderer pass as usual but instead of .draw uses .draw_instanced
     let mut renderer = gfx.create_renderer();
-    renderer.begin(Some(&ClearOptions::new(Color::BLACK)));
+    renderer.begin(Some(&ClearOptions::color(Color::BLACK)));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_buffers(&[&state.vbo, &state.ubo]);
     renderer.draw_instanced(0, 3, INSTANCES as _);

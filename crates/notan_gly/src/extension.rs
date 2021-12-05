@@ -1,9 +1,10 @@
 use crate::{DefaultGlyphPipeline, GlyphBrush, GlyphBrushBuilder, GlyphPipeline};
-use glyph_brush::{ab_glyph, Extra, Section};
+use glyph_brush::ab_glyph::Rect;
+use glyph_brush::{ab_glyph, Extra, GlyphPositioner, Section, SectionGlyph};
 use notan_app::{
     Commands, Device, ExtContainer, GfxExtension, GfxRenderer, Graphics, RenderTexture,
 };
-use notan_graphics::prelude::ClearOptions;
+use notan_graphics::prelude::{ClearOptions, Color};
 use notan_graphics::Renderer;
 use std::any::{Any, TypeId};
 use std::borrow::Cow;
@@ -58,7 +59,10 @@ impl GlyphExtension {
             .pipelines
             .get_mut(&TypeId::of::<DefaultGlyphPipeline>())
             .unwrap();
-        glyph_brush.create_renderer_from_queue(device, pipeline.deref_mut())
+        glyph_brush
+            .create_renderer(pipeline.deref_mut())
+            .clear(ClearOptions::color(Color::BLACK))
+            .process(device)
     }
 }
 

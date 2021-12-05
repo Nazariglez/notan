@@ -11,6 +11,7 @@ pub trait GlyphPipeline {
         &mut self,
         device: &mut Device,
         texture: &Texture,
+        clear: Option<ClearOptions>,
         transform: Mat4,
         target_width: i32,
         target_height: i32,
@@ -144,6 +145,7 @@ impl GlyphPipeline for DefaultGlyphPipeline {
         &mut self,
         device: &mut Device,
         texture: &Texture,
+        clear: Option<ClearOptions>,
         transform: Mat4,
         target_width: i32,
         target_height: i32,
@@ -161,7 +163,7 @@ impl GlyphPipeline for DefaultGlyphPipeline {
             renderer.set_scissors(region.x, region.y, region.width, region.height);
         }
 
-        renderer.begin(Some(&ClearOptions::new(Color::BLACK))); // TODO clear should be public to be managed by the user
+        renderer.begin(clear.as_ref());
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_texture(0, texture);
         renderer.bind_buffers(&[&self.vbo, &self.ubo]);

@@ -54,7 +54,7 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     glyphs.update(gfx, &mut state.renderer).unwrap();
 
     let mut renderer = gfx.create_renderer();
-    renderer.begin(Some(&ClearOptions::new(Color::new(0.7, 0.2, 0.3, 1.0))));
+    renderer.begin(Some(&ClearOptions::color(Color::new(0.7, 0.2, 0.3, 1.0))));
 
     // Pass to the GlyphRender the texture and the renderer to use
     state.renderer.render(&glyphs.texture, &mut renderer);

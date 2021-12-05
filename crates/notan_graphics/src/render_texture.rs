@@ -1,5 +1,5 @@
 use crate::texture::*;
-use crate::{Device, DropManager, ResourceId};
+use crate::{Device, DropManager, Renderer, ResourceId};
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -50,6 +50,10 @@ impl RenderTexture {
         let Self { texture, .. } = self;
 
         texture
+    }
+
+    pub fn create_renderer(&mut self) -> Renderer {
+        Renderer::new(self.width() as _, self.height() as _)
     }
 }
 
