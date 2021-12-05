@@ -354,7 +354,7 @@ pub struct ClearOptions {
 
 impl ClearOptions {
     /// Create a new struct just with color
-    pub fn new(color: Color) -> Self {
+    pub fn color(color: Color) -> Self {
         Self {
             color: Some(color),
             ..Default::default()

@@ -1,7 +1,7 @@
 use notan::gly::{ab_glyph, GlyphBrushBuilder, Section, Text};
 use notan::prelude::*;
 use notan_gly::ab_glyph::FontArc;
-use notan_gly::{DefaultGlyphPipeline, GlyConfig, Glyphs, GlyphBrush, GlyphExtension};
+use notan_gly::{DefaultGlyphPipeline, GlyConfig, GlyphBrush, GlyphExtension, Glyphs};
 
 #[derive(AppState)]
 struct State {}
@@ -24,27 +24,32 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let (width, height) = gfx.size();
 
-    let mut glyph = Glyphs::default();
+    let mut glyphs = Glyphs::default();
+
     // Queue sections to draw
-    glyph.queue(Section {
-        screen_position: (30.0, 30.0),
-        bounds: (width as f32, height as f32),
-        text: vec![Text::default()
-            .with_text("Hello glow_glyph!")
-            .with_color([1.0, 0.0, 0.0, 1.0])
-            .with_scale(40.0)],
-        ..Section::default()
-    });
+    glyphs.queue(
+        Section::new()
+            .with_screen_position((30.0, 30.0))
+            .with_bounds((width as _, height as _))
+            .add_text(
+                Text::default()
+                    .with_text("Hello notan_glyph!")
+                    .with_color([1.0, 0.0, 0.0, 1.0])
+                    .with_scale(40.0),
+            ),
+    );
 
-    glyph.queue(Section {
-        screen_position: (30.0, 90.0),
-        bounds: (width as f32, height as f32),
-        text: vec![Text::default()
-            .with_text("Hello glow_glyph!")
-            .with_color([1.0, 1.0, 1.0, 1.0])
-            .with_scale(40.0)],
-        ..Section::default()
-    });
+    glyphs.queue(
+        Section::new()
+            .with_screen_position((30.0, 90.0))
+            .with_bounds((width as _, height as _))
+            .add_text(
+                Text::default()
+                    .with_text("Hello notan_glyph!")
+                    .with_color([1.0, 1.0, 1.0, 1.0])
+                    .with_scale(40.0),
+            ),
+    );
 
-    gfx.render(&glyph);
+    gfx.render(&glyphs);
 }

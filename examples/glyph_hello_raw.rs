@@ -5,7 +5,7 @@
 use notan::gly::{ab_glyph, GlyphBrushBuilder, Section, Text};
 use notan::prelude::*;
 use notan_gly::ab_glyph::FontArc;
-use notan_gly::{DefaultGlyphPipeline, Glyphs, GlyphBrush, GlyphExtension};
+use notan_gly::{DefaultGlyphPipeline, GlyphBrush, GlyphExtension, Glyphs};
 
 #[derive(AppState)]
 struct State {
@@ -38,30 +38,36 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     let (width, height) = gfx.size();
 
     // Queue sections to draw
-    state.glyph_brush.queue(&Section {
-        screen_position: (30.0, 30.0),
-        bounds: (width as f32, height as f32),
-        text: vec![Text::default()
-            .with_text("Hello glow_glyph!")
-            .with_color([1.0, 0.0, 0.0, 1.0])
-            .with_scale(40.0)],
-        ..Section::default()
-    });
+    state.glyph_brush.queue(
+        Section::new()
+            .with_screen_position((30.0, 30.0))
+            .with_bounds((width as _, height as _))
+            .add_text(
+                Text::default()
+                    .with_text("Hello notan_glyph!")
+                    .with_color([1.0, 0.0, 0.0, 1.0])
+                    .with_scale(40.0),
+            ),
+    );
 
-    state.glyph_brush.queue(Section {
-        screen_position: (30.0, 90.0),
-        bounds: (width as f32, height as f32),
-        text: vec![Text::default()
-            .with_text("Hello glow_glyph!")
-            .with_color([1.0, 1.0, 1.0, 1.0])
-            .with_scale(40.0)],
-        ..Section::default()
-    });
+    state.glyph_brush.queue(
+        Section::new()
+            .with_screen_position((30.0, 90.0))
+            .with_bounds((width as _, height as _))
+            .add_text(
+                Text::default()
+                    .with_text("Hello notan_glyph!")
+                    .with_color([1.0, 1.0, 1.0, 1.0])
+                    .with_scale(40.0),
+            ),
+    );
 
-    // Process the sections queued and create a renderer
+    // process the queue and return a renderer to draw
     let renderer = state
         .glyph_brush
-        .create_renderer_from_queue(gfx, &mut state.pipeline);
+        .create_renderer(&mut state.pipeline)
+        .clear(ClearOptions::color(Color::BLACK))
+        .process(gfx);
 
     // Draw the renderer to the screen
     gfx.render(&renderer);

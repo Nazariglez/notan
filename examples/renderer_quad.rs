@@ -45,7 +45,7 @@ fn main() -> Result<(), String> {
 }
 
 fn setup(gfx: &mut Graphics) -> State {
-    let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
+    let clear_options = ClearOptions::color(Color::new(0.1, 0.2, 0.3, 1.0));
 
     #[rustfmt::skip]
         let vertices = [

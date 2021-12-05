@@ -10,7 +10,7 @@ use instance::Instance;
 
 pub use builder::GlyphBrushBuilder;
 pub use config::GlyConfig;
-pub use extension::{Glyphs, GlyphExtension};
+pub use extension::{GlyphExtension, Glyphs};
 pub use glyph_brush::ab_glyph;
 pub use glyph_brush::{
     BuiltInLineBreaker, Extra, FontId, GlyphCruncher, GlyphPositioner, HorizontalAlign, Layout,
@@ -24,10 +24,12 @@ use ab_glyph::{Font, FontArc, Rect};
 use core::hash::BuildHasher;
 use std::borrow::Cow;
 
+use crate::ab_glyph::{Glyph, Point};
 use crate::pipeline::GlyphPipeline;
 use glyph_brush::{BrushAction, BrushError, DefaultSectionHasher};
 use log::{log_enabled, warn};
 use notan_app::Graphics;
+use notan_graphics::prelude::{ClearOptions, Pipeline};
 use notan_graphics::{Device, Renderer};
 use notan_math::glam::Mat4;
 
@@ -136,24 +138,86 @@ impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
     }
 }
 
-impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
-    pub fn create_renderer_from_queue(
-        &mut self,
-        device: &mut Device,
-        pipeline: &mut dyn GlyphPipeline,
-    ) -> Renderer {
-        // TODO pattern builder to add size, scissor/region and clear options
-        self.process_queued(device, pipeline);
-        let (width, height) = device.size();
-        let transform = Mat4::orthographic_lh(0.0, width as _, height as _, 0.0, -1.0, 1.0);
-        return pipeline.create_renderer(
-            device,
-            self.cache.texture(),
-            transform,
+pub struct RenderQueueBuilder<'a, F = FontArc, H = DefaultSectionHasher> {
+    glyph_brush: &'a mut GlyphBrush<F, H>,
+    pipeline: &'a mut dyn GlyphPipeline,
+    clear: Option<ClearOptions>,
+    region: Option<notan_math::Rect>,
+    size: Option<(i32, i32)>,
+    transform: Option<Mat4>,
+}
+
+impl<'a, F: Font + Sync, H: BuildHasher> RenderQueueBuilder<'a, F, H> {
+    fn new(glyph_brush: &'a mut GlyphBrush<F, H>, pipeline: &'a mut dyn GlyphPipeline) -> Self {
+        Self {
+            glyph_brush,
+            pipeline,
+            clear: None,
+            region: None,
+            size: None,
+            transform: None,
+        }
+    }
+
+    pub fn transform(mut self, projection: Mat4) -> Self {
+        self.transform = Some(projection);
+        self
+    }
+
+    pub fn clear(mut self, options: ClearOptions) -> Self {
+        self.clear = Some(options);
+        self
+    }
+
+    pub fn region(mut self, x: f32, y: f32, width: f32, height: f32) -> Self {
+        self.region = Some(notan_math::Rect {
+            x,
+            y,
             width,
             height,
-            None,
-        );
+        });
+        self
+    }
+
+    pub fn size(mut self, width: i32, height: i32) -> Self {
+        self.size = Some((width, height));
+        self
+    }
+
+    pub fn process(self, device: &mut Device) -> Renderer {
+        let Self {
+            glyph_brush,
+            pipeline,
+            clear,
+            region,
+            size,
+            transform,
+        } = self;
+
+        glyph_brush.process_queued(device, pipeline);
+
+        let (width, height) = size.unwrap_or_else(|| device.size());
+        let projection = transform
+            .unwrap_or_else(|| Mat4::orthographic_lh(0.0, width as _, height as _, 0.0, -1.0, 1.0));
+
+        pipeline.create_renderer(
+            device,
+            glyph_brush.cache.texture(),
+            clear,
+            projection,
+            width,
+            height,
+            region,
+        )
+    }
+}
+
+impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
+    pub fn create_renderer<'a>(
+        &'a mut self,
+        pipeline: &'a mut dyn GlyphPipeline,
+    ) -> RenderQueueBuilder<F, H> {
+        RenderQueueBuilder::new(self, pipeline)
     }
 
     fn process_queued(&mut self, device: &mut Device, pipeline: &mut dyn GlyphPipeline) {
