@@ -1328,6 +1328,7 @@ dependencies = [
  "notan_log",
  "notan_macro",
  "notan_math",
+ "notan_text",
  "notan_utils",
  "wasm-bindgen",
 ]
@@ -1465,6 +1466,16 @@ dependencies = [
  "glam",
  "rand",
  "rand_pcg",
+]
+
+[[package]]
+name = "notan_text"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "notan_app",
+ "notan_gly",
+ "notan_graphics",
 ]
 
 [[package]]

@@ -17,7 +17,7 @@ pub use glyph_brush::{
     LineBreak, LineBreaker, Section, SectionGeometry, SectionGlyph, SectionGlyphIter, SectionText,
     Text, VerticalAlign,
 };
-pub use pipeline::DefaultGlyphPipeline;
+pub use pipeline::{DefaultGlyphPipeline, GlyphPipeline};
 
 use ab_glyph::{Font, FontArc, Rect};
 
@@ -25,7 +25,6 @@ use core::hash::BuildHasher;
 use std::borrow::Cow;
 
 use crate::ab_glyph::{Glyph, Point};
-use crate::pipeline::GlyphPipeline;
 use glyph_brush::{BrushAction, BrushError, DefaultSectionHasher};
 use log::{log_enabled, warn};
 use notan_app::Graphics;
