@@ -18,6 +18,7 @@ notan_gly = { path = "crates/notan_gly", optional = true }
 notan_draw = { path = "crates/notan_draw", optional = true }
 notan_backend = { path = "crates/notan_backend", optional = true }
 notan_egui = { path = "crates/notan_egui", optional = true }
+notan_text = { path = "crates/notan_text", optional = true }
 
 [workspace]
 members = ["crates/*"]
@@ -30,6 +31,7 @@ glyphs = ["notan_glyph"]
 gly = ["notan_gly"]
 draw = ["notan_draw"]
 egui = ["notan_egui"]
+text = ["notan_text"]
 
 [dev-dependencies]
 wasm-bindgen = "0.2.78"

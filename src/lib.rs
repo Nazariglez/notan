@@ -25,3 +25,6 @@ pub use notan_draw as draw;
 
 #[cfg(feature = "egui")]
 pub use notan_egui as egui;
+
+#[cfg(feature = "text")]
+pub use notan_text as text;

@@ -1,0 +1,12 @@
+[package]
+name = "notan_text"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+notan_app = { path = "../notan_app" }
+notan_graphics = { path = "../notan_graphics" }
+notan_gly = { path = "../notan_gly" }
+log = "0.4"
