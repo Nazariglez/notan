@@ -5,18 +5,52 @@
 use notan::prelude::*;
 use notan::text::*;
 
-#[notan_main]
-fn main() -> Result<(), String> {
-    notan::init().set_config(TextConfig).draw(draw).build()
+#[derive(AppState)]
+struct State {
+    s: String,
 }
 
-fn draw(gfx: &mut Graphics) {
+#[notan_main]
+fn main() -> Result<(), String> {
+    notan::init_with(|gfx: &mut Graphics| {
+        gfx.extension_mut::<TT, TextExtension>()
+            .unwrap()
+            .create_font(include_bytes!("./assets/Ubuntu-B.ttf"))
+            .unwrap();
+
+        State {
+            s: "hello".to_string(),
+        }
+    })
+    .set_config(TextConfig)
+    .draw(draw)
+    .build()
+}
+
+fn use_tt(tt: &TT) {
+    println!("TT!");
+}
+
+fn draw(gfx: &mut Graphics, state: &mut State) {
     let (w, h) = gfx.size();
     let mut tt = TT::new(w as _, h as _);
-    tt.position(30.0, 30.0);
-    tt.add_text("test");
+    tt.add_text(&state.s)
+        .position(30.0, 30.0)
+        .color(Color::RED)
+        .size(30.0);
+    // .position(30.0, 30.0);
 
+    // tt.chain_text("text")
+    //
+    // tt.position(30.0, 30.0);
+    //
+    // tt.add_text("Hello text!");
+    // tt.add_text("More about hello world?");
+    // // tt.position(60.0, 90.0);
+    // tt.add_text("another text...");
+    //
     gfx.render(&tt);
+    // use_tt(&tt);
 
     // // Queue sections to draw
     // state.glyph_brush.queue(
