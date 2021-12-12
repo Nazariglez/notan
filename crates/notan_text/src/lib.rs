@@ -71,10 +71,12 @@ impl TextExtension {
         text.sections.iter().for_each(|s| glyph_brush.queue(s));
         glyph_brush.queue(&text.current_section);
 
-        let mut pipeline = self
-            .pipelines
-            .get_mut(&TypeId::of::<DefaultGlyphPipeline>())
-            .unwrap();
+        let pipeline_type = text
+            .pipeline_type
+            .unwrap_or_else(|| TypeId::of::<DefaultGlyphPipeline>());
+
+        let mut pipeline = self.pipelines.get_mut(&pipeline_type).unwrap();
+
         glyph_brush
             .create_renderer(pipeline.deref_mut())
             .clear(ClearOptions::color(Color::BLACK))
@@ -89,8 +91,9 @@ impl GfxExtension<TT<'_>> for TextExtension {
 }
 
 pub struct AddTextBuilder<'b, 'a: 'b> {
-    section: &'b mut Section<'a>,
+    tt: &'b mut TT<'a>,
     text: Option<&'a str>,
+    section: Option<Section<'a>>,
     color: notan_graphics::color::Color,
     z: f32,
     size: f32,
@@ -98,7 +101,9 @@ pub struct AddTextBuilder<'b, 'a: 'b> {
 
 impl<'b, 'a: 'b> AddTextBuilder<'b, 'a> {
     pub fn position(mut self, x: f32, y: f32) -> Self {
-        self.section.screen_position = (x, y);
+        if let Some(s) = &mut self.section {
+            s.screen_position = (x, y);
+        }
         self
     }
 
@@ -120,17 +125,57 @@ impl<'b, 'a: 'b> AddTextBuilder<'b, 'a> {
 
 impl Drop for AddTextBuilder<'_, '_> {
     fn drop(&mut self) {
-        if let Some(text) = self.text.take() {
-            if text.is_empty() {
-                return;
+        if let (Some(text), Some(mut section)) = (self.text.take(), self.section.take()) {
+            if !text.is_empty() {
+                section.text.push(
+                    Text::new(text)
+                        .with_color(self.color.rgba())
+                        .with_scale(self.size)
+                        .with_z(self.z),
+                );
             }
 
-            self.section.text.push(
-                Text::new(text)
-                    .with_color(self.color.rgba())
-                    .with_scale(self.size)
-                    .with_z(self.z),
-            );
+            self.tt.sections.push(section);
+        }
+    }
+}
+
+pub struct ChainTextBuilder<'b, 'a: 'b> {
+    section: &'b mut Section<'a>,
+    text: Option<&'a str>,
+    color: notan_graphics::color::Color,
+    z: f32,
+    size: f32,
+}
+
+impl<'b, 'a: 'b> ChainTextBuilder<'b, 'a> {
+    pub fn color(mut self, color: notan_graphics::color::Color) -> Self {
+        self.color = color;
+        self
+    }
+
+    pub fn depth(mut self, z: f32) -> Self {
+        self.z = z;
+        self
+    }
+
+    pub fn size(mut self, size: f32) -> Self {
+        self.size = size;
+        self
+    }
+}
+
+impl Drop for ChainTextBuilder<'_, '_> {
+    fn drop(&mut self) {
+        if let Some(text) = self.text.take() {
+            if !text.is_empty() {
+                self.section.text.push(
+                    Text::new(text)
+                        .with_color(self.color.rgba())
+                        .with_scale(self.size)
+                        .with_z(self.z),
+                );
+            }
         }
     }
 }
@@ -140,7 +185,7 @@ pub struct TT<'a> {
     height: f32,
     sections: Vec<Section<'a>>,
     current_section: Section<'a>,
-    dirty: bool,
+    pub(crate) pipeline_type: Option<TypeId>,
 }
 
 impl<'a> TT<'a> {
@@ -150,20 +195,40 @@ impl<'a> TT<'a> {
             current_section: Default::default(),
             width,
             height,
-            dirty: true,
+            pipeline_type: None,
         }
+    }
+
+    pub fn with_pipeline<T: GlyphPipeline + 'static>(&mut self) {
+        self.pipeline_type = Some(TypeId::of::<T>());
     }
 
     pub fn add_text<'b>(&'b mut self, text: &'a str) -> AddTextBuilder<'b, 'a>
     where
         'a: 'b,
     {
-        self.sections.push(std::mem::replace(
-            &mut self.current_section,
-            Default::default(),
-        ));
         AddTextBuilder {
-            section: &mut self.current_section,
+            tt: self,
+            section: Some(Default::default()),
+            text: Some(text),
+            color: notan_graphics::color::Color::WHITE,
+            z: 0.0,
+            size: 16.0,
+        }
+    }
+
+    pub fn chain_text<'b>(&'b mut self, text: &'a str) -> ChainTextBuilder<'b, 'a>
+    where
+        'a: 'b,
+    {
+        if self.sections.is_empty() {
+            self.sections.push(Default::default());
+        }
+
+        let section = self.sections.last_mut().unwrap();
+
+        ChainTextBuilder {
+            section,
             text: Some(text),
             color: notan_graphics::color::Color::WHITE,
             z: 0.0,
