@@ -4,7 +4,7 @@ use notan_app::{ExtContainer, GfxExtension, GfxRenderer, Graphics};
 use notan_gly::ab_glyph::FontArc;
 use notan_gly::{
     ab_glyph, BuiltInLineBreaker, DefaultGlyphPipeline, FontId, GlyphBrush, GlyphBrushBuilder,
-    GlyphPipeline, Layout, LineBreaker, Section, Text,
+    GlyphPipeline, HorizontalAlign, Layout, LineBreaker, Section, Text as GText, VerticalAlign,
 };
 use notan_graphics::color::Color;
 use notan_graphics::commands::Commands;
@@ -26,6 +26,7 @@ pub struct Font {
 pub struct TextExtension {
     glyph_brush: GlyphBrush,
     pipelines: HashMap<TypeId, Box<dyn GlyphPipeline>>,
+    font_loaded: bool,
 }
 
 impl TextExtension {
@@ -35,6 +36,7 @@ impl TextExtension {
         let mut ext = Self {
             glyph_brush,
             pipelines,
+            font_loaded: false,
         };
 
         ext.add_pipeline(DefaultGlyphPipeline::new(gfx)?);
@@ -42,8 +44,9 @@ impl TextExtension {
     }
 
     pub fn create_font(&mut self, data: &[u8]) -> Result<Font, String> {
-        let font = FontArc::try_from_vec(data.to_vec()).unwrap();
+        let font = FontArc::try_from_vec(data.to_vec()).map_err(|err| err.to_string())?;
         let id = self.glyph_brush.add_font(font);
+
         Ok(Font {
             id: id.0 as _,
             inner: id,
@@ -66,7 +69,7 @@ impl TextExtension {
         self.pipelines.remove(&TypeId::of::<T>());
     }
 
-    fn create_renderer(&mut self, device: &mut Device, text: &TT) -> Renderer {
+    fn create_renderer(&mut self, device: &mut Device, text: &Text) -> Renderer {
         let mut glyph_brush = &mut self.glyph_brush;
         text.sections.iter().for_each(|s| glyph_brush.queue(s));
         glyph_brush.queue(&text.current_section);
@@ -75,31 +78,42 @@ impl TextExtension {
             .pipeline_type
             .unwrap_or_else(|| TypeId::of::<DefaultGlyphPipeline>());
 
+        let clear_options = text.clear_options.unwrap_or_else(|| ClearOptions::none());
+
         let mut pipeline = self.pipelines.get_mut(&pipeline_type).unwrap();
 
         glyph_brush
             .create_renderer(pipeline.deref_mut())
-            .clear(ClearOptions::color(Color::BLACK))
+            .clear(clear_options)
+            .size(text.width, text.height)
             .process(device)
     }
 }
 
-impl GfxExtension<TT<'_>> for TextExtension {
-    fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a TT) -> &'a [Commands] {
+impl GfxExtension<Text<'_>> for TextExtension {
+    fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a Text) -> &'a [Commands] {
         &[]
     }
 }
 
 pub struct AddTextBuilder<'b, 'a: 'b> {
-    tt: &'b mut TT<'a>,
-    text: Option<&'a str>,
+    text: &'b mut Text<'a>,
+    text_str: Option<&'a str>,
     section: Option<Section<'a>>,
-    color: notan_graphics::color::Color,
+    color: Color,
     z: f32,
     size: f32,
+    font: FontId,
+    h_align: HorizontalAlign,
+    v_align: VerticalAlign,
 }
 
 impl<'b, 'a: 'b> AddTextBuilder<'b, 'a> {
+    pub fn font(mut self, font: &Font) -> Self {
+        self.font = font.inner;
+        self
+    }
+
     pub fn position(mut self, x: f32, y: f32) -> Self {
         if let Some(s) = &mut self.section {
             s.screen_position = (x, y);
@@ -107,7 +121,44 @@ impl<'b, 'a: 'b> AddTextBuilder<'b, 'a> {
         self
     }
 
-    pub fn color(mut self, color: notan_graphics::color::Color) -> Self {
+    pub fn max_width(mut self, width: f32) -> Self {
+        if let Some(s) = &mut self.section {
+            s.bounds.0 = width;
+        }
+        self
+    }
+
+    pub fn h_align_left(mut self) -> Self {
+        self.h_align = HorizontalAlign::Left;
+        self
+    }
+
+    pub fn h_align_center(mut self) -> Self {
+        self.h_align = HorizontalAlign::Center;
+        self
+    }
+
+    pub fn h_align_right(mut self) -> Self {
+        self.h_align = HorizontalAlign::Right;
+        self
+    }
+
+    pub fn v_align_top(mut self) -> Self {
+        self.v_align = VerticalAlign::Top;
+        self
+    }
+
+    pub fn v_align_middle(mut self) -> Self {
+        self.v_align = VerticalAlign::Center;
+        self
+    }
+
+    pub fn v_align_bottom(mut self) -> Self {
+        self.v_align = VerticalAlign::Bottom;
+        self
+    }
+
+    pub fn color(mut self, color: Color) -> Self {
         self.color = color;
         self
     }
@@ -125,17 +176,22 @@ impl<'b, 'a: 'b> AddTextBuilder<'b, 'a> {
 
 impl Drop for AddTextBuilder<'_, '_> {
     fn drop(&mut self) {
-        if let (Some(text), Some(mut section)) = (self.text.take(), self.section.take()) {
+        if let (Some(text), Some(mut section)) = (self.text_str.take(), self.section.take()) {
             if !text.is_empty() {
                 section.text.push(
-                    Text::new(text)
+                    GText::new(text)
                         .with_color(self.color.rgba())
                         .with_scale(self.size)
-                        .with_z(self.z),
+                        .with_z(self.z)
+                        .with_font_id(self.font),
                 );
             }
 
-            self.tt.sections.push(section);
+            section.layout = Layout::default()
+                .h_align(self.h_align)
+                .v_align(self.v_align);
+
+            self.text.sections.push(section);
         }
     }
 }
@@ -143,13 +199,19 @@ impl Drop for AddTextBuilder<'_, '_> {
 pub struct ChainTextBuilder<'b, 'a: 'b> {
     section: &'b mut Section<'a>,
     text: Option<&'a str>,
-    color: notan_graphics::color::Color,
+    color: Color,
     z: f32,
     size: f32,
+    font: FontId,
 }
 
 impl<'b, 'a: 'b> ChainTextBuilder<'b, 'a> {
-    pub fn color(mut self, color: notan_graphics::color::Color) -> Self {
+    pub fn font(mut self, font: &Font) -> Self {
+        self.font = font.inner;
+        self
+    }
+
+    pub fn color(mut self, color: Color) -> Self {
         self.color = color;
         self
     }
@@ -170,32 +232,50 @@ impl Drop for ChainTextBuilder<'_, '_> {
         if let Some(text) = self.text.take() {
             if !text.is_empty() {
                 self.section.text.push(
-                    Text::new(text)
+                    GText::new(text)
                         .with_color(self.color.rgba())
                         .with_scale(self.size)
-                        .with_z(self.z),
+                        .with_z(self.z)
+                        .with_font_id(self.font),
                 );
             }
         }
     }
 }
 
-pub struct TT<'a> {
-    width: f32,
-    height: f32,
-    sections: Vec<Section<'a>>,
-    current_section: Section<'a>,
+pub struct Text<'a> {
+    pub(crate) width: i32,
+    pub(crate) height: i32,
+    pub(crate) sections: Vec<Section<'a>>,
+    pub(crate) current_section: Section<'a>,
     pub(crate) pipeline_type: Option<TypeId>,
+    pub(crate) clear_options: Option<ClearOptions>,
 }
 
-impl<'a> TT<'a> {
-    pub fn new(width: f32, height: f32) -> Self {
+impl<'a> Text<'a> {
+    pub fn new(width: i32, height: i32) -> Self {
         Self {
             sections: vec![],
             current_section: Default::default(),
             width,
             height,
             pipeline_type: None,
+            clear_options: None,
+        }
+    }
+
+    pub fn clear_options(&mut self, options: ClearOptions) {
+        self.clear_options = Some(options);
+    }
+
+    pub fn clear_color(&mut self, color: Color) {
+        if self.clear_options.is_none() {
+            self.clear_options = Some(ClearOptions::color(color));
+            return;
+        }
+
+        if let Some(opts) = &mut self.clear_options {
+            opts.color = Some(color);
         }
     }
 
@@ -203,21 +283,24 @@ impl<'a> TT<'a> {
         self.pipeline_type = Some(TypeId::of::<T>());
     }
 
-    pub fn add_text<'b>(&'b mut self, text: &'a str) -> AddTextBuilder<'b, 'a>
+    pub fn add<'b>(&'b mut self, text: &'a str) -> AddTextBuilder<'b, 'a>
     where
         'a: 'b,
     {
         AddTextBuilder {
-            tt: self,
+            text: self,
             section: Some(Default::default()),
-            text: Some(text),
-            color: notan_graphics::color::Color::WHITE,
+            text_str: Some(text),
+            color: Color::WHITE,
             z: 0.0,
             size: 16.0,
+            font: Default::default(),
+            h_align: HorizontalAlign::Left,
+            v_align: VerticalAlign::Top,
         }
     }
 
-    pub fn chain_text<'b>(&'b mut self, text: &'a str) -> ChainTextBuilder<'b, 'a>
+    pub fn chain<'b>(&'b mut self, text: &'a str) -> ChainTextBuilder<'b, 'a>
     where
         'a: 'b,
     {
@@ -230,25 +313,44 @@ impl<'a> TT<'a> {
         ChainTextBuilder {
             section,
             text: Some(text),
-            color: notan_graphics::color::Color::WHITE,
+            color: Color::WHITE,
             z: 0.0,
             size: 16.0,
+            font: Default::default(),
         }
     }
 }
 
-impl GfxRenderer for TT<'_> {
+impl GfxRenderer for Text<'_> {
     fn render(
         &self,
         device: &mut Device,
         extensions: &mut ExtContainer,
         target: Option<&RenderTexture>,
     ) {
-        let mut ext = extensions.get_mut::<TT, TextExtension>().unwrap();
+        let mut ext = extensions.get_mut::<Text, TextExtension>().unwrap();
         let renderer = ext.create_renderer(device, self);
         match target {
             None => device.render(renderer.commands()),
             Some(rt) => device.render_to(rt, renderer.commands()),
         }
+    }
+}
+
+pub trait CreateText {
+    fn create_text<'a>(&self) -> Text<'a>;
+    fn create_font(&mut self, data: &[u8]) -> Result<Font, String>;
+}
+
+impl CreateText for Graphics {
+    fn create_text<'a>(&self) -> Text<'a> {
+        let (width, height) = self.device.size();
+        Text::new(width, height)
+    }
+
+    fn create_font(&mut self, data: &[u8]) -> Result<Font, String> {
+        self.extension_mut::<Text<'_>, TextExtension>()
+            .ok_or_else(|| "The TextExtension is not in use".to_string())?
+            .create_font(data)
     }
 }
