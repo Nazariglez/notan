@@ -1,4 +1,4 @@
-use crate::{Font, TextExtension, TT};
+use crate::{Font, Text, TextExtension};
 use notan_app::assets::AssetLoader;
 use notan_app::{AppBuilder, AppState, BackendSystem, BuildConfig, Graphics};
 
@@ -21,7 +21,7 @@ where
 
 fn parse_font(id: &str, data: Vec<u8>, gfx: &mut Graphics) -> Result<Font, String> {
     let font = gfx
-        .extension_mut::<TT, TextExtension>()
+        .extension_mut::<Text, TextExtension>()
         .ok_or_else(|| "TextExtension is not added to Graphics")?
         .create_font(&data)?;
     log::debug!("Asset '{}' parsed as TextExtension Font", font.id);

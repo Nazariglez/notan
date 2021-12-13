@@ -193,6 +193,11 @@ impl<'a, F: Font + Sync, H: BuildHasher> RenderQueueBuilder<'a, F, H> {
             transform,
         } = self;
 
+        debug_assert!(
+            !glyph_brush.fonts().is_empty(),
+            "You need to add at least one Font to be used as default."
+        );
+
         glyph_brush.process_queued(device, pipeline);
 
         let (width, height) = size.unwrap_or_else(|| device.size());

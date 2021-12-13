@@ -345,7 +345,7 @@ impl Default for PipelineOptions {
 }
 
 /// Clear options to use at the beginning of the frame
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct ClearOptions {
     pub color: Option<Color>,
     pub depth: Option<f32>,

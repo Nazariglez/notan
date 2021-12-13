@@ -7,40 +7,46 @@ use notan::text::*;
 
 #[derive(AppState)]
 struct State {
-    s: String,
+    font: Font,
+    font2: Font,
 }
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    notan::init_with(|gfx: &mut Graphics| {
-        gfx.extension_mut::<TT, TextExtension>()
-            .unwrap()
-            .create_font(include_bytes!("./assets/Ubuntu-B.ttf"))
-            .unwrap();
-
-        State {
-            s: "hello".to_string(),
-        }
-    })
-    .set_config(TextConfig)
-    .draw(draw)
-    .build()
+    notan::init_with(setup)
+        .set_config(TextConfig)
+        .draw(draw)
+        .build()
 }
 
-fn use_tt(tt: &TT) {
-    println!("TT!");
+fn setup(gfx: &mut Graphics) -> State {
+    let font = gfx
+        .create_font(include_bytes!("./assets/Ubuntu-B.ttf"))
+        .unwrap();
+
+    let font2 = gfx
+        .create_font(include_bytes!("./assets/kenney_pixel-webfont.ttf"))
+        .unwrap();
+
+    State { font, font2 }
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
-    let (w, h) = gfx.size();
-    let mut tt = TT::new(w as _, h as _);
+    let mut text = gfx.create_text();
+    text.clear_color(Color::BLACK);
 
-    tt.add_text(&state.s)
-        .position(30.0, 30.0)
-        .color(Color::RED)
+    text.add("Hello ")
+        .position(400.0, 30.0)
+        .h_align_center()
+        .color(Color::ORANGE)
         .size(30.0);
 
-    tt.chain_text(" SUP!").size(50.0).color(Color::BLUE);
+    text.chain("Notan! ").size(50.0).color(Color::RED);
 
-    gfx.render(&tt);
+    text.chain("(Using TextExtension)")
+        .font(&state.font2)
+        .size(20.0)
+        .color(Color::GRAY.with_alpha(0.5));
+
+    gfx.render(&text);
 }
