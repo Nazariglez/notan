@@ -1,7 +1,3 @@
-/*
-   This example shows how to use GlyphBrush directly without the GlyphExtension
-*/
-
 use notan::prelude::*;
 use notan::text::*;
 
