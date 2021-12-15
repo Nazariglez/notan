@@ -293,7 +293,7 @@ impl<'a> Text<'a> {
         }
     }
 
-    pub fn with_pipeline<T: GlyphPipeline + 'static>(&mut self) {
+    pub fn use_pipeline<T: GlyphPipeline + 'static>(&mut self) {
         self.pipeline_type = Some(TypeId::of::<T>());
     }
 
