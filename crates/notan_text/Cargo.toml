@@ -9,4 +9,5 @@ edition = "2021"
 notan_app = { path = "../notan_app" }
 notan_graphics = { path = "../notan_graphics" }
 notan_gly = { path = "../notan_gly" }
+notan_math = { path = "../notan_math" }
 log = "0.4"

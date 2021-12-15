@@ -17,6 +17,8 @@ use std::ptr::addr_of;
 
 use crate::ab_glyph::PxScale;
 pub use config::TextConfig;
+use notan_math::glam::Mat4;
+use notan_math::Rect;
 
 pub struct Font {
     id: u64,
@@ -79,14 +81,22 @@ impl TextExtension {
             .unwrap_or_else(|| TypeId::of::<DefaultGlyphPipeline>());
 
         let clear_options = text.clear_options.unwrap_or_else(|| ClearOptions::none());
-
         let mut pipeline = self.pipelines.get_mut(&pipeline_type).unwrap();
 
-        glyph_brush
+        let mut builder = glyph_brush
             .create_renderer(pipeline.deref_mut())
             .clear(clear_options)
-            .size(text.width, text.height)
-            .process(device)
+            .size(text.width, text.height);
+
+        if let Some(transform) = text.transform {
+            builder = builder.transform(transform);
+        }
+
+        if let Some(region) = text.region {
+            builder = builder.region(region.x, region.y, region.width, region.height);
+        }
+
+        builder.process(device)
     }
 }
 
@@ -250,6 +260,8 @@ pub struct Text<'a> {
     pub(crate) current_section: Section<'a>,
     pub(crate) pipeline_type: Option<TypeId>,
     pub(crate) clear_options: Option<ClearOptions>,
+    pub(crate) transform: Option<Mat4>,
+    pub(crate) region: Option<Rect>,
 }
 
 impl<'a> Text<'a> {
@@ -261,6 +273,8 @@ impl<'a> Text<'a> {
             height,
             pipeline_type: None,
             clear_options: None,
+            transform: None,
+            region: None,
         }
     }
 
@@ -281,6 +295,19 @@ impl<'a> Text<'a> {
 
     pub fn with_pipeline<T: GlyphPipeline + 'static>(&mut self) {
         self.pipeline_type = Some(TypeId::of::<T>());
+    }
+
+    pub fn transform(&mut self, transform: Mat4) {
+        self.transform = Some(transform);
+    }
+
+    pub fn region(&mut self, x: f32, y: f32, width: f32, height: f32) {
+        self.region = Some(Rect {
+            x,
+            y,
+            width,
+            height,
+        });
     }
 
     pub fn add<'b>(&'b mut self, text: &'a str) -> AddTextBuilder<'b, 'a>
