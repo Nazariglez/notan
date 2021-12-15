@@ -806,9 +806,9 @@ dependencies = [
 
 [[package]]
 name = "glam"
-version = "0.19.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b8509e6791516e81c1a630d0bd7fbac36d2fa8712a9da8662e716b52d5051ca"
+checksum = "68270e16582ea40f9c5b2fcd588fbc9cb696577222e04a64d9085cc314806a8a"
 
 [[package]]
 name = "glow"
@@ -1501,6 +1501,7 @@ dependencies = [
  "notan_app",
  "notan_gly",
  "notan_graphics",
+ "notan_math",
 ]
 
 [[package]]
