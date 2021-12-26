@@ -4,21 +4,12 @@ use notan_glyph::{Font, GlyphPlugin};
 
 pub trait CreateDraw {
     fn create_draw(&self) -> Draw;
-    fn create_font(&self, data: &[u8]) -> Result<Font, String>;
 }
 
 impl CreateDraw for Graphics {
     fn create_draw(&self) -> Draw {
         let (width, height) = self.device.size();
         Draw::new(width, height)
-    }
-
-    fn create_font(&self, data: &[u8]) -> Result<Font, String> {
-        let mut ext = self
-            .extension_mut::<Draw, DrawExtension>()
-            .ok_or_else(|| "The DrawExtension is not in use.".to_string())?;
-
-        ext.glyphs.create_font(data)
     }
 }
 

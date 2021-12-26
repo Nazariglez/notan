@@ -1,10 +1,11 @@
 use crate::builder::DrawProcess;
 use crate::draw::{Draw, TextInfo};
 use crate::transform::DrawTransform;
-use notan_glyph::{Font, Text};
+use notan_glyph::Text;
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
 use notan_math::glam::Mat3;
+use notan_text::Font;
 
 pub struct TextSection<'a> {
     matrix: Option<Mat3>,

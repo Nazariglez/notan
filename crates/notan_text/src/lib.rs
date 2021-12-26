@@ -20,6 +20,7 @@ pub use config::TextConfig;
 use notan_math::glam::Mat4;
 use notan_math::Rect;
 
+#[derive(Clone, Copy, Debug)]
 pub struct Font {
     id: u64,
     inner: FontId,
@@ -84,7 +85,7 @@ impl TextExtension {
         let mut pipeline = self.pipelines.get_mut(&pipeline_type).unwrap();
 
         let mut builder = glyph_brush
-            .create_renderer(pipeline.deref_mut())
+            .process(device, pipeline.deref_mut())
             .clear(clear_options)
             .size(text.width, text.height);
 
@@ -96,7 +97,7 @@ impl TextExtension {
             builder = builder.region(region.x, region.y, region.width, region.height);
         }
 
-        builder.process(device)
+        builder.create_renderer()
     }
 }
 
@@ -366,7 +367,6 @@ impl GfxRenderer for Text<'_> {
 
 pub trait CreateText {
     fn create_text<'a>(&self) -> Text<'a>;
-    fn create_font(&mut self, data: &[u8]) -> Result<Font, String>;
 }
 
 impl CreateText for Graphics {
@@ -374,7 +374,20 @@ impl CreateText for Graphics {
         let (width, height) = self.device.size();
         Text::new(width, height)
     }
+}
 
+impl CreateText for RenderTexture {
+    fn create_text<'a>(&self) -> Text<'a> {
+        let (width, height) = self.size();
+        Text::new(width as _, height as _)
+    }
+}
+
+pub trait CreateFont {
+    fn create_font(&mut self, data: &[u8]) -> Result<Font, String>;
+}
+
+impl CreateFont for Graphics {
     fn create_font(&mut self, data: &[u8]) -> Result<Font, String> {
         self.extension_mut::<Text<'_>, TextExtension>()
             .ok_or_else(|| "The TextExtension is not in use".to_string())?

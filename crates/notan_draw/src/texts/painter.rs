@@ -1,9 +1,11 @@
 use crate::batch::*;
 use crate::manager::process_pipeline;
-use notan_glyph::{FontVertex, GlyphPipeline, GlyphPlugin};
+// use notan_glyph::{FontVertex, GlyphPipeline, GlyphPlugin};
+use notan_gly::GlyphPipeline;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 use notan_math::glam::{Mat4, Vec3};
+use notan_math::Rect;
 
 //language=glsl
 const TEXT_VERTEX: ShaderSource = vertex_shader! {
@@ -200,14 +202,33 @@ impl TextPainter {
     }
 }
 
-impl GlyphPipeline for TextPainter {
-    fn update(&mut self, _device: &mut Device, vertices: Option<&[FontVertex]>) {
-        if let Some(vert) = vertices {
-            self.font_vertices = vert.to_vec();
-        }
+// impl GlyphPipeline for TextPainter {
+//     fn update(&mut self, _device: &mut Device, vertices: Option<&[FontVertex]>) {
+//         if let Some(vert) = vertices {
+//             self.font_vertices = vert.to_vec();
+//         }
+//     }
+//
+//     fn render(&mut self, _texture: &Texture, _renderer: &mut Renderer) {}
+// }
+
+impl GlyphPipeline for TextPainer {
+    fn create_renderer(
+        &mut self,
+        device: &mut Device,
+        texture: &Texture,
+        clear: Option<ClearOptions>,
+        transform: Mat4,
+        target_width: i32,
+        target_height: i32,
+        region: Option<Rect>,
+    ) -> Renderer {
+        todo!()
     }
 
-    fn render(&mut self, _texture: &Texture, _renderer: &mut Renderer) {}
+    fn upload(&mut self, device: &mut Device, instances: &[notan_gly::instance::Instance]) {
+        todo!()
+    }
 }
 
 pub fn create_text_pipeline(

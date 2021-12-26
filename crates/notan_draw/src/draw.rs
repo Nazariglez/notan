@@ -3,9 +3,10 @@ pub(crate) use crate::custom_pipeline::CustomPipeline;
 use notan_math::glam::{Mat3, Mat4};
 
 use crate::transform::Transform;
-use notan_glyph::{Font, Text};
+use notan_glyph::Text;
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
+use notan_text::Font;
 
 #[derive(Debug, Clone)]
 pub struct Draw {
@@ -266,7 +267,7 @@ impl Draw {
                     .count();
 
                 texts.push(TextData {
-                    font: info.font.clone(),
+                    font: *info.font,
                     text: info.text.into(),
                     transform: matrix,
                     alpha: self.alpha,
@@ -279,13 +280,6 @@ impl Draw {
         let indices = self.text_batch_indices.get_or_insert(vec![]);
         indices.push(batch_len);
     }
-
-    //
-    // /*
-    // pub fn add_instanced<'a>(&mut self, info: &InstancedInfo<'a>) {
-    //     //provide a way to draw images with draw_instanced
-    // }
-    //  */
 }
 
 trait DrawInfo {

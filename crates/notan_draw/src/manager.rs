@@ -117,42 +117,42 @@ fn paint_batch(
     }
 }
 
-fn process_glyphs(
-    manager: &mut DrawManager,
-    draw: &Draw,
-    device: &mut Device,
-    glyphs: &mut GlyphPlugin,
-) {
-    if let Some(indices) = &draw.text_batch_indices {
-        let batch_len = draw.batches.len();
-        let mut last_index = std::usize::MAX;
-        indices.iter().for_each(|i| {
-            let n = *i;
-            if n == last_index {
-                return;
-            }
-            last_index = n;
-
-            let batch = if n >= batch_len {
-                draw.current_batch.as_ref()
-            } else {
-                draw.batches.get(n)
-            };
-
-            if let Some(b) = batch {
-                if let BatchType::Text { texts } = &b.typ {
-                    texts.iter().for_each(|data| {
-                        glyphs.process_text(&data.font, &(&data.text).into());
-                    });
-                }
-            }
-        });
-
-        if let Err(e) = glyphs.update(device, &mut manager.text_painter) {
-            log::error!("{}", e);
-        }
-    }
-}
+// fn process_glyphs(
+//     manager: &mut DrawManager,
+//     draw: &Draw,
+//     device: &mut Device,
+//     glyphs: &mut GlyphPlugin,
+// ) {
+//     if let Some(indices) = &draw.text_batch_indices {
+//         let batch_len = draw.batches.len();
+//         let mut last_index = std::usize::MAX;
+//         indices.iter().for_each(|i| {
+//             let n = *i;
+//             if n == last_index {
+//                 return;
+//             }
+//             last_index = n;
+//
+//             let batch = if n >= batch_len {
+//                 draw.current_batch.as_ref()
+//             } else {
+//                 draw.batches.get(n)
+//             };
+//
+//             if let Some(b) = batch {
+//                 if let BatchType::Text { texts } = &b.typ {
+//                     texts.iter().for_each(|data| {
+//                         glyphs.process_text(&data.font, &(&data.text).into());
+//                     });
+//                 }
+//             }
+//         });
+//
+//         if let Err(e) = glyphs.update(device, &mut manager.text_painter) {
+//             log::error!("{}", e);
+//         }
+//     }
+// }
 
 fn process_draw(
     manager: &mut DrawManager,
@@ -160,7 +160,7 @@ fn process_draw(
     device: &mut Device,
     glyphs: &mut GlyphPlugin,
 ) {
-    process_glyphs(manager, draw, device, glyphs);
+    // process_glyphs(manager, draw, device, glyphs);
 
     manager.image_painter.clear();
     manager.shape_painter.clear();

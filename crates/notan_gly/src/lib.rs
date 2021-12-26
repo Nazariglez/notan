@@ -1,7 +1,5 @@
 mod builder;
 mod cache;
-mod config;
-mod extension;
 mod instance;
 mod pipeline;
 
@@ -9,8 +7,6 @@ use cache::Cache;
 use instance::Instance;
 
 pub use builder::GlyphBrushBuilder;
-pub use config::GlyConfig;
-pub use extension::{GlyphExtension, Glyphs};
 pub use glyph_brush::ab_glyph;
 pub use glyph_brush::{
     BuiltInLineBreaker, Extra, FontId, GlyphCruncher, GlyphPositioner, HorizontalAlign, Layout,
@@ -53,13 +49,6 @@ impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
         S: Into<Cow<'a, Section<'a>>>,
     {
         self.glyph_brush.queue(section)
-    }
-
-    pub fn process<'a>(&mut self, glyphs: &Glyphs<'a>) {
-        glyphs.sections.iter().for_each(|s| {
-            let n: &Section = s.as_ref();
-            self.queue(n);
-        });
     }
 
     /// Queues a section/layout to be drawn by the next call of
@@ -138,6 +127,7 @@ impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
 }
 
 pub struct RenderQueueBuilder<'a, F = FontArc, H = DefaultSectionHasher> {
+    device: &'a mut Device,
     glyph_brush: &'a mut GlyphBrush<F, H>,
     pipeline: &'a mut dyn GlyphPipeline,
     clear: Option<ClearOptions>,
@@ -147,8 +137,13 @@ pub struct RenderQueueBuilder<'a, F = FontArc, H = DefaultSectionHasher> {
 }
 
 impl<'a, F: Font + Sync, H: BuildHasher> RenderQueueBuilder<'a, F, H> {
-    fn new(glyph_brush: &'a mut GlyphBrush<F, H>, pipeline: &'a mut dyn GlyphPipeline) -> Self {
+    fn new(
+        glyph_brush: &'a mut GlyphBrush<F, H>,
+        device: &'a mut Device,
+        pipeline: &'a mut dyn GlyphPipeline,
+    ) -> Self {
         Self {
+            device,
             glyph_brush,
             pipeline,
             clear: None,
@@ -183,8 +178,9 @@ impl<'a, F: Font + Sync, H: BuildHasher> RenderQueueBuilder<'a, F, H> {
         self
     }
 
-    pub fn process(self, device: &mut Device) -> Renderer {
+    pub fn create_renderer(self) -> Renderer {
         let Self {
+            device,
             glyph_brush,
             pipeline,
             clear,
@@ -192,13 +188,6 @@ impl<'a, F: Font + Sync, H: BuildHasher> RenderQueueBuilder<'a, F, H> {
             size,
             transform,
         } = self;
-
-        debug_assert!(
-            !glyph_brush.fonts().is_empty(),
-            "You need to add at least one Font to be used as default."
-        );
-
-        glyph_brush.process_queued(device, pipeline);
 
         let (width, height) = size.unwrap_or_else(|| device.size());
         let projection = transform
@@ -217,11 +206,18 @@ impl<'a, F: Font + Sync, H: BuildHasher> RenderQueueBuilder<'a, F, H> {
 }
 
 impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
-    pub fn create_renderer<'a>(
+    pub fn process<'a>(
         &'a mut self,
+        device: &'a mut Device,
         pipeline: &'a mut dyn GlyphPipeline,
     ) -> RenderQueueBuilder<F, H> {
-        RenderQueueBuilder::new(self, pipeline)
+        debug_assert!(
+            !self.fonts().is_empty(),
+            "You need to add at least one Font to be used as default."
+        );
+
+        self.process_queued(device, pipeline);
+        RenderQueueBuilder::new(self, device, pipeline)
     }
 
     fn process_queued(&mut self, device: &mut Device, pipeline: &mut dyn GlyphPipeline) {

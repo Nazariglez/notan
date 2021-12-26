@@ -13,6 +13,8 @@ notan_graphics = { path = "../notan_graphics" }
 notan_macro = { path = "../notan_macro" }
 notan_math = { path = "../notan_math" }
 notan_glyph = { path = "../notan_glyph", default-features = false }
+notan_gly = { path = "../notan_gly" }
+notan_text = { path = "../notan_text" }
 lyon = "0.17"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

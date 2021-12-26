@@ -1,6 +1,7 @@
-use notan_glyph::{Font, OwnedText};
+use notan_glyph::OwnedText;
 use notan_graphics::prelude::*;
 use notan_math::glam::{Mat3, Vec3};
+use notan_text::Font;
 
 #[derive(Clone, Debug)]
 pub(crate) struct TextData {

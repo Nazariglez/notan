@@ -5,7 +5,7 @@
 use notan::gly::{ab_glyph, GlyphBrushBuilder, Section, Text};
 use notan::prelude::*;
 use notan_gly::ab_glyph::FontArc;
-use notan_gly::{DefaultGlyphPipeline, GlyphBrush, GlyphExtension, Glyphs};
+use notan_gly::{DefaultGlyphPipeline, GlyphBrush};
 
 #[derive(AppState)]
 struct State {
@@ -65,9 +65,9 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     // process the queue and return a renderer to draw
     let renderer = state
         .glyph_brush
-        .create_renderer(&mut state.pipeline)
+        .process(gfx, &mut state.pipeline)
         .clear(ClearOptions::color(Color::BLACK))
-        .process(gfx);
+        .create_renderer();
 
     // Draw the renderer to the screen
     gfx.render(&renderer);
