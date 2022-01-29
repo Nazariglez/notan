@@ -62,12 +62,15 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
             ),
     );
 
+    // process the queued texts before render them
+    state.glyph_brush.process_queued(gfx, &mut state.pipeline);
+
     // process the queue and return a renderer to draw
     let renderer = state
         .glyph_brush
-        .process(gfx, &mut state.pipeline)
+        .render_queue(gfx, &mut state.pipeline)
         .clear(ClearOptions::color(Color::BLACK))
-        .create_renderer();
+        .build();
 
     // Draw the renderer to the screen
     gfx.render(&renderer);

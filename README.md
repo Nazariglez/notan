@@ -227,6 +227,11 @@ On my Macbook (2.3Hz i9 - 16GB RAM):
 Let's keep in mind that the conditions for `bunnymark` are very unlikely to see in a real project.
 However, it's widely used to test the performance in 2D Draw APIs.
 
+| Machine             | Bunnies | 
+|---------------------|---------|
+| OSX<sup>[1]()</sup> | 66000   |  
+| Web<sup>[2]()</sup> | 42000   |  
+
 ## Integration 
 
 Notan is designed to be as modular as possible. It's flexible enough to allow change how the event life cycle works with 
@@ -249,9 +254,30 @@ So, after a while I decided to start looking again, and I saw that **Rust** had 
 and check all those boxes.
 
 For the last three years, I have been working on this project in different repositories with different names and multiple "start-over" times.
-It was my place to learn Rust and OpenGL, my hobby and sandbox.
+It was my place to learn Rust and OpenGL, you can say that it was my sandbox and my hobby.
 
 However, I feel that it could be useful for more people than me in the current state.
+
+The name **Notan** comes from `not an engine`. The main purpose of the project is to be used as foundation providing 
+a basic but useful set of features. 
+
+They are:
+- Platform abstraction (desktop, mobile, etc...)
+- Windowing
+- Graphics rendering
+- Text rendering
+- Draw 2D API
+- Audio
+- Input (Keyboard, mouse, etc...)
+- Simple UI via egui
+
+Everything else, like particles, physics, etc..., is out of the scope of the project
+and can be added via external crates, plugins or extensions. Although we can always talk 
+if you think that something should be part of the project.
+
+## So... what's next?
+
+Improving the project step by step, aiming for a more mature and better APIs, fixes, better platform support, more graphics backends etc...
 
 ## License
 

@@ -82,10 +82,12 @@ impl TextExtension {
             .unwrap_or_else(|| TypeId::of::<DefaultGlyphPipeline>());
 
         let clear_options = text.clear_options.unwrap_or_else(|| ClearOptions::none());
-        let mut pipeline = self.pipelines.get_mut(&pipeline_type).unwrap();
+        let mut pipeline = self.pipelines.get_mut(&pipeline_type).unwrap().deref_mut();
+
+        glyph_brush.process_queued(device, pipeline);
 
         let mut builder = glyph_brush
-            .process(device, pipeline.deref_mut())
+            .render_queue(device, pipeline)
             .clear(clear_options)
             .size(text.width, text.height);
 
@@ -97,7 +99,12 @@ impl TextExtension {
             builder = builder.region(region.x, region.y, region.width, region.height);
         }
 
-        builder.create_renderer()
+        builder.build()
+    }
+
+    #[doc(hidden), inline]
+    pub fn glyph_brush_mut(&mut self) -> &mut GlyphBrush {
+        &mut self.glyph_brush
     }
 }
 

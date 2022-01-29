@@ -4,6 +4,7 @@ use super::shapes::*;
 use super::texts::*;
 use crate::batch::*;
 use crate::draw::*;
+use notan_gly::GlyphBrush;
 use notan_glyph::GlyphPlugin;
 use notan_graphics::prelude::*;
 use notan_math::glam::Mat4;
@@ -38,7 +39,7 @@ impl DrawManager {
         &mut self,
         draw: &Draw,
         device: &mut Device,
-        glyphs: &mut GlyphPlugin,
+        glyphs: &mut GlyphBrush,
     ) -> &[Commands] {
         self.renderer.clear();
         process_draw(self, draw, device, glyphs);
@@ -85,7 +86,7 @@ impl DrawManager {
 fn paint_batch(
     device: &mut Device,
     manager: &mut DrawManager,
-    glyphs: &mut GlyphPlugin,
+    glyphs: &mut GlyphBrush,
     b: &Batch,
     projection: &Mat4,
 ) {
@@ -117,50 +118,53 @@ fn paint_batch(
     }
 }
 
-// fn process_glyphs(
-//     manager: &mut DrawManager,
-//     draw: &Draw,
-//     device: &mut Device,
-//     glyphs: &mut GlyphPlugin,
-// ) {
-//     if let Some(indices) = &draw.text_batch_indices {
-//         let batch_len = draw.batches.len();
-//         let mut last_index = std::usize::MAX;
-//         indices.iter().for_each(|i| {
-//             let n = *i;
-//             if n == last_index {
-//                 return;
-//             }
-//             last_index = n;
-//
-//             let batch = if n >= batch_len {
-//                 draw.current_batch.as_ref()
-//             } else {
-//                 draw.batches.get(n)
-//             };
-//
-//             if let Some(b) = batch {
-//                 if let BatchType::Text { texts } = &b.typ {
-//                     texts.iter().for_each(|data| {
-//                         glyphs.process_text(&data.font, &(&data.text).into());
-//                     });
-//                 }
-//             }
-//         });
-//
-//         if let Err(e) = glyphs.update(device, &mut manager.text_painter) {
-//             log::error!("{}", e);
-//         }
-//     }
-// }
+fn process_glyphs(
+    manager: &mut DrawManager,
+    draw: &Draw,
+    device: &mut Device,
+    glyphs: &mut GlyphBrush,
+) {
+    if let Some(indices) = &draw.text_batch_indices {
+        let batch_len = draw.batches.len();
+        let mut last_index = std::usize::MAX;
+        indices.iter().for_each(|i| {
+            let n = *i;
+            if n == last_index {
+                return;
+            }
+            last_index = n;
+
+            let batch = if n >= batch_len {
+                draw.current_batch.as_ref()
+            } else {
+                draw.batches.get(n)
+            };
+
+            if let Some(b) = batch {
+                if let BatchType::Text { texts } = &b.typ {
+                    texts.iter().for_each(|data| {
+                        // glyphs.process_text(&data.font, &(&data.text).into());
+                        // TODO notan_glyph/src/text.rs -> section_from_text
+                        // TODO or use Text from notan_gly
+                    });
+                }
+            }
+        });
+
+        glyphs.process_queued(device, &mut manager.text_painter);
+        // if let Err(e) = glyphs.update(device, &mut manager.text_painter) {
+        //     log::error!("{}", e);
+        // }
+    }
+}
 
 fn process_draw(
     manager: &mut DrawManager,
     draw: &Draw,
     device: &mut Device,
-    glyphs: &mut GlyphPlugin,
+    glyphs: &mut GlyphBrush,
 ) {
-    // process_glyphs(manager, draw, device, glyphs);
+    process_glyphs(manager, draw, device, glyphs);
 
     manager.image_painter.clear();
     manager.shape_painter.clear();

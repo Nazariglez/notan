@@ -2,7 +2,7 @@ use glyph_brush::ab_glyph::{point, Rect};
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
-pub struct Instance {
+pub struct GlyphInstance {
     left_top: [f32; 3],
     right_bottom: [f32; 2],
     tex_left_top: [f32; 2],
@@ -10,10 +10,10 @@ pub struct Instance {
     color: [f32; 4],
 }
 
-unsafe impl bytemuck::Zeroable for Instance {}
-unsafe impl bytemuck::Pod for Instance {}
+unsafe impl bytemuck::Zeroable for GlyphInstance {}
+unsafe impl bytemuck::Pod for GlyphInstance {}
 
-impl Instance {
+impl GlyphInstance {
     pub fn from_vertex(
         glyph_brush::GlyphVertex {
             mut tex_coords,
@@ -21,7 +21,7 @@ impl Instance {
             bounds,
             extra,
         }: glyph_brush::GlyphVertex,
-    ) -> Instance {
+    ) -> GlyphInstance {
         let gl_bounds = bounds;
 
         let mut gl_rect = Rect {
@@ -56,7 +56,7 @@ impl Instance {
                 tex_coords.max.y - tex_coords.height() * gl_rect.height() / old_height;
         }
 
-        Instance {
+        GlyphInstance {
             left_top: [gl_rect.min.x, gl_rect.max.y, extra.z],
             right_bottom: [gl_rect.max.x, gl_rect.min.y],
             tex_left_top: [tex_coords.min.x, tex_coords.max.y],

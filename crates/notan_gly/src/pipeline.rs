@@ -1,4 +1,4 @@
-use crate::instance::Instance;
+use crate::instance::GlyphInstance;
 use notan_app::graphics::*;
 use notan_math::glam::{Mat3, Mat4};
 use notan_math::Rect;
@@ -16,9 +16,34 @@ pub trait GlyphPipeline {
         target_width: i32,
         target_height: i32,
         region: Option<Rect>,
-    ) -> Renderer;
+    ) -> Renderer {
+        let mut renderer = device.create_renderer();
+        self.append_to_renderer(
+            device,
+            &mut renderer,
+            texture,
+            clear,
+            transform,
+            target_width,
+            target_height,
+            region,
+        );
+        renderer
+    }
 
-    fn upload(&mut self, device: &mut Device, instances: &[Instance]);
+    fn append_to_renderer(
+        &mut self,
+        device: &mut Device,
+        renderer: &mut Renderer,
+        texture: &Texture,
+        clear: Option<ClearOptions>,
+        transform: Mat4,
+        target_width: i32,
+        target_height: i32,
+        region: Option<Rect>,
+    );
+
+    fn upload(&mut self, device: &mut Device, instances: &[GlyphInstance]);
 }
 
 //language=glsl
@@ -141,21 +166,21 @@ impl DefaultGlyphPipeline {
 }
 
 impl GlyphPipeline for DefaultGlyphPipeline {
-    fn create_renderer(
+    fn append_to_renderer(
         &mut self,
         device: &mut Device,
+        renderer: &mut Renderer,
         texture: &Texture,
         clear: Option<ClearOptions>,
         transform: Mat4,
         target_width: i32,
         target_height: i32,
         region: Option<Rect>,
-    ) -> Renderer {
+    ) {
         if self.current_transform != transform {
             device.set_buffer_data(&self.ubo, &transform.to_cols_array());
         }
 
-        let mut renderer = device.create_renderer();
         renderer.set_size(target_width as _, target_height as _);
         renderer.set_primitive(DrawPrimitive::TriangleStrip);
 
@@ -169,10 +194,9 @@ impl GlyphPipeline for DefaultGlyphPipeline {
         renderer.bind_buffers(&[&self.vbo, &self.ubo]);
         renderer.draw_instanced(0, 4, self.current_instances as _);
         renderer.end();
-        renderer
     }
 
-    fn upload(&mut self, device: &mut Device, instances: &[Instance]) {
+    fn upload(&mut self, device: &mut Device, instances: &[GlyphInstance]) {
         if instances.is_empty() {
             self.current_instances = 0;
             return;

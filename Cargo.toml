@@ -32,6 +32,7 @@ gly = ["notan_gly"]
 draw = ["notan_draw"]
 egui = ["notan_egui"]
 text = ["notan_text"]
+custom-backend = []
 
 [dev-dependencies]
 wasm-bindgen = "0.2.79"

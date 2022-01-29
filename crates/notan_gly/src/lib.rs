@@ -4,7 +4,7 @@ mod instance;
 mod pipeline;
 
 use cache::Cache;
-use instance::Instance;
+pub use instance::GlyphInstance;
 
 pub use builder::GlyphBrushBuilder;
 pub use glyph_brush::ab_glyph;
@@ -25,7 +25,7 @@ use glyph_brush::{BrushAction, BrushError, DefaultSectionHasher};
 use log::{log_enabled, warn};
 use notan_app::Graphics;
 use notan_graphics::prelude::{ClearOptions, Pipeline};
-use notan_graphics::{Device, Renderer};
+use notan_graphics::{Device, Renderer, Texture};
 use notan_math::glam::Mat4;
 
 /// Object allowing glyph drawing, containing cache state. Manages glyph positioning cacheing,
@@ -34,7 +34,7 @@ use notan_math::glam::Mat4;
 /// Build using a [`GlyphBrushBuilder`](struct.GlyphBrushBuilder.html).
 pub struct GlyphBrush<F = FontArc, H = DefaultSectionHasher> {
     cache: Cache,
-    glyph_brush: glyph_brush::GlyphBrush<Instance, Extra, F, H>,
+    glyph_brush: glyph_brush::GlyphBrush<GlyphInstance, Extra, F, H>,
 }
 
 impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
@@ -124,6 +124,12 @@ impl<F: Font, H: BuildHasher> GlyphBrush<F, H> {
     pub fn add_font(&mut self, font: F) -> FontId {
         self.glyph_brush.add_font(font)
     }
+
+    /// Returns the texture used to cache the glyphs
+    #[inline]
+    pub fn texture(&self) -> &Texture {
+        self.cache.texture()
+    }
 }
 
 pub struct RenderQueueBuilder<'a, F = FontArc, H = DefaultSectionHasher> {
@@ -178,7 +184,7 @@ impl<'a, F: Font + Sync, H: BuildHasher> RenderQueueBuilder<'a, F, H> {
         self
     }
 
-    pub fn create_renderer(self) -> Renderer {
+    pub fn build(self) -> Renderer {
         let Self {
             device,
             glyph_brush,
@@ -206,21 +212,20 @@ impl<'a, F: Font + Sync, H: BuildHasher> RenderQueueBuilder<'a, F, H> {
 }
 
 impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
-    pub fn process<'a>(
+    pub fn render_queue<'a>(
         &'a mut self,
         device: &'a mut Device,
         pipeline: &'a mut dyn GlyphPipeline,
     ) -> RenderQueueBuilder<F, H> {
+        RenderQueueBuilder::new(self, device, pipeline)
+    }
+
+    pub fn process_queued(&mut self, device: &mut Device, pipeline: &mut dyn GlyphPipeline) {
         debug_assert!(
             !self.fonts().is_empty(),
             "You need to add at least one Font to be used as default."
         );
 
-        self.process_queued(device, pipeline);
-        RenderQueueBuilder::new(self, device, pipeline)
-    }
-
-    fn process_queued(&mut self, device: &mut Device, pipeline: &mut dyn GlyphPipeline) {
         let mut brush_action;
 
         loop {
@@ -231,7 +236,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
 
                     self.cache.update(device, offset, size, tex_data);
                 },
-                Instance::from_vertex,
+                GlyphInstance::from_vertex,
             );
 
             match brush_action {

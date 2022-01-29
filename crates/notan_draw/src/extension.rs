@@ -1,6 +1,9 @@
 use crate::{Draw, DrawManager};
 use notan_app::graphics::*;
+use notan_gly::GlyphBrush;
 use notan_glyph::{Font, GlyphPlugin};
+use notan_text::{Text, TextExtension};
+use std::ops::DerefMut;
 
 pub trait CreateDraw {
     fn create_draw(&self) -> Draw;
@@ -29,8 +32,7 @@ impl DrawExtension {
 
 impl GfxExtension<Draw> for DrawExtension {
     fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a Draw) -> &'a [Commands] {
-        self.manager
-            .process_draw(renderer, device, &mut self.glyphs)
+        &[]
     }
 }
 
@@ -41,8 +43,11 @@ impl GfxRenderer for Draw {
         extensions: &mut ExtContainer,
         target: Option<&RenderTexture>,
     ) {
-        let mut plugin = extensions.get_mut::<Self, DrawExtension>().unwrap();
-        let cmds = plugin.commands(device, self);
+        let mut text_ext = extensions.get_mut::<Text, TextExtension>().unwrap();
+        let mut ext = extensions.get_mut::<Self, DrawExtension>().unwrap();
+        let cmds = ext
+            .manager
+            .process_draw(self, device, text_ext.glyph_brush_mut());
         match target {
             None => device.render(cmds),
             Some(rt) => device.render_to(rt, cmds),
