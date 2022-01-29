@@ -3,8 +3,8 @@ mod config;
 use notan_app::{ExtContainer, GfxExtension, GfxRenderer, Graphics};
 use notan_gly::ab_glyph::FontArc;
 use notan_gly::{
-    ab_glyph, BuiltInLineBreaker, DefaultGlyphPipeline, FontId, GlyphBrush, GlyphBrushBuilder,
-    GlyphPipeline, HorizontalAlign, Layout, LineBreaker, Section, Text as GText, VerticalAlign,
+    DefaultGlyphPipeline, FontId, GlyphBrush, GlyphBrushBuilder, GlyphPipeline, HorizontalAlign,
+    Layout, Section, Text as GText, VerticalAlign,
 };
 use notan_graphics::color::Color;
 use notan_graphics::commands::Commands;
@@ -13,9 +13,7 @@ use notan_graphics::{Device, RenderTexture, Renderer};
 use std::any::TypeId;
 use std::collections::HashMap;
 use std::ops::DerefMut;
-use std::ptr::addr_of;
 
-use crate::ab_glyph::PxScale;
 pub use config::TextConfig;
 use notan_math::glam::Mat4;
 use notan_math::Rect;
@@ -102,7 +100,8 @@ impl TextExtension {
         builder.build()
     }
 
-    #[doc(hidden), inline]
+    #[doc(hidden)]
+    #[inline]
     pub fn glyph_brush_mut(&mut self) -> &mut GlyphBrush {
         &mut self.glyph_brush
     }
