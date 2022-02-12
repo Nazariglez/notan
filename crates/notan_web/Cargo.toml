@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 log = "0.4"
 notan_app = { path = "../notan_app" }
-wasm-bindgen = "0.2.78"
+wasm-bindgen = "0.2.79"
 js-sys = "0.3"
 wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1"
