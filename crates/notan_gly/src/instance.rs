@@ -3,11 +3,11 @@ use glyph_brush::ab_glyph::{point, Rect};
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct GlyphInstance {
-    left_top: [f32; 3],
-    right_bottom: [f32; 2],
-    tex_left_top: [f32; 2],
-    tex_right_bottom: [f32; 2],
-    color: [f32; 4],
+    pub left_top: [f32; 3],
+    pub right_bottom: [f32; 2],
+    pub tex_left_top: [f32; 2],
+    pub tex_right_bottom: [f32; 2],
+    pub color: [f32; 4],
 }
 
 unsafe impl bytemuck::Zeroable for GlyphInstance {}

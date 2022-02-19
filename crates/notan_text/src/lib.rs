@@ -24,6 +24,18 @@ pub struct Font {
     inner: FontId,
 }
 
+impl Into<FontId> for Font {
+    fn into(self) -> FontId {
+        self.inner
+    }
+}
+
+impl Into<FontId> for &Font {
+    fn into(self) -> FontId {
+        self.inner
+    }
+}
+
 pub struct TextExtension {
     glyph_brush: GlyphBrush,
     pipelines: HashMap<TypeId, Box<dyn GlyphPipeline>>,

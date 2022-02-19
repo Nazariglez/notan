@@ -1,12 +1,12 @@
-use notan_glyph::OwnedText;
+use notan_gly::OwnedSection;
 use notan_graphics::prelude::*;
 use notan_math::glam::{Mat3, Vec3};
-use notan_text::Font;
+use notan_text::{Font, Text};
 
 #[derive(Clone, Debug)]
 pub(crate) struct TextData {
     pub transform: Mat3,
-    pub text: OwnedText,
+    pub section: OwnedSection,
     pub font: Font,
     pub alpha: f32,
     pub count: usize,

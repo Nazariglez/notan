@@ -1391,7 +1391,6 @@ dependencies = [
  "lyon",
  "notan_app",
  "notan_gly",
- "notan_glyph",
  "notan_graphics",
  "notan_macro",
  "notan_math",

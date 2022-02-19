@@ -1,9 +1,6 @@
 use crate::{Draw, DrawManager};
 use notan_app::graphics::*;
-use notan_gly::GlyphBrush;
-use notan_glyph::{Font, GlyphPlugin};
 use notan_text::{Text, TextExtension};
-use std::ops::DerefMut;
 
 pub trait CreateDraw {
     fn create_draw(&self) -> Draw;
@@ -18,14 +15,12 @@ impl CreateDraw for Graphics {
 
 pub struct DrawExtension {
     manager: DrawManager,
-    glyphs: GlyphPlugin,
 }
 
 impl DrawExtension {
     pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
         Ok(Self {
             manager: DrawManager::new(gfx)?,
-            glyphs: GlyphPlugin::new(gfx)?,
         })
     }
 }

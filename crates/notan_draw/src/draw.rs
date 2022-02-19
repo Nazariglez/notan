@@ -1,17 +1,15 @@
 use crate::batch::*;
 pub(crate) use crate::custom_pipeline::CustomPipeline;
-use notan_math::glam::{Mat3, Mat4};
-
 use crate::transform::Transform;
-use notan_glyph::Text;
+use notan_gly::Section;
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
+use notan_math::glam::{Mat3, Mat4};
 use notan_text::Font;
 
 #[derive(Debug, Clone)]
 pub struct Draw {
     pub(crate) clear_color: Option<Color>,
-    initialized: bool,
     alpha: f32,
     transform: Transform,
     base_projection: Mat4,
@@ -31,7 +29,6 @@ pub struct Draw {
 impl Draw {
     pub fn new(width: i32, height: i32) -> Self {
         Draw {
-            initialized: false,
             alpha: 1.0,
             clear_color: None,
             batches: vec![],
@@ -259,19 +256,12 @@ impl Draw {
                     _ => global_matrix,
                 };
 
-                let count = info
-                    .text
-                    .text()
-                    .chars()
-                    .filter(|c| !c.is_whitespace())
-                    .count();
-
                 texts.push(TextData {
                     font: *info.font,
-                    text: info.text.into(),
+                    section: info.section.to_owned(),
                     transform: matrix,
                     alpha: self.alpha,
-                    count,
+                    count: info.count,
                 });
             }
         }
@@ -343,8 +333,9 @@ impl DrawInfo for ShapeInfo<'_> {
 }
 
 pub struct TextInfo<'a> {
+    pub count: usize,
     pub transform: Option<&'a Mat3>,
-    pub text: &'a Text<'a>,
+    pub section: &'a Section<'a>,
     pub font: &'a Font,
     pub blend_mode: Option<BlendMode>,
 }

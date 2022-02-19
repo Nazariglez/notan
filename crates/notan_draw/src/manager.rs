@@ -5,7 +5,6 @@ use super::texts::*;
 use crate::batch::*;
 use crate::draw::*;
 use notan_gly::GlyphBrush;
-use notan_glyph::GlyphPlugin;
 use notan_graphics::prelude::*;
 use notan_math::glam::Mat4;
 
@@ -143,18 +142,13 @@ fn process_glyphs(
             if let Some(b) = batch {
                 if let BatchType::Text { texts } = &b.typ {
                     texts.iter().for_each(|data| {
-                        // glyphs.process_text(&data.font, &(&data.text).into());
-                        // TODO notan_glyph/src/text.rs -> section_from_text
-                        // TODO or use Text from notan_gly
+                        glyphs.queue(&data.section);
                     });
                 }
             }
         });
 
         glyphs.process_queued(device, &mut manager.text_painter);
-        // if let Err(e) = glyphs.update(device, &mut manager.text_painter) {
-        //     log::error!("{}", e);
-        // }
     }
 }
 
