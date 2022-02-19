@@ -166,15 +166,12 @@ impl EguiExtension {
             .collect::<Vec<u8>>();
 
         let texture = device
-            .inner_create_texture(TextureInfo {
-                width: width as _,
-                height: height as _,
-                format: TextureFormat::Rgba32,
-                min_filter: TextureFilter::Linear,
-                mag_filter: TextureFilter::Linear,
-                bytes: Some(pixels),
-                depth: false,
-            })
+            .create_texture()
+            .with_size(width as _, height as _)
+            .with_filter(TextureFilter::Linear, TextureFilter::Linear)
+            .with_format(TextureFormat::Rgba32)
+            .from_bytes(&pixels, width as _, height as _)
+            .build()
             .unwrap();
 
         self.texture = Some(texture);

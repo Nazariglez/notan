@@ -4,7 +4,6 @@
 
 use notan::gly::{ab_glyph, GlyphBrushBuilder, Section, Text};
 use notan::prelude::*;
-use notan_gly::ab_glyph::FontArc;
 use notan_gly::{DefaultGlyphPipeline, GlyphBrush};
 
 #[derive(AppState)]
