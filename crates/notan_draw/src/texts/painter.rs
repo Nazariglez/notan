@@ -1,6 +1,6 @@
 use crate::batch::*;
 use crate::manager::process_pipeline;
-use notan_gly::{GlyphBrush, GlyphInstance, GlyphPipeline};
+use notan_glyph::{GlyphBrush, GlyphInstance, GlyphPipeline};
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 use notan_math::glam::{Mat4, Vec3};

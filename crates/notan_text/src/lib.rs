@@ -1,8 +1,8 @@
 mod config;
 
 use notan_app::{ExtContainer, GfxExtension, GfxRenderer, Graphics};
-use notan_gly::ab_glyph::FontArc;
-use notan_gly::{
+use notan_glyph::ab_glyph::FontArc;
+use notan_glyph::{
     DefaultGlyphPipeline, FontId, GlyphBrush, GlyphBrushBuilder, GlyphPipeline, HorizontalAlign,
     Layout, Section, Text as GText, VerticalAlign,
 };

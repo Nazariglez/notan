@@ -16,7 +16,7 @@ notan_math = { path = "crates/notan_math" }
 notan_graphics = { path = "crates/notan_graphics" }
 notan_utils = { path = "crates/notan_utils" }
 notan_log = { path = "crates/notan_log", optional = true }
-notan_gly = { path = "crates/notan_gly", optional = true }
+notan_glyph = { path = "crates/notan_glyph", optional = true }
 notan_draw = { path = "crates/notan_draw", optional = true }
 notan_backend = { path = "crates/notan_backend", optional = true }
 notan_egui = { path = "crates/notan_egui", optional = true }
@@ -26,10 +26,10 @@ notan_text = { path = "crates/notan_text", optional = true }
 members = ["crates/*"]
 
 [features]
-default = ["default_backend", "log", "draw", "gly"]
+default = ["default_backend", "log", "draw"]
 log = ["notan_log"]
 default_backend = ["notan_backend"]
-gly = ["notan_gly"]
+glyph = ["notan_glyph"]
 draw = ["notan_draw"]
 egui = ["notan_egui"]
 text = ["notan_text"]
@@ -164,6 +164,22 @@ name = "game_of_life"
 required-features = ["draw"]
 
 [[example]]
+name = "game_pong"
+required-features = ["draw"]
+
+[[example]]
+name = "game_snake"
+required-features = ["draw"]
+
+[[example]]
+name = "game_tetris"
+required-features = ["draw"]
+
+[[example]]
+name = "glyph_hello_raw"
+required-features = ["glyph"]
+
+[[example]]
 name = "graphics_update_texture"
 required-features = ["draw"]
 
@@ -196,8 +212,8 @@ name = "log_basic"
 required-features = ["log"]
 
 [[example]]
-name = "renderer_font"
-required-features = ["glyphs"]
+name = "text_hello"
+required-features = ["text"]
 
 [[example]]
 name = "window_fullscreen"

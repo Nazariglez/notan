@@ -2,9 +2,9 @@
    This example shows how to use GlyphBrush directly without the GlyphExtension
 */
 
-use notan::gly::{ab_glyph, GlyphBrushBuilder, Section, Text};
+use notan::glyph::{ab_glyph, GlyphBrushBuilder, Section, Text};
 use notan::prelude::*;
-use notan_gly::{DefaultGlyphPipeline, GlyphBrush};
+use notan_glyph::{DefaultGlyphPipeline, GlyphBrush};
 
 #[derive(AppState)]
 struct State {

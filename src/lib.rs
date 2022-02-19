@@ -14,11 +14,8 @@ pub use notan_backend as backend;
 #[cfg(feature = "log")]
 pub use notan_log as log;
 
-#[cfg(feature = "glyphs")]
+#[cfg(feature = "glyph")]
 pub use notan_glyph as glyph;
-
-#[cfg(feature = "gly")]
-pub use notan_gly as gly;
 
 #[cfg(feature = "draw")]
 pub use notan_draw as draw;

@@ -1347,7 +1347,7 @@ dependencies = [
  "notan_backend",
  "notan_draw",
  "notan_egui",
- "notan_gly",
+ "notan_glyph",
  "notan_graphics",
  "notan_log",
  "notan_macro",
@@ -1389,7 +1389,7 @@ dependencies = [
  "log",
  "lyon",
  "notan_app",
- "notan_gly",
+ "notan_glyph",
  "notan_graphics",
  "notan_macro",
  "notan_math",
@@ -1423,7 +1423,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "notan_gly"
+name = "notan_glyph"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
@@ -1488,7 +1488,7 @@ version = "0.1.0"
 dependencies = [
  "log",
  "notan_app",
- "notan_gly",
+ "notan_glyph",
  "notan_graphics",
  "notan_math",
 ]

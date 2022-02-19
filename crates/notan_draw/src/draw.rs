@@ -1,7 +1,7 @@
 use crate::batch::*;
 pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::transform::Transform;
-use notan_gly::Section;
+use notan_glyph::Section;
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
 use notan_math::glam::{Mat3, Mat4};

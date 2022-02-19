@@ -1,4 +1,4 @@
-use notan_gly::OwnedSection;
+use notan_glyph::OwnedSection;
 use notan_graphics::prelude::*;
 use notan_math::glam::{Mat3, Vec3};
 use notan_text::{Font, Text};

@@ -1,7 +1,7 @@
 use crate::builder::DrawProcess;
 use crate::draw::{Draw, TextInfo};
 use crate::transform::DrawTransform;
-use notan_gly::{HorizontalAlign, Layout, Section, Text, VerticalAlign};
+use notan_glyph::{HorizontalAlign, Layout, Section, Text, VerticalAlign};
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
 use notan_math::glam::Mat3;

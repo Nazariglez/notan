@@ -4,7 +4,7 @@ use super::shapes::*;
 use super::texts::*;
 use crate::batch::*;
 use crate::draw::*;
-use notan_gly::GlyphBrush;
+use notan_glyph::GlyphBrush;
 use notan_graphics::prelude::*;
 use notan_math::glam::Mat4;
 
