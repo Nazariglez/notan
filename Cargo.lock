@@ -1348,7 +1348,6 @@ dependencies = [
  "notan_draw",
  "notan_egui",
  "notan_gly",
- "notan_glyph",
  "notan_graphics",
  "notan_log",
  "notan_macro",
@@ -1432,17 +1431,6 @@ dependencies = [
  "log",
  "notan_app",
  "notan_graphics",
- "notan_math",
-]
-
-[[package]]
-name = "notan_glyph"
-version = "0.1.0"
-dependencies = [
- "glyph_brush",
- "log",
- "notan_app",
- "notan_macro",
  "notan_math",
 ]
 
