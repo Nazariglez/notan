@@ -10,7 +10,7 @@ pub trait GlyphPipeline {
         texture: &Texture,
         clear: Option<ClearOptions>,
         transform: Mat4,
-        size: (i32,i32),
+        size: (i32, i32),
         region: Option<Rect>,
     ) -> Renderer {
         let mut renderer = device.create_renderer();

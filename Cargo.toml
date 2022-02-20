@@ -10,17 +10,17 @@ edition = "2018"
 lto = true
 
 [dependencies]
-notan_app = { path = "crates/notan_app" }
-notan_macro = { path = "crates/notan_macro" }
-notan_math = { path = "crates/notan_math" }
-notan_graphics = { path = "crates/notan_graphics" }
-notan_utils = { path = "crates/notan_utils" }
-notan_log = { path = "crates/notan_log", optional = true }
-notan_glyph = { path = "crates/notan_glyph", optional = true }
-notan_draw = { path = "crates/notan_draw", optional = true }
-notan_backend = { path = "crates/notan_backend", optional = true }
-notan_egui = { path = "crates/notan_egui", optional = true }
-notan_text = { path = "crates/notan_text", optional = true }
+notan_app = { path = "crates/notan_app", version = "0.1.0" }
+notan_macro = { path = "crates/notan_macro", version = "0.1.0" }
+notan_math = { path = "crates/notan_math", version = "0.1.0" }
+notan_graphics = { path = "crates/notan_graphics", version = "0.1.0" }
+notan_utils = { path = "crates/notan_utils", version = "0.1.0" }
+notan_log = { path = "crates/notan_log", version = "0.1.0", optional = true }
+notan_glyph = { path = "crates/notan_glyph", version = "0.1.0", optional = true }
+notan_draw = { path = "crates/notan_draw", version = "0.1.0", optional = true }
+notan_backend = { path = "crates/notan_backend", version = "0.1.0", optional = true }
+notan_egui = { path = "crates/notan_egui", version = "0.1.0", optional = true }
+notan_text = { path = "crates/notan_text", version = "0.1.0", optional = true }
 
 [workspace]
 members = ["crates/*"]
@@ -34,10 +34,6 @@ draw = ["notan_draw"]
 egui = ["notan_egui"]
 text = ["notan_text"]
 custom-backend = []
-
-[dev-dependencies]
-wasm-bindgen = "0.2.79"
-js-sys = "0.3"
 
 [[example]]
 name = "assets_custom_loader"

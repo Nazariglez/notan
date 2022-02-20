@@ -25,10 +25,7 @@ impl From<ShaderType> for glsl_to_spirv::ShaderType {
 
 fn read_file(full_path: &Path) -> Result<String, String> {
     if !full_path.is_file() {
-        return Err(format!(
-            "File {} was not found.",
-            full_path.display()
-        ));
+        return Err(format!("File {} was not found.", full_path.display()));
     }
 
     read_to_string(full_path).map_err(|e| e.to_string())

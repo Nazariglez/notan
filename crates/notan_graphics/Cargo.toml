@@ -11,5 +11,5 @@ log = "0.4"
 bytemuck = "1.4"
 parking_lot =  { version = "0.11", features = ["wasm-bindgen"] }
 image = "0.23"
-notan_math = { path = "../notan_math" }
-notan_macro = { path = "../notan_macro" }
+notan_math = { path = "../notan_math", version = "0.1.0" }
+notan_macro = { path = "../notan_macro", version = "0.1.0" }
