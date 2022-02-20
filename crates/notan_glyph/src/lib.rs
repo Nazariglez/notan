@@ -20,11 +20,10 @@ use ab_glyph::{Font, FontArc, Rect};
 use core::hash::BuildHasher;
 use std::borrow::Cow;
 
-use crate::ab_glyph::{Glyph, Point};
 use glyph_brush::{BrushAction, BrushError, DefaultSectionHasher};
 use log::{log_enabled, warn};
 use notan_app::Graphics;
-use notan_graphics::prelude::{ClearOptions, Pipeline};
+use notan_graphics::prelude::ClearOptions;
 use notan_graphics::{Device, Renderer, Texture};
 use notan_math::glam::Mat4;
 
@@ -204,8 +203,7 @@ impl<'a, F: Font + Sync, H: BuildHasher> RenderQueueBuilder<'a, F, H> {
             glyph_brush.cache.texture(),
             clear,
             projection,
-            width,
-            height,
+            (width, height),
             region,
         )
     }
@@ -234,7 +232,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
                     let offset = [rect.min[0] as u16, rect.min[1] as u16];
                     let size = [rect.width() as u16, rect.height() as u16];
 
-                    self.cache.update(device, offset, size, tex_data);
+                    self.cache.update(device, offset, size, tex_data).unwrap();
                 },
                 GlyphInstance::from_vertex,
             );

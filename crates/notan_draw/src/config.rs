@@ -1,5 +1,4 @@
-use crate::{CreateDraw, DrawExtension};
-use notan_app::assets::AssetLoader;
+use crate::DrawExtension;
 use notan_app::{AppBuilder, AppState, BackendSystem, BuildConfig, Graphics};
 use notan_text::*;
 

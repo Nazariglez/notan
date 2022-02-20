@@ -26,7 +26,7 @@ impl DrawExtension {
 }
 
 impl GfxExtension<Draw> for DrawExtension {
-    fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a Draw) -> &'a [Commands] {
+    fn commands<'a>(&'a mut self, _device: &mut Device, _renderer: &'a Draw) -> &'a [Commands] {
         &[]
     }
 }

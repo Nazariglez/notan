@@ -257,7 +257,6 @@ impl Draw {
                 };
 
                 texts.push(TextData {
-                    font: *info.font,
                     section: info.section.to_owned(),
                     transform: matrix,
                     alpha: self.alpha,

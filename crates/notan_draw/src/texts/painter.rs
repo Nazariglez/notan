@@ -136,8 +136,6 @@ impl TextPainter {
                         color: [r, g, b, a],
                     } = *g_instance;
 
-                    let (ww, hh) = (x2 - x1, y2 - y1);
-
                     let a = a * d.alpha;
 
                     let matrix = d.transform;
@@ -146,20 +144,20 @@ impl TextPainter {
                     let (x1, y1, x2, y2) = (xyz1.x, xyz1.y, xyz2.x, xyz2.y);
 
                     #[rustfmt::skip]
-                        vertices.extend_from_slice(&[
-                            x1, y1, u1, v1, r, g, b, a,
-                            x2, y1, u2, v1, r, g, b, a,
-                            x1, y2, u1, v2, r, g, b, a,
-                            x2, y2, u2, v2, r, g, b, a,
-                        ]);
+                    vertices.extend_from_slice(&[
+                        x1, y1, u1, v1, r, g, b, a,
+                        x2, y1, u2, v1, r, g, b, a,
+                        x1, y2, u1, v2, r, g, b, a,
+                        x2, y2, u2, v2, r, g, b, a,
+                    ]);
 
                     let n = ((start as u32) + (i as u32)) * 4;
 
                     #[rustfmt::skip]
-                        indices.extend_from_slice(&[
-                            n    , n + 1, n + 2,
-                            n + 2, n + 1, n + 3
-                        ]);
+                    indices.extend_from_slice(&[
+                        n    , n + 1, n + 2,
+                        n + 2, n + 1, n + 3
+                    ]);
                 });
 
                 self.count_chars = end;
@@ -181,8 +179,7 @@ impl TextPainter {
                 glyph_brush.texture(),
                 None,
                 *projection,
-                renderer.width(),
-                renderer.height(),
+                renderer.size(),
                 None,
             );
 
@@ -213,20 +210,19 @@ impl TextPainter {
 impl GlyphPipeline for TextPainter {
     fn append_to_renderer(
         &mut self,
-        device: &mut Device,
+        _device: &mut Device,
         renderer: &mut Renderer,
         texture: &Texture,
-        clear: Option<ClearOptions>,
-        transform: Mat4,
-        target_width: i32,
-        target_height: i32,
-        region: Option<Rect>,
+        _clear: Option<ClearOptions>,
+        _transform: Mat4,
+        _size: (i32, i32),
+        _region: Option<Rect>,
     ) {
         renderer.bind_texture(0, texture);
         renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
     }
 
-    fn upload(&mut self, device: &mut Device, instances: &[GlyphInstance]) {
+    fn upload(&mut self, _device: &mut Device, instances: &[GlyphInstance]) {
         self.font_vertices.clear();
         self.font_vertices.extend_from_slice(instances);
     }

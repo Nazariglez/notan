@@ -1,10 +1,7 @@
 use crate::instance::GlyphInstance;
 use notan_app::graphics::*;
-use notan_math::glam::{Mat3, Mat4};
+use notan_math::glam::Mat4;
 use notan_math::Rect;
-use std::any::{Any, TypeId};
-use std::cell::{Ref, RefCell, RefMut};
-use std::collections::HashMap;
 
 pub trait GlyphPipeline {
     fn create_renderer(
@@ -13,8 +10,7 @@ pub trait GlyphPipeline {
         texture: &Texture,
         clear: Option<ClearOptions>,
         transform: Mat4,
-        target_width: i32,
-        target_height: i32,
+        size: (i32,i32),
         region: Option<Rect>,
     ) -> Renderer {
         let mut renderer = device.create_renderer();
@@ -24,13 +20,13 @@ pub trait GlyphPipeline {
             texture,
             clear,
             transform,
-            target_width,
-            target_height,
+            size,
             region,
         );
         renderer
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn append_to_renderer(
         &mut self,
         device: &mut Device,
@@ -38,8 +34,7 @@ pub trait GlyphPipeline {
         texture: &Texture,
         clear: Option<ClearOptions>,
         transform: Mat4,
-        target_width: i32,
-        target_height: i32,
+        size: (i32, i32),
         region: Option<Rect>,
     );
 
@@ -131,7 +126,6 @@ pub struct DefaultGlyphPipeline {
     pub ebo: Buffer,
     pub ubo: Buffer,
     current_instances: usize,
-    supported_instances: usize,
     current_transform: Mat4,
 }
 
@@ -159,7 +153,6 @@ impl DefaultGlyphPipeline {
             ebo,
             ubo,
             current_instances: 0,
-            supported_instances: 50000,
             current_transform: Mat4::IDENTITY,
         })
     }
@@ -173,15 +166,14 @@ impl GlyphPipeline for DefaultGlyphPipeline {
         texture: &Texture,
         clear: Option<ClearOptions>,
         transform: Mat4,
-        target_width: i32,
-        target_height: i32,
+        size: (i32, i32),
         region: Option<Rect>,
     ) {
         if self.current_transform != transform {
             device.set_buffer_data(&self.ubo, &transform.to_cols_array());
         }
 
-        renderer.set_size(target_width as _, target_height as _);
+        renderer.set_size(size.0, size.1);
         renderer.set_primitive(DrawPrimitive::TriangleStrip);
 
         if let Some(region) = region {
@@ -211,7 +203,7 @@ impl GlyphPipeline for DefaultGlyphPipeline {
 fn create_pipeline(gfx: &mut Graphics, info: &VertexInfo) -> Result<Pipeline, String> {
     gfx.create_pipeline()
         .from(&GLYPH_VERTEX, &GLYPH_FRAGMENT)
-        .with_vertex_info(&info)
+        .with_vertex_info(info)
         .with_color_blend(BlendMode::NORMAL)
         .with_alpha_blend(BlendMode {
             src: BlendFactor::One,

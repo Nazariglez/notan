@@ -24,22 +24,27 @@ pub struct Font {
     inner: FontId,
 }
 
-impl Into<FontId> for Font {
-    fn into(self) -> FontId {
-        self.inner
+impl Font {
+    pub fn id(&self) -> u64 {
+        self.id
     }
 }
 
-impl Into<FontId> for &Font {
-    fn into(self) -> FontId {
-        self.inner
+impl From<Font> for FontId {
+    fn from(font: Font) -> Self {
+        font.inner
+    }
+}
+
+impl From<&Font> for FontId {
+    fn from(font: &Font) -> Self {
+        font.inner
     }
 }
 
 pub struct TextExtension {
     glyph_brush: GlyphBrush,
     pipelines: HashMap<TypeId, Box<dyn GlyphPipeline>>,
-    font_loaded: bool,
 }
 
 impl TextExtension {
@@ -49,7 +54,6 @@ impl TextExtension {
         let mut ext = Self {
             glyph_brush,
             pipelines,
-            font_loaded: false,
         };
 
         ext.add_pipeline(DefaultGlyphPipeline::new(gfx)?);
@@ -83,16 +87,16 @@ impl TextExtension {
     }
 
     fn create_renderer(&mut self, device: &mut Device, text: &Text) -> Renderer {
-        let mut glyph_brush = &mut self.glyph_brush;
+        let glyph_brush = &mut self.glyph_brush;
         text.sections.iter().for_each(|s| glyph_brush.queue(s));
         glyph_brush.queue(&text.current_section);
 
         let pipeline_type = text
             .pipeline_type
-            .unwrap_or_else(|| TypeId::of::<DefaultGlyphPipeline>());
+            .unwrap_or_else(TypeId::of::<DefaultGlyphPipeline>);
 
-        let clear_options = text.clear_options.unwrap_or_else(|| ClearOptions::none());
-        let mut pipeline = self.pipelines.get_mut(&pipeline_type).unwrap().deref_mut();
+        let clear_options = text.clear_options.unwrap_or_else(ClearOptions::none);
+        let pipeline = self.pipelines.get_mut(&pipeline_type).unwrap().deref_mut();
 
         glyph_brush.process_queued(device, pipeline);
 
@@ -120,7 +124,7 @@ impl TextExtension {
 }
 
 impl GfxExtension<Text<'_>> for TextExtension {
-    fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a Text) -> &'a [Commands] {
+    fn commands<'a>(&'a mut self, _device: &mut Device, _renderer: &'a Text) -> &'a [Commands] {
         &[]
     }
 }

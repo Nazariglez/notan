@@ -1,4 +1,4 @@
-use notan_app::{Graphics, Texture, TextureFilter, TextureFormat};
+use notan_app::{Texture, TextureFilter, TextureFormat};
 use notan_graphics::Device;
 
 pub struct Cache {

@@ -18,7 +18,7 @@ impl Drop for RenderTextureIdRef {
 #[derive(Debug, Clone)]
 pub struct RenderTexture {
     id: u64,
-    id_ref: Arc<RenderTextureIdRef>,
+    _id_ref: Arc<RenderTextureIdRef>,
     texture: Texture,
 }
 
@@ -28,7 +28,7 @@ impl RenderTexture {
 
         Self {
             id,
-            id_ref,
+            _id_ref: id_ref,
             texture,
         }
     }

@@ -19,7 +19,7 @@ impl Drop for BufferIdRef {
 #[derive(Debug, Clone)]
 pub struct Buffer {
     id: u64,
-    id_ref: Arc<BufferIdRef>,
+    _id_ref: Arc<BufferIdRef>,
     pub usage: BufferUsage,
     pub draw: Option<DrawType>,
 }
@@ -35,7 +35,7 @@ impl Buffer {
 
         Self {
             id,
-            id_ref,
+            _id_ref: id_ref,
             usage,
             draw,
         }

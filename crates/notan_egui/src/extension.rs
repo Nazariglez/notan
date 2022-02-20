@@ -4,7 +4,7 @@ use egui::TextureId;
 use notan_app::{
     BlendFactor, BlendMode, Buffer, ClearOptions, Color, Commands, Device, ExtContainer,
     GfxExtension, GfxRenderer, Graphics, Pipeline, RenderTexture, ShaderSource, Texture,
-    TextureFilter, TextureFormat, TextureInfo, VertexFormat, VertexInfo,
+    TextureFilter, TextureFormat, VertexFormat, VertexInfo,
 };
 use std::collections::HashMap;
 

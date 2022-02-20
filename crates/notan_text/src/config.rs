@@ -22,8 +22,8 @@ where
 fn parse_font(id: &str, data: Vec<u8>, gfx: &mut Graphics) -> Result<Font, String> {
     let font = gfx
         .extension_mut::<Text, TextExtension>()
-        .ok_or_else(|| "TextExtension is not added to Graphics")?
+        .ok_or("TextExtension is not added to Graphics")?
         .create_font(&data)?;
-    log::debug!("Asset '{}' parsed as TextExtension Font", font.id);
+    log::debug!("Asset '{}' parsed as TextExtension Font", id);
     Ok(font)
 }

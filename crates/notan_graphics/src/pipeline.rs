@@ -19,7 +19,7 @@ impl Drop for PipelineIdRef {
 #[derive(Debug, Clone)]
 pub struct Pipeline {
     id: u64,
-    id_ref: Arc<PipelineIdRef>,
+    _id_ref: Arc<PipelineIdRef>,
     stride: usize,
     pub options: PipelineOptions,
 }
@@ -41,7 +41,7 @@ impl Pipeline {
 
         Self {
             id,
-            id_ref,
+            _id_ref: id_ref,
             stride,
             options,
         }
