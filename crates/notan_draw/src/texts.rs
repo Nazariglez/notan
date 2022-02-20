@@ -3,7 +3,7 @@ mod text;
 
 use crate::builder::DrawBuilder;
 use crate::draw::Draw;
-pub use notan_glyph::Font;
+pub use notan_text::{CreateFont, Font};
 pub use painter::create_text_pipeline;
 pub(crate) use painter::*;
 pub use text::*;

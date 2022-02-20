@@ -4,7 +4,7 @@ use egui::TextureId;
 use notan_app::{
     BlendFactor, BlendMode, Buffer, ClearOptions, Color, Commands, Device, ExtContainer,
     GfxExtension, GfxRenderer, Graphics, Pipeline, RenderTexture, ShaderSource, Texture,
-    TextureFilter, TextureFormat, TextureInfo, VertexFormat, VertexInfo,
+    TextureFilter, TextureFormat, VertexFormat, VertexInfo,
 };
 use std::collections::HashMap;
 
@@ -166,15 +166,12 @@ impl EguiExtension {
             .collect::<Vec<u8>>();
 
         let texture = device
-            .create_texture(TextureInfo {
-                width: width as _,
-                height: height as _,
-                format: TextureFormat::Rgba32,
-                min_filter: TextureFilter::Linear,
-                mag_filter: TextureFilter::Linear,
-                bytes: Some(pixels),
-                depth: false,
-            })
+            .create_texture()
+            .with_size(width as _, height as _)
+            .with_filter(TextureFilter::Linear, TextureFilter::Linear)
+            .with_format(TextureFormat::Rgba32)
+            .from_bytes(&pixels, width as _, height as _)
+            .build()
             .unwrap();
 
         self.texture = Some(texture);
@@ -358,7 +355,7 @@ impl AsEguiTexture for RenderTexture {
         let id = self.texture().id();
 
         let already_registered = gfx
-            .get_ext::<EguiContext, EguiExtension>()
+            .extension::<EguiContext, EguiExtension>()
             .ok_or_else(|| "EGUI Plugin not found.".to_string())?
             .user_textures
             .contains_key(&id);
@@ -368,7 +365,7 @@ impl AsEguiTexture for RenderTexture {
         }
 
         let mut ext = gfx
-            .get_ext_mut::<EguiContext, EguiExtension>()
+            .extension_mut::<EguiContext, EguiExtension>()
             .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
 
         Ok(ext.register_native_texture(id, self.texture().clone()))
@@ -380,7 +377,7 @@ impl AsEguiTexture for Texture {
         let id = self.id();
 
         let already_registered = gfx
-            .get_ext::<EguiContext, EguiExtension>()
+            .extension::<EguiContext, EguiExtension>()
             .ok_or_else(|| "EGUI Plugin not found.".to_string())?
             .user_textures
             .contains_key(&id);
@@ -407,7 +404,7 @@ impl AsEguiTexture for Texture {
             .build()?;
 
         let mut ext = gfx
-            .get_ext_mut::<EguiContext, EguiExtension>()
+            .extension_mut::<EguiContext, EguiExtension>()
             .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
 
         Ok(ext.register_native_texture(id, texture))
@@ -430,7 +427,7 @@ impl RegisterEguiTexture for Graphics {
     fn unregister_egui_texture(&mut self, id: egui::TextureId) -> Result<(), String> {
         if let egui::TextureId::User(id) = id {
             let mut ext = self
-                .get_ext_mut::<EguiContext, EguiExtension>()
+                .extension_mut::<EguiContext, EguiExtension>()
                 .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
 
             ext.unregister_native_texture(id);

@@ -27,7 +27,7 @@ fn read_file(full_path: &Path) -> Result<String, String> {
     if !full_path.is_file() {
         return Err(format!(
             "File {} was not found.",
-            full_path.display().to_string()
+            full_path.display()
         ));
     }
 

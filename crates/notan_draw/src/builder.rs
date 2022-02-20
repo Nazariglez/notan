@@ -52,7 +52,7 @@ where
 {
     fn drop(&mut self) {
         if let Some(inner) = self.inner.take() {
-            inner.draw_process(&mut self.draw);
+            inner.draw_process(self.draw);
         }
     }
 }

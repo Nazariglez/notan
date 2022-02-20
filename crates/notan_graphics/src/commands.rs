@@ -39,10 +39,12 @@ pub enum Commands {
         height: f32,
     },
     Draw {
+        primitive: DrawPrimitive,
         offset: i32,
         count: i32,
     },
     DrawInstanced {
+        primitive: DrawPrimitive,
         offset: i32,
         count: i32,
         length: i32,

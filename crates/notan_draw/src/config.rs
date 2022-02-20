@@ -1,7 +1,6 @@
-use crate::{CreateDraw, DrawExtension};
-use notan_app::assets::AssetLoader;
+use crate::DrawExtension;
 use notan_app::{AppBuilder, AppState, BackendSystem, BuildConfig, Graphics};
-use notan_glyph::Font;
+use notan_text::*;
 
 pub struct DrawConfig;
 impl<S, B> BuildConfig<S, B> for DrawConfig
@@ -10,18 +9,14 @@ where
     B: BackendSystem,
 {
     fn apply(self, builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
-        builder
-            .add_graphic_ext(|gfx: &mut Graphics| DrawExtension::new(gfx).unwrap())
-            .add_loader(
-                AssetLoader::new()
-                    .use_parser(parse_font)
-                    .extensions(&["ttf"]),
-            )
-    }
-}
+        builder.add_graphic_ext(|gfx: &mut Graphics| {
+            // Add text extension if necessary
+            if gfx.extension::<Text, TextExtension>().is_none() {
+                let text_ext = TextExtension::new(gfx).unwrap();
+                gfx.add_extension(text_ext);
+            }
 
-fn parse_font(id: &str, data: Vec<u8>, gfx: &mut Graphics) -> Result<Font, String> {
-    let font = gfx.create_font(&data)?;
-    log::debug!("Asset '{}' parsed as Draw Font", id);
-    Ok(font)
+            DrawExtension::new(gfx).unwrap()
+        })
+    }
 }

@@ -6,6 +6,9 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[profile.release]
+lto = true
+
 [dependencies]
 notan_app = { path = "crates/notan_app" }
 notan_macro = { path = "crates/notan_macro" }
@@ -17,6 +20,7 @@ notan_glyph = { path = "crates/notan_glyph", optional = true }
 notan_draw = { path = "crates/notan_draw", optional = true }
 notan_backend = { path = "crates/notan_backend", optional = true }
 notan_egui = { path = "crates/notan_egui", optional = true }
+notan_text = { path = "crates/notan_text", optional = true }
 
 [workspace]
 members = ["crates/*"]
@@ -25,9 +29,11 @@ members = ["crates/*"]
 default = ["default_backend", "log", "draw"]
 log = ["notan_log"]
 default_backend = ["notan_backend"]
-glyphs = ["notan_glyph"]
+glyph = ["notan_glyph"]
 draw = ["notan_draw"]
 egui = ["notan_egui"]
+text = ["notan_text"]
+custom-backend = []
 
 [dev-dependencies]
 wasm-bindgen = "0.2.79"
@@ -158,6 +164,22 @@ name = "game_of_life"
 required-features = ["draw"]
 
 [[example]]
+name = "game_pong"
+required-features = ["draw"]
+
+[[example]]
+name = "game_snake"
+required-features = ["draw"]
+
+[[example]]
+name = "game_tetris"
+required-features = ["draw"]
+
+[[example]]
+name = "glyph_hello_raw"
+required-features = ["glyph"]
+
+[[example]]
 name = "graphics_update_texture"
 required-features = ["draw"]
 
@@ -190,8 +212,8 @@ name = "log_basic"
 required-features = ["log"]
 
 [[example]]
-name = "renderer_font"
-required-features = ["glyphs"]
+name = "text_hello"
+required-features = ["text"]
 
 [[example]]
 name = "window_fullscreen"

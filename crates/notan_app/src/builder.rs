@@ -150,7 +150,7 @@ where
         let cb =
             move |app: &mut App, assets: &mut Assets, gfx: &mut Graphics, plugins: &mut Plugins| {
                 let e = handler.callback().exec(app, assets, gfx, plugins);
-                gfx.add_ext(e);
+                gfx.add_extension(e);
             };
         self.extension_callbacks.push(Box::new(cb));
         self
@@ -221,7 +221,7 @@ where
             cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
         }
 
-        if let Err(e) = initialize(app, state, move |mut app, mut state| {
+        if let Err(e) = initialize(app, state, move |app, mut state| {
             let win_size = app.window().size();
             if graphics.size() != win_size {
                 let (width, height) = win_size;
@@ -237,25 +237,25 @@ where
             app.system_timer.update();
 
             // Manage pre frame events
-            if let AppFlow::SkipFrame = plugins.pre_frame(&mut app, &mut assets, &mut graphics)? {
+            if let AppFlow::SkipFrame = plugins.pre_frame(app, &mut assets, &mut graphics)? {
                 return Ok(FrameState::Skip);
             }
 
             // update delta time and fps here
             app.timer.update();
 
-            assets.tick((&mut app, &mut graphics, &mut plugins, &mut state))?;
+            assets.tick((app, &mut graphics, &mut plugins, &mut state))?;
 
             // Manage each event
             for evt in app.backend.events_iter() {
                 app.keyboard.process_events(&evt, app.timer.delta_f32());
                 app.mouse.process_events(&evt, app.timer.delta_f32());
 
-                match plugins.event(&mut app, &mut assets, &evt)? {
+                match plugins.event(app, &mut assets, &evt)? {
                     AppFlow::Skip => {}
                     AppFlow::Next => {
                         if let Some(cb) = &event_callback {
-                            cb.exec(&mut app, &mut assets, &mut plugins, &mut state, evt);
+                            cb.exec(app, &mut assets, &mut plugins, state, evt);
                         }
                     }
                     AppFlow::SkipFrame => return Ok(FrameState::Skip),
@@ -263,28 +263,22 @@ where
             }
 
             // Manage update callback
-            match plugins.update(&mut app, &mut assets)? {
+            match plugins.update(app, &mut assets)? {
                 AppFlow::Skip => {}
                 AppFlow::Next => {
                     if let Some(cb) = &update_callback {
-                        cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
+                        cb.exec(app, &mut assets, &mut plugins, state);
                     }
                 }
                 AppFlow::SkipFrame => return Ok(FrameState::Skip),
             }
 
             // Manage draw callback
-            match plugins.draw(&mut app, &mut assets, &mut graphics)? {
+            match plugins.draw(app, &mut assets, &mut graphics)? {
                 AppFlow::Skip => {}
                 AppFlow::Next => {
                     if let Some(cb) = &draw_callback {
-                        cb.exec(
-                            &mut app,
-                            &mut assets,
-                            &mut graphics,
-                            &mut plugins,
-                            &mut state,
-                        );
+                        cb.exec(app, &mut assets, &mut graphics, &mut plugins, state);
                     }
                 }
                 AppFlow::SkipFrame => return Ok(FrameState::Skip),
@@ -294,7 +288,7 @@ where
             app.keyboard.clear();
 
             // Manage post frame event
-            let _ = plugins.post_frame(&mut app, &mut assets, &mut graphics)?;
+            let _ = plugins.post_frame(app, &mut assets, &mut graphics)?;
 
             // Clean possible dropped resources on the backend
             graphics.clean();

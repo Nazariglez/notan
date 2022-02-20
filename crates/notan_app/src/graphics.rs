@@ -5,11 +5,13 @@ use std::any::{Any, TypeId};
 use std::cell::{Ref, RefCell, RefMut};
 
 /// Graphic interface to interact with the GPU
+/// It's a wrapper for the Device interface and
+/// the graphics extensions
 pub struct Graphics {
     /// Graphic raw implementation
     pub device: Device,
 
-    extensions: ExtContainer,
+    pub extensions: ExtContainer,
 }
 
 impl Graphics {
@@ -25,7 +27,7 @@ impl Graphics {
 
     /// Adds a new graphic extensions
     #[inline]
-    pub fn add_ext<R, T>(&mut self, extension: T)
+    pub fn add_extension<R, T>(&mut self, extension: T)
     where
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
@@ -35,7 +37,7 @@ impl Graphics {
 
     /// Remove a graphic extensions
     #[inline]
-    pub fn remove_ext<R, T>(&mut self)
+    pub fn remove_extension<R, T>(&mut self)
     where
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
@@ -45,7 +47,7 @@ impl Graphics {
 
     /// Returns the extension as mutable reference
     #[inline]
-    pub fn get_ext_mut<R, T>(&self) -> Option<RefMut<T>>
+    pub fn extension_mut<R, T>(&self) -> Option<RefMut<T>>
     where
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
@@ -55,7 +57,7 @@ impl Graphics {
 
     /// Returns the extension as reference
     #[inline]
-    pub fn get_ext<R, T>(&self) -> Option<Ref<T>>
+    pub fn extension<R, T>(&self) -> Option<Ref<T>>
     where
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
@@ -66,60 +68,60 @@ impl Graphics {
     /// Creates a Pipeline builder
     #[inline]
     pub fn create_pipeline(&mut self) -> PipelineBuilder {
-        PipelineBuilder::new(&mut self.device)
+        self.device.create_pipeline()
     }
 
     /// Creates a texture builder
     #[inline]
     pub fn create_texture(&mut self) -> TextureBuilder {
-        TextureBuilder::new(&mut self.device)
+        self.device.create_texture()
     }
 
     /// Creates a render texture builder
     #[inline]
     pub fn create_render_texture(&mut self, width: i32, height: i32) -> RenderTextureBuilder {
-        RenderTextureBuilder::new(&mut self.device, width, height)
+        self.device.create_render_texture(width, height)
     }
 
     /// Creates a vertex buffer builder
     #[inline]
     pub fn create_vertex_buffer(&mut self) -> VertexBufferBuilder {
-        VertexBufferBuilder::new(&mut self.device)
+        self.device.create_vertex_buffer()
     }
 
     /// Creates a index buffer builder
     #[inline]
     pub fn create_index_buffer(&mut self) -> IndexBufferBuilder {
-        IndexBufferBuilder::new(&mut self.device)
+        self.device.create_index_buffer()
     }
 
     /// Creates a uniform buffer builder
     #[inline]
     pub fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> UniformBufferBuilder {
-        UniformBufferBuilder::new(&mut self.device, slot, name)
+        self.device.create_uniform_buffer(slot, name)
     }
 
     /// Update the texture data
     #[inline]
     pub fn update_texture<'a>(&'a mut self, texture: &'a mut Texture) -> TextureUpdater {
-        TextureUpdater::new(&mut self.device, texture)
+        self.device.update_texture(texture)
     }
 
     /// Read pixels from a texture
     #[inline]
     pub fn read_pixels<'a>(&'a mut self, texture: &'a Texture) -> TextureReader {
-        TextureReader::new(&mut self.device, texture)
+        self.device.read_pixels(texture)
     }
 
     /// Render to the screen
     #[inline]
-    pub fn render(&mut self, renderer: &dyn GfxRenderer) {
+    pub fn render<G: GfxRenderer>(&mut self, renderer: &G) {
         renderer.render(&mut self.device, &mut self.extensions, None);
     }
 
     /// Render to a custom target
     #[inline]
-    pub fn render_to(&mut self, target: &RenderTexture, renderer: &dyn GfxRenderer) {
+    pub fn render_to<G: GfxRenderer>(&mut self, target: &RenderTexture, renderer: &G) {
         renderer.render(&mut self.device, &mut self.extensions, Some(target));
     }
 
@@ -127,6 +129,42 @@ impl Graphics {
     #[inline]
     pub fn set_buffer_data<T: BufferDataType>(&mut self, buffer: &Buffer, data: &[T]) {
         self.device.set_buffer_data(buffer, data);
+    }
+
+    /// Creates a render pass
+    #[inline]
+    pub fn create_renderer(&self) -> Renderer {
+        self.device.create_renderer()
+    }
+
+    /// Returns the Graphics API limits
+    #[inline]
+    pub fn limits(&self) -> Limits {
+        self.device.limits()
+    }
+
+    /// Returns the drawable size
+    #[inline]
+    pub fn size(&self) -> (i32, i32) {
+        self.device.size()
+    }
+
+    /// Sets the drawable size
+    #[inline]
+    pub fn set_size(&mut self, width: i32, height: i32) {
+        self.device.set_size(width, height);
+    }
+
+    /// Returns the screen dpi
+    #[inline]
+    pub fn dpi(&self) -> f64 {
+        self.device.dpi()
+    }
+
+    /// Sets the screens dpi
+    #[inline]
+    pub fn set_dpi(&mut self, scale_factor: f64) {
+        self.device.set_dpi(scale_factor);
     }
 }
 
@@ -210,10 +248,7 @@ pub trait GfxRenderer {
     );
 }
 
-pub trait GfxExtension<T: ?Sized>
-where
-    Self: Send + Sync,
-{
+pub trait GfxExtension<T: ?Sized> {
     /// Process and returns the commands
     fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a T) -> &'a [Commands];
 }

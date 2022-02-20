@@ -4,7 +4,7 @@ use super::shapes::*;
 use super::texts::*;
 use crate::batch::*;
 use crate::draw::*;
-use notan_glyph::GlyphPlugin;
+use notan_glyph::GlyphBrush;
 use notan_graphics::prelude::*;
 use notan_math::glam::Mat4;
 
@@ -38,7 +38,7 @@ impl DrawManager {
         &mut self,
         draw: &Draw,
         device: &mut Device,
-        glyphs: &mut GlyphPlugin,
+        glyphs: &mut GlyphBrush,
     ) -> &[Commands] {
         self.renderer.clear();
         process_draw(self, draw, device, glyphs);
@@ -85,7 +85,7 @@ impl DrawManager {
 fn paint_batch(
     device: &mut Device,
     manager: &mut DrawManager,
-    glyphs: &mut GlyphPlugin,
+    glyphs: &mut GlyphBrush,
     b: &Batch,
     projection: &Mat4,
 ) {
@@ -121,7 +121,7 @@ fn process_glyphs(
     manager: &mut DrawManager,
     draw: &Draw,
     device: &mut Device,
-    glyphs: &mut GlyphPlugin,
+    glyphs: &mut GlyphBrush,
 ) {
     if let Some(indices) = &draw.text_batch_indices {
         let batch_len = draw.batches.len();
@@ -142,15 +142,13 @@ fn process_glyphs(
             if let Some(b) = batch {
                 if let BatchType::Text { texts } = &b.typ {
                     texts.iter().for_each(|data| {
-                        glyphs.process_text(&data.font, &(&data.text).into());
+                        glyphs.queue(&data.section);
                     });
                 }
             }
         });
 
-        if let Err(e) = glyphs.update(device, &mut manager.text_painter) {
-            log::error!("{}", e);
-        }
+        glyphs.process_queued(device, &mut manager.text_painter);
     }
 }
 
@@ -158,7 +156,7 @@ fn process_draw(
     manager: &mut DrawManager,
     draw: &Draw,
     device: &mut Device,
-    glyphs: &mut GlyphPlugin,
+    glyphs: &mut GlyphBrush,
 ) {
     process_glyphs(manager, draw, device, glyphs);
 

@@ -4,6 +4,13 @@ use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 use notan_math::glam::Mat4;
 
+fn vertex_info() -> VertexInfo {
+    VertexInfo::new()
+        .attr(0, VertexFormat::Float2)
+        .attr(1, VertexFormat::Float2)
+        .attr(2, VertexFormat::Float4)
+}
+
 //language=glsl
 const IMAGE_VERTEX: ShaderSource = vertex_shader! {
     r#"
@@ -50,19 +57,12 @@ pub fn create_image_pipeline(
     fragment: Option<&ShaderSource>,
 ) -> Result<Pipeline, String> {
     let fragment = fragment.unwrap_or(&IMAGE_FRAGMENT);
-    device.create_pipeline(
-        &IMAGE_VERTEX,
-        fragment,
-        &[
-            VertexAttr::new(0, VertexFormat::Float2),
-            VertexAttr::new(1, VertexFormat::Float2),
-            VertexAttr::new(2, VertexFormat::Float4),
-        ],
-        PipelineOptions {
-            color_blend: Some(BlendMode::NORMAL),
-            ..Default::default()
-        },
-    )
+    device
+        .create_pipeline()
+        .from(&IMAGE_VERTEX, fragment)
+        .with_vertex_info(&vertex_info())
+        .with_color_blend(BlendMode::NORMAL)
+        .build()
 }
 
 pub(crate) struct ImagePainter {
@@ -83,19 +83,22 @@ impl ImagePainter {
         let pipeline = create_image_pipeline(device, None)?;
 
         let uniforms = [0.0; 16];
+        let vbo = device
+            .create_vertex_buffer()
+            .with_info(&vertex_info())
+            .build()?;
+
+        let ebo = device.create_index_buffer().build()?;
+
+        let ubo = device
+            .create_uniform_buffer(0, "Locals")
+            .with_data(&uniforms)
+            .build()?;
 
         Ok(Self {
-            vbo: device.create_vertex_buffer(
-                None,
-                &[
-                    VertexAttr::new(0, VertexFormat::Float2),
-                    VertexAttr::new(1, VertexFormat::Float2),
-                    VertexAttr::new(2, VertexFormat::Float4),
-                ],
-                VertexStepMode::Vertex,
-            )?,
-            ebo: device.create_index_buffer(None)?,
-            ubo: device.create_uniform_buffer(0, "Locals", Some(&uniforms))?,
+            vbo,
+            ebo,
+            ubo,
             pipeline,
             vertices: vec![],
             indices: vec![],

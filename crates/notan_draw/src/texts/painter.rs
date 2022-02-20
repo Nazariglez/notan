@@ -1,9 +1,10 @@
 use crate::batch::*;
 use crate::manager::process_pipeline;
-use notan_glyph::{FontVertex, GlyphPipeline, GlyphPlugin};
+use notan_glyph::{GlyphBrush, GlyphInstance, GlyphPipeline};
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
 use notan_math::glam::{Mat4, Vec3};
+use notan_math::Rect;
 
 //language=glsl
 const TEXT_VERTEX: ShaderSource = vertex_shader! {
@@ -51,6 +52,13 @@ const TEXT_FRAGMENT: ShaderSource = fragment_shader! {
     "#
 };
 
+fn vertex_info() -> VertexInfo {
+    VertexInfo::new()
+        .attr(0, VertexFormat::Float2)
+        .attr(1, VertexFormat::Float2)
+        .attr(2, VertexFormat::Float4)
+}
+
 pub(crate) struct TextPainter {
     pub pipeline: Pipeline,
     pub vbo: Buffer,
@@ -63,7 +71,7 @@ pub(crate) struct TextPainter {
     uniforms: [f32; 16],
     count_vertices: usize,
     count_indices: usize,
-    font_vertices: Vec<FontVertex>,
+    font_vertices: Vec<GlyphInstance>,
     dirty_buffer: bool,
 }
 
@@ -72,17 +80,17 @@ impl TextPainter {
         let uniforms = [0.0; 16];
 
         let pipeline = create_text_pipeline(device, None)?;
-        let vbo = device.create_vertex_buffer(
-            None,
-            &[
-                VertexAttr::new(0, VertexFormat::Float2),
-                VertexAttr::new(1, VertexFormat::Float2),
-                VertexAttr::new(2, VertexFormat::Float4),
-            ],
-            VertexStepMode::Vertex,
-        )?;
-        let ebo = device.create_index_buffer(None)?;
-        let ubo = device.create_uniform_buffer(0, "Locals", Some(&uniforms))?;
+        let vbo = device
+            .create_vertex_buffer()
+            .with_info(&vertex_info())
+            .build()?;
+
+        let ebo = device.create_index_buffer().build()?;
+
+        let ubo = device
+            .create_uniform_buffer(0, "Locals")
+            .with_data(&uniforms)
+            .build()?;
 
         Ok(Self {
             pipeline,
@@ -103,8 +111,8 @@ impl TextPainter {
 
     pub fn push(
         &mut self,
-        _device: &mut Device,
-        glyphs: &mut GlyphPlugin,
+        device: &mut Device,
+        glyph_brush: &mut GlyphBrush,
         renderer: &mut Renderer,
         batch: &Batch,
         projection: &Mat4,
@@ -119,18 +127,16 @@ impl TextPainter {
                 let start = self.count_chars;
                 let end = start + count;
                 let vert = &self.font_vertices[start..end];
-                vert.iter().enumerate().for_each(|(i, fv)| {
-                    let FontVertex {
-                        pos: (x1, y1, _),
-                        size: (ww, hh),
-                        uvs: [u1, v1, u2, v2],
-                        color: c,
-                    } = *fv;
+                vert.iter().enumerate().for_each(|(i, g_instance)| {
+                    let GlyphInstance {
+                        left_top: [x1, y1, _],
+                        right_bottom: [x2, y2],
+                        tex_left_top: [u1, v1],
+                        tex_right_bottom: [u2, v2],
+                        color: [r, g, b, a],
+                    } = *g_instance;
 
-                    let x2 = x1 + ww;
-                    let y2 = y1 + hh;
-
-                    let a = c.a * d.alpha;
+                    let a = a * d.alpha;
 
                     let matrix = d.transform;
                     let xyz1 = matrix * Vec3::new(x1, y1, 1.0);
@@ -138,20 +144,20 @@ impl TextPainter {
                     let (x1, y1, x2, y2) = (xyz1.x, xyz1.y, xyz2.x, xyz2.y);
 
                     #[rustfmt::skip]
-                        vertices.extend_from_slice(&[
-                            x1, y1, u1, v1, c.r, c.g, c.b, a,
-                            x2, y1, u2, v1, c.r, c.g, c.b, a,
-                            x1, y2, u1, v2, c.r, c.g, c.b, a,
-                            x2, y2, u2, v2, c.r, c.g, c.b, a,
-                        ]);
+                    vertices.extend_from_slice(&[
+                        x1, y1, u1, v1, r, g, b, a,
+                        x2, y1, u2, v1, r, g, b, a,
+                        x1, y2, u1, v2, r, g, b, a,
+                        x2, y2, u2, v2, r, g, b, a,
+                    ]);
 
                     let n = ((start as u32) + (i as u32)) * 4;
 
                     #[rustfmt::skip]
-                        indices.extend_from_slice(&[
-                            n    , n + 1, n + 2,
-                            n + 2, n + 1, n + 3
-                        ]);
+                    indices.extend_from_slice(&[
+                        n    , n + 1, n + 2,
+                        n + 2, n + 1, n + 3
+                    ]);
                 });
 
                 self.count_chars = end;
@@ -167,8 +173,16 @@ impl TextPainter {
 
             self.uniforms.copy_from_slice(&projection.to_cols_array());
 
-            renderer.bind_texture(0, &glyphs.texture);
-            renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
+            self.append_to_renderer(
+                device,
+                renderer,
+                glyph_brush.texture(),
+                None,
+                *projection,
+                renderer.size(),
+                None,
+            );
+
             renderer.draw(offset as _, indices.len() as _);
             self.dirty_buffer = true;
         }
@@ -194,13 +208,24 @@ impl TextPainter {
 }
 
 impl GlyphPipeline for TextPainter {
-    fn update(&mut self, _device: &mut Device, vertices: Option<&[FontVertex]>) {
-        if let Some(vert) = vertices {
-            self.font_vertices = vert.to_vec();
-        }
+    fn append_to_renderer(
+        &mut self,
+        _device: &mut Device,
+        renderer: &mut Renderer,
+        texture: &Texture,
+        _clear: Option<ClearOptions>,
+        _transform: Mat4,
+        _size: (i32, i32),
+        _region: Option<Rect>,
+    ) {
+        renderer.bind_texture(0, texture);
+        renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
     }
 
-    fn render(&mut self, _texture: &Texture, _renderer: &mut Renderer) {}
+    fn upload(&mut self, _device: &mut Device, instances: &[GlyphInstance]) {
+        self.font_vertices.clear();
+        self.font_vertices.extend_from_slice(instances);
+    }
 }
 
 pub fn create_text_pipeline(
@@ -208,17 +233,10 @@ pub fn create_text_pipeline(
     fragment: Option<&ShaderSource>,
 ) -> Result<Pipeline, String> {
     let fragment = fragment.unwrap_or(&TEXT_FRAGMENT);
-    device.create_pipeline(
-        &TEXT_VERTEX,
-        fragment,
-        &[
-            VertexAttr::new(0, VertexFormat::Float2),
-            VertexAttr::new(1, VertexFormat::Float2),
-            VertexAttr::new(2, VertexFormat::Float4),
-        ],
-        PipelineOptions {
-            color_blend: Some(BlendMode::NORMAL),
-            ..Default::default()
-        },
-    )
+    device
+        .create_pipeline()
+        .from(&TEXT_VERTEX, fragment)
+        .with_vertex_info(&vertex_info())
+        .with_color_blend(BlendMode::NORMAL)
+        .build()
 }

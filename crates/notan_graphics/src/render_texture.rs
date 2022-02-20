@@ -1,5 +1,5 @@
 use crate::texture::*;
-use crate::{Device, DropManager, ResourceId};
+use crate::{Device, DropManager, Renderer, ResourceId};
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -18,7 +18,7 @@ impl Drop for RenderTextureIdRef {
 #[derive(Debug, Clone)]
 pub struct RenderTexture {
     id: u64,
-    id_ref: Arc<RenderTextureIdRef>,
+    _id_ref: Arc<RenderTextureIdRef>,
     texture: Texture,
 }
 
@@ -28,7 +28,7 @@ impl RenderTexture {
 
         Self {
             id,
-            id_ref,
+            _id_ref: id_ref,
             texture,
         }
     }
@@ -50,6 +50,10 @@ impl RenderTexture {
         let Self { texture, .. } = self;
 
         texture
+    }
+
+    pub fn create_renderer(&mut self) -> Renderer {
+        Renderer::new(self.width() as _, self.height() as _)
     }
 }
 
@@ -99,6 +103,6 @@ impl<'a> RenderTextureBuilder<'a> {
     pub fn build(self) -> Result<RenderTexture, String> {
         let Self { device, info } = self;
 
-        device.create_render_texture(info)
+        device.inner_create_render_texture(info)
     }
 }

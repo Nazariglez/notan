@@ -145,7 +145,7 @@ impl Drop for TextureIdRef {
 #[derive(Debug, Clone)]
 pub struct Texture {
     id: u64,
-    id_ref: Arc<TextureIdRef>,
+    _id_ref: Arc<TextureIdRef>,
     width: i32,
     height: i32,
     format: TextureFormat,
@@ -178,7 +178,7 @@ impl Texture {
 
         Self {
             id,
-            id_ref,
+            _id_ref: id_ref,
             width,
             height,
             format,
@@ -388,7 +388,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             _ => {}
         }
 
-        device.create_texture(info)
+        device.inner_create_texture(info)
     }
 }
 
@@ -464,7 +464,7 @@ impl<'a> TextureReader<'a> {
             format,
         };
 
-        device.read_pixels(texture, bytes, &info)
+        device.inner_read_pixels(texture, bytes, &info)
     }
 }
 
@@ -552,6 +552,6 @@ impl<'a> TextureUpdater<'a> {
             bytes,
         };
 
-        device.update_texture(texture, &info)
+        device.inner_update_texture(texture, &info)
     }
 }

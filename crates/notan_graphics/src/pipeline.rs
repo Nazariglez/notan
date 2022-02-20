@@ -19,7 +19,7 @@ impl Drop for PipelineIdRef {
 #[derive(Debug, Clone)]
 pub struct Pipeline {
     id: u64,
-    id_ref: Arc<PipelineIdRef>,
+    _id_ref: Arc<PipelineIdRef>,
     stride: usize,
     pub options: PipelineOptions,
 }
@@ -41,7 +41,7 @@ impl Pipeline {
 
         Self {
             id,
-            id_ref,
+            _id_ref: id_ref,
             stride,
             options,
         }
@@ -153,12 +153,11 @@ impl<'a, 'b> PipelineBuilder<'a, 'b> {
         match self.shaders {
             Some(ShaderKind::Source { vertex, fragment }) => {
                 self.device
-                    .create_pipeline(vertex, fragment, &self.attrs, self.options)
+                    .inner_create_pipeline(vertex, fragment, &self.attrs, self.options)
             }
-            Some(ShaderKind::Raw { vertex, fragment }) => {
-                self.device
-                    .create_pipeline_from_raw(vertex, fragment, &self.attrs, self.options)
-            }
+            Some(ShaderKind::Raw { vertex, fragment }) => self
+                .device
+                .inner_create_pipeline_from_raw(vertex, fragment, &self.attrs, self.options),
             _ => Err("Vertex and Fragment shaders should be present".to_string()),
         }
     }
@@ -346,7 +345,7 @@ impl Default for PipelineOptions {
 }
 
 /// Clear options to use at the beginning of the frame
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct ClearOptions {
     pub color: Option<Color>,
     pub depth: Option<f32>,
@@ -355,7 +354,7 @@ pub struct ClearOptions {
 
 impl ClearOptions {
     /// Create a new struct just with color
-    pub fn new(color: Color) -> Self {
+    pub fn color(color: Color) -> Self {
         Self {
             color: Some(color),
             ..Default::default()
@@ -410,5 +409,17 @@ impl Default for StencilOptions {
             write_mask: 0,
             reference: 0,
         }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum DrawPrimitive {
+    Triangles,
+    TriangleStrip,
+}
+
+impl Default for DrawPrimitive {
+    fn default() -> Self {
+        DrawPrimitive::Triangles
     }
 }

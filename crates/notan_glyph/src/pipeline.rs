@@ -1,187 +1,215 @@
-use crate::font_vertex::FontVertex;
+use crate::instance::GlyphInstance;
 use notan_app::graphics::*;
+use notan_math::glam::Mat4;
+use notan_math::Rect;
 
-#[cfg(feature = "basic_pipeline")]
-use notan_macro::{fragment_shader, vertex_shader};
-#[cfg(feature = "basic_pipeline")]
-use notan_math::glam;
-
-/// Used to manage and render the vertices glyphs
 pub trait GlyphPipeline {
-    /// In charge of update the vertices if they change, projections, etc...
-    /// Should be called always before the render method
-    fn update(&mut self, device: &mut Device, vertices: Option<&[FontVertex]>);
+    fn create_renderer(
+        &mut self,
+        device: &mut Device,
+        texture: &Texture,
+        clear: Option<ClearOptions>,
+        transform: Mat4,
+        size: (i32,i32),
+        region: Option<Rect>,
+    ) -> Renderer {
+        let mut renderer = device.create_renderer();
+        self.append_to_renderer(
+            device,
+            &mut renderer,
+            texture,
+            clear,
+            transform,
+            size,
+            region,
+        );
+        renderer
+    }
 
-    /// Uses a Renderer passed in to add the instructions to render the glyphs
-    fn render(&mut self, texture: &Texture, renderer: &mut Renderer);
+    #[allow(clippy::too_many_arguments)]
+    fn append_to_renderer(
+        &mut self,
+        device: &mut Device,
+        renderer: &mut Renderer,
+        texture: &Texture,
+        clear: Option<ClearOptions>,
+        transform: Mat4,
+        size: (i32, i32),
+        region: Option<Rect>,
+    );
+
+    fn upload(&mut self, device: &mut Device, instances: &[GlyphInstance]);
 }
 
-#[cfg(feature = "basic_pipeline")]
 //language=glsl
 const GLYPH_VERTEX: ShaderSource = vertex_shader! {
     r#"
     #version 450
-    layout(location = 0) in vec3 a_pos;
-    layout(location = 1) in vec2 a_uvs;
-    layout(location = 2) in vec4 a_color;
 
-    layout(location = 0) out vec4 v_color;
-    layout(location = 1) out vec2 v_uvs;
     layout(set = 0, binding = 0) uniform Locals {
-        mat4 u_projection;
+        mat4 transform;
     };
 
+    layout(location = 0) in vec3 left_top;
+    layout(location = 1) in vec2 right_bottom;
+    layout(location = 2) in vec2 tex_left_top;
+    layout(location = 3) in vec2 tex_right_bottom;
+    layout(location = 4) in vec4 color;
+
+    layout(location = 0) out vec2 f_tex_pos;
+    layout(location = 1) out vec4 f_color;
+
+    // generate positional data based on vertex ID
     void main() {
-        v_color = a_color;
-        v_uvs = a_uvs;
-        gl_Position = u_projection * vec4(a_pos, 1.0);
+        vec2 pos = vec2(0.0);
+        float left = left_top.x;
+        float right = right_bottom.x;
+        float top = left_top.y;
+        float bottom = right_bottom.y;
+
+        switch (gl_VertexIndex) {
+            case 0:
+                pos = vec2(left, top);
+                f_tex_pos = tex_left_top;
+                break;
+
+            case 1:
+                pos = vec2(right, top);
+                f_tex_pos = vec2(tex_right_bottom.x, tex_left_top.y);
+                break;
+
+            case 2:
+                pos = vec2(left, bottom);
+                f_tex_pos = vec2(tex_left_top.x, tex_right_bottom.y);
+                break;
+
+            case 3:
+                pos = vec2(right, bottom);
+                f_tex_pos = tex_right_bottom;
+                break;
+        }
+
+        f_color = color;
+        gl_Position = transform * vec4(pos, left_top.z, 1.0);
     }
     "#
 };
 
-#[cfg(feature = "basic_pipeline")]
 //language=glsl
 const GLYPH_FRAGMENT: ShaderSource = fragment_shader! {
     r#"
     #version 450
     precision mediump float;
 
-    layout(location = 0) in vec2 v_uvs;
-    layout(location = 1) in vec4 v_color;
+    layout(set = 0, binding = 0) uniform sampler2D font_sampler;
 
-    layout(set = 0, binding = 0) uniform sampler2D u_texture;
+    layout(location = 0) in vec2 f_tex_pos;
+    layout(location = 1) in vec4 f_color;
 
-    layout(location = 0) out vec4 color;
+    layout(location = 0) out vec4 Target0;
 
     void main() {
-        float alpha = texture(u_texture, v_uvs).r;
-         if(alpha <= 0.0) {
-             discard;
-         }
+        float alpha = texture(font_sampler, f_tex_pos).r;
 
-        color = v_color * vec4(1.0, 1.0, 1.0, alpha);
+        if (alpha <= 0.0) {
+            discard;
+        }
+
+        Target0 = f_color * vec4(1.0, 1.0, 1.0, alpha);
     }
     "#
 };
 
-#[cfg(feature = "basic_pipeline")]
-pub struct BasicPipeline {
+pub struct DefaultGlyphPipeline {
     pub pipeline: Pipeline,
     pub vbo: Buffer,
     pub ebo: Buffer,
     pub ubo: Buffer,
-
-    ebo_len: usize,
-    cached_size: (i32, i32),
+    current_instances: usize,
+    current_transform: Mat4,
 }
 
-#[cfg(feature = "basic_pipeline")]
-impl BasicPipeline {
-    pub fn new(device: &mut Device) -> Result<Self, String> {
-        let pipeline = create_glyph_pipeline(device, None)?;
-        let vbo = device.create_vertex_buffer(
-            None,
-            &[
-                VertexAttr::new(0, VertexFormat::Float3),
-                VertexAttr::new(1, VertexFormat::Float2),
-                VertexAttr::new(2, VertexFormat::Float4),
-            ],
-            VertexStepMode::Vertex,
-        )?;
-        let ebo = device.create_index_buffer(None)?;
-        let ubo = device.create_uniform_buffer(0, "Locals", Some(&[0.0; 16]))?;
+impl DefaultGlyphPipeline {
+    pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
+        let vertex_info = VertexInfo::new()
+            .attr(0, VertexFormat::Float3)
+            .attr(1, VertexFormat::Float2)
+            .attr(2, VertexFormat::Float2)
+            .attr(3, VertexFormat::Float2)
+            .attr(4, VertexFormat::Float4)
+            .step_mode(VertexStepMode::Instance);
+
+        let pipeline = create_pipeline(gfx, &vertex_info)?;
+        let vbo = gfx.create_vertex_buffer().with_info(&vertex_info).build()?;
+        let ebo = gfx.create_index_buffer().build()?;
+        let ubo = gfx
+            .create_uniform_buffer(0, "Locals")
+            .with_data(&[0.0; 16])
+            .build()?;
 
         Ok(Self {
             pipeline,
             vbo,
             ebo,
-            ebo_len: 0,
             ubo,
-            cached_size: (0, 0),
+            current_instances: 0,
+            current_transform: Mat4::IDENTITY,
         })
     }
 }
 
-#[cfg(feature = "basic_pipeline")]
-impl GlyphPipeline for BasicPipeline {
-    fn update(&mut self, device: &mut Device, vertices: Option<&[FontVertex]>) {
-        let size = device.size();
-        if self.cached_size.0 != size.0 || self.cached_size.1 != size.1 {
-            let ubo_data =
-                glam::Mat4::orthographic_lh(0.0, size.0 as _, size.1 as _, 0.0, -1.0, 1.0)
-                    .to_cols_array();
-            device.set_buffer_data(&self.ubo, &ubo_data);
-            self.cached_size = size;
+impl GlyphPipeline for DefaultGlyphPipeline {
+    fn append_to_renderer(
+        &mut self,
+        device: &mut Device,
+        renderer: &mut Renderer,
+        texture: &Texture,
+        clear: Option<ClearOptions>,
+        transform: Mat4,
+        size: (i32, i32),
+        region: Option<Rect>,
+    ) {
+        if self.current_transform != transform {
+            device.set_buffer_data(&self.ubo, &transform.to_cols_array());
         }
 
-        if let Some(vert) = vertices {
-            let (vbo_data, ebo_data): (Vec<[f32; 36]>, Vec<[u32; 6]>) = vert
-                .iter()
-                .enumerate()
-                .map(|(i, fv)| {
-                    let FontVertex {
-                        pos: (x1, y1, z),
-                        size: (ww, hh),
-                        uvs: [u1, v1, u2, v2],
-                        color: c,
-                    } = *fv;
+        renderer.set_size(size.0, size.1);
+        renderer.set_primitive(DrawPrimitive::TriangleStrip);
 
-                    let x2 = x1 + ww;
-                    let y2 = y1 + hh;
-
-                    #[rustfmt::skip]
-                    let vertices = [
-                        x1, y1, z, u1, v1, c.r, c.g, c.b, c.a,
-                        x2, y1, z, u2, v1, c.r, c.g, c.b, c.a,
-                        x1, y2, z, u1, v2, c.r, c.g, c.b, c.a,
-                        x2, y2, z, u2, v2, c.r, c.g, c.b, c.a,
-                    ];
-
-                    let n = (i as u32) * 4;
-
-                    #[rustfmt::skip]
-                    let indices:[u32; 6] = [
-                        n    , n + 1, n + 2,
-                        n + 2, n + 1, n + 3
-                    ];
-
-                    (vertices, indices)
-                })
-                .unzip();
-
-            let vbo_data = vbo_data.concat();
-            let ebo_data = ebo_data.concat();
-            self.ebo_len = ebo_data.len();
-            device.set_buffer_data(&self.vbo, &vbo_data);
-            device.set_buffer_data(&self.ebo, &ebo_data);
+        if let Some(region) = region {
+            renderer.set_scissors(region.x, region.y, region.width, region.height);
         }
-    }
 
-    fn render(&mut self, texture: &Texture, renderer: &mut Renderer) {
+        renderer.begin(clear.as_ref());
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_texture(0, texture);
-        renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
-        renderer.draw(0, self.ebo_len as _);
+        renderer.bind_buffers(&[&self.vbo, &self.ubo]);
+        renderer.draw_instanced(0, 4, self.current_instances as _);
+        renderer.end();
+    }
+
+    fn upload(&mut self, device: &mut Device, instances: &[GlyphInstance]) {
+        if instances.is_empty() {
+            self.current_instances = 0;
+            return;
+        }
+
+        let data: &[f32] = bytemuck::cast_slice(instances);
+        device.set_buffer_data(&self.vbo, data);
+        self.current_instances = instances.len();
     }
 }
 
-#[cfg(feature = "basic_pipeline")]
-pub fn create_glyph_pipeline(
-    device: &mut Device,
-    fragment: Option<&ShaderSource>,
-) -> Result<Pipeline, String> {
-    let fragment = fragment.unwrap_or(&GLYPH_FRAGMENT);
-    device.create_pipeline(
-        &GLYPH_VERTEX,
-        fragment,
-        &[
-            VertexAttr::new(0, VertexFormat::Float3),
-            VertexAttr::new(1, VertexFormat::Float2),
-            VertexAttr::new(2, VertexFormat::Float4),
-        ],
-        PipelineOptions {
-            color_blend: Some(BlendMode::NORMAL),
-            ..Default::default()
-        },
-    )
+fn create_pipeline(gfx: &mut Graphics, info: &VertexInfo) -> Result<Pipeline, String> {
+    gfx.create_pipeline()
+        .from(&GLYPH_VERTEX, &GLYPH_FRAGMENT)
+        .with_vertex_info(info)
+        .with_color_blend(BlendMode::NORMAL)
+        .with_alpha_blend(BlendMode {
+            src: BlendFactor::One,
+            dst: BlendFactor::InverseSourceAlpha,
+            op: BlendOperation::Add,
+        })
+        // TODO depth stencil and culling
+        .build()
 }
