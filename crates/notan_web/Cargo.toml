@@ -13,7 +13,7 @@ description = "Provides a web/wasm32 backend for Notan"
 
 [dependencies]
 log = "0.4"
-notan_app = { path = "../notan_app" }
+notan_app = { path = "../notan_app", version = "0.1.0" }
 wasm-bindgen = "0.2.79"
 js-sys = "0.3"
 wasm-bindgen-futures = "0.4"
