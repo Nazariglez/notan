@@ -220,17 +220,16 @@ However, this is something that we try to accomplish with this project since the
 Let's see a simple example, the 2D Draw API is built on top of the Graphics API, it has plenty of room for improvements,
 but I got some decent numbers on my machine running the example [draw_bunnymark](examples/draw_bunnymark.rs).
 
-On my Macbook (2.3Hz i9 - 16GB RAM):
+On a Macbook (2.3Hz i9 - 16GB RAM):
 - Native: 66000 Bunnies at 60FPS
 - Chrome: 42000 Bunnies at 60FPS
 
+On a high-end Desktop with Archlinux:
+- Native: 144000 Bunnies at 60FPS
+- Chrome: 122000 Bunnies at 60FPS
+
 Let's keep in mind that the conditions for `bunnymark` are very unlikely to see in a real project.
 However, it's widely used to test the performance in 2D Draw APIs.
-
-| Machine             | Bunnies | 
-|---------------------|---------|
-| OSX<sup>[1]()</sup> | 66000   |  
-| Web<sup>[2]()</sup> | 42000   |  
 
 ## Integration 
 
@@ -267,7 +266,7 @@ They are:
 - Graphics rendering
 - Text rendering
 - Draw 2D API
-- Audio
+- Audio (wip)
 - Input (Keyboard, mouse, etc...)
 - Simple UI via egui
 

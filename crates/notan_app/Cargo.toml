@@ -9,10 +9,10 @@ edition = "2018"
 [dependencies]
 log = "0.4"
 hashbrown = "0.11"
-notan_math = { path = "../notan_math" }
-notan_macro = { path = "../notan_macro" }
-notan_graphics = { path = "../notan_graphics" }
-notan_utils = { path = "../notan_utils" }
+notan_math = { path = "../notan_math", version = "0.1.0" }
+notan_macro = { path = "../notan_macro", version = "0.1.0" }
+notan_graphics = { path = "../notan_graphics", version = "0.1.0" }
+notan_utils = { path = "../notan_utils", version = "0.1.0" }
 downcast-rs = "1.2"
 indexmap = "1.6"
 futures = "0.3"

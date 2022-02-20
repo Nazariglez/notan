@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-notan_app = { path = "../notan_app" }
-notan_graphics = { path = "../notan_graphics" }
-notan_glyph = { path = "../notan_glyph" }
-notan_math = { path = "../notan_math" }
+notan_app = { path = "../notan_app", version = "0.1.0" }
+notan_graphics = { path = "../notan_graphics", version = "0.1.0" }
+notan_glyph = { path = "../notan_glyph", version = "0.1.0" }
+notan_math = { path = "../notan_math", version = "0.1.0" }
 log = "0.4"

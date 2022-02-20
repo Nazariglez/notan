@@ -10,7 +10,7 @@ edition = "2018"
 log = "0.4"
 bytemuck = "1.5"
 glow = "0.11"
-notan_graphics = { path= "../notan_graphics" }
+notan_graphics = { path= "../notan_graphics", version = "0.1.0" }
 hashbrown = "0.11"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

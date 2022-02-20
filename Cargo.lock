@@ -1342,7 +1342,6 @@ dependencies = [
 name = "notan"
 version = "0.1.0"
 dependencies = [
- "js-sys",
  "notan_app",
  "notan_backend",
  "notan_draw",
@@ -1354,7 +1353,6 @@ dependencies = [
  "notan_math",
  "notan_text",
  "notan_utils",
- "wasm-bindgen",
 ]
 
 [[package]]

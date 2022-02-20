@@ -32,6 +32,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     text.clear_color(Color::BLACK);
 
     text.add("Hello ")
+        .font(&state.font)
         .position(400.0, 30.0)
         .h_align_center()
         .color(Color::ORANGE)
