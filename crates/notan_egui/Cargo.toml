@@ -1,8 +1,8 @@
 [package]
 name = "notan_egui"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
-edition = "2018"
+edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/Nazariglez/notan"
 repository = "https://github.com/Nazariglez/notan"
@@ -13,8 +13,8 @@ description = "Provides EGUI support for Notan"
 
 [dependencies]
 log = "0.4"
-notan_app = { path = "../notan_app", version = "0.1.0" }
-notan_macro = { path = "../notan_macro", version = "0.1.0" }
+notan_app = { path = "../notan_app", version = "0.2.0" }
+notan_macro = { path = "../notan_macro", version = "0.2.0" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 egui = "0.15"
