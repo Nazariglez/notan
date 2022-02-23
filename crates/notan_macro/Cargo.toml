@@ -14,12 +14,11 @@ description = "Provides a set of utils as macros for Notan"
 [dependencies]
 syn = { version = "1.0", features = ["full", "extra-traits"] }
 quote = "1.0"
-bevy-glsl-to-spirv = "0.2.1"
 paste = "1.0"
 num = "0.4"
 glsl-to-spirv = "0.1.7"
-proc-macro2 = "1.0.24"
-spirv_cross = { version = "0.22.1", features = ["glsl"] }
+proc-macro2 = "1.0"
+spirv_cross = { version = "0.23", features = ["glsl"] }
 
 [lib]
 proc-macro = true
