@@ -13,15 +13,15 @@ description = "Provides the core API for Notan"
 
 [dependencies]
 log = "0.4"
-hashbrown = "0.11"
+hashbrown = "0.12"
 notan_math = { path = "../notan_math", version = "0.2.0" }
 notan_macro = { path = "../notan_macro", version = "0.2.0" }
 notan_graphics = { path = "../notan_graphics", version = "0.2.0" }
 notan_utils = { path = "../notan_utils", version = "0.2.0" }
 downcast-rs = "1.2"
-indexmap = "1.6"
+indexmap = "1.8"
 futures = "0.3"
-platter = {version = "0.1.4", features = ["web-sys"] }
-parking_lot =  { version = "0.11", features = ["wasm-bindgen"] }
+platter = { version = "0.1.4", features = ["web-sys"] }
+parking_lot = "0.12"
 
 [features]
