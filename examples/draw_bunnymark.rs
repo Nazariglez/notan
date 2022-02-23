@@ -41,8 +41,8 @@ impl State {
             self.bunnies.push(Bunny {
                 x: 0.0,
                 y: 0.0,
-                speed_x: self.rng.gen_range(0.0, 10.0),
-                speed_y: self.rng.gen_range(-5.0, 5.0),
+                speed_x: self.rng.gen_range(0.0..10.0),
+                speed_y: self.rng.gen_range(-5.0..5.0),
             })
         });
     }
@@ -77,7 +77,7 @@ fn update(app: &mut App, state: &mut State) {
             b.speed_y *= -0.85;
             b.y = 600.0;
             if rng.gen::<bool>() {
-                b.speed_y -= rng.gen_range(0.0, 6.0);
+                b.speed_y -= rng.gen_range(0.0..6.0);
             }
         } else if b.y < 0.0 {
             b.speed_y = 0.0;

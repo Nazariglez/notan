@@ -12,12 +12,9 @@ description = "Provides simple set of math's utils for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rand_pcg = "0.2.1"
-glam = {version = "0.20", features = ["scalar-math"] }
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rand = {version = "0.7.2"}
+rand_pcg = "0.3"
+glam = { version = "0.20", features = ["scalar-math"] }
+rand = { version = "0.8"}
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-rand = {version = "0.7.2", features = ["wasm-bindgen"]}
-getrandom = { version = "0.2.3", features = ["js"] }
+getrandom = { version = "0.2", features = ["js"] }
