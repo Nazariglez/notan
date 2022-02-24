@@ -15,6 +15,6 @@ description = "Provides a native backend using winit for Notan"
 log = "0.4"
 notan_app = { path = "../notan_app", version = "0.2.0" }
 notan_glow = { path = "../notan_glow", version = "0.2.0" }
-winit = "0.25"
-glutin = "0.27"
+winit = "0.26"
+glutin = "0.28"
 crossbeam-channel = "0.5"
