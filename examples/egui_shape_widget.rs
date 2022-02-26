@@ -52,17 +52,16 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     draw_shape(&mut draw, state);
     gfx.render(&draw);
 
-    // Get the EGUI plugin that contains egui::CtxRef
+    // Get the EGUI plugin that contains egui::Context
     let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
 
-    // Create a EguiContext to render the frame. We can pass a color to clear the frame if we want
-    let egui_ctx = plugin.create_context(None);
-
-    // Draw the EGUI Widget here
-    draw_egui_widget(&egui_ctx, state);
+    let output = plugin.run(|ctx| {
+        // Draw the EGUI Widget here
+        draw_egui_widget(ctx, state);
+    });
 
     // Draw the context to the screen or to a RenderTexture
-    gfx.render(&egui_ctx);
+    gfx.render(&output);
 }
 
 // Draw a Triangle using the properties set on the state
@@ -84,7 +83,7 @@ fn draw_shape(draw: &mut Draw, state: &mut State) {
 }
 
 // Creates a widget to change the properties
-fn draw_egui_widget(ctx: &EguiContext, state: &mut State) {
+fn draw_egui_widget(ctx: &egui::Context, state: &mut State) {
     egui::Window::new("Custom Shape Widget")
         .default_width(400.0)
         .show(ctx, |ui| draw_egui_ui(ui, state));
