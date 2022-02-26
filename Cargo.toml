@@ -48,6 +48,9 @@ drop_files = ["notan_app/drop_files", "notan_backend/drop_files"]
 name = "app_open_links"
 required-features = ["links"]
 
+[dev-dependencies]
+egui_demo_lib = "0.17.0"
+
 [[example]]
 name = "assets_custom_loader"
 required-features = ["draw"]
@@ -154,6 +157,10 @@ required-features = ["draw"]
 
 [[example]]
 name = "egui_basic"
+required-features = ["egui"]
+
+[[example]]
+name = "egui_demo"
 required-features = ["egui"]
 
 [[example]]

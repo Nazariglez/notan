@@ -8,12 +8,14 @@ struct State {
 }
 
 impl State {
-    fn new(gfx: &mut Graphics) -> State {
+    fn new(gfx: &mut Graphics, plugins: &mut Plugins) -> State {
         let texture = gfx
             .create_texture()
             .from_image(include_bytes!("assets/rust-logo-256x256.png"))
             .build()
             .unwrap();
+
+        let ctx = plugins.get_mut::<EguiPlugin>().unwrap();
 
         let img_size = egui::vec2(texture.width(), texture.height());
         let egui_texture_id = gfx.register_egui_texture(&texture).unwrap();
