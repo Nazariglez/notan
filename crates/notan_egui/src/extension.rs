@@ -41,11 +41,8 @@ const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
             1.0
         );
 
-        // notan only support f32 vbo (right now), we need to convert this to bytes
-        vec4 norm_srgba = vec4(floor(a_srgba.r * 256), floor(a_srgba.g * 256), floor(a_srgba.b * 256), floor(a_srgba.a * 256));
-
         // egui encodes vertex colors in gamma spaces, so we must decode the colors here:
-        v_rgba = linear_from_srgba(norm_srgba);
+        v_rgba = linear_from_srgba(a_srgba);
         v_tc = a_tc;
     }
     "#
@@ -290,8 +287,10 @@ impl EguiExtension {
             .vertices
             .iter()
             .flat_map(|v| {
-                let c: Color = v.color.to_array().into();
-                [v.pos.x, v.pos.y, v.uv.x, v.uv.y, c.r, c.g, c.b, c.a]
+                let [r, g, b, a] = v.color.to_array();
+                [
+                    v.pos.x, v.pos.y, v.uv.x, v.uv.y, r as _, g as _, b as _, a as _,
+                ]
             })
             .collect();
 
@@ -337,6 +336,7 @@ impl EguiExtension {
             log::error!("Invalid EGUI Texture id: {:?}", mesh.texture_id);
         }
     }
+}
 
 // - Color converson
 pub trait EguiColorConversion {
