@@ -1,10 +1,7 @@
-use crate::context::EguiContext;
 use crate::Color32;
-use egui::TextureId;
 use notan_app::{
-    BlendFactor, BlendMode, Buffer, ClearOptions, Color, Commands, Device, ExtContainer,
-    GfxExtension, GfxRenderer, Graphics, Pipeline, RenderTexture, ShaderSource, Texture,
-    TextureFilter, TextureFormat, VertexFormat, VertexInfo,
+    BlendFactor, BlendMode, Buffer, Color, Device, ExtContainer, Graphics, Pipeline, RenderTexture,
+    ShaderSource, Texture, TextureFilter, TextureFormat, VertexFormat, VertexInfo,
 };
 use std::collections::HashMap;
 
@@ -102,7 +99,7 @@ pub struct EguiExtension {
     ubo: Buffer,
     texture: Option<Texture>,
     texture_version: Option<u64>,
-    user_textures: HashMap<u64, Texture>,
+    textures: HashMap<egui::TextureId, Texture>,
 }
 
 impl EguiExtension {
@@ -141,77 +138,160 @@ impl EguiExtension {
             ubo,
             texture: None,
             texture_version: None,
-            user_textures: HashMap::new(),
+            textures: HashMap::new(),
         })
     }
 
-    #[inline]
-    fn build_texture(&mut self, device: &mut Device, egui_tex: &egui::Texture) {
-        if self.texture_version == Some(egui_tex.version) {
-            return; // No change
-        }
+    pub fn set_texture(
+        &mut self,
+        device: &mut Device,
+        id: egui::TextureId,
+        delta: &egui::epaint::ImageDelta,
+    ) {
+        let [width, height] = delta.image.size();
+        if let Some([x, y]) = delta.pos {
+            if let Some(texture) = self.textures.get_mut(&id) {
+                match &delta.image {
+                    egui::ImageData::Color(image) => {
+                        debug_assert_eq!(
+                            image.width() * image.height(),
+                            image.pixels.len(),
+                            "Mismatch between texture size and texel count"
+                        );
 
-        let width = egui_tex.width;
-        let height = egui_tex.height;
+                        device
+                            .update_texture(texture)
+                            .with_data(bytemuck::cast_slice(image.pixels.as_ref()))
+                            .with_x_offset(x as _)
+                            .with_y_offset(y as _)
+                            .with_width(width as _)
+                            .with_height(height as _)
+                            .update()
+                            .unwrap();
+                    }
+                    egui::ImageData::Alpha(image) => {
+                        debug_assert_eq!(
+                            image.width() * image.height(),
+                            image.pixels.len(),
+                            "Mismatch between texture size and texel count"
+                        );
 
-        let font_gamma = if (device.dpi() - 2.0).abs() > f64::EPSILON {
-            2.5
+                        let gamma = 1.0;
+                        let data: Vec<u8> = image
+                            .srgba_pixels(gamma)
+                            .flat_map(|a| a.to_array())
+                            .collect();
+
+                        device
+                            .update_texture(texture)
+                            .with_data(&data)
+                            .with_x_offset(x as _)
+                            .with_y_offset(y as _)
+                            .with_width(width as _)
+                            .with_height(height as _)
+                            .update()
+                            .unwrap();
+                    }
+                }
+            } else {
+                eprintln!("Failed to find egui texture {:?}", id);
+            }
         } else {
-            1.0
-        };
+            let texture = match &delta.image {
+                egui::ImageData::Color(image) => {
+                    assert_eq!(
+                        image.width() * image.height(),
+                        image.pixels.len(),
+                        "Mismatch between texture size and texel count"
+                    );
+                    let data: &[u8] = bytemuck::cast_slice(image.pixels.as_ref());
+                    device
+                        .create_texture()
+                        .from_bytes(data, width as _, height as _)
+                        .with_format(TextureFormat::Rgba32)
+                        .with_filter(TextureFilter::Linear, TextureFilter::Linear)
+                        .build()
+                        .unwrap()
+                }
+                egui::ImageData::Alpha(image) => {
+                    assert_eq!(
+                        image.width() * image.height(),
+                        image.pixels.len(),
+                        "Mismatch between texture size and texel count"
+                    );
 
-        let pixels = egui_tex
-            .srgba_pixels(font_gamma)
-            .flat_map(|c| c.to_array())
-            .collect::<Vec<u8>>();
+                    let gamma = 1.0;
+                    let data: Vec<u8> = image
+                        .srgba_pixels(gamma)
+                        .flat_map(|a| a.to_array())
+                        .collect();
 
-        let texture = device
-            .create_texture()
-            .with_size(width as _, height as _)
-            .with_filter(TextureFilter::Linear, TextureFilter::Linear)
-            .with_format(TextureFormat::Rgba32)
-            .from_bytes(&pixels, width as _, height as _)
-            .build()
-            .unwrap();
+                    device
+                        .create_texture()
+                        .from_bytes(&data, width as _, height as _)
+                        .with_format(TextureFormat::Rgba32)
+                        .with_filter(TextureFilter::Linear, TextureFilter::Linear)
+                        .build()
+                        .unwrap()
+                }
+            };
 
-        self.texture = Some(texture);
-        self.texture_version = Some(egui_tex.version);
+            self.textures.insert(id, texture);
+        }
     }
 
-    fn paint_meshes(
+    pub fn free_texture(&mut self, tex_id: egui::TextureId) {
+        self.textures.remove(&tex_id);
+    }
+
+    pub fn paint_and_update_textures(
         &mut self,
         device: &mut Device,
         meshes: Vec<egui::ClippedMesh>,
-        egui_tex: &egui::Texture,
+        textures_delta: &egui::TexturesDelta,
         target: Option<&RenderTexture>,
     ) {
-        self.build_texture(device, egui_tex);
+        for (id, image_delta) in &textures_delta.set {
+            self.set_texture(device, *id, image_delta);
+        }
 
+        self.paint(device, meshes, target);
+
+        for &id in &textures_delta.free {
+            self.free_texture(id);
+        }
+    }
+
+    pub fn paint(
+        &mut self,
+        device: &mut Device,
+        meshes: Vec<egui::ClippedMesh>,
+        target: Option<&RenderTexture>,
+    ) {
         let (width, height) = device.size();
-        device.set_buffer_data(&self.ubo, &[width as f32, height as f32]);
+        let screen_size: [f32; 2] = [width as _, height as _]; // todo if Some(target) use target.size()
+        device.set_buffer_data(&self.ubo, &screen_size);
 
         meshes
             .iter()
             .for_each(|egui::ClippedMesh(clip_rect, mesh)| {
-                self.paint_mesh(device, *clip_rect, mesh, target)
+                self.paint_job(device, *clip_rect, mesh, target)
             });
     }
 
-    fn paint_mesh(
+    pub fn paint_job(
         &mut self,
         device: &mut Device,
         clip_rect: egui::Rect,
-        mesh: &egui::paint::Mesh,
+        mesh: &egui::Mesh,
         target: Option<&RenderTexture>,
     ) {
         let vertices: Vec<f32> = mesh
             .vertices
             .iter()
             .flat_map(|v| {
-                let color: Color = v.color.to_array().into();
-                [
-                    v.pos.x, v.pos.y, v.uv.x, v.uv.y, color.r, color.g, color.b, color.a,
-                ]
+                let c: Color = v.color.to_array().into();
+                [v.pos.x, v.pos.y, v.uv.x, v.uv.y, c.r, c.g, c.b, c.a]
             })
             .collect();
 
@@ -239,7 +319,7 @@ impl EguiExtension {
         let width = clip_max_x - clip_min_x;
         let height = clip_max_y - clip_min_y;
 
-        if let Some(texture) = self.get_texture(mesh.texture_id) {
+        if let Some(texture) = self.textures.get(&mesh.texture_id) {
             let mut renderer = device.create_renderer();
             renderer.set_scissors(clip_min_x, clip_min_y, width, height);
             renderer.begin(None);
@@ -257,66 +337,6 @@ impl EguiExtension {
             log::error!("Invalid EGUI Texture id: {:?}", mesh.texture_id);
         }
     }
-
-    pub fn get_texture(&self, tex_id: egui::TextureId) -> Option<&Texture> {
-        match tex_id {
-            TextureId::Egui => self.texture.as_ref(),
-            TextureId::User(id) => self.user_textures.get(&id),
-        }
-    }
-
-    pub(crate) fn register_native_texture(&mut self, id: u64, native: Texture) -> egui::TextureId {
-        self.user_textures.entry(id).or_insert_with(|| native);
-        egui::TextureId::User(id as _)
-    }
-
-    pub(crate) fn unregister_native_texture(&mut self, id: u64) {
-        self.user_textures.remove(&id);
-    }
-}
-
-impl GfxRenderer for EguiContext {
-    fn render(
-        &self,
-        device: &mut Device,
-        extensions: &mut ExtContainer,
-        target: Option<&RenderTexture>,
-    ) {
-        let (_output, shapes) = self.ctx.end_frame();
-
-        // if output.needs_repaint { // FIXME this doesn't work if the user is doing a clear between frames
-        let meshes = self.ctx.tessellate(shapes);
-        let texture = self.ctx.texture();
-
-        if self.clear_color.is_some() {
-            let mut clear_renderer = device.create_renderer();
-            clear_renderer.begin(Some(&ClearOptions {
-                color: self.clear_color,
-                ..Default::default()
-            }));
-            clear_renderer.end();
-
-            match target {
-                Some(rt) => device.render_to(rt, clear_renderer.commands()),
-                _ => device.render(clear_renderer.commands()),
-            }
-        }
-
-        let mut plugin = extensions.get_mut::<Self, EguiExtension>().unwrap();
-        plugin.paint_meshes(device, meshes, &texture, target);
-        // }
-    }
-}
-
-impl GfxExtension<EguiContext> for EguiExtension {
-    fn commands<'a>(
-        &'a mut self,
-        _device: &mut Device,
-        _renderer: &'a EguiContext,
-    ) -> &'a [Commands] {
-        &[]
-    }
-}
 
 // - Color converson
 pub trait EguiColorConversion {
@@ -344,96 +364,96 @@ impl EguiColorConversion for Color32 {
         self.to_array().into()
     }
 }
-
-// - Texture conversion
-pub trait AsEguiTexture {
-    fn as_egui_texture(&self, gfx: &mut Graphics) -> Result<egui::TextureId, String>;
-}
-
-impl AsEguiTexture for RenderTexture {
-    fn as_egui_texture(&self, gfx: &mut Graphics) -> Result<egui::TextureId, String> {
-        let id = self.texture().id();
-
-        let already_registered = gfx
-            .extension::<EguiContext, EguiExtension>()
-            .ok_or_else(|| "EGUI Plugin not found.".to_string())?
-            .user_textures
-            .contains_key(&id);
-
-        if already_registered {
-            return Ok(egui::TextureId::User(id as _));
-        }
-
-        let mut ext = gfx
-            .extension_mut::<EguiContext, EguiExtension>()
-            .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
-
-        Ok(ext.register_native_texture(id, self.texture().clone()))
-    }
-}
-
-impl AsEguiTexture for Texture {
-    fn as_egui_texture(&self, gfx: &mut Graphics) -> Result<egui::TextureId, String> {
-        let id = self.id();
-
-        let already_registered = gfx
-            .extension::<EguiContext, EguiExtension>()
-            .ok_or_else(|| "EGUI Plugin not found.".to_string())?
-            .user_textures
-            .contains_key(&id);
-
-        if already_registered {
-            return Ok(egui::TextureId::User(id as _));
-        }
-
-        let w = self.width() as usize;
-        let h = self.height() as usize;
-
-        let mut pixels = vec![0; w * h * 4];
-        gfx.read_pixels(self).read_to(&mut pixels)?;
-
-        let bytes = pixels
-            .chunks_exact(4)
-            .map(|p| egui::Color32::from_rgba_unmultiplied(p[0], p[1], p[2], p[3]))
-            .flat_map(|color| color.to_array())
-            .collect::<Vec<_>>();
-
-        let texture = gfx
-            .create_texture()
-            .from_bytes(&bytes, w as _, h as _)
-            .build()?;
-
-        let mut ext = gfx
-            .extension_mut::<EguiContext, EguiExtension>()
-            .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
-
-        Ok(ext.register_native_texture(id, texture))
-    }
-}
-
-pub trait RegisterEguiTexture {
-    fn register_egui_texture(
-        &mut self,
-        texture: &impl AsEguiTexture,
-    ) -> Result<egui::TextureId, String>;
-    fn unregister_egui_texture(&mut self, id: egui::TextureId) -> Result<(), String>;
-}
-
-impl RegisterEguiTexture for Graphics {
-    fn register_egui_texture(&mut self, texture: &impl AsEguiTexture) -> Result<TextureId, String> {
-        texture.as_egui_texture(self)
-    }
-
-    fn unregister_egui_texture(&mut self, id: egui::TextureId) -> Result<(), String> {
-        if let egui::TextureId::User(id) = id {
-            let mut ext = self
-                .extension_mut::<EguiContext, EguiExtension>()
-                .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
-
-            ext.unregister_native_texture(id);
-            Ok(())
-        } else {
-            Err("Invalid EGUI Texture id".to_string())
-        }
-    }
-}
+//
+// // - Texture conversion
+// pub trait AsEguiTexture {
+//     fn as_egui_texture(&self, gfx: &mut Graphics) -> Result<egui::TextureId, String>;
+// }
+//
+// impl AsEguiTexture for RenderTexture {
+//     fn as_egui_texture(&self, gfx: &mut Graphics) -> Result<egui::TextureId, String> {
+//         let id = self.texture().id();
+//
+//         let already_registered = gfx
+//             .extension::<EguiContext, EguiExtension>()
+//             .ok_or_else(|| "EGUI Plugin not found.".to_string())?
+//             .user_textures
+//             .contains_key(&id);
+//
+//         if already_registered {
+//             return Ok(egui::TextureId::User(id as _));
+//         }
+//
+//         let mut ext = gfx
+//             .extension_mut::<EguiContext, EguiExtension>()
+//             .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
+//
+//         Ok(ext.register_native_texture(id, self.texture().clone()))
+//     }
+// }
+//
+// impl AsEguiTexture for Texture {
+//     fn as_egui_texture(&self, gfx: &mut Graphics) -> Result<egui::TextureId, String> {
+//         let id = self.id();
+//
+//         let already_registered = gfx
+//             .extension::<EguiContext, EguiExtension>()
+//             .ok_or_else(|| "EGUI Plugin not found.".to_string())?
+//             .user_textures
+//             .contains_key(&id);
+//
+//         if already_registered {
+//             return Ok(egui::TextureId::User(id as _));
+//         }
+//
+//         let w = self.width() as usize;
+//         let h = self.height() as usize;
+//
+//         let mut pixels = vec![0; w * h * 4];
+//         gfx.read_pixels(self).read_to(&mut pixels)?;
+//
+//         let bytes = pixels
+//             .chunks_exact(4)
+//             .map(|p| egui::Color32::from_rgba_unmultiplied(p[0], p[1], p[2], p[3]))
+//             .flat_map(|color| color.to_array())
+//             .collect::<Vec<_>>();
+//
+//         let texture = gfx
+//             .create_texture()
+//             .from_bytes(&bytes, w as _, h as _)
+//             .build()?;
+//
+//         let mut ext = gfx
+//             .extension_mut::<EguiContext, EguiExtension>()
+//             .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
+//
+//         Ok(ext.register_native_texture(id, texture))
+//     }
+// }
+//
+// pub trait RegisterEguiTexture {
+//     fn register_egui_texture(
+//         &mut self,
+//         texture: &impl AsEguiTexture,
+//     ) -> Result<egui::TextureId, String>;
+//     fn unregister_egui_texture(&mut self, id: egui::TextureId) -> Result<(), String>;
+// }
+//
+// impl RegisterEguiTexture for Graphics {
+//     fn register_egui_texture(&mut self, texture: &impl AsEguiTexture) -> Result<TextureId, String> {
+//         texture.as_egui_texture(self)
+//     }
+//
+//     fn unregister_egui_texture(&mut self, id: egui::TextureId) -> Result<(), String> {
+//         if let egui::TextureId::User(id) = id {
+//             let mut ext = self
+//                 .extension_mut::<EguiContext, EguiExtension>()
+//                 .ok_or_else(|| "EGUI Plugin not found.".to_string())?;
+//
+//             ext.unregister_native_texture(id);
+//             Ok(())
+//         } else {
+//             Err("Invalid EGUI Texture id".to_string())
+//         }
+//     }
+// }
