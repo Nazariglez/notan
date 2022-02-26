@@ -146,6 +146,11 @@ impl Device {
     }
 
     #[inline]
+    pub fn api_name(&self) -> &str {
+        self.backend.api_name()
+    }
+
+    #[inline]
     pub fn create_renderer(&self) -> Renderer {
         Renderer::new(self.size.0, self.size.1)
     }
