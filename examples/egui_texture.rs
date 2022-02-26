@@ -3,27 +3,22 @@ use notan::prelude::*;
 
 #[derive(AppState)]
 struct State {
-    egui_tex: egui::TextureId,
+    tex_id: egui::TextureId,
     img_size: egui::Vec2,
 }
 
 impl State {
-    fn new(gfx: &mut Graphics, plugins: &mut Plugins) -> State {
+    fn new(gfx: &mut Graphics) -> State {
         let texture = gfx
             .create_texture()
             .from_image(include_bytes!("assets/rust-logo-256x256.png"))
             .build()
             .unwrap();
 
-        let ctx = plugins.get_mut::<EguiPlugin>().unwrap();
+        let img_size: egui::Vec2 = texture.size().into();
+        let tex_id = gfx.egui_add_texture(&texture);
 
-        let img_size = egui::vec2(texture.width(), texture.height());
-        let egui_texture_id = gfx.register_egui_texture(&texture).unwrap();
-
-        Self {
-            img_size,
-            egui_tex: egui_texture_id,
-        }
+        Self { img_size, tex_id }
     }
 }
 
@@ -36,14 +31,13 @@ fn main() -> Result<(), String> {
 }
 
 fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
-    let ctx = plugins
-        .get_mut::<EguiPlugin>()
-        .map(|mut plugin| plugin.create_context(Some(Color::BLACK)))
-        .unwrap();
+    let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
 
-    egui::Window::new("Notan Texture").show(&ctx, |ui| {
-        ui.image(state.egui_tex, state.img_size);
+    let output = plugin.run(|ctx| {
+        egui::Window::new("Notan Texture").show(ctx, |ui| {
+            ui.image(state.tex_id, state.img_size);
+        });
     });
 
-    gfx.render(&ctx);
+    gfx.render(&output);
 }

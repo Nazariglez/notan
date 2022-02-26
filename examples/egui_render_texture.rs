@@ -6,7 +6,7 @@ use notan::prelude::*;
 struct State {
     cube: Cube,
     render_texture: RenderTexture,
-    egui_tex: egui::TextureId,
+    tex_id: egui::TextureId,
     img_size: egui::Vec2,
 }
 
@@ -20,12 +20,12 @@ impl State {
             .build()
             .unwrap();
 
-        let img_size = egui::vec2(render_texture.width(), render_texture.height());
-        let egui_texture_id = gfx.register_egui_texture(&render_texture).unwrap();
+        let img_size = render_texture.size().into();
+        let tex_id = gfx.egui_add_texture(&render_texture);
 
         Self {
             img_size,
-            egui_tex: egui_texture_id,
+            tex_id,
             cube,
             render_texture,
         }
@@ -45,16 +45,15 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut St
     let cube_renderer = state.cube.create_renderer(gfx, app.timer.delta_f32());
     gfx.render_to(&state.render_texture, &cube_renderer);
 
-    let ctx = plugins
-        .get_mut::<EguiPlugin>()
-        .map(|mut plugin| plugin.create_context(Some(Color::BLACK)))
-        .unwrap();
+    let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
 
-    egui::Window::new("Notan Render Texture").show(&ctx, |ui| {
-        ui.image(state.egui_tex, state.img_size);
+    let output = plugin.run(|ctx| {
+        egui::Window::new("Notan Render Texture").show(ctx, |ui| {
+            ui.image(state.tex_id, state.img_size);
+        });
     });
 
-    gfx.render(&ctx);
+    gfx.render(&output);
 }
 
 // - Cube Code

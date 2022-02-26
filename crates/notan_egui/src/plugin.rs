@@ -14,18 +14,6 @@ pub struct EguiPlugin {
 }
 
 impl EguiPlugin {
-    // pub fn raw_ctx(&self) -> &egui::Context {
-    //     &self.ctx
-    // }
-    //
-    // pub fn create_context(&mut self, clear_color: Option<Color>) -> Ctx {
-    //     self.ctx.begin_frame(self.raw_input.take());
-    //     Ctx {
-    //         ctx: self.ctx.clone(),
-    //         clear_color,
-    //     }
-    // }
-
     #[inline]
     pub(crate) fn add_event(&mut self, evt: egui::Event) {
         self.raw_input.events.push(evt);
