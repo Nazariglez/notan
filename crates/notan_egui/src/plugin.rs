@@ -1,30 +1,111 @@
-use crate::context::EguiContext;
 use crate::input::{to_egui_key, to_egui_pointer};
+use crate::EguiExtension;
 use notan_app::assets::Assets;
-use notan_app::{App, AppFlow, Color, Event, Plugin};
+use notan_app::{
+    App, AppFlow, ClearOptions, Color, Commands, Device, Event, ExtContainer, GfxExtension,
+    GfxRenderer, Plugin, RenderTexture,
+};
+use std::cell::RefCell;
 
 #[derive(Default)]
 pub struct EguiPlugin {
-    ctx: egui::CtxRef,
+    ctx: egui::Context,
     raw_input: egui::RawInput,
 }
 
 impl EguiPlugin {
-    pub fn raw_ctx(&self) -> &egui::CtxRef {
-        &self.ctx
-    }
-
-    pub fn create_context(&mut self, clear_color: Option<Color>) -> EguiContext {
-        self.ctx.begin_frame(self.raw_input.take());
-        EguiContext {
-            ctx: self.ctx.clone(),
-            clear_color,
-        }
-    }
+    // pub fn raw_ctx(&self) -> &egui::Context {
+    //     &self.ctx
+    // }
+    //
+    // pub fn create_context(&mut self, clear_color: Option<Color>) -> Ctx {
+    //     self.ctx.begin_frame(self.raw_input.take());
+    //     Ctx {
+    //         ctx: self.ctx.clone(),
+    //         clear_color,
+    //     }
+    // }
 
     #[inline]
     pub(crate) fn add_event(&mut self, evt: egui::Event) {
         self.raw_input.events.push(evt);
+    }
+
+    pub fn run(&mut self, run_ui: impl FnOnce(&egui::Context)) -> Output {
+        let new_input = self.raw_input.take();
+
+        let egui::FullOutput {
+            platform_output,
+            needs_repaint,
+            textures_delta,
+            shapes,
+        } = self.ctx.run(new_input, run_ui);
+
+        let egui::PlatformOutput {
+            cursor_icon,
+            open_url,
+            copied_text,
+            events,
+            mutable_text_under_cursor,
+            text_cursor_pos,
+        } = platform_output;
+
+        // TODO cursor, url, etc...
+
+        Output {
+            ctx: self.ctx.clone(),
+            shapes: RefCell::new(Some(shapes)),
+            textures_delta,
+            clear_color: None,
+        }
+    }
+}
+
+pub struct Output {
+    ctx: egui::Context,
+    shapes: RefCell<Option<Vec<egui::epaint::ClippedShape>>>,
+    textures_delta: egui::TexturesDelta,
+    clear_color: Option<Color>,
+}
+
+impl Output {
+    pub fn clear_color(&mut self, color: Color) {
+        self.clear_color = Some(color);
+    }
+}
+
+impl GfxExtension<Output> for EguiExtension {
+    fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a Output) -> &'a [Commands] {
+        &[]
+    }
+}
+
+impl GfxRenderer for Output {
+    fn render(
+        &self,
+        device: &mut Device,
+        extensions: &mut ExtContainer,
+        target: Option<&RenderTexture>,
+    ) {
+        let mut ext = extensions.get_mut::<Self, EguiExtension>().unwrap();
+        if let Some(shapes) = self.shapes.borrow_mut().take() {
+            if self.clear_color.is_some() {
+                let mut clear_renderer = device.create_renderer();
+                clear_renderer.begin(Some(&ClearOptions {
+                    color: self.clear_color,
+                    ..Default::default()
+                }));
+                clear_renderer.end();
+
+                match target {
+                    Some(rt) => device.render_to(rt, clear_renderer.commands()),
+                    _ => device.render(clear_renderer.commands()),
+                }
+            }
+
+            let meshes = self.ctx.tessellate(shapes);
+            ext.paint_and_update_textures(device, meshes, &self.textures_delta, target);
+        }
     }
 }
 
@@ -80,9 +161,12 @@ impl Plugin for EguiPlugin {
             }
             Event::MouseWheel { delta_x, delta_y } => {
                 if modifiers.ctrl || modifiers.command {
-                    self.raw_input.zoom_delta *= (delta_y / 200.0).exp();
+                    let factor = (delta_y / 200.0).exp();
+                    self.add_event(egui::Event::Zoom(factor));
+                } else if cfg!(target_os = "macos") && modifiers.shift {
+                    self.add_event(egui::Event::Scroll(egui::vec2(delta_x + delta_y, 0.0)));
                 } else {
-                    self.raw_input.scroll_delta += egui::vec2(*delta_x, *delta_y);
+                    self.add_event(egui::Event::Scroll(egui::vec2(*delta_x, *delta_y)));
                 }
             }
             Event::MouseEnter { .. } => {}
