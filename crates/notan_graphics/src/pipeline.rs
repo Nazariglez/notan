@@ -227,6 +227,11 @@ impl BlendMode {
         dst: BlendFactor::InverseSourceColor,
         op: BlendOperation::Add,
     };
+    pub const OVER: BlendMode = BlendMode {
+        src: BlendFactor::One,
+        dst: BlendFactor::InverseSourceAlpha,
+        op: BlendOperation::Add,
+    };
 
     /// Creates a new blend mode using the ADD operation
     pub fn new(source: BlendFactor, destination: BlendFactor) -> Self {
