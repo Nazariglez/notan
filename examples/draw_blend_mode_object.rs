@@ -60,7 +60,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
         ("Add", BlendMode::ADD),
         ("Erase", BlendMode::ERASE),
         ("Screen", BlendMode::SCREEN),
-        ("Multiply", BlendMode::MULTIPLY)
+        ("Multiply", BlendMode::MULTIPLY),
     ];
 
     modes.iter().enumerate().for_each(|(i, (name, mode))| {

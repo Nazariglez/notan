@@ -12,6 +12,7 @@ impl State {
         let texture = gfx
             .create_texture()
             .from_image(include_bytes!("assets/rust-logo-256x256.png"))
+            .with_premultiplied_alpha()
             .build()
             .unwrap();
 
@@ -33,11 +34,13 @@ fn main() -> Result<(), String> {
 fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
 
-    let output = plugin.run(|ctx| {
+    let mut output = plugin.run(|ctx| {
         egui::Window::new("Notan Texture").show(ctx, |ui| {
             ui.image(state.tex_id, state.img_size);
         });
     });
+
+    output.clear_color(Color::BLACK);
 
     gfx.render(&output);
 }

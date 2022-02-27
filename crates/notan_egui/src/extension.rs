@@ -1,8 +1,9 @@
 use crate::plugin::Output;
 use crate::TextureId;
 use notan_app::{
-    BlendFactor, BlendMode, Buffer, CullMode, Device, ExtContainer, Graphics, Pipeline,
-    RenderTexture, ShaderSource, Texture, TextureFilter, TextureFormat, VertexFormat, VertexInfo,
+    BlendFactor, BlendMode, BlendOperation, Buffer, CullMode, Device, ExtContainer, Graphics,
+    Pipeline, RenderTexture, ShaderSource, Texture, TextureFilter, TextureFormat, VertexFormat,
+    VertexInfo,
 };
 use std::collections::HashMap;
 
@@ -355,16 +356,6 @@ impl EguiExtension {
             let mut renderer = device.create_renderer();
             renderer.set_scissors(clip_min_x, clip_min_y, width, height);
             renderer.begin(None);
-
-            // let blend = match &mesh.texture_id {
-            //     TextureId::Managed(_) => {
-            //         BlendMode::new(BlendFactor::One, BlendFactor::InverseSourceAlpha)
-            //     }
-            //     TextureId::User(_) => BlendMode::NORMAL,
-            // };
-            //
-            // self.pipeline.options.color_blend = Some(blend);
-
             renderer.set_pipeline(&self.pipeline);
             renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
             renderer.bind_texture(0, texture);
