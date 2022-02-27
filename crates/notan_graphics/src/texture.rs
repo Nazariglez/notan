@@ -1,5 +1,6 @@
 #![allow(clippy::wrong_self_convention)]
 
+use crate::color::Color;
 use crate::device::{DropManager, ResourceId};
 use crate::Device;
 use notan_math::Rect;
@@ -32,6 +33,7 @@ pub struct TextureInfo {
     pub min_filter: TextureFilter,
     pub mag_filter: TextureFilter,
     pub bytes: Option<Vec<u8>>,
+    pub premultiplied_alpha: bool,
 
     /// Used for render textures
     pub depth: bool,
@@ -47,80 +49,12 @@ impl Default for TextureInfo {
             height: 1,
             bytes: None,
             depth: false,
+            premultiplied_alpha: false,
         }
     }
 }
 
 impl TextureInfo {
-    pub fn render_texture(depth: bool, width: i32, height: i32) -> Self {
-        Self {
-            width,
-            height,
-            depth,
-            ..Default::default()
-        }
-    }
-
-    pub fn from_image(bytes: &[u8]) -> Result<Self, String> {
-        Self::from_image_with_options(
-            bytes,
-            TextureFormat::Rgba32,
-            TextureFilter::Nearest,
-            TextureFilter::Nearest,
-        )
-    }
-
-    pub fn from_image_with_options(
-        bytes: &[u8],
-        format: TextureFormat,
-        mag_filter: TextureFilter,
-        min_filter: TextureFilter,
-    ) -> Result<Self, String> {
-        let data = image::load_from_memory(bytes)
-            .map_err(|e| e.to_string())?
-            .to_rgba8();
-
-        Ok(Self {
-            width: data.width() as _,
-            height: data.height() as _,
-            bytes: Some(data.to_vec()),
-            format,
-            mag_filter,
-            min_filter,
-            depth: false,
-        })
-    }
-
-    pub fn from_bytes(bytes: &[u8], width: i32, height: i32) -> Result<Self, String> {
-        Self::from_bytes_with_options(
-            bytes,
-            width,
-            height,
-            TextureFormat::Rgba32,
-            TextureFilter::Nearest,
-            TextureFilter::Nearest,
-        )
-    }
-
-    pub fn from_bytes_with_options(
-        bytes: &[u8],
-        width: i32,
-        height: i32,
-        format: TextureFormat,
-        mag_filter: TextureFilter,
-        min_filter: TextureFilter,
-    ) -> Result<Self, String> {
-        Ok(Self {
-            width,
-            height,
-            bytes: Some(bytes.to_vec()),
-            format,
-            mag_filter,
-            min_filter,
-            depth: false,
-        })
-    }
-
     pub fn bytes_per_pixel(&self) -> u8 {
         use TextureFormat::*;
         match self.format {
@@ -349,6 +283,12 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
         self
     }
 
+    /// Process the texels to multiply the rgb values by the alpha
+    pub fn with_premultiplied_alpha(mut self) -> Self {
+        self.info.premultiplied_alpha = true;
+        self
+    }
+
     /// Generate the mipmaps
     pub fn generate_mipmap(self) -> Self {
         todo!("generate mipmaps");
@@ -367,7 +307,13 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
                     .map_err(|e| e.to_string())?
                     .to_rgba8();
 
-                info.bytes = Some(data.to_vec());
+                let pixels = if info.premultiplied_alpha {
+                    premultiplied_alpha(data.to_vec())
+                } else {
+                    data.to_vec()
+                };
+
+                info.bytes = Some(pixels);
                 info.format = TextureFormat::Rgba32;
                 info.width = data.width() as _;
                 info.height = data.height() as _;
@@ -379,7 +325,13 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
                     debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, info.bytes_per_pixel());
                 }
 
-                info.bytes = Some(bytes.to_vec());
+                let pixels = if info.premultiplied_alpha {
+                    premultiplied_alpha(bytes.to_vec())
+                } else {
+                    bytes.to_vec()
+                };
+
+                info.bytes = Some(pixels);
             }
             Some(TextureKind::EmptyBuffer) => {
                 let size = info.width * info.height * (info.bytes_per_pixel() as i32);
@@ -390,6 +342,17 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
 
         device.inner_create_texture(info)
     }
+}
+
+fn premultiplied_alpha(pixels: Vec<u8>) -> Vec<u8> {
+    pixels
+        .chunks(4)
+        .flat_map(|c| {
+            Color::from_bytes(c[0], c[1], c[2], c[3])
+                .to_premultiplied_alpha()
+                .rgba_u8()
+        })
+        .collect()
 }
 
 pub struct TextureReader<'a> {

@@ -124,6 +124,23 @@ impl Color {
         let a = (self.a * 255.0) as _;
         [r, g, b, a]
     }
+
+    #[inline(always)]
+    /// Returns the same color as premultiplied alpha
+    pub fn to_premultiplied_alpha(&self) -> Color {
+        if self.a == 0.0 {
+            Self::TRANSPARENT
+        } else if self.a == 1.0 {
+            *self
+        } else {
+            Self {
+                r: self.r * self.a,
+                g: self.g * self.a,
+                b: self.b * self.a,
+                a: self.a,
+            }
+        }
+    }
 }
 
 impl From<Color> for [u8; 4] {
