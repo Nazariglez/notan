@@ -4,7 +4,7 @@ mod input;
 mod plugin;
 
 pub use config::EguiConfig;
-pub use extension::{EguiAddTexture, EguiExtension};
+pub use extension::{EguiExtension, EguiRegisterTexture};
 pub use plugin::EguiPlugin;
 
 pub use egui::*;
