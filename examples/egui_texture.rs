@@ -17,7 +17,7 @@ impl State {
             .unwrap();
 
         let img_size: egui::Vec2 = texture.size().into();
-        let tex_id = gfx.egui_add_texture(&texture);
+        let tex_id = gfx.egui_register_texture(&texture);
 
         Self { img_size, tex_id }
     }
