@@ -1,9 +1,8 @@
 use crate::plugin::Output;
 use crate::TextureId;
 use notan_app::{
-    BlendFactor, BlendMode, BlendOperation, Buffer, CullMode, Device, ExtContainer, Graphics,
-    Pipeline, RenderTexture, ShaderSource, Texture, TextureFilter, TextureFormat, VertexFormat,
-    VertexInfo,
+    BlendFactor, BlendMode, Buffer, CullMode, Device, Graphics, Pipeline, RenderTexture,
+    ShaderSource, Texture, TextureFilter, TextureFormat, VertexFormat, VertexInfo,
 };
 use std::collections::HashMap;
 
@@ -22,9 +21,11 @@ const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
 
     layout(location = 0) out vec4 v_rgba;
     layout(location = 1) out vec2 v_tc;
+    layout(location = 2) out float v_is_rgba;
 
     layout(set = 0, binding = 0) uniform Locals {
         vec2 u_screen_size;
+        float u_is_rgba;
     };
 
     // 0-1 linear  from  0-255 sRGB
@@ -40,6 +41,8 @@ const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
     }
 
     void main() {
+        v_is_rgba = u_is_rgba;
+
         gl_Position = vec4(
             2.0 * a_pos.x / u_screen_size.x - 1.0,
             1.0 - 2.0 * a_pos.y / u_screen_size.y,
@@ -65,6 +68,7 @@ const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
 
     layout(location = 0) in vec4 v_rgba;
     layout(location = 1) in vec2 v_tc;
+    layout(location = 3) in float v_is_rgba;
 
     layout(set = 0, binding = 0) uniform sampler2D u_sampler;
 
@@ -84,10 +88,14 @@ const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
 
     void main() {
         vec4 texture_rgba = texture(u_sampler, v_tc);
+        if (v_is_rgba == 1.0) {
+            color = texture_rgba;
+            return;
+        } 
 
         /// Multiply vertex color with texture color (in linear space).
         color = v_rgba * texture_rgba;
-        
+
         if (color.a > 0.0) {
             color.rgb /= color.a;
         }
@@ -110,6 +118,7 @@ pub struct EguiExtension {
     ebo: Buffer,
     ubo: Buffer,
     textures: HashMap<egui::TextureId, Texture>,
+    is_rgba: bool,
 }
 
 impl EguiExtension {
@@ -148,6 +157,7 @@ impl EguiExtension {
             ebo,
             ubo,
             textures: HashMap::new(),
+            is_rgba: false,
         })
     }
 
@@ -203,7 +213,6 @@ impl EguiExtension {
 
                         let data: Vec<u8> = image
                             .srgba_pixels(gamma)
-                            // .pixels
                             .flat_map(|a| a.to_array())
                             .collect();
 
@@ -219,7 +228,7 @@ impl EguiExtension {
                     }
                 }
             } else {
-                eprintln!("Failed to find egui texture {:?}", id);
+                log::error!("Failed to find EGUI texture {:?}", id);
             }
         } else {
             let texture = match &delta.image {
@@ -298,8 +307,10 @@ impl EguiExtension {
         let (width, height) = target.map_or(device.size(), |rt| {
             (rt.base_width() as _, rt.base_height() as _)
         });
-        let screen_size: [f32; 2] = [width as _, height as _];
-        device.set_buffer_data(&self.ubo, &screen_size);
+
+        self.is_rgba = false;
+        let uniforms: [f32; 3] = [width as _, height as _, 0.0];
+        device.set_buffer_data(&self.ubo, &uniforms);
 
         meshes
             .iter()
@@ -353,6 +364,31 @@ impl EguiExtension {
         let height = clip_max_y - clip_min_y;
 
         if let Some(texture) = self.textures.get(&mesh.texture_id) {
+            // Here we should check if it's a User texture and the type
+            // If it's a RGBA texture then tell the shader to not use gamma
+            // If it's sRGBA let the shader do their thing
+            // TODO add support for sRGBA textures and framebuffers
+            match &mesh.texture_id {
+                TextureId::Managed(_) => {
+                    if self.is_rgba {
+                        self.is_rgba = false;
+                        device.set_buffer_data(
+                            &self.ubo,
+                            &[width_in_pixels as _, height_in_pixels as _, 0.0],
+                        );
+                    }
+                }
+                TextureId::User(_) => {
+                    if !self.is_rgba {
+                        self.is_rgba = true;
+                        device.set_buffer_data(
+                            &self.ubo,
+                            &[width_in_pixels as _, height_in_pixels as _, 1.0],
+                        );
+                    }
+                }
+            }
+
             let mut renderer = device.create_renderer();
             renderer.set_scissors(clip_min_x, clip_min_y, width, height);
             renderer.begin(None);
@@ -372,13 +408,13 @@ impl EguiExtension {
     }
 }
 
-pub trait EguiAddTexture {
-    fn egui_add_texture(&mut self, texture: &Texture) -> egui::TextureId;
+pub trait EguiRegisterTexture {
+    fn egui_register_texture(&mut self, texture: &Texture) -> egui::TextureId;
     fn egui_remove_texture(&mut self, id: egui::TextureId);
 }
 
-impl EguiAddTexture for Graphics {
-    fn egui_add_texture(&mut self, texture: &Texture) -> TextureId {
+impl EguiRegisterTexture for Graphics {
+    fn egui_register_texture(&mut self, texture: &Texture) -> TextureId {
         self.extension_mut::<Output, EguiExtension>()
             .unwrap()
             .add_texture(texture)
