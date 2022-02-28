@@ -21,7 +21,7 @@ impl State {
             .unwrap();
 
         let img_size = render_texture.size().into();
-        let tex_id = gfx.egui_add_texture(&render_texture);
+        let tex_id = gfx.egui_register_texture(&render_texture);
 
         Self {
             img_size,
@@ -47,11 +47,12 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut St
 
     let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
 
-    let output = plugin.run(|ctx| {
+    let mut output = plugin.run(|ctx| {
         egui::Window::new("Notan Render Texture").show(ctx, |ui| {
             ui.image(state.tex_id, state.img_size);
         });
     });
+    output.clear_color(Color::BLACK);
 
     gfx.render(&output);
 }
