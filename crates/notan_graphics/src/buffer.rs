@@ -210,40 +210,54 @@ impl Default for VertexStepMode {
     }
 }
 
-// FIXME: VertexBuffer only support f32, add u8 support
 #[derive(Debug, Clone, Copy)]
 pub enum VertexFormat {
-    Float1,
-    Float2,
-    Float3,
-    Float4,
-    // Uint1,
-    // Uint2,
-    // Uint3,
-    // Uint4
+    Float32,
+    Float32x2,
+    Float32x3,
+    Float32x4,
+    UInt8,
+    UInt8Norm,
+    UInt8x2,
+    UInt8x2Norm,
+    UInt8x3,
+    UInt8x3Norm,
+    UInt8x4,
+    UInt8x4Norm,
 }
 
 impl VertexFormat {
     pub fn size(&self) -> i32 {
         match self {
-            VertexFormat::Float1 => 1,
-            VertexFormat::Float2 => 2,
-            VertexFormat::Float3 => 3,
-            VertexFormat::Float4 => 4,
-            // VertexFormat::Uint1 => 1,
-            // VertexFormat::Uint2 => 2,
-            // VertexFormat::Uint3 => 3,
-            // VertexFormat::Uint4 => 4,
+            VertexFormat::Float32 => 1,
+            VertexFormat::Float32x2 => 2,
+            VertexFormat::Float32x3 => 3,
+            VertexFormat::Float32x4 => 4,
+            VertexFormat::UInt8 => 1,
+            VertexFormat::UInt8Norm => 1,
+            VertexFormat::UInt8x2 => 2,
+            VertexFormat::UInt8x2Norm => 2,
+            VertexFormat::UInt8x3 => 3,
+            VertexFormat::UInt8x3Norm => 3,
+            VertexFormat::UInt8x4 => 4,
+            VertexFormat::UInt8x4Norm => 4,
         }
     }
 
     pub fn bytes(&self) -> i32 {
-        self.size() * 4
-        // TODO if Uint return self.size() if float return self.size() * 4
+        use VertexFormat::*;
+        match &self {
+            UInt8 | UInt8x2 | UInt8x3 | UInt8x4 => self.size(),
+            UInt8Norm | UInt8x2Norm | UInt8x3Norm | UInt8x4Norm => self.size(),
+            _ => self.size() * 4,
+        }
     }
 
     pub fn normalized(&self) -> bool {
-        false //check type
-              // todo u8 = true, float = false
+        use VertexFormat::*;
+        match &self {
+            UInt8Norm | UInt8x2Norm | UInt8x3Norm | UInt8x4Norm => true,
+            _ => false,
+        }
     }
 }
