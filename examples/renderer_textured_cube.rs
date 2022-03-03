@@ -62,8 +62,8 @@ fn setup(gfx: &mut Graphics) -> State {
     };
 
     let vertex_info = VertexInfo::new()
-        .attr(0, VertexFormat::Float3)
-        .attr(1, VertexFormat::Float2);
+        .attr(0, VertexFormat::Float32x3)
+        .attr(1, VertexFormat::Float32x2);
 
     let pipeline = gfx
         .create_pipeline()

@@ -98,8 +98,8 @@ impl PostProcessTarget {
             .unwrap();
 
         let vertex_info = VertexInfo::new()
-            .attr(0, VertexFormat::Float3)
-            .attr(1, VertexFormat::Float2);
+            .attr(0, VertexFormat::Float32x3)
+            .attr(1, VertexFormat::Float32x2);
 
         let pipeline = gfx
             .create_pipeline()
@@ -228,8 +228,8 @@ struct Cube {
 impl Cube {
     fn new(gfx: &mut Graphics) -> Self {
         let vertex_info = VertexInfo::new()
-            .attr(0, VertexFormat::Float3)
-            .attr(1, VertexFormat::Float4);
+            .attr(0, VertexFormat::Float32x3)
+            .attr(1, VertexFormat::Float32x4);
 
         let pipeline = gfx
             .create_pipeline()
