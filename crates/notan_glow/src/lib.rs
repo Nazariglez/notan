@@ -36,6 +36,7 @@ pub struct GlowBackend {
     current_pipeline: u64,
     limits: Limits,
     current_uniforms: Vec<UniformLocation>,
+    drawing_srgba: bool,
 }
 
 impl GlowBackend {
@@ -96,6 +97,7 @@ impl GlowBackend {
             current_pipeline: 0,
             limits,
             current_uniforms: vec![],
+            drawing_srgba: false,
         })
     }
 }
@@ -104,6 +106,30 @@ impl GlowBackend {
     #[inline(always)]
     fn clear(&self, color: &Option<Color>, depth: &Option<f32>, stencil: &Option<i32>) {
         clear(&self.gl, color, depth, stencil);
+    }
+
+    #[inline]
+    fn enable_srgba(&mut self) {
+        if self.drawing_srgba {
+            return;
+        }
+
+        self.drawing_srgba = true;
+        unsafe {
+            self.gl.enable(glow::FRAMEBUFFER_SRGB);
+        }
+    }
+
+    #[inline]
+    fn disable_srgba(&mut self) {
+        if !self.drawing_srgba {
+            return;
+        }
+
+        self.drawing_srgba = false;
+        unsafe {
+            self.gl.disable(glow::FRAMEBUFFER_SRGB);
+        }
     }
 
     fn begin(
@@ -162,6 +188,7 @@ impl GlowBackend {
 
     fn end(&mut self) {
         unsafe {
+            self.disable_srgba();
             self.gl.disable(glow::SCISSOR_TEST);
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
@@ -210,8 +237,17 @@ impl GlowBackend {
     }
 
     fn bind_texture(&mut self, id: u64, slot: u32, location: u32) {
-        if let Some(texture) = self.textures.get(&id) {
+        let is_srgba = if let Some(texture) = self.textures.get(&id) {
             texture.bind(&self.gl, slot, self.get_uniform_loc(&location));
+            texture.is_srgba
+        } else {
+            false
+        };
+
+        if is_srgba {
+            self.enable_srgba();
+        } else {
+            self.disable_srgba();
         }
     }
 

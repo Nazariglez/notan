@@ -58,7 +58,7 @@ impl TextureInfo {
     pub fn bytes_per_pixel(&self) -> u8 {
         use TextureFormat::*;
         match self.format {
-            R8 => 1,
+            R8 | SRgba8 => 1,
             _ => 4,
         }
     }
@@ -205,6 +205,7 @@ impl AsRef<Texture> for Texture {
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TextureFormat {
+    SRgba8,
     Rgba32,
     R8,
     Depth16,
@@ -321,8 +322,8 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             Some(TextureKind::Bytes(bytes)) => {
                 #[cfg(debug_assertions)]
                 {
-                    let size = info.width * info.height * (info.bytes_per_pixel() as i32);
-                    debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, info.bytes_per_pixel());
+                    let size = info.width * info.height * 4;
+                    debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, 4);
                 }
 
                 let pixels = if info.premultiplied_alpha {
