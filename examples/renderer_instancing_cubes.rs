@@ -82,10 +82,10 @@ fn setup(gfx: &mut Graphics) -> State {
         compare: CompareMode::Less,
     };
 
-    let vertex_pos_info = VertexInfo::new().attr(0, VertexFormat::Float3);
+    let vertex_pos_info = VertexInfo::new().attr(0, VertexFormat::Float32x3);
 
     let vertex_color_info = VertexInfo::new()
-        .attr(1, VertexFormat::Float4)
+        .attr(1, VertexFormat::Float32x4)
         .step_mode(VertexStepMode::Instance);
 
     let pipeline = gfx

@@ -132,11 +132,11 @@ pub struct DefaultGlyphPipeline {
 impl DefaultGlyphPipeline {
     pub fn new(gfx: &mut Graphics) -> Result<Self, String> {
         let vertex_info = VertexInfo::new()
-            .attr(0, VertexFormat::Float3)
-            .attr(1, VertexFormat::Float2)
-            .attr(2, VertexFormat::Float2)
-            .attr(3, VertexFormat::Float2)
-            .attr(4, VertexFormat::Float4)
+            .attr(0, VertexFormat::Float32x3)
+            .attr(1, VertexFormat::Float32x2)
+            .attr(2, VertexFormat::Float32x2)
+            .attr(3, VertexFormat::Float32x2)
+            .attr(4, VertexFormat::Float32x4)
             .step_mode(VertexStepMode::Instance);
 
         let pipeline = create_pipeline(gfx, &vertex_info)?;

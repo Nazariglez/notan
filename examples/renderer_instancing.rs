@@ -55,7 +55,7 @@ fn main() -> Result<(), String> {
 }
 
 fn setup(gfx: &mut Graphics) -> State {
-    let vertex_info = VertexInfo::new().attr(0, VertexFormat::Float2);
+    let vertex_info = VertexInfo::new().attr(0, VertexFormat::Float32x2);
 
     let pipeline = gfx
         .create_pipeline()
