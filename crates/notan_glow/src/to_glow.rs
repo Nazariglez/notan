@@ -104,7 +104,11 @@ impl ToGlow for BufferUsage {
 
 impl ToGlow for VertexFormat {
     fn to_glow(&self) -> u32 {
-        glow::FLOAT
+        use VertexFormat::*;
+        match &self {
+            UInt8 | UInt8x2 | UInt8x3 | UInt8x4 => glow::UNSIGNED_BYTE,
+            _ => glow::FLOAT,
+        }
     }
 }
 

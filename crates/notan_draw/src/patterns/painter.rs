@@ -53,10 +53,10 @@ const PATTERN_FRAGMENT: ShaderSource = fragment_shader! {
 
 fn vertex_info() -> VertexInfo {
     VertexInfo::new()
-        .attr(0, VertexFormat::Float2)
-        .attr(1, VertexFormat::Float2)
-        .attr(2, VertexFormat::Float4)
-        .attr(3, VertexFormat::Float4)
+        .attr(0, VertexFormat::Float32x2)
+        .attr(1, VertexFormat::Float32x2)
+        .attr(2, VertexFormat::Float32x4)
+        .attr(3, VertexFormat::Float32x4)
 }
 
 pub fn create_pattern_pipeline(
