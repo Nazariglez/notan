@@ -7,13 +7,19 @@ pub type TextureKey = <glow::Context as glow::HasContext>::Texture;
 pub(crate) struct InnerTexture {
     pub texture: TextureKey,
     pub size: (i32, i32),
+    pub is_srgba: bool,
 }
 
 impl InnerTexture {
     pub fn new(gl: &Context, info: &TextureInfo) -> Result<Self, String> {
         let texture = unsafe { create_texture(gl, info)? };
         let size = (info.width, info.height);
-        Ok(Self { texture, size })
+        let is_srgba = info.format == TextureFormat::SRgba8;
+        Ok(Self {
+            texture,
+            size,
+            is_srgba,
+        })
     }
 
     pub fn bind(&self, gl: &Context, slot: u32, location: &UniformLocation) {
@@ -144,12 +150,14 @@ pub(crate) fn texture_format(tf: &TextureFormat) -> u32 {
         TextureFormat::Rgba32 => glow::RGBA,
         TextureFormat::R8 => glow::RED,
         TextureFormat::Depth16 => glow::DEPTH_COMPONENT16,
+        TextureFormat::SRgba8 => glow::RGBA,
     }
 }
 
 pub(crate) fn texture_internal_format(tf: &TextureFormat) -> u32 {
     match tf {
         TextureFormat::R8 => glow::R8,
+        TextureFormat::SRgba8 => glow::SRGB8_ALPHA8,
         _ => texture_format(tf),
     }
 }
