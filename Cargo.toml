@@ -41,7 +41,11 @@ glyph = ["notan_glyph"]
 draw = ["notan_draw"]
 egui = ["notan_egui"]
 text = ["notan_text"]
-custom-backend = []
+links = ["notan_app/links", "notan_backend/links"]
+
+[[example]]
+name = "app_open_links"
+required-features = ["links"]
 
 [[example]]
 name = "assets_custom_loader"

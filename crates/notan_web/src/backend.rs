@@ -43,6 +43,12 @@ impl Backend for WebBackend {
     fn system_timestamp(&self) -> u64 {
         js_sys::Date::now() as u64
     }
+
+    fn open_link(&self, url: &str) {
+        if let Err(err) = self.window.as_ref().unwrap().open_url(url) {
+            log::error!("{}", err);
+        }
+    }
 }
 
 impl BackendSystem for WebBackend {

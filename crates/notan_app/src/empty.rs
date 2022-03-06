@@ -56,6 +56,10 @@ impl Backend for EmptyBackend {
     fn system_timestamp(&self) -> u64 {
         0
     }
+
+    fn open_link(&self, _url: &str) {
+        // noop
+    }
 }
 
 impl BackendSystem for EmptyBackend {

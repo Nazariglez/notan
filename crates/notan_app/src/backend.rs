@@ -25,6 +25,9 @@ pub trait Backend: Downcast {
 
     /// Return the system timestamp
     fn system_timestamp(&self) -> u64;
+
+    /// Open a link on a browser if the platform supports it
+    fn open_link(&self, url: &str);
 }
 
 impl_downcast!(Backend);
