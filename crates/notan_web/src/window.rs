@@ -94,6 +94,14 @@ impl WebWindowBackend {
         win.init()
     }
 
+    pub(crate) fn open_url(&self, url: &str) -> Result<(), String> {
+        self.window
+            .open_with_url_and_target(url, "_blank")
+            .map_err(|err| format!("{:?}", err))?;
+
+        Ok(())
+    }
+
     #[inline]
     pub(crate) fn init(mut self) -> Result<Self, String> {
         if let Err(e) = self.canvas.set_attribute(

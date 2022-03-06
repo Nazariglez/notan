@@ -42,6 +42,12 @@ impl App {
     }
 
     #[inline]
+    #[cfg(feature = "links")]
+    pub fn open_link(&self, url: &str) {
+        self.backend.open_link(url);
+    }
+
+    #[inline]
     pub fn date_now(&self) -> u64 {
         self.backend.system_timestamp()
     }

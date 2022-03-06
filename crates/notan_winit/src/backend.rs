@@ -45,6 +45,20 @@ impl Backend for WinitBackend {
             .unwrap()
             .as_millis() as u64
     }
+
+    fn open_link(&self, url: &str) {
+        #[cfg(feature = "links")]
+        {
+            if let Err(err) = webbrowser::open(url) {
+                log::error!("Error opening {}: {}", url, err);
+            }
+        }
+
+        #[cfg(not(feature = "links"))]
+        {
+            log::warn!("Cannot {} link without the feature 'links' enabled.", url);
+        }
+    }
 }
 
 impl BackendSystem for WinitBackend {

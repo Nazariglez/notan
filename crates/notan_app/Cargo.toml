@@ -25,3 +25,4 @@ platter = { version = "0.1.4", features = ["web-sys"] }
 parking_lot = "0.12"
 
 [features]
+links = []
