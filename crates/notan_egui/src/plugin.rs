@@ -1,9 +1,10 @@
 use crate::input::{to_egui_key, to_egui_pointer};
 use crate::EguiExtension;
+use egui::Context;
 use notan_app::assets::Assets;
 use notan_app::{
     App, AppFlow, ClearOptions, Color, Commands, Device, Event, ExtContainer, GfxExtension,
-    GfxRenderer, Plugin, RenderTexture,
+    GfxRenderer, Plugin, Plugins, RenderTexture,
 };
 use std::cell::RefCell;
 
@@ -45,6 +46,7 @@ impl EguiPlugin {
             shapes: RefCell::new(Some(shapes)),
             textures_delta,
             clear_color: None,
+            needs_repaint,
         }
     }
 }
@@ -54,11 +56,16 @@ pub struct Output {
     shapes: RefCell<Option<Vec<egui::epaint::ClippedShape>>>,
     textures_delta: egui::TexturesDelta,
     clear_color: Option<Color>,
+    needs_repaint: bool,
 }
 
 impl Output {
     pub fn clear_color(&mut self, color: Color) {
         self.clear_color = Some(color);
+    }
+
+    pub fn needs_repaint(&self) -> bool {
+        self.needs_repaint
     }
 }
 
@@ -217,4 +224,15 @@ fn is_printable(chr: char, modifiers: &egui::Modifiers) -> bool {
         || '\u{100000}' <= chr && chr <= '\u{10fffd}';
 
     !is_in_private_use_area && !chr.is_ascii_control()
+}
+
+pub trait EguiPluginSugar {
+    fn egui(&mut self, run_ui: impl FnOnce(&egui::Context)) -> Output;
+}
+
+impl EguiPluginSugar for Plugins {
+    fn egui(&mut self, run_ui: impl FnOnce(&Context)) -> Output {
+        let mut ext = self.get_mut::<EguiPlugin>().unwrap();
+        ext.run(run_ui)
+    }
 }
