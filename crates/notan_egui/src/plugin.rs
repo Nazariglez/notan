@@ -92,7 +92,11 @@ impl GfxRenderer for Output {
             }
 
             let meshes = self.ctx.tessellate(shapes);
-            ext.paint_and_update_textures(device, meshes, &self.textures_delta, target);
+            if let Err(err) =
+                ext.paint_and_update_textures(device, meshes, &self.textures_delta, target)
+            {
+                log::error!("{}", err);
+            }
         }
     }
 }

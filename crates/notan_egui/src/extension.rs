@@ -173,7 +173,7 @@ impl EguiExtension {
         device: &mut Device,
         id: egui::TextureId,
         delta: &egui::epaint::ImageDelta,
-    ) {
+    ) -> Result<(), String> {
         let [width, height] = delta.image.size();
 
         // todo mobile
@@ -183,71 +183,31 @@ impl EguiExtension {
             1.0
         };
 
+        // update texture
         if let Some([x, y]) = delta.pos {
-            if let Some(texture) = self.textures.get_mut(&id) {
-                match &delta.image {
-                    egui::ImageData::Color(image) => {
-                        debug_assert_eq!(
-                            image.width() * image.height(),
-                            image.pixels.len(),
-                            "Mismatch between texture size and texel count"
-                        );
+            let texture = self
+                .textures
+                .get_mut(&id)
+                .ok_or_else(|| format!("Failed to find EGUI texture {:?}", id))?;
 
-                        device
-                            .update_texture(texture)
-                            .with_data(bytemuck::cast_slice(image.pixels.as_ref()))
-                            .with_x_offset(x as _)
-                            .with_y_offset(y as _)
-                            .with_width(width as _)
-                            .with_height(height as _)
-                            .update()
-                            .unwrap();
-                    }
-                    egui::ImageData::Alpha(image) => {
-                        debug_assert_eq!(
-                            image.width() * image.height(),
-                            image.pixels.len(),
-                            "Mismatch between texture size and texel count"
-                        );
-
-                        let data: Vec<u8> = image
-                            .srgba_pixels(gamma)
-                            .flat_map(|a| a.to_array())
-                            .collect();
-
-                        device
-                            .update_texture(texture)
-                            .with_data(&data)
-                            .with_x_offset(x as _)
-                            .with_y_offset(y as _)
-                            .with_width(width as _)
-                            .with_height(height as _)
-                            .update()
-                            .unwrap();
-                    }
-                }
-            } else {
-                log::error!("Failed to find EGUI texture {:?}", id);
-            }
-        } else {
-            let texture = match &delta.image {
+            match &delta.image {
                 egui::ImageData::Color(image) => {
                     debug_assert_eq!(
                         image.width() * image.height(),
                         image.pixels.len(),
                         "Mismatch between texture size and texel count"
                     );
-                    device
-                        .create_texture()
-                        .from_bytes(
-                            bytemuck::cast_slice(image.pixels.as_ref()),
-                            width as _,
-                            height as _,
-                        )
-                        .with_format(TextureFormat::SRgba8)
-                        .with_filter(TextureFilter::Linear, TextureFilter::Linear)
-                        .build()
-                        .unwrap()
+
+                    let data = bytemuck::cast_slice(image.pixels.as_ref());
+                    update_texture(
+                        device,
+                        texture,
+                        data,
+                        x as _,
+                        y as _,
+                        width as _,
+                        height as _,
+                    )?
                 }
                 egui::ImageData::Alpha(image) => {
                     debug_assert_eq!(
@@ -261,18 +221,51 @@ impl EguiExtension {
                         .flat_map(|a| a.to_array())
                         .collect();
 
-                    device
-                        .create_texture()
-                        .from_bytes(&data, width as _, height as _)
-                        .with_format(TextureFormat::SRgba8)
-                        .with_filter(TextureFilter::Linear, TextureFilter::Linear)
-                        .build()
-                        .unwrap()
+                    update_texture(
+                        device,
+                        texture,
+                        &data,
+                        x as _,
+                        y as _,
+                        width as _,
+                        height as _,
+                    )?
                 }
-            };
+            }
 
-            self.textures.insert(id, texture);
+            return Ok(());
         }
+
+        // create a new texture
+        let texture = match &delta.image {
+            egui::ImageData::Color(image) => {
+                debug_assert_eq!(
+                    image.width() * image.height(),
+                    image.pixels.len(),
+                    "Mismatch between texture size and texel count"
+                );
+
+                let data = bytemuck::cast_slice(image.pixels.as_ref());
+                create_texture(device, &data, width as _, height as _)?
+            }
+            egui::ImageData::Alpha(image) => {
+                debug_assert_eq!(
+                    image.width() * image.height(),
+                    image.pixels.len(),
+                    "Mismatch between texture size and texel count"
+                );
+
+                let data: Vec<u8> = image
+                    .srgba_pixels(gamma)
+                    .flat_map(|a| a.to_array())
+                    .collect();
+
+                create_texture(device, &data, width as _, height as _)?
+            }
+        };
+
+        self.textures.insert(id, texture);
+        Ok(())
     }
 
     fn free_texture(&mut self, tex_id: egui::TextureId) {
@@ -285,24 +278,26 @@ impl EguiExtension {
         meshes: Vec<egui::ClippedMesh>,
         textures_delta: &egui::TexturesDelta,
         target: Option<&RenderTexture>,
-    ) {
+    ) -> Result<(), String> {
         for (id, image_delta) in &textures_delta.set {
-            self.set_texture(device, *id, image_delta);
+            self.set_texture(device, *id, image_delta)?;
         }
 
-        self.paint(device, meshes, target);
+        self.paint_meshes(device, meshes, target)?;
 
         for &id in &textures_delta.free {
             self.free_texture(id);
         }
+
+        Ok(())
     }
 
-    fn paint(
+    fn paint_meshes(
         &mut self,
         device: &mut Device,
         meshes: Vec<egui::ClippedMesh>,
         target: Option<&RenderTexture>,
-    ) {
+    ) -> Result<(), String> {
         let (width, height) = target.map_or(device.size(), |rt| {
             (rt.base_width() as _, rt.base_height() as _)
         });
@@ -311,20 +306,20 @@ impl EguiExtension {
         let uniforms: [f32; 3] = [width as _, height as _, 0.0];
         device.set_buffer_data(&self.ubo, &uniforms);
 
-        meshes
-            .iter()
-            .for_each(|egui::ClippedMesh(clip_rect, mesh)| {
-                self.paint_job(device, *clip_rect, mesh, target)
-            });
+        for egui::ClippedMesh(clip_rect, mesh) in &meshes {
+            self.paint_mesh(device, *clip_rect, mesh, target)?;
+        }
+
+        Ok(())
     }
 
-    fn paint_job(
+    fn paint_mesh(
         &mut self,
         device: &mut Device,
         clip_rect: egui::Rect,
         mesh: &egui::Mesh,
         target: Option<&RenderTexture>,
-    ) {
+    ) -> Result<(), String> {
         let vertices: &[f32] = bytemuck::cast_slice(&mesh.vertices);
         device.set_buffer_data(&self.vbo, &vertices);
         device.set_buffer_data(&self.ebo, &mesh.indices);
@@ -352,40 +347,43 @@ impl EguiExtension {
         let width = clip_max_x - clip_min_x;
         let height = clip_max_y - clip_min_y;
 
-        if let Some(texture) = self.textures.get(&mesh.texture_id) {
-            // webgl2 doesn't have a gl.enable(GL_FRAMEBUFFER_SRGB) so gamma should be fixed by fragment shader
-            // to do that a float 0.0 - 1.0 is passed to the shader to indicate if it should or not encode gamma
-            if cfg!(target_arch = "wasm32") {
-                let is_srgb = matches!(texture.format(), TextureFormat::SRgba8);
-                let ww = width_in_pixels as _;
-                let hh = height_in_pixels as _;
+        let texture = self
+            .textures
+            .get(&mesh.texture_id)
+            .ok_or_else(|| format!("Invalid EGUI texture id {:?}", &mesh.texture_id))?;
 
-                if is_srgb && !self.need_gamma_fix {
-                    self.need_gamma_fix = true;
-                    device.set_buffer_data(&self.ubo, &[ww, hh, 1.0]);
-                } else if !is_srgb && self.need_gamma_fix {
-                    self.need_gamma_fix = false;
-                    device.set_buffer_data(&self.ubo, &[ww, hh, 0.0]);
-                }
+        // webgl2 doesn't have a gl.enable(GL_FRAMEBUFFER_SRGB) so gamma should be fixed by fragment shader
+        // to do that a float 0.0 - 1.0 is passed to the shader to indicate if it should or not encode gamma
+        if cfg!(target_arch = "wasm32") {
+            let is_srgb = matches!(texture.format(), TextureFormat::SRgba8);
+            let ww = width_in_pixels as _;
+            let hh = height_in_pixels as _;
+
+            if is_srgb && !self.need_gamma_fix {
+                self.need_gamma_fix = true;
+                device.set_buffer_data(&self.ubo, &[ww, hh, 1.0]);
+            } else if !is_srgb && self.need_gamma_fix {
+                self.need_gamma_fix = false;
+                device.set_buffer_data(&self.ubo, &[ww, hh, 0.0]);
             }
-
-            // render pass
-            let mut renderer = device.create_renderer();
-            renderer.set_scissors(clip_min_x, clip_min_y, width, height);
-            renderer.begin(None);
-            renderer.set_pipeline(&self.pipeline);
-            renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
-            renderer.bind_texture(0, texture);
-            renderer.draw(0, mesh.indices.len() as _);
-            renderer.end();
-
-            match target {
-                Some(rt) => device.render_to(rt, renderer.commands()),
-                _ => device.render(renderer.commands()),
-            }
-        } else {
-            log::error!("Invalid EGUI Texture id: {:?}", mesh.texture_id);
         }
+
+        // render pass
+        let mut renderer = device.create_renderer();
+        renderer.set_scissors(clip_min_x, clip_min_y, width, height);
+        renderer.begin(None);
+        renderer.set_pipeline(&self.pipeline);
+        renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
+        renderer.bind_texture(0, texture);
+        renderer.draw(0, mesh.indices.len() as _);
+        renderer.end();
+
+        match target {
+            Some(rt) => device.render_to(rt, renderer.commands()),
+            _ => device.render(renderer.commands()),
+        }
+
+        Ok(())
     }
 }
 
@@ -406,4 +404,39 @@ impl EguiRegisterTexture for Graphics {
             .unwrap()
             .remove_texture(id);
     }
+}
+
+#[inline]
+fn create_texture(
+    device: &mut Device,
+    data: &[u8],
+    width: i32,
+    height: i32,
+) -> Result<Texture, String> {
+    device
+        .create_texture()
+        .from_bytes(data, width, height)
+        .with_format(TextureFormat::SRgba8)
+        .with_filter(TextureFilter::Linear, TextureFilter::Linear)
+        .build()
+}
+
+#[inline]
+fn update_texture(
+    device: &mut Device,
+    texture: &mut Texture,
+    data: &[u8],
+    x: i32,
+    y: i32,
+    width: i32,
+    height: i32,
+) -> Result<(), String> {
+    device
+        .update_texture(texture)
+        .with_data(data)
+        .with_x_offset(x)
+        .with_y_offset(y)
+        .with_width(width)
+        .with_height(height)
+        .update()
 }
