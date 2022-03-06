@@ -12,7 +12,8 @@ repository = "https://github.com/Nazariglez/notan"
 license = "MIT OR Apache-2.0"
 description = "A simple portable multimedia layer to create apps or games easily"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package.metadata.docs.rs]
+all-features = true
 
 [profile.release]
 lto = true
