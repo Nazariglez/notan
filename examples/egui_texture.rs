@@ -32,9 +32,7 @@ fn main() -> Result<(), String> {
 }
 
 fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
-    let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
-
-    let mut output = plugin.run(|ctx| {
+    let mut output = plugins.egui(|ctx| {
         egui::Window::new("Notan Texture").show(ctx, |ui| {
             ui.image(state.tex_id, state.img_size);
         });
@@ -42,5 +40,7 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
 
     output.clear_color(Color::BLACK);
 
-    gfx.render(&output);
+    if output.needs_repaint() {
+        gfx.render(&output);
+    }
 }
