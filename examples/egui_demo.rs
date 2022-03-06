@@ -1,4 +1,4 @@
-use notan::egui::{self, *};
+use notan::egui::*;
 use notan::prelude::*;
 
 #[derive(Default, AppState)]
@@ -18,10 +18,10 @@ fn main() -> Result<(), String> {
 }
 
 fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
-    let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
-
-    let mut output = plugin.run(|ctx| state.demo.ui(ctx));
+    let mut output = plugins.egui(|ctx| state.demo.ui(ctx));
     output.clear_color(Color::BLACK);
 
-    gfx.render(&output);
+    if output.needs_repaint() {
+        gfx.render(&output);
+    }
 }

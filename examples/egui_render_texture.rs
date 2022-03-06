@@ -45,15 +45,14 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut St
     let cube_renderer = state.cube.create_renderer(gfx, app.timer.delta_f32());
     gfx.render_to(&state.render_texture, &cube_renderer);
 
-    let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
-
-    let mut output = plugin.run(|ctx| {
+    let mut output = plugins.egui(|ctx| {
         egui::Window::new("Notan Render Texture").show(ctx, |ui| {
             ui.image(state.tex_id, state.img_size);
         });
     });
     output.clear_color(Color::BLACK);
 
+    // output.needs_repaint is not checked because our render texture needs to be always draw
     gfx.render(&output);
 }
 
