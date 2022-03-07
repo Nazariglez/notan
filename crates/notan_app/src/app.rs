@@ -44,7 +44,13 @@ impl App {
     #[inline]
     #[cfg(feature = "links")]
     pub fn open_link(&self, url: &str) {
-        self.backend.open_link(url);
+        self.backend.open_link(url, false);
+    }
+
+    #[inline]
+    #[cfg(feature = "links")]
+    pub fn open_link_new_tab(&self, url: &str) {
+        self.backend.open_link(url, true);
     }
 
     #[inline]

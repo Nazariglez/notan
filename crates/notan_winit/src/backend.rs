@@ -46,7 +46,7 @@ impl Backend for WinitBackend {
             .as_millis() as u64
     }
 
-    fn open_link(&self, url: &str) {
+    fn open_link(&self, url: &str, _new_tab: bool) {
         #[cfg(feature = "links")]
         {
             if let Err(err) = webbrowser::open(url) {
