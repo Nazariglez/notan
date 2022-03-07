@@ -52,10 +52,7 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     draw_shape(&mut draw, state);
     gfx.render(&draw);
 
-    // Get the EGUI plugin that contains egui::Context
-    let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
-
-    let output = plugin.run(|ctx| {
+    let output = plugins.egui(|ctx| {
         // Draw the EGUI Widget here
         draw_egui_widget(ctx, state);
     });
