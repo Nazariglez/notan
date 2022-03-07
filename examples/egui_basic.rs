@@ -7,9 +7,7 @@ fn main() -> Result<(), String> {
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
-    let mut plugin = plugins.get_mut::<EguiPlugin>().unwrap();
-
-    let mut output = plugin.run(|ctx| {
+    let mut output = plugins.egui(|ctx| {
         egui::SidePanel::left("side_panel").show(&ctx, |ui| {
             ui.heading("Egui Plugin Example");
 
@@ -28,5 +26,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
 
     output.clear_color(Color::BLACK);
 
-    gfx.render(&output);
+    if output.needs_repaint() {
+        gfx.render(&output);
+    }
 }
