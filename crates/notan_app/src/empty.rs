@@ -57,7 +57,7 @@ impl Backend for EmptyBackend {
         0
     }
 
-    fn open_link(&self, _url: &str) {
+    fn open_link(&self, _url: &str, _new_tab: bool) {
         // noop
     }
 }

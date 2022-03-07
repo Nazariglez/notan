@@ -44,8 +44,8 @@ impl Backend for WebBackend {
         js_sys::Date::now() as u64
     }
 
-    fn open_link(&self, url: &str) {
-        if let Err(err) = self.window.as_ref().unwrap().open_url(url) {
+    fn open_link(&self, url: &str, new_tab: bool) {
+        if let Err(err) = self.window.as_ref().unwrap().open_url(url, new_tab) {
             log::error!("{}", err);
         }
     }

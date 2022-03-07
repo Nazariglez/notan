@@ -1,10 +1,11 @@
 use crate::input::{to_egui_key, to_egui_pointer};
 use crate::EguiExtension;
+use egui::output::OpenUrl;
 use egui::Context;
 use notan_app::assets::Assets;
 use notan_app::{
-    App, AppFlow, ClearOptions, Color, Commands, Device, Event, ExtContainer, GfxExtension,
-    GfxRenderer, Plugin, Plugins, RenderTexture,
+    App, AppBuilder, AppFlow, ClearOptions, Color, Commands, Device, Event, ExtContainer,
+    GfxExtension, GfxRenderer, Graphics, Plugin, Plugins, RenderTexture,
 };
 use std::cell::RefCell;
 
@@ -12,6 +13,7 @@ use std::cell::RefCell;
 pub struct EguiPlugin {
     ctx: egui::Context,
     raw_input: egui::RawInput,
+    platform_output: Option<egui::PlatformOutput>,
 }
 
 impl EguiPlugin {
@@ -30,16 +32,7 @@ impl EguiPlugin {
             shapes,
         } = self.ctx.run(new_input, run_ui);
 
-        let egui::PlatformOutput {
-            cursor_icon,
-            open_url,
-            copied_text,
-            events,
-            mutable_text_under_cursor,
-            text_cursor_pos,
-        } = platform_output;
-
-        // TODO cursor, url, etc...
+        self.platform_output = Some(platform_output);
 
         Output {
             ctx: self.ctx.clone(),
@@ -208,6 +201,35 @@ impl Plugin for EguiPlugin {
             min: egui::pos2(0.0, 0.0),
             max: egui::pos2(w as _, h as _),
         });
+        Ok(AppFlow::Next)
+    }
+
+    fn post_frame(
+        &mut self,
+        app: &mut App,
+        assets: &mut Assets,
+        gfx: &mut Graphics,
+    ) -> Result<AppFlow, String> {
+        if let Some(platform_output) = self.platform_output.take() {
+            let egui::PlatformOutput {
+                cursor_icon,
+                open_url,
+                copied_text,
+                events,
+                mutable_text_under_cursor,
+                text_cursor_pos,
+            } = platform_output;
+
+            #[cfg(feature = "links")]
+            if let Some(OpenUrl { url, new_tab }) = open_url {
+                if new_tab {
+                    app.open_link_new_tab(&url);
+                } else {
+                    app.open_link(&url);
+                }
+            }
+        }
+
         Ok(AppFlow::Next)
     }
 }
