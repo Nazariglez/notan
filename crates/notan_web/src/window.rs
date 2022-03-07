@@ -94,9 +94,11 @@ impl WebWindowBackend {
         win.init()
     }
 
-    pub(crate) fn open_url(&self, url: &str) -> Result<(), String> {
+    pub(crate) fn open_url(&self, url: &str, new_tab: bool) -> Result<(), String> {
+        let target = if new_tab { "_blank" } else { "_self" };
+
         self.window
-            .open_with_url_and_target(url, "_blank")
+            .open_with_url_and_target(url, target)
             .map_err(|err| format!("{:?}", err))?;
 
         Ok(())

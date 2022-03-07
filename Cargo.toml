@@ -42,8 +42,8 @@ glyph = ["notan_glyph"]
 draw = ["notan_draw"]
 egui = ["notan_egui"]
 text = ["notan_text"]
-links = ["notan_app/links", "notan_backend/links"]
 drop_files = ["notan_app/drop_files", "notan_backend/drop_files"]
+links = ["notan_app/links", "notan_backend/links", "notan_egui/links"]
 
 [[example]]
 name = "app_open_links"

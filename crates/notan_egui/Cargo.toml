@@ -17,3 +17,6 @@ egui = { version = "0.17", features = ["convert_bytemuck"] }
 bytemuck = "1.7"
 notan_app = { path = "../notan_app", version = "0.2.0" }
 notan_macro = { path = "../notan_macro", version = "0.2.0" }
+
+[features]
+links = []
