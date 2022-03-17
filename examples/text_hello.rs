@@ -10,7 +10,7 @@ struct State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup)
-        .set_config(TextConfig)
+        .add_config(TextConfig)
         .draw(draw)
         .build()
 }

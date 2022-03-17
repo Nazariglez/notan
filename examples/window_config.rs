@@ -10,5 +10,5 @@ fn main() -> Result<(), String> {
         .resizable() // window can be resized
         .min_size(600, 400); // Set a minimum window size
 
-    notan::init().set_config(window_config).build()
+    notan::init().add_config(window_config).build()
 }

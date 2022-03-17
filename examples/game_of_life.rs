@@ -67,8 +67,8 @@ fn main() -> Result<(), String> {
 
     notan::init_with(setup)
         .initialize(init)
-        .set_config(win_config)
-        .set_config(DrawConfig)
+        .add_config(win_config)
+        .add_config(DrawConfig)
         .update(update)
         .draw(draw)
         .build()

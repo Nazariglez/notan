@@ -36,7 +36,7 @@ fn main() -> Result<(), String> {
     notan::init_with(State::new)
         // Add the new loaded here
         .add_loader(create_text_loader())
-        .set_config(DrawConfig)
+        .add_config(DrawConfig)
         .draw(draw)
         .build()
 }

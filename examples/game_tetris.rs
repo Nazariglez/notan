@@ -15,8 +15,8 @@ fn main() -> Result<(), String> {
     let win_config = WindowConfig::new().size(500, TILE_SIZE * ROWS).vsync();
 
     notan::init_with(State::new)
-        .set_config(win_config)
-        .set_config(DrawConfig)
+        .add_config(win_config)
+        .add_config(DrawConfig)
         .update(update)
         .draw(draw)
         .build()
