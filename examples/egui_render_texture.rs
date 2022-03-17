@@ -35,8 +35,8 @@ impl State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(State::new)
-        .set_config(WindowConfig::new().vsync())
-        .set_config(EguiConfig)
+        .add_config(WindowConfig::new().vsync())
+        .add_config(EguiConfig)
         .draw(draw)
         .build()
 }

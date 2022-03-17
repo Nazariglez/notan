@@ -12,7 +12,7 @@ fn main() -> Result<(), String> {
     let log_config = log::LogConfig::default().level(level);
 
     notan::init()
-        .set_config(log_config)
+        .add_config(log_config)
         .initialize(start)
         .build()
 }

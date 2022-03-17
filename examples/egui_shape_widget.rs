@@ -38,9 +38,9 @@ fn main() -> Result<(), String> {
         .vsync();
 
     notan::init_with(State::default)
-        .set_config(win_config)
-        .set_config(EguiConfig)
-        .set_config(DrawConfig)
+        .add_config(win_config)
+        .add_config(EguiConfig)
+        .add_config(DrawConfig)
         .draw(draw)
         .build()
 }

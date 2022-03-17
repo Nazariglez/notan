@@ -43,7 +43,7 @@ impl State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(State::new)
-        .set_config(DrawConfig) // Simple way to add the draw extension
+        .add_config(DrawConfig) // Simple way to add the draw extension
         .update(update)
         .draw(draw)
         .build()

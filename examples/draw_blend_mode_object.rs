@@ -11,7 +11,7 @@ struct State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
-        .set_config(DrawConfig)
+        .add_config(DrawConfig)
         .draw(draw)
         .build()
 }

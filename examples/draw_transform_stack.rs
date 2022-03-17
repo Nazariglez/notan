@@ -60,7 +60,7 @@ fn draw_container<F: FnMut(&mut Draw, &Container)>(
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(State::new)
-        .set_config(DrawConfig)
+        .add_config(DrawConfig)
         .update(update)
         .draw(draw)
         .build()
