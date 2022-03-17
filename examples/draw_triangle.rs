@@ -4,7 +4,7 @@ use notan::prelude::*;
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init()
-        .set_config(DrawConfig) // Simple way to add the draw extension
+        .add_config(DrawConfig) // Simple way to add the draw extension
         .draw(draw)
         .build()
 }

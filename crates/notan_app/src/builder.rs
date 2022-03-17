@@ -75,7 +75,7 @@ where
     }
 
     /// Applies a configuration
-    pub fn set_config<C>(self, config: C) -> Self
+    pub fn add_config<C>(self, config: C) -> Self
     where
         C: BuildConfig<S, B>,
     {

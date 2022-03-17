@@ -111,8 +111,8 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
-        .set_config(WindowConfig::new().vsync())
-        .set_config(DrawConfig)
+        .add_config(WindowConfig::new().vsync())
+        .add_config(DrawConfig)
         .update(update)
         .draw(draw)
         .build()

@@ -10,7 +10,7 @@ struct State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup)
-        .set_config(DrawConfig)
+        .add_config(DrawConfig)
         .update(|app: &mut App, state: &mut State| state.count += 60.0 * app.timer.delta_f32())
         .draw(draw)
         .build()

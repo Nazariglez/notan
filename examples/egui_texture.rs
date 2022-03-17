@@ -28,7 +28,7 @@ impl State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(State::new)
-        .set_config(EguiConfig)
+        .add_config(EguiConfig)
         .draw(draw)
         .build()
 }
