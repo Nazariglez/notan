@@ -21,6 +21,9 @@ console_error_panic_hook = "0.1"
 notan_glow = { path = "../notan_glow", version = "0.2.0" }
 notan_graphics = { path = "../notan_graphics", version = "0.2.0" }
 
+[features]
+drop_files = []
+
 [dependencies.web-sys]
 version = "0.3"
 features= [
