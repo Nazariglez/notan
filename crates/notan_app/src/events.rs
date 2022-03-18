@@ -1,8 +1,9 @@
 use crate::keyboard::*;
 use crate::mouse::*;
 use std::collections::VecDeque;
+use std::path::{Path, PathBuf};
 
-#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 /// Application events usually received from the user
 pub enum Event {
     /// When the app is about to close
@@ -32,7 +33,7 @@ pub enum Event {
     /// Mouse cursor has entered the window's app
     MouseEnter { x: i32, y: i32 },
 
-    /// Mouse cursos has left the window's app
+    /// Mouse cursor has left the window's app
     MouseLeft { x: i32, y: i32 },
 
     /// Keyboard's key is down
@@ -43,6 +44,15 @@ pub enum Event {
 
     /// Unicode char pressed
     ReceivedCharacter(char),
+
+    /// The user is dragging a file over the window
+    DragEnter(PathBuf),
+
+    /// The user stops dragging any file over the window
+    DragLeft,
+
+    /// A file was dropped into the window
+    Drop(PathBuf),
 }
 
 #[derive(Debug, Clone, Default)]

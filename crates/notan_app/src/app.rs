@@ -9,7 +9,7 @@ impl AppState for () {}
 
 /// Represents the context of the application
 pub struct App {
-    /// Backend implamentation
+    /// Backend implementation
     pub backend: Box<dyn Backend>,
 
     /// Mouse data
