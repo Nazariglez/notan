@@ -9,7 +9,7 @@ pub enum Event {
     /// When the app is about to close
     Exit,
 
-    /// Reoresents the current window's position after it was moved
+    /// Represents the current window's position after it was moved
     WindowMove { x: i32, y: i32 },
 
     /// Represents the current window's size after it was resized
@@ -45,12 +45,15 @@ pub enum Event {
     /// Unicode char pressed
     ReceivedCharacter(char),
 
+    #[cfg(feature = "drop_files")]
     /// The user is dragging a file over the window
     DragEnter(PathBuf),
 
+    #[cfg(feature = "drop_files")]
     /// The user stops dragging any file over the window
     DragLeft,
 
+    #[cfg(feature = "drop_files")]
     /// A file was dropped into the window
     Drop(PathBuf),
 }

@@ -26,3 +26,4 @@ parking_lot = "0.12"
 
 [features]
 links = []
+drop_files = []
