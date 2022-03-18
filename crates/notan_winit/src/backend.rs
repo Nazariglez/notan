@@ -127,6 +127,15 @@ impl BackendSystem for WinitBackend {
                             WindowEvent::ReceivedCharacter(c) => {
                                 b.events.push(Event::ReceivedCharacter(*c));
                             }
+                            WindowEvent::HoveredFile(path) => {
+                                b.events.push(Event::DragEnter(path.clone()));
+                            }
+                            WindowEvent::HoveredFileCancelled => {
+                                b.events.push(Event::DragLeft);
+                            }
+                            WindowEvent::DroppedFile(path) => {
+                                b.events.push(Event::Drop(path.clone()));
+                            }
                             _ => {}
                         }
                     }
