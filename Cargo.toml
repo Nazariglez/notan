@@ -44,6 +44,7 @@ egui = ["notan_egui"]
 text = ["notan_text"]
 drop_files = ["notan_app/drop_files", "notan_backend/drop_files"]
 links = ["notan_app/links", "notan_backend/links", "notan_egui/links"]
+drop_files = ["notan_app/drop_files", "notan_backend/drop_files"]
 
 [[example]]
 name = "app_open_links"
