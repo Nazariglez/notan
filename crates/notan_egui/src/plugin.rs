@@ -186,9 +186,14 @@ impl Plugin for EguiPlugin {
                     self.add_event(egui::Event::Text(char.to_string()))
                 }
             }
+
+            #[cfg(feature = "clipboard")]
             Event::Copy => self.add_event(egui::Event::Copy),
+            #[cfg(feature = "clipboard")]
             Event::Cut => self.add_event(egui::Event::Cut),
+            #[cfg(feature = "clipboard")]
             Event::Paste(text) => self.add_event(egui::Event::Paste(text.clone())),
+            _ => {}
         }
 
         Ok(AppFlow::Next)

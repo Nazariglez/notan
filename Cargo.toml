@@ -45,7 +45,7 @@ text = ["notan_text"]
 drop_files = ["notan_app/drop_files", "notan_backend/drop_files"]
 links = ["notan_app/links", "notan_backend/links", "notan_egui/links"]
 drop_files = ["notan_app/drop_files", "notan_backend/drop_files"]
-clipboard = ["notan_app/clipboard", "notan_backend/clipboard"]
+clipboard = ["notan_app/clipboard", "notan_backend/clipboard", "notan_egui/clipboard"]
 
 [[example]]
 name = "app_open_links"
