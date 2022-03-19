@@ -1,9 +1,11 @@
+use crate::assets::Asset;
 use crate::keyboard::*;
 use crate::mouse::*;
 use std::collections::VecDeque;
+use std::future::Future;
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 /// Application events usually received from the user
 pub enum Event {
     /// When the app is about to close
@@ -47,7 +49,11 @@ pub enum Event {
 
     #[cfg(feature = "drop_files")]
     /// The user is dragging a file over the window
-    DragEnter(PathBuf),
+    DragEnter {
+        path: Option<PathBuf>,
+        name: Option<String>,
+        mime: String,
+    },
 
     #[cfg(feature = "drop_files")]
     /// The user stops dragging any file over the window
@@ -55,7 +61,7 @@ pub enum Event {
 
     #[cfg(feature = "drop_files")]
     /// A file was dropped into the window
-    Drop(PathBuf),
+    Drop(DroppedFile),
 
     #[cfg(feature = "clipboard")]
     /// Text copied to the clipboard
@@ -68,6 +74,17 @@ pub enum Event {
     #[cfg(feature = "clipboard")]
     /// Text pasted from the clipboard
     Paste(String),
+}
+
+#[cfg(feature = "drop_files")]
+#[derive(Default, Debug, PartialEq, Clone)]
+pub struct DroppedFile {
+    pub path: Option<PathBuf>,
+    pub name: String,
+    pub mime: String,
+
+    #[cfg(target_arch = "wasm32")]
+    pub file: Option<web_sys::File>,
 }
 
 #[derive(Debug, Clone, Default)]

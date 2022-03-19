@@ -3,6 +3,7 @@ use super::utils::{AssetLoadTracker, DoneSignal, LoadWrapper};
 use futures::prelude::*;
 use hashbrown::HashMap;
 
+use crate::DroppedFile;
 use std::any::TypeId;
 
 /// Store the assets while they are loading
@@ -20,6 +21,31 @@ impl AssetStorage {
         log::info!("to load -> {} {:?}", id, state.type_id);
         self.to_load.insert(id.to_string(), state);
         loaded
+    }
+
+    #[cfg(all(target_arch = "wasm32", feature = "drop_files"))]
+    pub(crate) fn register_wasm_dropped_file(
+        &mut self,
+        id: &str,
+        file: &DroppedFile,
+        type_id: TypeId,
+    ) -> Result<DoneSignal, String> {
+        let f = file
+            .file
+            .as_ref()
+            .ok_or_else(|| "File not available".to_string())?;
+        let fut = Box::pin(
+            wasm_bindgen_futures::JsFuture::from(f.array_buffer()).map(|res| match res {
+                Ok(buffer) => Ok(js_sys::Uint8Array::new(&buffer).to_vec()),
+                Err(e) => Err(format!("{:?}", e)),
+            }),
+        );
+
+        let state = LoadWrapper::new(id, fut, type_id);
+        let loaded = state.loaded.clone();
+        log::info!("to load -> {} {:?}", id, state.type_id);
+        self.to_load.insert(id.to_string(), state);
+        Ok(loaded)
     }
 
     /// Parse an asset with the loaded one
