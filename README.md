@@ -41,7 +41,7 @@ use notan::draw::*;
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init().draw(draw)
-        .set_config(DrawConfig)
+        .add_config(DrawConfig)
         .build()
 }
 
