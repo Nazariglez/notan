@@ -20,3 +20,4 @@ notan_winit = { path = "../notan_winit", version = "0.2.0" }
 [features]
 links = ["notan_winit/links"]
 drop_files = ["notan_winit/drop_files", "notan_web/drop_files"]
+clipboard = ["notan_winit/clipboard", "notan_web/clipboard"]
