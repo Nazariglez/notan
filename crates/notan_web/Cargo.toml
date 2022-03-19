@@ -23,6 +23,7 @@ notan_graphics = { path = "../notan_graphics", version = "0.2.0" }
 
 [features]
 drop_files = []
+clipboard = []
 
 [dependencies.web-sys]
 version = "0.3"
@@ -45,4 +46,6 @@ features= [
     "WheelEvent",
     "KeyboardEvent",
     "CssStyleDeclaration",
+    "Clipboard",
+    "ClipboardEvent"
 ]
