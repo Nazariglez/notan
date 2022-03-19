@@ -47,12 +47,16 @@ links = ["notan_app/links", "notan_backend/links", "notan_egui/links"]
 drop_files = ["notan_app/drop_files", "notan_backend/drop_files", "notan_egui/drop_files"]
 clipboard = ["notan_app/clipboard", "notan_backend/clipboard", "notan_egui/clipboard"]
 
+[dev-dependencies]
+egui_demo_lib = "0.17.0"
+
+[[example]]
+name = "app_drop_file"
+required-features = ["draw", "drop_files"]
+
 [[example]]
 name = "app_open_links"
 required-features = ["links"]
-
-[dev-dependencies]
-egui_demo_lib = "0.17.0"
 
 [[example]]
 name = "assets_custom_loader"
