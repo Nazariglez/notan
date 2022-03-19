@@ -193,7 +193,28 @@ impl Plugin for EguiPlugin {
             Event::Cut => self.add_event(egui::Event::Cut),
             #[cfg(feature = "clipboard")]
             Event::Paste(text) => self.add_event(egui::Event::Paste(text.clone())),
-            _ => {}
+
+            #[cfg(feature = "drop_files")]
+            Event::DragEnter(path) => {
+                self.raw_input.hovered_files.push(egui::HoveredFile {
+                    path: Some(path.clone()),
+                    ..Default::default()
+                });
+            }
+
+            #[cfg(feature = "drop_files")]
+            Event::DragLeft => {
+                self.raw_input.hovered_files.clear();
+            }
+
+            #[cfg(feature = "drop_files")]
+            Event::Drop(path) => {
+                self.raw_input.hovered_files.clear();
+                self.raw_input.dropped_files.push(egui::DroppedFile {
+                    path: Some(path.clone()),
+                    ..Default::default()
+                });
+            }
         }
 
         Ok(AppFlow::Next)
