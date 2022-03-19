@@ -1532,8 +1532,10 @@ dependencies = [
  "copypasta",
  "downcast-rs",
  "futures",
+ "futures-util",
  "hashbrown 0.12.0",
  "indexmap",
+ "js-sys",
  "log",
  "notan_graphics",
  "notan_macro",
@@ -1541,6 +1543,8 @@ dependencies = [
  "notan_utils",
  "parking_lot 0.12.0",
  "platter",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]
@@ -1678,6 +1682,7 @@ name = "notan_web"
 version = "0.2.0"
 dependencies = [
  "console_error_panic_hook",
+ "futures-util",
  "js-sys",
  "log",
  "notan_app",

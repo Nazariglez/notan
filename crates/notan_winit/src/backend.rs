@@ -1,7 +1,7 @@
 use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse};
 use glutin::event_loop::ControlFlow;
-use notan_app::{FrameState, WindowConfig};
+use notan_app::{DroppedFile, FrameState, WindowConfig};
 
 use notan_app::{
     App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, WindowBackend,
@@ -130,7 +130,14 @@ impl BackendSystem for WinitBackend {
 
                             #[cfg(feature = "drop_files")]
                             WindowEvent::HoveredFile(path) => {
-                                b.events.push(Event::DragEnter(path.clone()));
+                                b.events.push(Event::DragEnter {
+                                    path: Some(path.clone()),
+                                    name: Some(path.file_name().map_or_else(
+                                        || "".to_string(),
+                                        |n| n.to_string_lossy().to_string(),
+                                    )),
+                                    mime: "".to_string(),
+                                });
                             }
                             #[cfg(feature = "drop_files")]
                             WindowEvent::HoveredFileCancelled => {
@@ -138,7 +145,16 @@ impl BackendSystem for WinitBackend {
                             }
                             #[cfg(feature = "drop_files")]
                             WindowEvent::DroppedFile(path) => {
-                                b.events.push(Event::Drop(path.clone()));
+                                let name = path
+                                    .file_name()
+                                    .map(|name| name.to_string_lossy().to_string())
+                                    .unwrap_or("".to_string());
+
+                                b.events.push(Event::Drop(DroppedFile {
+                                    path: Some(path.clone()),
+                                    name,
+                                    ..Default::default()
+                                }));
                             }
 
                             _ => {}

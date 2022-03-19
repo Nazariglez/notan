@@ -4,10 +4,14 @@ use super::loader::*;
 use super::storage::AssetStorage;
 use super::utils::DoneSignal;
 
+use crate::DroppedFile;
 use hashbrown::HashMap;
 use std::any::TypeId;
 use std::path::Path;
 use std::rc::Rc;
+
+#[cfg(all(target_arch = "wasm32", feature = "drop_files"))]
+use futures_util::FutureExt;
 
 pub struct Assets {
     storage: AssetStorage,
@@ -88,12 +92,48 @@ impl Assets {
         })
     }
 
+    #[cfg(all(target_arch = "wasm32", feature = "drop_files"))]
+    fn load_wasm_dropped_file(&mut self, file: &DroppedFile) -> Result<DoneSignal, String> {
+        let id = file.name.clone();
+        let ext = Path::new(&id)
+            .extension()
+            .map(|ext| ext.to_str().unwrap())
+            .unwrap_or("");
+
+        let loader = match self.loaders.get(ext) {
+            Some(loader) => loader,
+            None => {
+                log::warn!(
+                    "Not found a loader for '{}', loading as bytes (Vec<u8>)",
+                    id
+                );
+                &self.byte_loader
+            }
+        };
+
+        Ok(match loader.type_id() {
+            Some(type_id) => self
+                .storage
+                .register_wasm_dropped_file(&id, file, type_id)?,
+            None => return Err("Loader without output type id".to_string()),
+        })
+    }
+
     pub fn load_asset<A>(&mut self, id: &str) -> Result<Asset<A>, String>
     where
         A: Send + Sync + 'static,
     {
         let _ = self.load(id)?;
         self.storage.get(id, true)
+    }
+
+    #[cfg(all(target_arch = "wasm32", feature = "drop_files"))]
+    fn load_wasm_dropped_file_asset<A>(&mut self, file: &DroppedFile) -> Result<Asset<A>, String>
+    where
+        A: Send + Sync + 'static,
+    {
+        let _ = self.load_wasm_dropped_file(file)?;
+        self.storage.get(&file.name, true)
     }
 
     pub fn load_list(&mut self, paths: &[&str]) -> Result<AssetList, String> {
@@ -103,5 +143,24 @@ impl Assets {
             list.insert(id, loaded);
         }
         Ok(list)
+    }
+
+    #[cfg(feature = "drop_files")]
+    pub fn load_dropped_file<A>(&mut self, file: &DroppedFile) -> Result<Asset<A>, String>
+    where
+        A: Send + Sync + 'static,
+    {
+        if let Some(path) = &file.path {
+            if let Some(id) = path.to_str() {
+                return self.load_asset(id);
+            }
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            return self.load_wasm_dropped_file_asset(file);
+        }
+
+        Err(format!("Can't load the dropped file {}", file.name))
     }
 }

@@ -1,3 +1,4 @@
+use crate::files::{enable_files, FileCallbacks};
 use crate::keyboard::{enable_keyboard, KeyboardCallbacks};
 use crate::mouse::{enable_mouse, MouseCallbacks};
 use crate::utils::{
@@ -34,6 +35,7 @@ pub struct WebWindowBackend {
 
     pub(crate) mouse_callbacks: MouseCallbacks,
     pub(crate) keyboard_callbacks: KeyboardCallbacks,
+    pub(crate) file_callbacks: FileCallbacks,
 
     config: WindowConfig,
 }
@@ -67,6 +69,7 @@ impl WebWindowBackend {
 
         let mouse_callbacks = Default::default();
         let keyboard_callbacks = Default::default();
+        let file_callbacks = Default::default();
         let antialias = config.multisampling != 0;
 
         let dpi = window.device_pixel_ratio();
@@ -78,6 +81,7 @@ impl WebWindowBackend {
             canvas_parent,
             mouse_callbacks,
             keyboard_callbacks,
+            file_callbacks,
             fullscreen_requested,
             fullscreen_last_size,
             fullscreen_callback_ref,
@@ -128,6 +132,7 @@ impl WebWindowBackend {
 
         enable_mouse(&mut self, fullscreen_dispatcher.clone())?;
         enable_keyboard(&mut self, fullscreen_dispatcher.clone())?;
+        enable_files(&mut self)?;
 
         if self.config.resizable {
             enable_resize(&mut self)?;
