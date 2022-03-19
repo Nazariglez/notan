@@ -1,18 +1,20 @@
 use notan::app::Event;
 use notan::draw::*;
 use notan::prelude::*;
+use std::cmp::min;
 
 #[derive(AppState)]
 struct State {
     font: Font,
     dragging: usize,
-    dropped: Vec<String>,
+    asset: Option<Asset<Texture>>,
 }
 
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup)
         .add_config(DrawConfig)
+        .add_config(notan::log::LogConfig::new(notan::log::LevelFilter::Debug))
         .draw(draw)
         .event(event)
         .build()
@@ -25,21 +27,25 @@ fn setup(gfx: &mut Graphics) -> State {
     State {
         font,
         dragging: 0,
-        dropped: vec![],
+        asset: None,
     }
 }
 
-fn event(state: &mut State, evt: Event) {
+fn event(assets: &mut Assets, state: &mut State, evt: Event) {
     match evt {
-        Event::DragEnter(_path) => {
+        Event::DragEnter { .. } => {
             state.dragging += 1;
         }
         Event::DragLeft => {
             state.dragging = 0;
         }
-        Event::Drop(path) => {
+        Event::Drop(file) => {
             state.dragging = 0;
-            state.dropped.push(path.to_string_lossy().to_string());
+
+            // Start loading the file if it's a png
+            if file.name.contains(".png") {
+                state.asset = Some(assets.load_dropped_file::<Texture>(&file).unwrap());
+            }
         }
         _ => {}
     }
@@ -49,23 +55,28 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
     draw.clear(Color::BLACK);
 
-    if state.dropped.len() > 0 {
-        let mut y = 20.0;
-        state.dropped.iter().rev().take(20).for_each(|path| {
-            draw.text(&state.font, &format!("Dropped: {}", path))
-                .color(Color::ORANGE)
-                .alpha(0.6)
-                .h_align_left()
-                .v_align_top()
-                .position(20.0, y)
-                .size(16.0);
-
-            y += 20.0;
-        });
+    // Display the image if it's already loaded
+    if let Some(asset) = &state.asset {
+        if let Some(img) = asset.lock() {
+            draw.image(&img).position(30.0, 30.0).scale(0.5, 0.5);
+        }
     }
 
+    // Just UI Text
     if state.dragging == 0 {
-        draw.text(&state.font, "Drop files here")
+        let text = match &state.asset {
+            None => "Drop a PNG here",
+            Some(asset) => {
+                if asset.is_loaded() {
+                    "Drop another PNG here"
+                } else {
+                    "Loading..."
+                }
+            }
+        };
+
+        draw.text(&state.font, text)
+            .color(Color::ORANGE)
             .size(30.0)
             .v_align_middle()
             .h_align_center()

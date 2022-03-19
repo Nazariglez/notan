@@ -195,9 +195,10 @@ impl Plugin for EguiPlugin {
             Event::Paste(text) => self.add_event(egui::Event::Paste(text.clone())),
 
             #[cfg(feature = "drop_files")]
-            Event::DragEnter(path) => {
+            Event::DragEnter { path, name, mime } => {
                 self.raw_input.hovered_files.push(egui::HoveredFile {
-                    path: Some(path.clone()),
+                    path: path.clone(),
+                    mime: mime.clone(),
                     ..Default::default()
                 });
             }
@@ -208,10 +209,10 @@ impl Plugin for EguiPlugin {
             }
 
             #[cfg(feature = "drop_files")]
-            Event::Drop(path) => {
+            Event::Drop(file) => {
                 self.raw_input.hovered_files.clear();
                 self.raw_input.dropped_files.push(egui::DroppedFile {
-                    path: Some(path.clone()),
+                    path: file.path.clone(),
                     ..Default::default()
                 });
             }
