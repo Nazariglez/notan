@@ -11,8 +11,8 @@ fn main() -> Result<(), String> {
     let win = WindowConfig::default().resizable().vsync().size(1280, 1024);
 
     notan::init_with(State::default)
-        .set_config(win)
-        .set_config(EguiConfig)
+        .add_config(win)
+        .add_config(EguiConfig)
         .draw(draw)
         .build()
 }

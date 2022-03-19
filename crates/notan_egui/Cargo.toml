@@ -21,3 +21,4 @@ notan_macro = { path = "../notan_macro", version = "0.2.0" }
 [features]
 links = []
 clipboard = []
+drop_files = []
