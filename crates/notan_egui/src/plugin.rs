@@ -186,6 +186,9 @@ impl Plugin for EguiPlugin {
                     self.add_event(egui::Event::Text(char.to_string()))
                 }
             }
+            Event::Copy => self.add_event(egui::Event::Copy),
+            Event::Cut => self.add_event(egui::Event::Cut),
+            Event::Paste(text) => self.add_event(egui::Event::Paste(text.clone())),
         }
 
         Ok(AppFlow::Next)
