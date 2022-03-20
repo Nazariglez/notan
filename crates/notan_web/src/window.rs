@@ -1,4 +1,3 @@
-use crate::files::{enable_files, FileCallbacks};
 use crate::keyboard::{enable_keyboard, KeyboardCallbacks};
 use crate::mouse::{enable_mouse, MouseCallbacks};
 use crate::utils::{
@@ -11,6 +10,9 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, Event as WebEvent, HtmlCanvasElement, Window};
+
+#[cfg(feature = "drop_files")]
+use crate::files::{enable_files, FileCallbacks};
 
 pub struct WebWindowBackend {
     pub canvas: HtmlCanvasElement,
@@ -35,6 +37,8 @@ pub struct WebWindowBackend {
 
     pub(crate) mouse_callbacks: MouseCallbacks,
     pub(crate) keyboard_callbacks: KeyboardCallbacks,
+
+    #[cfg(feature = "drop_files")]
     pub(crate) file_callbacks: FileCallbacks,
 
     config: WindowConfig,
@@ -69,7 +73,10 @@ impl WebWindowBackend {
 
         let mouse_callbacks = Default::default();
         let keyboard_callbacks = Default::default();
+
+        #[cfg(feature = "drop_files")]
         let file_callbacks = Default::default();
+
         let antialias = config.multisampling != 0;
 
         let dpi = window.device_pixel_ratio();
@@ -81,7 +88,10 @@ impl WebWindowBackend {
             canvas_parent,
             mouse_callbacks,
             keyboard_callbacks,
+
+            #[cfg(feature = "drop_files")]
             file_callbacks,
+
             fullscreen_requested,
             fullscreen_last_size,
             fullscreen_callback_ref,
@@ -132,6 +142,8 @@ impl WebWindowBackend {
 
         enable_mouse(&mut self, fullscreen_dispatcher.clone())?;
         enable_keyboard(&mut self, fullscreen_dispatcher.clone())?;
+
+        #[cfg(feature = "drop_files")]
         enable_files(&mut self)?;
 
         if self.config.resizable {
