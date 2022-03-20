@@ -165,13 +165,16 @@ We treat the web as a first class citizen. Our web backend is made using [web-sy
 or [wasm-pack](https://github.com/rustwasm/wasm-pack). Take in account that you need to create an `index.html` file and call the main function from the `wasm` module.
 
 Using `wasm-pack build --release --target web` you need to load the module with something similar to this:
+
 ```html
+
 <html>
 <head>
     <title>Notan App</title>
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+          content="minimal-ui, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body>
@@ -180,7 +183,7 @@ Using `wasm-pack build --release --target web` you need to load the module with 
     let module = await init();
     module.notan_main();
 </script>
-<div id="container">
+<div id="examples">
     <canvas id="notan_canvas"></canvas>
 </div>
 </body>
