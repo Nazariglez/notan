@@ -21,39 +21,34 @@ pub fn enable_files(win: &mut WebWindowBackend) -> Result<(), String> {
     let callbacks = &mut win.file_callbacks;
     let events = win.events.clone();
 
-    callbacks.on_drop = {
+    callbacks.on_drop = Some({
         let events = events.clone();
+        canvas_add_event_listener(&win.canvas, "drop", move |e: DragEvent| {
+            e.stop_propagation();
+            e.prevent_default();
 
-        Some(canvas_add_event_listener(
-            &win.canvas,
-            "drop",
-            move |e: DragEvent| {
-                e.stop_propagation();
-                e.prevent_default();
+            if let Some(dt) = e.data_transfer() {
+                if let Some(files) = dt.files() {
+                    let len = files.length();
+                    if len > 0 {
+                        (0..len).for_each(|i| {
+                            if let Some(file) = files.item(i) {
+                                let name = file.name();
+                                let mime = file.type_();
 
-                if let Some(dt) = e.data_transfer() {
-                    if let Some(files) = dt.files() {
-                        let len = files.length();
-                        if len > 0 {
-                            (0..len).for_each(|i| {
-                                if let Some(file) = files.item(i) {
-                                    let name = file.name();
-                                    let mime = file.type_();
-
-                                    events.borrow_mut().push(Event::Drop(DroppedFile {
-                                        name,
-                                        mime,
-                                        file: Some(file),
-                                        ..Default::default()
-                                    }))
-                                }
-                            });
-                        }
+                                events.borrow_mut().push(Event::Drop(DroppedFile {
+                                    name,
+                                    mime,
+                                    file: Some(file),
+                                    ..Default::default()
+                                }))
+                            }
+                        });
                     }
                 }
-            },
-        )?)
-    };
+            }
+        })?
+    });
 
     callbacks.on_drag_over = Some(canvas_add_event_listener(
         &win.canvas,
@@ -64,10 +59,10 @@ pub fn enable_files(win: &mut WebWindowBackend) -> Result<(), String> {
         },
     )?);
 
-    callbacks.on_drag_enter = Some(canvas_add_event_listener(
-        &win.canvas,
-        "dragenter",
-        |e: DragEvent| {
+    callbacks.on_drag_enter = Some({
+        let events = events.clone();
+
+        canvas_add_event_listener(&win.canvas, "dragenter", move |e: DragEvent| {
             e.stop_propagation();
             e.prevent_default();
 
@@ -76,24 +71,18 @@ pub fn enable_files(win: &mut WebWindowBackend) -> Result<(), String> {
                 (0..len).for_each(|i| {
                     if let Some(item) = dt.items().get(i) {
                         if item.kind() == "file" {
-                            // let file = item.get_as_file().unwrap().unwrap();
-                            if let Ok(f) = item.get_as_file() {
-                                if let Some(f) = f {
-                                    log::info!("{} {}", f.name(), f.type_());
-                                } else {
-                                    log::info!("nop1");
-                                }
-                            } else {
-                                log::info!("nop2");
-                            }
-                        } else {
-                            log::info!("nop3");
+                            let mime = item.type_();
+                            events.borrow_mut().push(Event::DragEnter {
+                                path: None,
+                                name: None,
+                                mime,
+                            });
                         }
                     }
                 })
             }
-        },
-    )?);
+        })?
+    });
 
     callbacks.on_drag_leave = Some(canvas_add_event_listener(
         &win.canvas,
