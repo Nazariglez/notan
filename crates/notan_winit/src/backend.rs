@@ -1,7 +1,10 @@
 use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse};
 use glutin::event_loop::ControlFlow;
-use notan_app::{DroppedFile, FrameState, WindowConfig};
+use notan_app::{FrameState, WindowConfig};
+
+#[cfg(feature = "drop_files")]
+use notan_app::DroppedFile;
 
 use notan_app::{
     App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, WindowBackend,

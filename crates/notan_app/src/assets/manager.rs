@@ -4,11 +4,13 @@ use super::loader::*;
 use super::storage::AssetStorage;
 use super::utils::DoneSignal;
 
-use crate::DroppedFile;
 use hashbrown::HashMap;
 use std::any::TypeId;
 use std::path::Path;
 use std::rc::Rc;
+
+#[cfg(feature = "drop_files")]
+use crate::DroppedFile;
 
 #[cfg(all(target_arch = "wasm32", feature = "drop_files"))]
 use futures_util::FutureExt;
