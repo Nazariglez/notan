@@ -133,13 +133,21 @@ impl BackendSystem for WinitBackend {
 
                             #[cfg(feature = "drop_files")]
                             WindowEvent::HoveredFile(path) => {
+                                let name = path.file_name().map_or_else(
+                                    || "".to_string(),
+                                    |n| n.to_string_lossy().to_string(),
+                                );
+
+                                let mime = mime_guess::from_path(path)
+                                    .first_raw()
+                                    .clone()
+                                    .unwrap_or("")
+                                    .to_string();
+
                                 b.events.push(Event::DragEnter {
                                     path: Some(path.clone()),
-                                    name: Some(path.file_name().map_or_else(
-                                        || "".to_string(),
-                                        |n| n.to_string_lossy().to_string(),
-                                    )),
-                                    mime: "".to_string(),
+                                    name: Some(name),
+                                    mime,
                                 });
                             }
                             #[cfg(feature = "drop_files")]
@@ -153,10 +161,16 @@ impl BackendSystem for WinitBackend {
                                     .map(|name| name.to_string_lossy().to_string())
                                     .unwrap_or("".to_string());
 
+                                let mime = mime_guess::from_path(path)
+                                    .first_raw()
+                                    .clone()
+                                    .unwrap_or("")
+                                    .to_string();
+
                                 b.events.push(Event::Drop(DroppedFile {
                                     path: Some(path.clone()),
                                     name,
-                                    ..Default::default()
+                                    mime,
                                 }));
                             }
 
