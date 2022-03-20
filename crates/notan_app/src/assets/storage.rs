@@ -2,9 +2,10 @@ use super::asset::Asset;
 use super::utils::{AssetLoadTracker, DoneSignal, LoadWrapper};
 use futures::prelude::*;
 use hashbrown::HashMap;
-
-use crate::DroppedFile;
 use std::any::TypeId;
+
+#[cfg(all(target_arch = "wasm32", feature = "drop_files"))]
+use crate::DroppedFile;
 
 /// Store the assets while they are loading
 #[derive(Default)]
