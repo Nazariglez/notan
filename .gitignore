@@ -28,4 +28,4 @@ pkg
 **/docs/**/*
 
 # allow static images
-!**/docs/examles/images/**/*
+!**/docs/examples/images/**/*.jpg
