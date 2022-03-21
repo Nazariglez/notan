@@ -17,7 +17,10 @@ for f in ./examples/*.rs; do
   f=$f
   f=${f/\.\/examples\//""}
   f=${f/.rs/""}
-  run "$f" &
-  finish "$f"
+  # take a screenshot if it doesn't exists
+  if [ ! -f ./docs/examples/images/"$f".jpg ]; then
+    run "$f" &
+    finish "$f"
+  fi
 done
 
