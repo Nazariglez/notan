@@ -22,4 +22,10 @@
 **/.vscode
 pkg
 **/notes.txt
-**/docs
+
+
+# webpage generated
+**/docs/**/*
+
+# allow static images
+!**/docs/examles/images/**/*
