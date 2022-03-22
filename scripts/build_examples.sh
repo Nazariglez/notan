@@ -12,7 +12,7 @@ compile() {
 
   url="examples/${f}.html"
   image="examples/images/${f}.jpg"
-  doc_body="${doc_body}\n<li><a href=\"${url}\"><div class=\"example-image\"><img src=\"${image}\" alt=\"${f}\"></div><div class=\"example-link\">${f}</div>/a></li>"
+  doc_body="${doc_body}\n<li><a href=\"${url}\"><div class=\"example-image\"><img src=\"${image}\" alt=\"${f}\"></div><div class=\"example-link\">${f}</div></a></li>"
 }
 
 for f in ./examples/*.rs; do

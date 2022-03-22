@@ -96,8 +96,8 @@ fn setup(gfx: &mut Graphics) -> State {
 fn init(state: &mut State) {
     let mut rng = Random::default();
     for _ in 0..500 {
-        let x = rng.gen_range(0, WIDTH);
-        let y = rng.gen_range(0, HEIGHT);
+        let x = rng.gen_range(0..WIDTH);
+        let y = rng.gen_range(0..HEIGHT);
 
         let neighbors = get_neighbors(x as _, y as _);
         neighbors.iter().for_each(|(x, y)| {
