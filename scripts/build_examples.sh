@@ -11,7 +11,8 @@ compile() {
   ./scripts/web_example.sh $f --release --no-assets
 
   url="examples/${f}.html"
-  doc_body="${doc_body}\n<li><a href=\"${url}\">${f}</a></li>"
+  image="examples/images/${f}.jpg"
+  doc_body="${doc_body}\n<li><a href=\"${url}\"><div class=\"example-image\"><img src=\"${image}\" alt=\"${f}\"></div><div class=\"example-link\">${f}</div>/a></li>"
 }
 
 for f in ./examples/*.rs; do
