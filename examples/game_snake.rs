@@ -214,7 +214,7 @@ impl State {
 }
 
 fn random_xy(rng: &mut Random) -> (usize, usize) {
-    (rng.gen_range(0, COLS), rng.gen_range(0, ROWS))
+    (rng.gen_range(0..COLS), rng.gen_range(0..ROWS))
 }
 
 fn xy(index: usize) -> (usize, usize) {

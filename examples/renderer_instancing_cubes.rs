@@ -146,9 +146,9 @@ fn setup(gfx: &mut Graphics) -> State {
         .into_iter()
         .flat_map(|_| {
             [
-                rng.gen_range(0.0, 1.0),
-                rng.gen_range(0.0, 1.0),
-                rng.gen_range(0.0, 1.0),
+                rng.gen_range(0.0..1.0),
+                rng.gen_range(0.0..1.0),
+                rng.gen_range(0.0..1.0),
                 1.0,
             ]
         })

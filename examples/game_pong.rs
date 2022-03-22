@@ -209,10 +209,7 @@ impl BoundCalc for Paddle {
 }
 
 fn random_speed(rng: &mut Random) -> f32 {
-    rng.gen_range(
-        BALL_SPEED - BALL_SPEED_THRESHOLD,
-        BALL_SPEED + BALL_SPEED_THRESHOLD,
-    )
+    rng.gen_range((BALL_SPEED - BALL_SPEED_THRESHOLD)..(BALL_SPEED + BALL_SPEED_THRESHOLD))
 }
 
 struct Ball {
@@ -238,9 +235,9 @@ impl Ball {
 
     fn fire(&mut self, rng: &mut Random, left: bool) {
         self.x = if left { 50.0 } else { WIDTH as f32 - 50.0 };
-        self.y = rng.gen_range(WALL_SIZE, HEIGHT as f32 - WALL_SIZE);
+        self.y = rng.gen_range(WALL_SIZE..(HEIGHT as f32 - WALL_SIZE));
 
-        let angle_to_fire: f32 = rng.gen_range(0.0, FIRE_ANGLE_MAX);
+        let angle_to_fire: f32 = rng.gen_range(0.0..FIRE_ANGLE_MAX);
         self.speed_from_angle(random_speed(rng), angle_to_fire, left);
     }
 
