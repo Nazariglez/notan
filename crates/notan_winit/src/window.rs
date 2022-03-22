@@ -66,7 +66,7 @@ impl WinitWindowBackend {
             .with_vsync(config.vsync)
             .with_gl(glutin::GlRequest::GlThenGles {
                 opengl_version: (3, 3),
-                opengles_version: (2, 0),
+                opengles_version: (3, 0),
             })
             .with_gl_profile(glutin::GlProfile::Core)
             .with_multisampling(config.multisampling)

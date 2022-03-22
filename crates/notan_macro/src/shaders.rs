@@ -75,9 +75,9 @@ impl quote::ToTokens for ShaderBytes {
 
 pub(crate) fn source_from_spirv(spirv: Vec<u8>) -> Result<TokenStream, String> {
     let webgl2_bytes = spirv_to(&spirv, Output::Webgl2)?;
-    let wgpu_bytes = spirv_to(&spirv, Output::Wgpu)?;
+    // let wgpu_bytes = spirv_to(&spirv, Output::Wgpu)?;
     let opengl_3_3_bytes = spirv_to(&spirv, Output::OpenGl3_3)?;
-    let opengl_es_bytes = spirv_to(&spirv, Output::OpenGl_ES)?;
+    // let opengl_es_bytes = spirv_to(&spirv, Output::OpenGl_ES)?;
 
     Ok((quote! {
         ShaderSource {
@@ -85,14 +85,14 @@ pub(crate) fn source_from_spirv(spirv: Vec<u8>) -> Result<TokenStream, String> {
                 #[cfg(target_arch = "wasm32")]
                 ("webgl2", &#webgl2_bytes),
 
-                #[cfg(all(not(target_arch = "wasm32"), feature = "wgpu"))]
-                ("wgpu", &#wgpu_bytes),
+                // #[cfg(all(not(target_arch = "wasm32"), feature = "wgpu"))]
+                // ("wgpu", &#wgpu_bytes),
 
                 #[cfg(all(not(target_arch = "wasm32"), not(feature = "wgpu"), not(target_os = "ios")))]
                 ("opengl", &#opengl_3_3_bytes),
 
-                #[cfg(any(target_os = "ios", target_os = "android"))]
-                ("opengl_es", &#opengl_es_bytes),
+                // #[cfg(any(target_os = "ios", target_os = "android"))]
+                // ("opengl_es", &#opengl_es_bytes),
             ]
         }
     })
@@ -115,7 +115,7 @@ impl From<Output> for Option<glsl::Version> {
         Some(match value {
             Output::Webgl2 => V3_00Es,
             Output::OpenGl3_3 => V3_30,
-            Output::OpenGl_ES => V1_00Es,
+            Output::OpenGl_ES => V3_00Es,
             _ => return None,
         })
     }
