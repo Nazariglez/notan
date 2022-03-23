@@ -7,6 +7,7 @@ use notan_graphics::prelude::*;
 pub struct EmptyWindowBackend {
     size: (i32, i32),
     is_fullscreen: bool,
+    lazy: bool,
 }
 
 impl WindowBackend for EmptyWindowBackend {
@@ -28,6 +29,14 @@ impl WindowBackend for EmptyWindowBackend {
 
     fn dpi(&self) -> f64 {
         1.0
+    }
+
+    fn set_lazy_loop(&mut self, lazy: bool) {
+        self.lazy = lazy;
+    }
+
+    fn lazy_loop(&self) -> bool {
+        self.lazy
     }
 }
 

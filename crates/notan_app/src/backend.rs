@@ -82,4 +82,10 @@ pub trait WindowBackend {
 
     /// Screen's DPI
     fn dpi(&self) -> f64;
+
+    /// Enable or disable the lazy mode for the app's loop
+    fn set_lazy_loop(&mut self, lazy: bool);
+
+    /// Returns true if the lazy mode is enabled
+    fn lazy_loop(&self) -> bool;
 }

@@ -42,6 +42,9 @@ pub struct WindowConfig {
     /// **Only Web:** By default a canvas will have the size set multiplied by the device_pixel_ratio
     /// This can be disabled by setting this to `false`. This could be useful for mobile browsers.
     pub canvas_auto_resolution: bool,
+
+    /// Inner loop will run only after an input event
+    pub lazy_loop: bool,
 }
 
 impl Default for WindowConfig {
@@ -58,6 +61,7 @@ impl Default for WindowConfig {
             vsync: false,
             multisampling: 0,
             canvas_auto_resolution: true,
+            lazy_loop: false,
         }
     }
 }
@@ -71,6 +75,12 @@ impl WindowConfig {
     /// Sets the window's title
     pub fn title(mut self, title: &str) -> Self {
         self.title = title.to_string();
+        self
+    }
+
+    /// Inner loop will run only after an input event
+    pub fn lazy_loop(mut self) -> Self {
+        self.lazy_loop = true;
         self
     }
 
