@@ -9,6 +9,7 @@ use winit::window::{Window, WindowBuilder};
 pub struct WinitWindowBackend {
     pub(crate) gl_ctx: ContextWrapper<PossiblyCurrent, Window>,
     pub(crate) scale_factor: f64,
+    pub(crate) lazy: bool,
     // win: WindowedContext<PossiblyCurrent>,
 }
 
@@ -39,6 +40,14 @@ impl WindowBackend for WinitWindowBackend {
 
     fn dpi(&self) -> f64 {
         self.scale_factor
+    }
+
+    fn set_lazy_loop(&mut self, lazy: bool) {
+        self.lazy = lazy;
+    }
+
+    fn lazy_loop(&self) -> bool {
+        self.lazy
     }
 }
 
@@ -84,6 +93,7 @@ impl WinitWindowBackend {
         Ok(Self {
             gl_ctx,
             scale_factor,
+            lazy: config.lazy_loop,
         })
     }
 
