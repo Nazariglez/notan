@@ -2,6 +2,7 @@ use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse};
 use glutin::event_loop::ControlFlow;
 use notan_app::{FrameState, WindowConfig};
+use std::ops::Add;
 
 #[cfg(feature = "drop_files")]
 use notan_app::DroppedFile;
@@ -81,19 +82,33 @@ impl BackendSystem for WinitBackend {
 
         Ok(Box::new(move |mut app: App, mut state: S, mut cb: R| {
             let (mut mouse_x, mut mouse_y) = (0, 0);
+            let mut request_redraw = false;
+
+            let mut add_event =
+                move |b: &mut WinitBackend, request_redraw: &mut bool, evt: Event| {
+                    b.events.push(evt);
+                    *request_redraw = true;
+                };
 
             event_loop.run(move |event, _win_target, control_flow| {
                 let b = backend(&mut app);
+
+                // Await for the next event to run the loop again
+                let is_lazy = b.window.as_ref().unwrap().lazy;
+                if is_lazy {
+                    *control_flow = ControlFlow::Wait;
+                }
+
                 match event {
                     WEvent::WindowEvent { ref event, .. } => {
                         if let Some(evt) =
                             mouse::process_events(event, &mut mouse_x, &mut mouse_y, dpi_scale)
                         {
-                            b.events.push(evt);
+                            add_event(b, &mut request_redraw, evt);
                         }
 
                         if let Some(evt) = keyboard::process_events(event) {
-                            b.events.push(evt);
+                            add_event(b, &mut request_redraw, evt);
                         }
 
                         match event {
@@ -104,10 +119,14 @@ impl BackendSystem for WinitBackend {
                                 b.window.as_mut().unwrap().gl_ctx.resize(*size);
 
                                 let logical_size = size.to_logical::<f64>(dpi_scale);
-                                b.events.push(Event::WindowResize {
-                                    width: logical_size.width as _,
-                                    height: logical_size.height as _,
-                                });
+                                add_event(
+                                    b,
+                                    &mut request_redraw,
+                                    Event::WindowResize {
+                                        width: logical_size.width as _,
+                                        height: logical_size.height as _,
+                                    },
+                                );
                             }
                             WindowEvent::ScaleFactorChanged {
                                 scale_factor,
@@ -120,15 +139,22 @@ impl BackendSystem for WinitBackend {
 
                                 let logical_size = size.to_logical::<f64>(dpi_scale);
 
-                                b.events
-                                    .push(Event::ScreenAspectChange { ratio: dpi_scale });
-                                b.events.push(Event::WindowResize {
-                                    width: logical_size.width as _,
-                                    height: logical_size.height as _,
-                                });
+                                add_event(
+                                    b,
+                                    &mut request_redraw,
+                                    Event::ScreenAspectChange { ratio: dpi_scale },
+                                );
+                                add_event(
+                                    b,
+                                    &mut request_redraw,
+                                    Event::WindowResize {
+                                        width: logical_size.width as _,
+                                        height: logical_size.height as _,
+                                    },
+                                );
                             }
                             WindowEvent::ReceivedCharacter(c) => {
-                                b.events.push(Event::ReceivedCharacter(*c));
+                                add_event(b, &mut request_redraw, Event::ReceivedCharacter(*c));
                             }
 
                             #[cfg(feature = "drop_files")]
@@ -144,15 +170,19 @@ impl BackendSystem for WinitBackend {
                                     .unwrap_or("")
                                     .to_string();
 
-                                b.events.push(Event::DragEnter {
-                                    path: Some(path.clone()),
-                                    name: Some(name),
-                                    mime,
-                                });
+                                add_event(
+                                    b,
+                                    &mut request_redraw,
+                                    Event::DragEnter {
+                                        path: Some(path.clone()),
+                                        name: Some(name),
+                                        mime,
+                                    },
+                                );
                             }
                             #[cfg(feature = "drop_files")]
                             WindowEvent::HoveredFileCancelled => {
-                                b.events.push(Event::DragLeft);
+                                add_event(b, &mut request_redraw, Event::DragLeft);
                             }
                             #[cfg(feature = "drop_files")]
                             WindowEvent::DroppedFile(path) => {
@@ -167,18 +197,25 @@ impl BackendSystem for WinitBackend {
                                     .unwrap_or("")
                                     .to_string();
 
-                                b.events.push(Event::Drop(DroppedFile {
-                                    path: Some(path.clone()),
-                                    name,
-                                    mime,
-                                }));
+                                add_event(
+                                    b,
+                                    &mut request_redraw,
+                                    Event::Drop(DroppedFile {
+                                        path: Some(path.clone()),
+                                        name,
+                                        mime,
+                                    }),
+                                );
                             }
 
                             _ => {}
                         }
                     }
                     WEvent::MainEventsCleared => {
-                        b.window.as_mut().unwrap().window().request_redraw();
+                        let needs_redraw = !is_lazy || (is_lazy && request_redraw);
+                        if needs_redraw {
+                            b.window.as_mut().unwrap().window().request_redraw();
+                        }
                     }
                     WEvent::RedrawRequested(_) => {
                         match cb(&mut app, &mut state) {
@@ -194,10 +231,16 @@ impl BackendSystem for WinitBackend {
                             }
                         }
                     }
+                    WEvent::RedrawEventsCleared => {
+                        request_redraw = false;
+                    }
                     _ => {}
                 }
 
-                let exit_requested = backend(&mut app).exit_requested;
+                let b = backend(&mut app);
+
+                // Close the loop if the user want to exit
+                let exit_requested = b.exit_requested;
                 if exit_requested {
                     *control_flow = ControlFlow::Exit;
                 }
