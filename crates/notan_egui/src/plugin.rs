@@ -4,8 +4,8 @@ use egui::output::OpenUrl;
 use egui::Context;
 use notan_app::assets::Assets;
 use notan_app::{
-    App, AppBuilder, AppFlow, ClearOptions, Color, Commands, Device, Event, ExtContainer,
-    GfxExtension, GfxRenderer, Graphics, Plugin, Plugins, RenderTexture,
+    App, AppFlow, ClearOptions, Color, Commands, Device, Event, ExtContainer, GfxExtension,
+    GfxRenderer, Graphics, Plugin, Plugins, RenderTexture,
 };
 use std::cell::RefCell;
 
@@ -63,7 +63,7 @@ impl Output {
 }
 
 impl GfxExtension<Output> for EguiExtension {
-    fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a Output) -> &'a [Commands] {
+    fn commands<'a>(&'a mut self, _device: &mut Device, _renderer: &'a Output) -> &'a [Commands] {
         &[]
     }
 }
@@ -195,7 +195,7 @@ impl Plugin for EguiPlugin {
             Event::Paste(text) => self.add_event(egui::Event::Paste(text.clone())),
 
             #[cfg(feature = "drop_files")]
-            Event::DragEnter { path, name, mime } => {
+            Event::DragEnter { path, mime, .. } => {
                 self.raw_input.hovered_files.push(egui::HoveredFile {
                     path: path.clone(),
                     mime: mime.clone(),
