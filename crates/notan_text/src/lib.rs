@@ -7,7 +7,6 @@ use notan_glyph::{
     Layout, Section, Text as GText, VerticalAlign,
 };
 use notan_graphics::color::Color;
-use notan_graphics::commands::Commands;
 use notan_graphics::pipeline::ClearOptions;
 use notan_graphics::{Device, RenderTexture, Renderer};
 use std::any::TypeId;
@@ -123,11 +122,7 @@ impl TextExtension {
     }
 }
 
-impl GfxExtension<Text<'_>> for TextExtension {
-    fn commands<'a>(&'a mut self, _device: &mut Device, _renderer: &'a Text) -> &'a [Commands] {
-        &[]
-    }
-}
+impl GfxExtension<Text<'_>> for TextExtension {}
 
 pub struct AddTextBuilder<'b, 'a: 'b> {
     text: &'b mut Text<'a>,
@@ -377,13 +372,17 @@ impl GfxRenderer for Text<'_> {
         device: &mut Device,
         extensions: &mut ExtContainer,
         target: Option<&RenderTexture>,
-    ) {
-        let mut ext = extensions.get_mut::<Text, TextExtension>().unwrap();
+    ) -> Result<(), String> {
+        let mut ext = extensions.get_mut::<Text, TextExtension>().ok_or_else(|| {
+            "Missing TextExtension. You may need to add 'TextConfig' to notan.".to_string()
+        })?;
+
         let renderer = ext.create_renderer(device, self);
         match target {
             None => device.render(renderer.commands()),
             Some(rt) => device.render_to(rt, renderer.commands()),
         }
+        Ok(())
     }
 }
 

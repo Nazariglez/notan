@@ -116,13 +116,19 @@ impl Graphics {
     /// Render to the screen
     #[inline]
     pub fn render<G: GfxRenderer>(&mut self, renderer: &G) {
-        renderer.render(&mut self.device, &mut self.extensions, None);
+        if let Err(err) = renderer.render(&mut self.device, &mut self.extensions, None) {
+            log::error!("{}", err);
+            panic!("{}", err);
+        }
     }
 
     /// Render to a custom target
     #[inline]
     pub fn render_to<G: GfxRenderer>(&mut self, target: &RenderTexture, renderer: &G) {
-        renderer.render(&mut self.device, &mut self.extensions, Some(target));
+        if let Err(err) = renderer.render(&mut self.device, &mut self.extensions, Some(target)) {
+            log::error!("{}", err);
+            panic!("{}", err);
+        }
     }
 
     /// Upload the buffer data to the GPU
@@ -245,13 +251,10 @@ pub trait GfxRenderer {
         device: &mut Device,
         extensions: &mut ExtContainer,
         target: Option<&RenderTexture>,
-    );
+    ) -> Result<(), String>;
 }
 
-pub trait GfxExtension<T: ?Sized> {
-    /// Process and returns the commands
-    fn commands<'a>(&'a mut self, device: &mut Device, renderer: &'a T) -> &'a [Commands];
-}
+pub trait GfxExtension<T: ?Sized> {}
 
 impl GfxRenderer for Renderer {
     fn render(
@@ -259,10 +262,12 @@ impl GfxRenderer for Renderer {
         device: &mut Device,
         _extensions: &mut ExtContainer,
         target: Option<&RenderTexture>,
-    ) {
+    ) -> Result<(), String> {
         match target {
             None => device.render(self.commands()),
             Some(rt) => device.render_to(rt, self.commands()),
         }
+
+        Ok(())
     }
 }
