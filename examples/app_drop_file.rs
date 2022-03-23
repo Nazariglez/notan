@@ -1,7 +1,6 @@
 use notan::app::Event;
 use notan::draw::*;
 use notan::prelude::*;
-use std::cmp::min;
 
 #[derive(AppState)]
 struct State {

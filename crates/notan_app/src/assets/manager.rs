@@ -12,9 +12,6 @@ use std::rc::Rc;
 #[cfg(feature = "drop_files")]
 use crate::DroppedFile;
 
-#[cfg(all(target_arch = "wasm32", feature = "drop_files"))]
-use futures_util::FutureExt;
-
 pub struct Assets {
     storage: AssetStorage,
     pub(crate) loaders: HashMap<String, LoaderCallback>,
@@ -163,6 +160,7 @@ impl Assets {
             return self.load_wasm_dropped_file_asset(file);
         }
 
+        #[cfg(not(target_arch = "wasm32"))]
         Err(format!("Can't load the dropped file {}", file.name))
     }
 }

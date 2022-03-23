@@ -1,9 +1,7 @@
-use crate::assets::Asset;
 use crate::keyboard::*;
 use crate::mouse::*;
 use std::collections::VecDeque;
-use std::future::Future;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[derive(Debug, PartialEq, Clone)]
 /// Application events usually received from the user

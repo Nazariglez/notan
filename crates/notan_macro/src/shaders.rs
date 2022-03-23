@@ -99,7 +99,7 @@ pub(crate) fn source_from_spirv(spirv: Vec<u8>) -> Result<TokenStream, String> {
     .into())
 }
 
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, unused)]
 #[derive(Debug, Clone, Copy)]
 enum Output {
     Webgl2,

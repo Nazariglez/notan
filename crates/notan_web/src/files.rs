@@ -1,13 +1,11 @@
 use crate::utils::canvas_add_event_listener;
 use crate::window::WebWindowBackend;
-use futures_util::{FutureExt, TryFutureExt};
-use notan_app::{DroppedFile, Event};
-use std::cell::RefCell;
-use std::future::Future;
-use std::path::PathBuf;
-use std::rc::Rc;
+use notan_app::Event;
 use wasm_bindgen::prelude::*;
 use web_sys::DragEvent;
+
+#[cfg(feature = "drop_files")]
+use notan_app::DroppedFile;
 
 #[derive(Default)]
 pub struct FileCallbacks {
