@@ -1,5 +1,3 @@
-extern crate core;
-
 mod config;
 pub mod empty;
 pub mod keyboard;
