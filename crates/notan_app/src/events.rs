@@ -1,6 +1,8 @@
 use crate::keyboard::*;
 use crate::mouse::*;
 use std::collections::VecDeque;
+
+#[cfg(feature = "drop_files")]
 use std::path::PathBuf;
 
 #[derive(Debug, PartialEq, Clone)]

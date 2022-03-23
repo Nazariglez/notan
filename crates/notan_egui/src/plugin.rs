@@ -62,11 +62,7 @@ impl Output {
     }
 }
 
-impl GfxExtension<Output> for EguiExtension {
-    fn commands<'a>(&'a mut self, _device: &mut Device, _renderer: &'a Output) -> &'a [Commands] {
-        &[]
-    }
-}
+impl GfxExtension<Output> for EguiExtension {}
 
 impl GfxRenderer for Output {
     fn render(
@@ -74,8 +70,11 @@ impl GfxRenderer for Output {
         device: &mut Device,
         extensions: &mut ExtContainer,
         target: Option<&RenderTexture>,
-    ) {
-        let mut ext = extensions.get_mut::<Self, EguiExtension>().unwrap();
+    ) -> Result<(), String> {
+        let mut ext = extensions.get_mut::<Self, EguiExtension>().ok_or_else(|| {
+            "Missing EguiExtension. You may need to add 'EguiConfig' to notan.".to_string()
+        })?;
+
         if let Some(shapes) = self.shapes.borrow_mut().take() {
             if self.clear_color.is_some() {
                 let mut clear_renderer = device.create_renderer();
@@ -92,12 +91,10 @@ impl GfxRenderer for Output {
             }
 
             let meshes = self.ctx.tessellate(shapes);
-            if let Err(err) =
-                ext.paint_and_update_textures(device, meshes, &self.textures_delta, target)
-            {
-                log::error!("{}", err);
-            }
+            ext.paint_and_update_textures(device, meshes, &self.textures_delta, target)?;
         }
+
+        Ok(())
     }
 }
 

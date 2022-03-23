@@ -25,11 +25,7 @@ impl DrawExtension {
     }
 }
 
-impl GfxExtension<Draw> for DrawExtension {
-    fn commands<'a>(&'a mut self, _device: &mut Device, _renderer: &'a Draw) -> &'a [Commands] {
-        &[]
-    }
-}
+impl GfxExtension<Draw> for DrawExtension {}
 
 impl GfxRenderer for Draw {
     fn render(
@@ -37,9 +33,14 @@ impl GfxRenderer for Draw {
         device: &mut Device,
         extensions: &mut ExtContainer,
         target: Option<&RenderTexture>,
-    ) {
-        let mut text_ext = extensions.get_mut::<Text, TextExtension>().unwrap();
-        let mut ext = extensions.get_mut::<Self, DrawExtension>().unwrap();
+    ) -> Result<(), String> {
+        let mut text_ext = extensions.get_mut::<Text, TextExtension>().ok_or_else(|| {
+            "Missing TextExtension. You may need to add 'DrawConfig' to notan.".to_string()
+        })?;
+        let mut ext = extensions.get_mut::<Self, DrawExtension>().ok_or_else(|| {
+            "Missing DrawExtension. You may need to add 'DrawConfig' to notan.".to_string()
+        })?;
+
         let cmds = ext
             .manager
             .process_draw(self, device, text_ext.glyph_brush_mut());
@@ -47,5 +48,7 @@ impl GfxRenderer for Draw {
             None => device.render(cmds),
             Some(rt) => device.render_to(rt, cmds),
         }
+
+        Ok(())
     }
 }
