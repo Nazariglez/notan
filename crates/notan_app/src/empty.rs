@@ -38,6 +38,10 @@ impl WindowBackend for EmptyWindowBackend {
     fn lazy_loop(&self) -> bool {
         self.lazy
     }
+
+    fn request_frame(&mut self) {
+        // no-op
+    }
 }
 
 #[derive(Default)]

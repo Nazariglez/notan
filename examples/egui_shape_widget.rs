@@ -35,6 +35,7 @@ fn main() -> Result<(), String> {
     let win_config = WindowConfig::new()
         .size(WIDTH, HEIGHT)
         .multisampling(8)
+        .lazy_loop()
         .vsync();
 
     notan::init_with(State::default)
@@ -46,19 +47,21 @@ fn main() -> Result<(), String> {
 }
 
 fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
-    // Draw shape
-    let mut draw = gfx.create_draw();
-    draw.clear(state.clear_color);
-    draw_shape(&mut draw, state);
-    gfx.render(&draw);
-
     let output = plugins.egui(|ctx| {
         // Draw the EGUI Widget here
         draw_egui_widget(ctx, state);
     });
 
-    // Draw the context to the screen or to a RenderTexture
-    gfx.render(&output);
+    if output.needs_repaint() {
+        // Draw shape
+        let mut draw = gfx.create_draw();
+        draw.clear(state.clear_color);
+        draw_shape(&mut draw, state);
+        gfx.render(&draw);
+
+        // Draw the context to the screen or to a RenderTexture
+        gfx.render(&output);
+    }
 }
 
 // Draw a Triangle using the properties set on the state
