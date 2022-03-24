@@ -8,7 +8,12 @@ struct State {
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win = WindowConfig::default().resizable().vsync().size(1280, 1024);
+    let win = WindowConfig::default()
+        .resizable()
+        .size(1280, 1024)
+        .vsync()
+        // enable lazy mode to only draw after an input
+        .lazy_loop();
 
     notan::init_with(State::default)
         .add_config(win)
@@ -17,11 +22,15 @@ fn main() -> Result<(), String> {
         .build()
 }
 
-fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
+fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     let mut output = plugins.egui(|ctx| state.demo.ui(ctx));
     output.clear_color(Color::BLACK);
 
     if output.needs_repaint() {
         gfx.render(&output);
+
+        // using the lazy loop we can check if egui demo needs repaint
+        // to ask for the next frame in case it's drawing an animation
+        app.window().request_frame();
     }
 }

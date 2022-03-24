@@ -88,4 +88,7 @@ pub trait WindowBackend {
 
     /// Returns true if the lazy mode is enabled
     fn lazy_loop(&self) -> bool;
+
+    /// Request next frame
+    fn request_frame(&mut self);
 }
