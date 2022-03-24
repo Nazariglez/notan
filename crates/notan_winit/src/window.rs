@@ -49,6 +49,10 @@ impl WindowBackend for WinitWindowBackend {
     fn lazy_loop(&self) -> bool {
         self.lazy
     }
+
+    fn request_frame(&mut self) {
+        self.gl_ctx.window().request_redraw();
+    }
 }
 
 impl WinitWindowBackend {
