@@ -1,8 +1,8 @@
 use crate::keyboard::{enable_keyboard, KeyboardCallbacks};
 use crate::mouse::{enable_mouse, MouseCallbacks};
 use crate::utils::{
-    canvas_add_event_listener, get_notan_size, get_or_create_canvas, set_size_dpi,
-    window_add_event_listener,
+    canvas_add_event_listener, get_notan_size, get_or_create_canvas, request_animation_frame,
+    set_size_dpi, window_add_event_listener,
 };
 use notan_app::WindowConfig;
 use notan_app::{Event, EventIterator, WindowBackend};
@@ -20,6 +20,8 @@ pub struct WebWindowBackend {
     pub document: Document,
     pub canvas_parent: Element,
     pub dpi: f64,
+
+    pub lazy: Rc<RefCell<bool>>,
 
     pub(crate) antialias: bool,
 
@@ -42,10 +44,16 @@ pub struct WebWindowBackend {
     pub(crate) file_callbacks: FileCallbacks,
 
     config: WindowConfig,
+
+    raf: Rc<RefCell<Option<Closure<dyn FnMut()>>>>,
 }
 
 impl WebWindowBackend {
-    pub fn new(config: WindowConfig, events: Rc<RefCell<EventIterator>>) -> Result<Self, String> {
+    pub fn new(
+        config: WindowConfig,
+        events: Rc<RefCell<EventIterator>>,
+        raf: Rc<RefCell<Option<Closure<dyn FnMut()>>>>,
+    ) -> Result<Self, String> {
         let window =
             web_sys::window().ok_or_else(|| String::from("Can't access window dom object."))?;
         let document = window
@@ -80,6 +88,7 @@ impl WebWindowBackend {
         let antialias = config.multisampling != 0;
 
         let dpi = window.device_pixel_ratio();
+        let lazy = Rc::new(RefCell::new(config.lazy_loop));
 
         let win = Self {
             window,
@@ -103,6 +112,9 @@ impl WebWindowBackend {
             config,
             antialias,
             dpi,
+            lazy,
+
+            raf,
         };
 
         win.init()
@@ -169,6 +181,20 @@ impl WebWindowBackend {
             self.set_size(ww as _, hh as _);
         }
     }
+
+    #[inline(always)]
+    pub(crate) fn add_event_fn(&self) -> impl Fn(Event) {
+        let win = self.window.clone();
+        let events = self.events.clone();
+        let raf = self.raf.clone();
+        let lazy = self.lazy.clone();
+        move |evt| {
+            events.borrow_mut().push(evt);
+            if *lazy.borrow() {
+                request_animation_frame(&win, raf.borrow().as_ref().unwrap());
+            }
+        }
+    }
 }
 
 impl WindowBackend for WebWindowBackend {
@@ -197,6 +223,23 @@ impl WindowBackend for WebWindowBackend {
             1.0
         }
     }
+
+    fn set_lazy_loop(&mut self, lazy: bool) {
+        *self.lazy.borrow_mut() = lazy;
+        if !lazy {
+            self.request_frame();
+        }
+    }
+
+    fn lazy_loop(&self) -> bool {
+        *self.lazy.borrow()
+    }
+
+    fn request_frame(&mut self) {
+        if *self.lazy.borrow() {
+            request_animation_frame(&self.window, self.raf.borrow().as_ref().unwrap());
+        }
+    }
 }
 
 unsafe impl Send for WebWindowBackend {}
@@ -208,6 +251,7 @@ fn enable_fullscreen(win: &mut WebWindowBackend) -> Result<(), String> {
         let canvas = win.canvas.clone();
         let document = win.document.clone();
         let last_size = win.fullscreen_last_size.clone();
+        let add_event = win.add_event_fn();
         win.fullscreen_callback_ref =
             Some(window_add_event_listener("fullscreenchange", move |_| {
                 let (width, height) = if document.fullscreen() {
@@ -222,11 +266,8 @@ fn enable_fullscreen(win: &mut WebWindowBackend) -> Result<(), String> {
                     }
                 };
 
-                log::info!("callback -> {:?} {} {}", last_size, width, height);
                 set_size_dpi(&canvas, width, height);
-                events
-                    .borrow_mut()
-                    .push(Event::WindowResize { width, height });
+                add_event(Event::WindowResize { width, height });
             })?);
     }
 
@@ -255,11 +296,11 @@ fn fullscreen_dispatcher_callback(win: &mut WebWindowBackend) -> Rc<RefCell<dyn 
 }
 
 fn enable_resize(win: &mut WebWindowBackend) -> Result<(), String> {
-    let events = win.events.clone();
     let canvas = win.canvas.clone();
     let parent = win.canvas_parent.clone();
     let min_size = win.min_size;
     let max_size = win.max_size;
+    let add_event = win.add_event_fn();
     win.resize_callback_ref = Some(window_add_event_listener("resize", move |_| {
         let mut p_width = parent.client_width();
         let mut p_height = parent.client_height();
@@ -285,7 +326,7 @@ fn enable_resize(win: &mut WebWindowBackend) -> Result<(), String> {
         }
 
         set_size_dpi(&canvas, p_width as _, p_height as _);
-        events.borrow_mut().push(Event::WindowResize {
+        add_event(Event::WindowResize {
             width: p_width,
             height: p_height,
         });
