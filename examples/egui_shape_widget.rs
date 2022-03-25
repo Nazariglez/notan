@@ -46,7 +46,7 @@ fn main() -> Result<(), String> {
         .build()
 }
 
-fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
+fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     let output = plugins.egui(|ctx| {
         // Draw the EGUI Widget here
         draw_egui_widget(ctx, state);
@@ -61,6 +61,10 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
 
         // Draw the context to the screen or to a RenderTexture
         gfx.render(&output);
+
+        // using the lazy loop we can check if egui demo needs repaint
+        // to ask for the next frame in case it's drawing an animation
+        app.window().request_frame();
     }
 }
 
