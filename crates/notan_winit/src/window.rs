@@ -44,6 +44,9 @@ impl WindowBackend for WinitWindowBackend {
 
     fn set_lazy_loop(&mut self, lazy: bool) {
         self.lazy = lazy;
+        if !self.lazy {
+            self.request_frame();
+        }
     }
 
     fn lazy_loop(&self) -> bool {
@@ -51,7 +54,9 @@ impl WindowBackend for WinitWindowBackend {
     }
 
     fn request_frame(&mut self) {
-        self.gl_ctx.window().request_redraw();
+        if self.lazy {
+            self.gl_ctx.window().request_redraw();
+        }
     }
 }
 
