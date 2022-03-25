@@ -17,37 +17,34 @@ pub fn enable_keyboard(
     win: &mut WebWindowBackend,
     fullscreen_dispatcher: Rc<RefCell<dyn Fn()>>,
 ) -> Result<(), String> {
+    let add_evt_down = win.add_event_fn();
+    let add_evt_up = win.add_event_fn();
     let callbacks = &mut win.keyboard_callbacks;
-    let events = win.events.clone();
     let fullscreen = fullscreen_dispatcher.clone();
     callbacks.on_down = Some(window_add_event_listener(
         "keydown",
         move |e: KeyboardEvent| {
             (*fullscreen.borrow_mut())();
-            let mut events = events.borrow_mut();
             if let Some(key) = keyboard_code(&e.code()) {
-                events.push(Event::KeyDown { key });
+                add_evt_down(Event::KeyDown { key });
             }
 
             let char = e.key();
             if char.len() <= 2 {
                 if let Some(char) = char.chars().next() {
-                    events.push(Event::ReceivedCharacter(char));
+                    add_evt_down(Event::ReceivedCharacter(char));
                 }
             }
         },
     )?);
 
-    let events = win.events.clone();
     let fullscreen = fullscreen_dispatcher.clone();
     callbacks.on_up = Some(window_add_event_listener(
         "keyup",
         move |e: KeyboardEvent| {
             (*fullscreen.borrow_mut())();
-            let mut events = events.borrow_mut();
-
             if let Some(key) = keyboard_code(&e.code()) {
-                events.push(Event::KeyUp { key });
+                add_evt_up(Event::KeyUp { key });
             }
         },
     )?);

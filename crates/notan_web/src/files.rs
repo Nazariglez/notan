@@ -16,11 +16,13 @@ pub struct FileCallbacks {
 }
 
 pub fn enable_files(win: &mut WebWindowBackend) -> Result<(), String> {
+    let add_evt_drop = win.add_event_fn();
+    let add_evt_enter = win.add_event_fn();
+    let add_evt_leave = win.add_event_fn();
     let callbacks = &mut win.file_callbacks;
     let events = win.events.clone();
 
     callbacks.on_drop = Some({
-        let events = events.clone();
         canvas_add_event_listener(&win.canvas, "drop", move |e: DragEvent| {
             e.stop_propagation();
             e.prevent_default();
@@ -34,7 +36,7 @@ pub fn enable_files(win: &mut WebWindowBackend) -> Result<(), String> {
                                 let name = file.name();
                                 let mime = file.type_();
 
-                                events.borrow_mut().push(Event::Drop(DroppedFile {
+                                add_evt_drop(Event::Drop(DroppedFile {
                                     name,
                                     mime,
                                     file: Some(file),
@@ -58,8 +60,6 @@ pub fn enable_files(win: &mut WebWindowBackend) -> Result<(), String> {
     )?);
 
     callbacks.on_drag_enter = Some({
-        let events = events.clone();
-
         canvas_add_event_listener(&win.canvas, "dragenter", move |e: DragEvent| {
             e.stop_propagation();
             e.prevent_default();
@@ -70,7 +70,7 @@ pub fn enable_files(win: &mut WebWindowBackend) -> Result<(), String> {
                     if let Some(item) = dt.items().get(i) {
                         if item.kind() == "file" {
                             let mime = item.type_();
-                            events.borrow_mut().push(Event::DragEnter {
+                            add_evt_enter(Event::DragEnter {
                                 path: None,
                                 name: None,
                                 mime,
@@ -88,7 +88,7 @@ pub fn enable_files(win: &mut WebWindowBackend) -> Result<(), String> {
         move |e: DragEvent| {
             e.stop_propagation();
             e.prevent_default();
-            events.borrow_mut().push(Event::DragLeft);
+            add_evt_leave(Event::DragLeft);
         },
     )?);
 

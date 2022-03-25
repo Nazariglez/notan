@@ -57,11 +57,11 @@ impl BackendSystem for WebBackend {
         S: 'static,
         R: FnMut(&mut App, &mut S) -> Result<FrameState, String> + 'static,
     {
-        let win = WebWindowBackend::new(window, self.events.clone())?;
+        let callback = Rc::new(RefCell::new(None));
+        let win = WebWindowBackend::new(window, self.events.clone(), callback.clone())?;
         self.window = Some(win);
 
         Ok(Box::new(move |mut app: App, mut state: S, mut cb: R| {
-            let callback = Rc::new(RefCell::new(None));
             let inner_callback = callback.clone();
 
             *callback.borrow_mut() = Some(Closure::wrap(Box::new(move || {
@@ -75,7 +75,12 @@ impl BackendSystem for WebBackend {
                     let win = backend.window.as_mut().unwrap();
                     win.check_dpi();
 
-                    request_animation_frame(&win.window, inner_callback.borrow().as_ref().unwrap());
+                    if !win.lazy_loop() {
+                        request_animation_frame(
+                            &win.window,
+                            inner_callback.borrow().as_ref().unwrap(),
+                        );
+                    }
                 }
             }) as Box<dyn FnMut()>));
 
