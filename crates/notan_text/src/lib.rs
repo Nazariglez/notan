@@ -14,7 +14,7 @@ use std::collections::HashMap;
 use std::ops::DerefMut;
 
 pub use config::TextConfig;
-use notan_math::glam::Mat4;
+use notan_math::Mat4;
 use notan_math::Rect;
 
 #[derive(Clone, Copy, Debug)]

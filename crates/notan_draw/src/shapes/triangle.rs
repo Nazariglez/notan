@@ -5,7 +5,7 @@ use crate::draw::{Draw, ShapeInfo};
 use crate::transform::DrawTransform;
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
-use notan_math::glam::Mat3;
+use notan_math::Mat3;
 
 pub struct Triangle {
     colors: [Color; 3],

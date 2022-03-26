@@ -25,7 +25,7 @@ use log::{log_enabled, warn};
 use notan_app::Graphics;
 use notan_graphics::prelude::ClearOptions;
 use notan_graphics::{Device, Renderer, Texture};
-use notan_math::glam::Mat4;
+use notan_math::Mat4;
 
 /// Object allowing glyph drawing, containing cache state. Manages glyph positioning cacheing,
 /// glyph draw caching & efficient GPU texture cache updating and re-sizing on demand.

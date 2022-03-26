@@ -3,8 +3,8 @@ use crate::manager::process_pipeline;
 use notan_glyph::{GlyphBrush, GlyphInstance, GlyphPipeline};
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
-use notan_math::glam::{Mat4, Vec3};
 use notan_math::Rect;
+use notan_math::{Mat4, Vec3};
 
 //language=glsl
 const TEXT_VERTEX: ShaderSource = vertex_shader! {

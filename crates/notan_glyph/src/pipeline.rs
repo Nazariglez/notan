@@ -1,6 +1,6 @@
 use crate::instance::GlyphInstance;
 use notan_app::graphics::*;
-use notan_math::glam::Mat4;
+use notan_math::Mat4;
 use notan_math::Rect;
 
 pub trait GlyphPipeline {

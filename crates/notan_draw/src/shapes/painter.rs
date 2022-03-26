@@ -100,12 +100,7 @@ impl ShapePainter {
         })
     }
 
-    pub fn push(
-        &mut self,
-        renderer: &mut Renderer,
-        batch: &Batch,
-        projection: &notan_math::glam::Mat4,
-    ) {
+    pub fn push(&mut self, renderer: &mut Renderer, batch: &Batch, projection: &notan_math::Mat4) {
         if let BatchType::Shape = &batch.typ {
             process_pipeline(renderer, batch, &self.pipeline);
 

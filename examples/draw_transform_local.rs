@@ -1,8 +1,5 @@
 use notan::draw::*;
-use notan::math::{
-    glam::{Mat3, Vec2},
-    DEG_TO_RAD,
-};
+use notan::math::{Mat3, Vec2, DEG_TO_RAD};
 use notan::prelude::*;
 
 #[derive(AppState, Default)]

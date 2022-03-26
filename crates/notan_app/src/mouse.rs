@@ -38,7 +38,7 @@ impl Mouse {
 
     #[inline]
     /// Returns a local position
-    pub fn local_position(&self, m: notan_math::glam::Mat3) -> (f32, f32) {
+    pub fn local_position(&self, m: notan_math::Mat3) -> (f32, f32) {
         let pos = notan_math::mat3_screen_to_local(self.x, self.y, m);
         (pos.x, pos.y)
     }

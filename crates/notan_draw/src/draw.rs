@@ -4,7 +4,7 @@ use crate::transform::Transform;
 use notan_glyph::Section;
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
-use notan_math::glam::{Mat3, Mat4};
+use notan_math::{Mat3, Mat4};
 use notan_text::Font;
 
 #[derive(Debug, Clone)]
@@ -34,7 +34,7 @@ impl Draw {
             batches: vec![],
             current_batch: None,
             transform: Transform::new(),
-            base_projection: notan_math::glam::Mat4::orthographic_lh(
+            base_projection: notan_math::Mat4::orthographic_lh(
                 0.0,
                 width as _,
                 height as _,
@@ -104,7 +104,7 @@ impl Draw {
     pub fn set_size(&mut self, width: f32, height: f32) {
         self.size = (width, height);
         self.base_projection =
-            notan_math::glam::Mat4::orthographic_lh(0.0, width, height, 0.0, -1.0, 1.0);
+            notan_math::Mat4::orthographic_lh(0.0, width, height, 0.0, -1.0, 1.0);
     }
 
     pub fn size(&self) -> (f32, f32) {

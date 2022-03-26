@@ -1,5 +1,5 @@
-use glam::{Mat4, Vec3};
 use notan::egui::{self, *};
+use notan::math::{Mat4, Vec3};
 use notan::prelude::*;
 
 #[derive(AppState)]
@@ -98,7 +98,7 @@ struct Cube {
     vertex_buffer: Buffer,
     index_buffer: Buffer,
     uniform_buffer: Buffer,
-    mvp: glam::Mat4,
+    mvp: notan::math::Mat4,
     angle: f32,
 }
 
