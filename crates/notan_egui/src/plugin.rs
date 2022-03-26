@@ -1,11 +1,11 @@
 use crate::input::{to_egui_key, to_egui_pointer};
 use crate::EguiExtension;
 use egui::output::OpenUrl;
-use egui::Context;
+use egui::{Context, CursorIcon};
 use notan_app::assets::Assets;
 use notan_app::{
-    App, AppFlow, ClearOptions, Color, Commands, Device, Event, ExtContainer, GfxExtension,
-    GfxRenderer, Graphics, Plugin, Plugins, RenderTexture,
+    App, AppFlow, ClearOptions, Color, Commands, CursorIcon as NCursorIcon, Device, Event,
+    ExtContainer, GfxExtension, GfxRenderer, Graphics, Plugin, Plugins, RenderTexture,
 };
 use std::cell::RefCell;
 
@@ -247,6 +247,8 @@ impl Plugin for EguiPlugin {
                 text_cursor_pos,
             } = platform_output;
 
+            app.window().set_cursor(translate_cursor(cursor_icon));
+
             #[cfg(feature = "links")]
             if let Some(OpenUrl { url, new_tab }) = open_url {
                 if new_tab {
@@ -258,6 +260,36 @@ impl Plugin for EguiPlugin {
         }
 
         Ok(AppFlow::Next)
+    }
+}
+
+fn translate_cursor(cursor: CursorIcon) -> notan_app::CursorIcon {
+    match cursor {
+        CursorIcon::Default => NCursorIcon::Default,
+        CursorIcon::None => NCursorIcon::None,
+        CursorIcon::ContextMenu => NCursorIcon::ContextMenu,
+        CursorIcon::Help => NCursorIcon::Help,
+        CursorIcon::PointingHand => NCursorIcon::PointingHand,
+        CursorIcon::Progress => NCursorIcon::Progress,
+        CursorIcon::Wait => NCursorIcon::Wait,
+        CursorIcon::Cell => NCursorIcon::Cell,
+        CursorIcon::Crosshair => NCursorIcon::Crosshair,
+        CursorIcon::Text => NCursorIcon::Text,
+        CursorIcon::VerticalText => NCursorIcon::VerticalText,
+        CursorIcon::Alias => NCursorIcon::Alias,
+        CursorIcon::Copy => NCursorIcon::Copy,
+        CursorIcon::Move => NCursorIcon::Move,
+        CursorIcon::NoDrop => NCursorIcon::NoDrop,
+        CursorIcon::NotAllowed => NCursorIcon::NotAllowed,
+        CursorIcon::Grab => NCursorIcon::Grab,
+        CursorIcon::Grabbing => NCursorIcon::Grabbing,
+        CursorIcon::AllScroll => NCursorIcon::AllScroll,
+        CursorIcon::ResizeHorizontal => NCursorIcon::ResizeHorizontal,
+        CursorIcon::ResizeNeSw => NCursorIcon::ResizeNeSw,
+        CursorIcon::ResizeNwSe => NCursorIcon::ResizeNwSe,
+        CursorIcon::ResizeVertical => NCursorIcon::ResizeVertical,
+        CursorIcon::ZoomIn => NCursorIcon::ZoomIn,
+        CursorIcon::ZoomOut => NCursorIcon::ZoomOut,
     }
 }
 

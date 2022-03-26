@@ -1,6 +1,8 @@
 use crate::config::WindowConfig;
 // use crate::graphics::{Device, DeviceBackend, RenderTexture};
-use crate::{App, Backend, BackendSystem, EventIterator, FrameState, InitializeFn, WindowBackend};
+use crate::{
+    App, Backend, BackendSystem, CursorIcon, EventIterator, FrameState, InitializeFn, WindowBackend,
+};
 use notan_graphics::prelude::*;
 
 #[derive(Default)]
@@ -41,6 +43,12 @@ impl WindowBackend for EmptyWindowBackend {
 
     fn request_frame(&mut self) {
         // no-op
+    }
+
+    fn set_cursor(&mut self, _cursor: CursorIcon) {}
+
+    fn cursor(&self) -> CursorIcon {
+        CursorIcon::Default
     }
 }
 
