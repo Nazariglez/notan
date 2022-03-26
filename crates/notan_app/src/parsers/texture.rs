@@ -5,7 +5,7 @@ use notan_graphics::Texture;
 pub fn create_texture_parser() -> AssetLoader {
     AssetLoader::new()
         .use_parser(parse_image)
-        .extensions(&["png"])
+        .extensions(&["png", "jpg", "jpeg"])
 }
 
 fn parse_image(id: &str, data: Vec<u8>, gfx: &mut Graphics) -> Result<Texture, String> {
