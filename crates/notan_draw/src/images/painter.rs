@@ -2,7 +2,7 @@ use crate::batch::*;
 use crate::manager::process_pipeline;
 use notan_graphics::prelude::*;
 use notan_macro::{fragment_shader, vertex_shader};
-use notan_math::glam::Mat4;
+use notan_math::Mat4;
 
 fn vertex_info() -> VertexInfo {
     VertexInfo::new()

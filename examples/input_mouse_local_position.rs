@@ -21,7 +21,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     let size = (400.0, 300.0);
 
     // Clone matrix
-    let mut m = glam::Mat3::IDENTITY;
+    let mut m = notan::math::Mat3::IDENTITY;
 
     // Draw the rect
     draw.rect((0.0, 0.0), size)

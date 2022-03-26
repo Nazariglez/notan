@@ -44,7 +44,7 @@ struct State {
     pipeline: Pipeline,
     vertex_buffer: Buffer,
     uniform_buffer: Buffer,
-    mvp: glam::Mat4,
+    mvp: notan::math::Mat4,
     angle: f32,
     texture: Texture,
 }
@@ -122,13 +122,13 @@ fn setup(gfx: &mut Graphics) -> State {
         1.0,-1.0,1.0,       0.667979,0.335_851
     ];
 
-    let projection = glam::Mat4::perspective_rh_gl(45.0, 4.0 / 3.0, 0.1, 100.0);
-    let view = glam::Mat4::look_at_rh(
-        glam::Vec3::new(4.0, 3.0, 3.0),
-        glam::Vec3::new(0.0, 0.0, 0.0),
-        glam::Vec3::new(0.0, 1.0, 0.0),
+    let projection = notan::math::Mat4::perspective_rh_gl(45.0, 4.0 / 3.0, 0.1, 100.0);
+    let view = notan::math::Mat4::look_at_rh(
+        notan::math::Vec3::new(4.0, 3.0, 3.0),
+        notan::math::Vec3::new(0.0, 0.0, 0.0),
+        notan::math::Vec3::new(0.0, 1.0, 0.0),
     );
-    let mvp = glam::Mat4::IDENTITY * projection * view;
+    let mvp = notan::math::Mat4::IDENTITY * projection * view;
 
     let vertex_buffer = gfx
         .create_vertex_buffer()
@@ -177,8 +177,8 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     state.angle += 0.6 * app.timer.delta_f32();
 }
 
-fn rotated_matrix(base: glam::Mat4, angle: f32) -> [f32; 16] {
-    let rot_x = glam::Mat4::from_rotation_x(angle);
-    let rot_y = glam::Mat4::from_rotation_y(angle);
+fn rotated_matrix(base: notan::math::Mat4, angle: f32) -> [f32; 16] {
+    let rot_x = notan::math::Mat4::from_rotation_x(angle);
+    let rot_y = notan::math::Mat4::from_rotation_y(angle);
     (base * rot_x * rot_y).to_cols_array()
 }

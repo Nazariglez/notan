@@ -1,5 +1,5 @@
-use glam::{Mat3, Vec2};
 use notan::draw::*;
+use notan::math::{Mat3, Vec2};
 use notan::prelude::*;
 
 // Hierarchy

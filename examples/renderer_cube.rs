@@ -1,4 +1,4 @@
-use glam::{Mat4, Vec3};
+use notan::math::{Mat4, Vec3};
 use notan::prelude::*;
 
 //language=glsl
@@ -43,7 +43,7 @@ struct State {
     vbo: Buffer,
     ebo: Buffer,
     ubo: Buffer,
-    mvp: glam::Mat4,
+    mvp: notan::math::Mat4,
     angle: f32,
 }
 
@@ -119,7 +119,7 @@ fn setup(gfx: &mut Graphics) -> State {
         22, 21, 20,  23, 22, 20
     ];
 
-    let projection = glam::Mat4::perspective_rh_gl(45.0, 4.0 / 3.0, 0.1, 100.0);
+    let projection = notan::math::Mat4::perspective_rh_gl(45.0, 4.0 / 3.0, 0.1, 100.0);
     let view = Mat4::look_at_rh(
         Vec3::new(4.0, 3.0, 3.0),
         Vec3::new(0.0, 0.0, 0.0),

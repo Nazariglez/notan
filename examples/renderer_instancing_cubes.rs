@@ -1,4 +1,4 @@
-use glam::{Mat4, Vec3};
+use notan::math::{Mat4, Vec3};
 use notan::prelude::*;
 
 // Number of instances to draw
@@ -61,7 +61,7 @@ struct State {
     ubo: Buffer,
     ebo: Buffer,
     angle: f32,
-    mvp: glam::Mat4,
+    mvp: notan::math::Mat4,
     clear_options: ClearOptions,
 }
 
@@ -154,7 +154,7 @@ fn setup(gfx: &mut Graphics) -> State {
         })
         .collect::<Vec<f32>>();
 
-    let projection = glam::Mat4::perspective_rh_gl(5.0, 4.0 / 3.0, 0.1, 100.0);
+    let projection = notan::math::Mat4::perspective_rh_gl(5.0, 4.0 / 3.0, 0.1, 100.0);
     let view = Mat4::look_at_rh(
         Vec3::new(4.0, 3.0, 3.0),
         Vec3::new(0.0, 0.0, 0.0),

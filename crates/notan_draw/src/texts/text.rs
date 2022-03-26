@@ -4,7 +4,7 @@ use crate::transform::DrawTransform;
 use notan_glyph::{HorizontalAlign, Layout, Section, Text, VerticalAlign};
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
-use notan_math::glam::Mat3;
+use notan_math::Mat3;
 use notan_text::Font;
 
 pub struct TextSection<'a> {
