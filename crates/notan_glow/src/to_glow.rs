@@ -127,6 +127,8 @@ impl ToGlow for DrawPrimitive {
         match self {
             DrawPrimitive::Triangles => glow::TRIANGLES,
             DrawPrimitive::TriangleStrip => glow::TRIANGLE_STRIP,
+            DrawPrimitive::Lines => glow::LINES,
+            DrawPrimitive::LineStrip => glow::LINE_STRIP,
         }
     }
 }
