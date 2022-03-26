@@ -25,7 +25,7 @@ pub struct WebWindowBackend {
 
     pub(crate) antialias: bool,
 
-    pub(crate) events: Rc<RefCell<EventIterator>>,
+    events: Rc<RefCell<EventIterator>>,
 
     fullscreen_requested: Rc<RefCell<Option<bool>>>,
     fullscreen_last_size: Rc<RefCell<Option<(i32, i32)>>>,
@@ -46,6 +46,7 @@ pub struct WebWindowBackend {
     config: WindowConfig,
 
     raf: Rc<RefCell<Option<Closure<dyn FnMut()>>>>,
+    pub(crate) frame_requested: Rc<RefCell<bool>>,
 }
 
 impl WebWindowBackend {
@@ -89,6 +90,7 @@ impl WebWindowBackend {
 
         let dpi = window.device_pixel_ratio();
         let lazy = Rc::new(RefCell::new(config.lazy_loop));
+        let frame_requested = Rc::new(RefCell::new(false));
 
         let win = Self {
             window,
@@ -115,6 +117,7 @@ impl WebWindowBackend {
             lazy,
 
             raf,
+            frame_requested,
         };
 
         win.init()
@@ -179,6 +182,7 @@ impl WebWindowBackend {
                 .borrow_mut()
                 .push(Event::ScreenAspectChange { ratio: dpi });
             self.set_size(ww as _, hh as _);
+            self.request_frame();
         }
     }
 
@@ -188,9 +192,11 @@ impl WebWindowBackend {
         let events = self.events.clone();
         let raf = self.raf.clone();
         let lazy = self.lazy.clone();
+        let frame_requested = self.frame_requested.clone();
         move |evt| {
             events.borrow_mut().push(evt);
-            if *lazy.borrow() {
+            if !*frame_requested.borrow() && *lazy.borrow() {
+                *frame_requested.borrow_mut() = true;
                 request_animation_frame(&win, raf.borrow().as_ref().unwrap());
             }
         }
@@ -236,7 +242,8 @@ impl WindowBackend for WebWindowBackend {
     }
 
     fn request_frame(&mut self) {
-        if *self.lazy.borrow() {
+        if !*self.frame_requested.borrow() && self.lazy_loop() {
+            *self.frame_requested.borrow_mut() = true;
             request_animation_frame(&self.window, self.raf.borrow().as_ref().unwrap());
         }
     }

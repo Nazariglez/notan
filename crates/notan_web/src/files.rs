@@ -20,7 +20,6 @@ pub fn enable_files(win: &mut WebWindowBackend) -> Result<(), String> {
     let add_evt_enter = win.add_event_fn();
     let add_evt_leave = win.add_event_fn();
     let callbacks = &mut win.file_callbacks;
-    let events = win.events.clone();
 
     callbacks.on_drop = Some({
         canvas_add_event_listener(&win.canvas, "drop", move |e: DragEvent| {
