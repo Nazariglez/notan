@@ -75,7 +75,9 @@ impl BackendSystem for WebBackend {
                     let win = backend.window.as_mut().unwrap();
                     win.check_dpi();
 
-                    if !win.lazy_loop() {
+                    if win.lazy_loop() {
+                        *win.frame_requested.borrow_mut() = false;
+                    } else {
                         request_animation_frame(
                             &win.window,
                             inner_callback.borrow().as_ref().unwrap(),
