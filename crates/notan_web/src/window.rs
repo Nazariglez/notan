@@ -4,7 +4,7 @@ use crate::utils::{
     canvas_add_event_listener, get_notan_size, get_or_create_canvas, request_animation_frame,
     set_size_dpi, window_add_event_listener,
 };
-use notan_app::WindowConfig;
+use notan_app::{CursorIcon, WindowConfig};
 use notan_app::{Event, EventIterator, WindowBackend};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -47,6 +47,8 @@ pub struct WebWindowBackend {
 
     raf: Rc<RefCell<Option<Closure<dyn FnMut()>>>>,
     pub(crate) frame_requested: Rc<RefCell<bool>>,
+
+    cursor: CursorIcon,
 }
 
 impl WebWindowBackend {
@@ -118,6 +120,8 @@ impl WebWindowBackend {
 
             raf,
             frame_requested,
+
+            cursor: CursorIcon::Default,
         };
 
         win.init()
@@ -249,6 +253,19 @@ impl WindowBackend for WebWindowBackend {
             request_animation_frame(&self.window, self.raf.borrow().as_ref().unwrap());
         }
     }
+
+    fn set_cursor(&mut self, cursor: CursorIcon) {
+        if cursor != self.cursor {
+            self.cursor = cursor;
+            self.canvas
+                .style()
+                .set_property("cursor", web_cursor(cursor));
+        }
+    }
+
+    fn cursor(&self) -> CursorIcon {
+        self.cursor
+    }
 }
 
 unsafe impl Send for WebWindowBackend {}
@@ -341,4 +358,34 @@ fn enable_resize(win: &mut WebWindowBackend) -> Result<(), String> {
         });
     })?);
     Ok(())
+}
+
+fn web_cursor(cursor: CursorIcon) -> &'static str {
+    match cursor {
+        CursorIcon::Default => "default",
+        CursorIcon::None => "none",
+        CursorIcon::ContextMenu => "context-menu",
+        CursorIcon::Help => "help",
+        CursorIcon::PointingHand => "pointer",
+        CursorIcon::Progress => "progress",
+        CursorIcon::Wait => "wait",
+        CursorIcon::Cell => "cell",
+        CursorIcon::Crosshair => "crosshair",
+        CursorIcon::Text => "text",
+        CursorIcon::VerticalText => "vertical-text",
+        CursorIcon::Alias => "alias",
+        CursorIcon::Copy => "copy",
+        CursorIcon::Move => "move",
+        CursorIcon::NoDrop => "no-drop",
+        CursorIcon::NotAllowed => "not-allowed",
+        CursorIcon::Grab => "grab",
+        CursorIcon::Grabbing => "grabbing",
+        CursorIcon::AllScroll => "all-scroll",
+        CursorIcon::ResizeHorizontal => "ew-resize",
+        CursorIcon::ResizeNeSw => "nesw-resize",
+        CursorIcon::ResizeNwSe => "nwse-resize",
+        CursorIcon::ResizeVertical => "ns-resize",
+        CursorIcon::ZoomIn => "zoom-in",
+        CursorIcon::ZoomOut => "zoom-out",
+    }
 }
