@@ -56,6 +56,37 @@ pub trait BackendSystem: Backend {
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend>;
 }
 
+/// Represent mouse cursor icon
+/// They are same as egui::CursorIcon because this is mostly to give support to egui
+#[derive(Debug, Copy, Clone, PartialOrd, PartialEq)]
+pub enum CursorIcon {
+    Default,
+    None,
+    ContextMenu,
+    Help,
+    PointingHand,
+    Progress,
+    Wait,
+    Cell,
+    Crosshair,
+    Text,
+    VerticalText,
+    Alias,
+    Copy,
+    Move,
+    NoDrop,
+    NotAllowed,
+    Grab,
+    Grabbing,
+    AllScroll,
+    ResizeHorizontal,
+    ResizeNeSw,
+    ResizeNwSe,
+    ResizeVertical,
+    ZoomIn,
+    ZoomOut,
+}
+
 /// Represents a window
 pub trait WindowBackend {
     /// Sets the window's size
@@ -91,4 +122,10 @@ pub trait WindowBackend {
 
     /// Request next frame
     fn request_frame(&mut self);
+
+    /// Sets the mouse cursor icon
+    fn set_cursor(&mut self, cursor: CursorIcon);
+
+    /// Returns the current cursor icon
+    fn cursor(&self) -> CursorIcon;
 }

@@ -1,15 +1,17 @@
 use glutin::window::Fullscreen::Borderless;
 use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
-use notan_app::WindowBackend;
+use notan_app::CursorIcon::Default;
 use notan_app::WindowConfig;
+use notan_app::{CursorIcon, WindowBackend};
 use winit::dpi::LogicalSize;
 use winit::event_loop::EventLoop;
-use winit::window::{Window, WindowBuilder};
+use winit::window::{CursorIcon as WCursorIcon, Window, WindowBuilder};
 
 pub struct WinitWindowBackend {
     pub(crate) gl_ctx: ContextWrapper<PossiblyCurrent, Window>,
     pub(crate) scale_factor: f64,
     pub(crate) lazy: bool,
+    cursor: CursorIcon,
     // win: WindowedContext<PossiblyCurrent>,
 }
 
@@ -58,6 +60,25 @@ impl WindowBackend for WinitWindowBackend {
             self.gl_ctx.window().request_redraw();
         }
     }
+
+    fn set_cursor(&mut self, cursor: CursorIcon) {
+        if cursor != self.cursor {
+            self.cursor = cursor;
+            match winit_cursor(cursor) {
+                None => {
+                    self.window().set_cursor_visible(false);
+                }
+                Some(icon) => {
+                    self.window().set_cursor_visible(true);
+                    self.window().set_cursor_icon(icon);
+                }
+            }
+        }
+    }
+
+    fn cursor(&self) -> CursorIcon {
+        self.cursor
+    }
 }
 
 impl WinitWindowBackend {
@@ -103,6 +124,7 @@ impl WinitWindowBackend {
             gl_ctx,
             scale_factor,
             lazy: config.lazy_loop,
+            cursor: CursorIcon::Default,
         })
     }
 
@@ -113,4 +135,34 @@ impl WinitWindowBackend {
     pub(crate) fn swap_buffers(&self) {
         self.gl_ctx.swap_buffers().unwrap();
     }
+}
+
+fn winit_cursor(cursor: CursorIcon) -> Option<WCursorIcon> {
+    Some(match cursor {
+        CursorIcon::None => return None,
+        CursorIcon::Default => WCursorIcon::Default,
+        CursorIcon::ContextMenu => WCursorIcon::ContextMenu,
+        CursorIcon::Help => WCursorIcon::Help,
+        CursorIcon::PointingHand => WCursorIcon::Hand,
+        CursorIcon::Progress => WCursorIcon::Progress,
+        CursorIcon::Wait => WCursorIcon::Wait,
+        CursorIcon::Cell => WCursorIcon::Cell,
+        CursorIcon::Crosshair => WCursorIcon::Crosshair,
+        CursorIcon::Text => WCursorIcon::Text,
+        CursorIcon::VerticalText => WCursorIcon::VerticalText,
+        CursorIcon::Alias => WCursorIcon::Alias,
+        CursorIcon::Copy => WCursorIcon::Copy,
+        CursorIcon::Move => WCursorIcon::Move,
+        CursorIcon::NoDrop => WCursorIcon::NoDrop,
+        CursorIcon::NotAllowed => WCursorIcon::NotAllowed,
+        CursorIcon::Grab => WCursorIcon::Grab,
+        CursorIcon::Grabbing => WCursorIcon::Grabbing,
+        CursorIcon::AllScroll => WCursorIcon::AllScroll,
+        CursorIcon::ResizeHorizontal => WCursorIcon::EwResize,
+        CursorIcon::ResizeNeSw => WCursorIcon::NeswResize,
+        CursorIcon::ResizeNwSe => WCursorIcon::NwseResize,
+        CursorIcon::ResizeVertical => WCursorIcon::NsResize,
+        CursorIcon::ZoomIn => WCursorIcon::ZoomIn,
+        CursorIcon::ZoomOut => WCursorIcon::ZoomOut,
+    })
 }
