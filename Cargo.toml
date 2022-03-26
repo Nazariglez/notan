@@ -167,7 +167,7 @@ required-features = ["egui"]
 
 [[example]]
 name = "egui_demo"
-required-features = ["egui"]
+required-features = ["egui", "links"]
 
 [[example]]
 name = "egui_render_texture"

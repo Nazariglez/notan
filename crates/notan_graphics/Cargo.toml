@@ -15,6 +15,6 @@ description = "Provides simple graphics API for Notan"
 log = "0.4"
 bytemuck = "1.7"
 parking_lot = "0.12"
-image = { version = "0.24", default-features = false, features = ["jpeg", "png", "bmp", "hdr"] }
+image = { version = "0.24", default-features = false, features = ["jpeg", "png"] }
 notan_math = { path = "../notan_math", version = "0.2.0" }
 notan_macro = { path = "../notan_macro", version = "0.2.0" }
