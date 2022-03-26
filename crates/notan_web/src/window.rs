@@ -195,7 +195,8 @@ impl WebWindowBackend {
         let frame_requested = self.frame_requested.clone();
         move |evt| {
             events.borrow_mut().push(evt);
-            if !*frame_requested.borrow() && *lazy.borrow() {
+            let needs_raf = *lazy.borrow() && !*frame_requested.borrow();
+            if needs_raf {
                 *frame_requested.borrow_mut() = true;
                 request_animation_frame(&win, raf.borrow().as_ref().unwrap());
             }
@@ -242,7 +243,8 @@ impl WindowBackend for WebWindowBackend {
     }
 
     fn request_frame(&mut self) {
-        if !*self.frame_requested.borrow() && self.lazy_loop() {
+        let needs_raf = self.lazy_loop() && !*self.frame_requested.borrow();
+        if needs_raf {
             *self.frame_requested.borrow_mut() = true;
             request_animation_frame(&self.window, self.raf.borrow().as_ref().unwrap());
         }

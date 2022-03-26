@@ -65,11 +65,6 @@ impl BackendSystem for WebBackend {
             let inner_callback = callback.clone();
 
             *callback.borrow_mut() = Some(Closure::wrap(Box::new(move || {
-                if let Err(e) = cb(&mut app, &mut state) {
-                    log::error!("{}", e);
-                    return;
-                }
-
                 let backend = backend(&mut app);
                 if !backend.exit_requested {
                     let win = backend.window.as_mut().unwrap();
@@ -83,6 +78,11 @@ impl BackendSystem for WebBackend {
                             inner_callback.borrow().as_ref().unwrap(),
                         );
                     }
+                }
+
+                if let Err(e) = cb(&mut app, &mut state) {
+                    log::error!("{}", e);
+                    return;
                 }
             }) as Box<dyn FnMut()>));
 
