@@ -419,6 +419,8 @@ impl Default for StencilOptions {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum DrawPrimitive {
+    Lines,
+    LineStrip,
     Triangles,
     TriangleStrip,
 }
