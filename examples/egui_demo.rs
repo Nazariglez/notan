@@ -1,4 +1,3 @@
-use notan::egui;
 use notan::egui::*;
 use notan::prelude::*;
 
@@ -24,12 +23,7 @@ fn main() -> Result<(), String> {
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
-    let mut output = plugins.egui(|ctx| {
-        state.demo.ui(ctx);
-        egui::Window::new("...").show(ctx, |ui| {
-            ui.label(format!("{}", app.timer.fps()));
-        });
-    });
+    let mut output = plugins.egui(|ctx| state.demo.ui(ctx));
     output.clear_color(Color::BLACK);
 
     if output.needs_repaint() {

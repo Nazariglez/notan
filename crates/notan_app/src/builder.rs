@@ -284,6 +284,15 @@ where
                 AppFlow::SkipFrame => return Ok(FrameState::Skip),
             }
 
+            // call next frame in lazy mode if user is pressing mouse or keyboard
+            if app.window().lazy_loop() {
+                let mouse_down = app.mouse.down.len() != 0;
+                let key_down = app.keyboard.down.len() != 0;
+                if mouse_down || key_down {
+                    app.window().request_frame();
+                }
+            }
+
             app.mouse.clear();
             app.keyboard.clear();
 
