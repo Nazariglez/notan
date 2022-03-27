@@ -23,7 +23,6 @@ indexmap = "1.8"
 futures = "0.3"
 platter = { version = "0.1.4", features = ["web-sys"] }
 parking_lot = "0.12"
-copypasta = { version = "0.7", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3", optional = true }
@@ -34,4 +33,4 @@ js-sys = { version = "0.3", optional = true }
 [features]
 links = []
 drop_files = ["wasm-bindgen-futures", "js-sys", "futures-util", "web-sys", "web-sys/File", "web-sys/Blob"]
-clipboard = ["copypasta"]
+clipboard = []

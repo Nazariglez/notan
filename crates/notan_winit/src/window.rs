@@ -1,6 +1,5 @@
 use glutin::window::Fullscreen::Borderless;
 use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
-use notan_app::CursorIcon::Default;
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
 use winit::dpi::LogicalSize;

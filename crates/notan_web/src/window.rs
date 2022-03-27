@@ -257,9 +257,18 @@ impl WindowBackend for WebWindowBackend {
     fn set_cursor(&mut self, cursor: CursorIcon) {
         if cursor != self.cursor {
             self.cursor = cursor;
-            self.canvas
+            let res = self
+                .canvas
                 .style()
                 .set_property("cursor", web_cursor(cursor));
+            match res {
+                Ok(_) => {
+                    self.cursor = cursor;
+                }
+                Err(err) => {
+                    log::error!("{:?}", err);
+                }
+            }
         }
     }
 
@@ -273,7 +282,6 @@ unsafe impl Sync for WebWindowBackend {}
 
 fn enable_fullscreen(win: &mut WebWindowBackend) -> Result<(), String> {
     if win.fullscreen_callback_ref.is_none() {
-        let events = win.events.clone();
         let canvas = win.canvas.clone();
         let document = win.document.clone();
         let last_size = win.fullscreen_last_size.clone();

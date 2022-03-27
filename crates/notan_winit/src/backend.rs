@@ -2,7 +2,6 @@ use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse};
 use glutin::event_loop::ControlFlow;
 use notan_app::{FrameState, WindowConfig};
-use std::ops::Add;
 
 #[cfg(feature = "drop_files")]
 use notan_app::DroppedFile;
@@ -84,11 +83,10 @@ impl BackendSystem for WinitBackend {
             let (mut mouse_x, mut mouse_y) = (0, 0);
             let mut request_redraw = false;
 
-            let mut add_event =
-                move |b: &mut WinitBackend, request_redraw: &mut bool, evt: Event| {
-                    b.events.push(evt);
-                    *request_redraw = true;
-                };
+            let add_event = move |b: &mut WinitBackend, request_redraw: &mut bool, evt: Event| {
+                b.events.push(evt);
+                *request_redraw = true;
+            };
 
             event_loop.run(move |event, _win_target, control_flow| {
                 let b = backend(&mut app);
