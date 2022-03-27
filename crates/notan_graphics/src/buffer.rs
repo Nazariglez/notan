@@ -254,10 +254,12 @@ impl VertexFormat {
     }
 
     pub fn normalized(&self) -> bool {
-        use VertexFormat::*;
-        match &self {
-            UInt8Norm | UInt8x2Norm | UInt8x3Norm | UInt8x4Norm => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            VertexFormat::UInt8Norm
+                | VertexFormat::UInt8x2Norm
+                | VertexFormat::UInt8x3Norm
+                | VertexFormat::UInt8x4Norm
+        )
     }
 }

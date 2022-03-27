@@ -164,7 +164,6 @@ impl BackendSystem for WinitBackend {
 
                                 let mime = mime_guess::from_path(path)
                                     .first_raw()
-                                    .clone()
                                     .unwrap_or("")
                                     .to_string();
 
@@ -187,11 +186,10 @@ impl BackendSystem for WinitBackend {
                                 let name = path
                                     .file_name()
                                     .map(|name| name.to_string_lossy().to_string())
-                                    .unwrap_or("".to_string());
+                                    .unwrap_or_else(|| "".to_string());
 
                                 let mime = mime_guess::from_path(path)
                                     .first_raw()
-                                    .clone()
                                     .unwrap_or("")
                                     .to_string();
 
@@ -210,7 +208,7 @@ impl BackendSystem for WinitBackend {
                         }
                     }
                     WEvent::MainEventsCleared => {
-                        let needs_redraw = !is_lazy || (is_lazy && request_redraw);
+                        let needs_redraw = !is_lazy || request_redraw;
                         if needs_redraw {
                             b.window.as_mut().unwrap().window().request_redraw();
                         }

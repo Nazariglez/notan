@@ -14,6 +14,8 @@ use web_sys::{Document, Element, Event as WebEvent, HtmlCanvasElement, Window};
 #[cfg(feature = "drop_files")]
 use crate::files::{enable_files, FileCallbacks};
 
+type RafType = Rc<RefCell<Option<Closure<dyn FnMut()>>>>;
+
 pub struct WebWindowBackend {
     pub canvas: HtmlCanvasElement,
     pub window: Window,
@@ -45,7 +47,7 @@ pub struct WebWindowBackend {
 
     config: WindowConfig,
 
-    raf: Rc<RefCell<Option<Closure<dyn FnMut()>>>>,
+    raf: RafType,
     pub(crate) frame_requested: Rc<RefCell<bool>>,
 
     cursor: CursorIcon,
@@ -55,7 +57,7 @@ impl WebWindowBackend {
     pub fn new(
         config: WindowConfig,
         events: Rc<RefCell<EventIterator>>,
-        raf: Rc<RefCell<Option<Closure<dyn FnMut()>>>>,
+        raf: RafType,
     ) -> Result<Self, String> {
         let window =
             web_sys::window().ok_or_else(|| String::from("Can't access window dom object."))?;

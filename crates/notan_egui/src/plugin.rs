@@ -196,7 +196,6 @@ impl Plugin for EguiPlugin {
                 self.raw_input.hovered_files.push(egui::HoveredFile {
                     path: path.clone(),
                     mime: mime.clone(),
-                    ..Default::default()
                 });
             }
 
