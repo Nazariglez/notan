@@ -157,7 +157,7 @@ impl Assets {
 
         #[cfg(target_arch = "wasm32")]
         {
-            return self.load_wasm_dropped_file_asset(file);
+            self.load_wasm_dropped_file_asset(file)
         }
 
         #[cfg(not(target_arch = "wasm32"))]

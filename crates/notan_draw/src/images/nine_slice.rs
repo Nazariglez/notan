@@ -110,10 +110,10 @@ impl DrawProcess for NineSlice<'_> {
         let img_hh = texture.height();
 
         let (width, height) = size.unwrap_or((img_ww, img_hh));
-        let left = left.unwrap_or_else(|| img_ww / 3.0);
-        let right = right.unwrap_or_else(|| img_ww / 3.0);
-        let top = top.unwrap_or_else(|| img_hh / 3.0);
-        let bottom = bottom.unwrap_or_else(|| img_hh / 3.0);
+        let left = left.unwrap_or(img_ww / 3.0);
+        let right = right.unwrap_or(img_ww / 3.0);
+        let top = top.unwrap_or(img_hh / 3.0);
+        let bottom = bottom.unwrap_or(img_hh / 3.0);
         let center_w = width - (left + right);
         let center_h = height - (top + bottom);
         let center_img_w = img_ww - (left + right);

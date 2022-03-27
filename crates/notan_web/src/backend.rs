@@ -82,7 +82,6 @@ impl BackendSystem for WebBackend {
 
                 if let Err(e) = cb(&mut app, &mut state) {
                     log::error!("{}", e);
-                    return;
                 }
             }) as Box<dyn FnMut()>));
 

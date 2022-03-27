@@ -286,8 +286,8 @@ where
 
             // call next frame in lazy mode if user is pressing mouse or keyboard
             if app.window().lazy_loop() {
-                let mouse_down = app.mouse.down.len() != 0;
-                let key_down = app.keyboard.down.len() != 0;
+                let mouse_down = !app.mouse.down.is_empty();
+                let key_down = !app.keyboard.down.is_empty();
                 if mouse_down || key_down {
                     app.window().request_frame();
                 }

@@ -246,7 +246,7 @@ impl EguiExtension {
                 );
 
                 let data = bytemuck::cast_slice(image.pixels.as_ref());
-                create_texture(device, &data, width as _, height as _)?
+                create_texture(device, data, width as _, height as _)?
             }
             egui::ImageData::Alpha(image) => {
                 debug_assert_eq!(
@@ -321,7 +321,7 @@ impl EguiExtension {
         target: Option<&RenderTexture>,
     ) -> Result<(), String> {
         let vertices: &[f32] = bytemuck::cast_slice(&mesh.vertices);
-        device.set_buffer_data(&self.vbo, &vertices);
+        device.set_buffer_data(&self.vbo, vertices);
         device.set_buffer_data(&self.ebo, &mesh.indices);
 
         let (width_in_pixels, height_in_pixels) = target.map_or(device.size(), |rt| {
