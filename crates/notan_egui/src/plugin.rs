@@ -4,8 +4,8 @@ use egui::output::OpenUrl;
 use egui::{Context, CursorIcon};
 use notan_app::assets::Assets;
 use notan_app::{
-    App, AppFlow, ClearOptions, Color, Commands, CursorIcon as NCursorIcon, Device, Event,
-    ExtContainer, GfxExtension, GfxRenderer, Graphics, Plugin, Plugins, RenderTexture,
+    App, AppFlow, ClearOptions, Color, CursorIcon as NCursorIcon, Device, Event, ExtContainer,
+    GfxExtension, GfxRenderer, Graphics, Plugin, Plugins, RenderTexture,
 };
 use std::cell::RefCell;
 
@@ -234,17 +234,14 @@ impl Plugin for EguiPlugin {
     fn post_frame(
         &mut self,
         app: &mut App,
-        assets: &mut Assets,
-        gfx: &mut Graphics,
+        _assets: &mut Assets,
+        _gfx: &mut Graphics,
     ) -> Result<AppFlow, String> {
         if let Some(platform_output) = self.platform_output.take() {
             let egui::PlatformOutput {
                 cursor_icon,
                 open_url,
-                copied_text,
-                events,
-                mutable_text_under_cursor,
-                text_cursor_pos,
+                ..
             } = platform_output;
 
             app.window().set_cursor(translate_cursor(cursor_icon));

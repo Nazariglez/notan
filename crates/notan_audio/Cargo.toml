@@ -1,6 +1,7 @@
 [package]
 name = "notan_audio"
 version = "0.2.0"
+authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/Nazariglez/notan"
