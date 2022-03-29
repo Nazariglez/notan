@@ -1,6 +1,6 @@
 [package]
 name = "notan_winit"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -13,8 +13,8 @@ description = "Provides a native backend using winit for Notan"
 
 [dependencies]
 log = "0.4"
-notan_app = { path = "../notan_app", version = "0.2.0" }
-notan_glow = { path = "../notan_glow", version = "0.2.0" }
+notan_app = { path = "../notan_app", version = "0.2.1" }
+notan_glow = { path = "../notan_glow", version = "0.2.1" }
 winit = "0.26"
 glutin = "0.28"
 crossbeam-channel = "0.5"
