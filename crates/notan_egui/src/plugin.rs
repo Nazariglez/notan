@@ -122,8 +122,12 @@ impl Plugin for EguiPlugin {
         match event {
             Event::Exit => {}
             Event::WindowMove { .. } => {}
-            Event::WindowResize { .. } => {}
-            Event::ScreenAspectChange { .. } => {}
+            Event::WindowResize { .. } => {
+                self.ctx.request_repaint();
+            }
+            Event::ScreenAspectChange { .. } => {
+                self.ctx.request_repaint();
+            }
             Event::MouseMove { .. } => self.add_event(egui::Event::PointerMoved(egui::Pos2::new(
                 app.mouse.x,
                 app.mouse.y,
