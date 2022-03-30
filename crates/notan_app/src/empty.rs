@@ -1,4 +1,5 @@
 use crate::config::WindowConfig;
+use notan_audio::{AudioBackend, AudioSourceInfo};
 // use crate::graphics::{Device, DeviceBackend, RenderTexture};
 use crate::{
     App, Backend, BackendSystem, CursorIcon, EventIterator, FrameState, InitializeFn, WindowBackend,
@@ -103,6 +104,10 @@ impl BackendSystem for EmptyBackend {
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend> {
         Box::new(EmptyDeviceBackend::default())
     }
+
+    fn get_audio_backend(&self) -> Box<dyn AudioBackend> {
+        Box::new(EmptyAudioBackend::default())
+    }
 }
 
 #[derive(Default)]
@@ -183,6 +188,23 @@ impl DeviceBackend for EmptyDeviceBackend {
         _bytes: &mut [u8],
         _opts: &TextureRead,
     ) -> Result<(), String> {
+        Ok(())
+    }
+}
+
+#[derive(Default)]
+struct EmptyAudioBackend {
+    id_count: u64,
+}
+
+impl AudioBackend for EmptyAudioBackend {
+    fn create_source(&mut self, _info: &AudioSourceInfo) -> Result<u64, String> {
+        let id = self.id_count;
+        self.id_count += 1;
+        Ok(id)
+    }
+
+    fn play(&mut self, _source: u64, _repeat: bool) -> Result<(), String> {
         Ok(())
     }
 }

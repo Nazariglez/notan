@@ -1,11 +1,21 @@
 use notan::prelude::*;
+use notan_app::keyboard::KeyCode;
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    notan::init().draw(draw).build()
+    notan::init_with(|app: &mut App| {
+        app.audio
+            .create_audio(include_bytes!("assets/assets_music.ogg"));
+    })
+    .draw(draw)
+    .build()
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics) {
+    if app.keyboard.was_pressed(KeyCode::Space) {
+        app.audio.play(0);
+    }
+
     // "Random" color bases on the app's time
     let color = Color::from_rgb(
         app.timer.time_since_init().cos(),
