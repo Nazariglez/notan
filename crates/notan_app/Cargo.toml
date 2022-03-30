@@ -18,6 +18,7 @@ notan_math = { path = "../notan_math", version = "0.3.0" }
 notan_macro = { path = "../notan_macro", version = "0.3.0" }
 notan_graphics = { path = "../notan_graphics", version = "0.3.0" }
 notan_utils = { path = "../notan_utils", version = "0.3.0" }
+notan_audio = { path = "../notan_audio", version = "0.3.0" }
 downcast-rs = "1.2"
 indexmap = "1.8"
 futures = "0.3"

@@ -3,6 +3,7 @@ pub mod prelude;
 
 pub use notan::*;
 pub use notan_app as app;
+pub use notan_audio as audio;
 pub use notan_graphics as graphics;
 pub use notan_macro::*;
 pub use notan_math as math;

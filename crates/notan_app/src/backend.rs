@@ -4,6 +4,7 @@ use crate::{App, EventIterator};
 use downcast_rs::{impl_downcast, Downcast};
 use futures::prelude::*;
 use futures::Future;
+use notan_audio::AudioBackend;
 use notan_graphics::DeviceBackend;
 
 /// Closure returned from the backend's initialize method
@@ -54,6 +55,9 @@ pub trait BackendSystem: Backend {
 
     /// Returns the graphics backend implementation
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend>;
+
+    /// Return the audio backend implmentation
+    fn get_audio_backend(&self) -> Box<dyn AudioBackend>;
 }
 
 /// Represent mouse cursor icon
