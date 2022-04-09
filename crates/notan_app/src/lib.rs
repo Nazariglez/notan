@@ -1,7 +1,7 @@
 mod config;
 pub mod empty;
-pub mod keyboard;
-pub mod mouse;
+mod keyboard;
+mod mouse;
 pub mod prelude;
 
 mod app;
@@ -16,6 +16,11 @@ mod timer;
 pub mod assets;
 mod events;
 mod plugins;
+
+pub mod input {
+    pub use super::keyboard::*;
+    pub use super::mouse::*;
+}
 
 pub use app::*;
 pub use backend::*;

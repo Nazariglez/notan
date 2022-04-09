@@ -1,4 +1,3 @@
-use notan::app::mouse::MouseButton;
 use notan::draw::*;
 use notan::prelude::*;
 
