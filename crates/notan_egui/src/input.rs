@@ -1,6 +1,6 @@
 use egui::PointerButton;
-use notan_app::keyboard::KeyCode;
-use notan_app::mouse::MouseButton;
+use notan_app::input::KeyCode;
+use notan_app::input::MouseButton;
 
 pub(crate) fn to_egui_pointer(btn: &MouseButton) -> Option<egui::PointerButton> {
     Some(match btn {

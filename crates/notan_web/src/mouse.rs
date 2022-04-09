@@ -2,7 +2,7 @@ use crate::utils::{
     canvas_add_event_listener, canvas_position_from_global, window_add_event_listener,
 };
 use crate::window::WebWindowBackend;
-use notan_app::mouse::MouseButton;
+use notan_app::input::MouseButton;
 use notan_app::Event;
 use std::cell::RefCell;
 use std::rc::Rc;
