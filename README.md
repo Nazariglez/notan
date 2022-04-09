@@ -7,7 +7,7 @@
 
 <br />
 
-This project aims to be a simple and portable multimedia layer, designed to make your own multimedia app on top of it
+This project aims to be a simple and portable layer, designed to make your own multimedia apps on top of it
 without worrying too much about platform-specific code.
 
 The main goal is to provide a set of APIs and tools that can be used to create your project in an ergonomic manner without
@@ -104,11 +104,11 @@ fn main() -> Result<(), String> {
 }
 
 fn setup(gfx: &mut Graphics) -> State {
-    let clear_options = ClearOptions::new(Color::new(0.1, 0.2, 0.3, 1.0));
+    let clear_options = ClearOptions::color(Color::new(0.1, 0.2, 0.3, 1.0));
 
     let vertex_info = VertexInfo::new()
-        .attr(0, VertexFormat::Float2)
-        .attr(1, VertexFormat::Float3);
+        .attr(0, VertexFormat::Float32x2)
+        .attr(1, VertexFormat::Float32x3);
 
     let pipeline = gfx
         .create_pipeline()
@@ -196,7 +196,7 @@ Below this "core" exists the `backends`, which are crates that add support for a
 code and translating it to our "core" APIs. Anybody should be able to create and use a custom backend easily.
 And, on top of the "core" we can build more ergonomic APIs that are usable with any backend made for Notan.
 
-Then the final user only needs to worry to build their apps on top of Notan and it should be fine no matter the compilation target.
+Then the final user only needs to worrying to build their apps on top of Notan and it should be fine no matter the compilation target.
 Of course, there are still things to have in mind if you want to target different targets, writing portable code can be tricky sometimes
 but Notan should help with most of them.
 
