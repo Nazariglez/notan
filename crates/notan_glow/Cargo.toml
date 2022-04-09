@@ -1,6 +1,6 @@
 [package]
 name = "notan_glow"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -13,12 +13,12 @@ description = "Provides support for OpenGL, OpenGL ES and WebGL for Notan"
 
 [dependencies]
 log = "0.4"
-bytemuck = "1.7"
+bytemuck = "1.9"
 glow = "0.11"
-notan_graphics = { path= "../notan_graphics", version = "0.2.1" }
+notan_graphics = { path= "../notan_graphics", version = "0.3.0" }
 hashbrown = "0.12"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2.79"
+wasm-bindgen = "0.2.80"
 js-sys = "0.3"
 web-sys = { version = "0.3", features = ["Window", "WebGlContextAttributes","HtmlCanvasElement","HtmlImageElement"] }
