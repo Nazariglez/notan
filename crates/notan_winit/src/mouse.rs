@@ -1,5 +1,5 @@
 use glutin::dpi::LogicalPosition;
-use notan_app::prelude::mouse::MouseButton;
+use notan_app::input::MouseButton;
 use notan_app::Event;
 
 use winit::event::ElementState;

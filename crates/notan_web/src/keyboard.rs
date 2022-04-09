@@ -1,6 +1,6 @@
 use crate::utils::window_add_event_listener;
 use crate::window::WebWindowBackend;
-use notan_app::keyboard::KeyCode;
+use notan_app::input::KeyCode;
 use notan_app::Event;
 use std::cell::RefCell;
 use std::rc::Rc;
