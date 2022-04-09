@@ -1,6 +1,5 @@
 use crate::input::{to_egui_key, to_egui_pointer};
 use crate::EguiExtension;
-use egui::output::OpenUrl;
 use egui::{Context, CursorIcon};
 use notan_app::assets::Assets;
 use notan_app::{
@@ -8,6 +7,9 @@ use notan_app::{
     GfxExtension, GfxRenderer, Graphics, Plugin, Plugins, RenderTexture,
 };
 use std::cell::RefCell;
+
+#[cfg(feature = "links")]
+use egui::output::OpenUrl;
 
 #[derive(Default)]
 pub struct EguiPlugin {
@@ -248,6 +250,9 @@ impl Plugin for EguiPlugin {
             } = platform_output;
 
             app.window().set_cursor(translate_cursor(cursor_icon));
+
+            #[cfg(not(feature = "links"))]
+            let _ = open_url;
 
             #[cfg(feature = "links")]
             if let Some(OpenUrl { url, new_tab }) = open_url {
