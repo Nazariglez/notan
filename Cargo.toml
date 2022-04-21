@@ -35,16 +35,16 @@ notan_text = { path = "crates/notan_text", version = "0.3.0", optional = true }
 members = ["crates/*"]
 
 [features]
-default = ["default_backend", "log", "draw"]
-log = ["notan_log"]
+default = ["default_backend"]
 default_backend = ["notan_backend"]
+log = ["notan_log"]
 glyph = ["notan_glyph"]
 draw = ["notan_draw"]
 egui = ["notan_egui"]
 text = ["notan_text"]
-links = ["notan_app/links", "notan_backend/links", "notan_egui/links"]
-drop_files = ["notan_app/drop_files", "notan_backend/drop_files", "notan_egui/drop_files"]
-clipboard = ["notan_app/clipboard", "notan_backend/clipboard", "notan_egui/clipboard"]
+links = ["notan_app/links", "notan_backend?/links", "notan_egui?/links"]
+drop_files = ["notan_app/drop_files", "notan_backend?/drop_files", "notan_egui?/drop_files"]
+clipboard = ["notan_app/clipboard", "notan_backend?/clipboard", "notan_egui?/clipboard"]
 
 [dev-dependencies]
 egui_demo_lib = "0.17.0"
