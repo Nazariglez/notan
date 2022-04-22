@@ -55,4 +55,6 @@ impl AudioBackend for RodioBackend {
 
         Ok(())
     }
+
+    // fn stop(&mut self, source: u64) {}
 }
