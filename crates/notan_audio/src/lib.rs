@@ -2,6 +2,7 @@
 pub trait AudioBackend {
     fn create_source(&mut self, info: &AudioSourceInfo) -> Result<u64, String>;
     fn play(&mut self, source: u64, repeat: bool) -> Result<(), String>;
+    // fn stop(&mut self, source: u64);
 }
 
 pub struct AudioManager {
@@ -26,6 +27,10 @@ impl AudioManager {
     pub fn play(&mut self, id: u64) {
         self.backend.play(id, false).unwrap();
     }
+
+    pub fn stop(&mut self, id: u64) {
+        // self.backend.stop(id);
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Hash)]
@@ -40,3 +45,6 @@ pub struct AudioSourceInfo {
     pub bytes: Vec<u8>,
     pub typ: AudioFileType,
 }
+
+pub struct AudioSource;
+pub struct AudioSink(u64);
