@@ -9,7 +9,4 @@ repository = "https://github.com/Nazariglez/notan"
 license = "MIT OR Apache-2.0"
 description = "Provides simple audio API for Notan"
 
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]

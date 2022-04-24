@@ -10,6 +10,7 @@ crates=(
   notan_app
   notan_log
   notan_glow
+  notan_oddio
   notan_glyph
   notan_egui
   notan_text

@@ -3,6 +3,7 @@ use crate::window::WebWindowBackend;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 use notan_app::{FrameState, WindowConfig};
 use notan_graphics::DeviceBackend;
+use notan_oddio::OddioBackend;
 use std::cell::RefCell;
 use std::panic;
 use std::rc::Rc;
@@ -94,6 +95,11 @@ impl BackendSystem for WebBackend {
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend> {
         let win = self.window.as_ref().unwrap();
         let backend = notan_glow::GlowBackend::new(&win.canvas, win.antialias).unwrap();
+        Box::new(backend)
+    }
+
+    fn get_audio_backend(&self) -> Box<dyn notan_audio::AudioBackend> {
+        let backend = OddioBackend::new().unwrap();
         Box::new(backend)
     }
 }

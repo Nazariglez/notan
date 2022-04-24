@@ -6,11 +6,11 @@ use notan_app::{FrameState, LoadFileFn, WindowConfig};
 #[cfg(feature = "drop_files")]
 use notan_app::DroppedFile;
 
-use crate::audio::RodioBackend;
 use notan_app::{
     App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, WindowBackend,
 };
 use notan_audio::AudioBackend;
+use notan_oddio::OddioBackend;
 use winit::event::{Event as WEvent, WindowEvent};
 use winit::event_loop::EventLoop;
 
@@ -254,7 +254,7 @@ impl BackendSystem for WinitBackend {
     }
 
     fn get_audio_backend(&self) -> Box<dyn AudioBackend> {
-        let backend = RodioBackend::new().unwrap();
+        let backend = OddioBackend::new().unwrap();
         Box::new(backend)
     }
 }
