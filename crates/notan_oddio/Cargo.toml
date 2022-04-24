@@ -1,0 +1,17 @@
+[package]
+name = "notan_oddio"
+version = "0.3.0"
+edition = "2021"
+readme = "README.md"
+homepage = "https://github.com/Nazariglez/notan"
+repository = "https://github.com/Nazariglez/notan"
+license = "MIT OR Apache-2.0"
+description = "Provides support for Audio features using Oddio"
+
+[dependencies]
+log = "0.4"
+hashbrown = "0.12"
+notan_audio = { path = "../notan_audio", version = "0.3.0" }
+cpal = { version = "0.13.5", features = ["wasm-bindgen"] }
+oddio = "0.5.0"
+symphonia = { version = "0.5.0", features = ["mp3"] }
