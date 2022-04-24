@@ -3,7 +3,7 @@ use std::sync::Arc;
 /// Represent the audio implementation backend
 pub trait AudioBackend {
     fn create_source(&mut self, bytes: &[u8]) -> Result<u64, String>;
-    fn play_sound(&mut self, source: u64) -> Result<u64, String>;
+    fn play_sound(&mut self, source: u64, repeat: bool) -> Result<u64, String>;
     fn play(&mut self, sound: u64);
     fn stop(&mut self, sound: u64);
 }
@@ -31,8 +31,8 @@ impl Audio {
         Ok(AudioSource { id })
     }
 
-    pub fn play_sound(&mut self, source: &AudioSource) -> SoundId {
-        let id = self.backend.play_sound(source.id).unwrap();
+    pub fn play_sound(&mut self, source: &AudioSource, repeat: bool) -> SoundId {
+        let id = self.backend.play_sound(source.id, repeat).unwrap();
         SoundId { id }
     }
 
