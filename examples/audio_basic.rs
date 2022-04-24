@@ -1,22 +1,34 @@
 use notan::prelude::*;
+use notan_audio::AudioSource;
 
 // todo webaudio https://developer.chrome.com/blog/web-audio-autoplay/#policy-adjustments
+
+#[derive(AppState)]
+struct State {
+    source: AudioSource,
+}
 
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(|app: &mut App| {
-        app.audio
-            .create_audio(include_bytes!("assets/assets_music.ogg"));
+        let source = app
+            .audio
+            .create_source(include_bytes!("assets/assets_music.ogg"))
+            .unwrap();
+
+        State { source }
     })
     .draw(draw)
     .build()
 }
 
-fn draw(app: &mut App, gfx: &mut Graphics) {
+fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     if app.keyboard.was_pressed(KeyCode::Space) {
-        app.audio.play(0);
+        let sound = app.audio.play_sound(&state.source);
+        // app.audio.play(&sound);
+        // app.audio.play(0);
     } else if app.keyboard.was_pressed(KeyCode::Z) {
-        app.audio.stop(0);
+        // app.audio.stop(0);
     }
 
     // "Random" color bases on the app's time

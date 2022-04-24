@@ -10,7 +10,7 @@ use crate::handlers::{
 use crate::parsers::*;
 use crate::plugins::*;
 use crate::{App, Backend, BackendSystem, FrameState, GfxExtension, GfxRenderer};
-use notan_audio::AudioManager;
+use notan_audio::Audio;
 
 pub use crate::handlers::SetupHandler;
 
@@ -185,7 +185,7 @@ where
         let initialize = backend.initialize(window)?;
 
         let mut graphics = Graphics::new(backend.get_graphics_backend())?;
-        let audio = AudioManager::new(backend.get_audio_backend())?;
+        let audio = Audio::new(backend.get_audio_backend())?;
 
         let mut app = App::new(Box::new(backend), audio);
 
