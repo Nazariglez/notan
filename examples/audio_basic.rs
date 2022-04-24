@@ -13,7 +13,7 @@ fn main() -> Result<(), String> {
     notan::init_with(|app: &mut App| {
         let source = app
             .audio
-            .create_source(include_bytes!("assets/assets_music.ogg"))
+            .create_source(include_bytes!("assets/bipbip.ogg"))
             .unwrap();
 
         State { source }
@@ -24,7 +24,7 @@ fn main() -> Result<(), String> {
 
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     if app.keyboard.was_pressed(KeyCode::Space) {
-        let sound = app.audio.play_sound(&state.source);
+        let sound = app.audio.play_sound(&state.source, true);
         // app.audio.play(&sound);
         // app.audio.play(0);
     } else if app.keyboard.was_pressed(KeyCode::Z) {

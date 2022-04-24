@@ -9,7 +9,13 @@ use std::io::Cursor;
 use std::sync::Arc;
 use symphonia::core::io::MediaSourceStream;
 
-type AudioHandle = Handle<Stop<Gain<FramesSignal<[f32; 2]>>>>;
+type FrameHandle = Handle<Stop<Gain<FramesSignal<[f32; 2]>>>>;
+type CycleHandle = Handle<Stop<Gain<Cycle<[f32; 2]>>>>;
+
+enum AudioHandle {
+    Frame(FrameHandle),
+    Cycle(CycleHandle),
+}
 
 pub struct OddioBackend {
     source_id_count: u64,
@@ -86,14 +92,22 @@ impl AudioBackend for OddioBackend {
         Ok(id)
     }
 
-    fn play_sound(&mut self, source: u64) -> Result<u64, String> {
+    fn play_sound(&mut self, source: u64, repeat: bool) -> Result<u64, String> {
         let frames = self
             .sources
             .get(&source)
             .ok_or_else(|| "Invalid audio source id.".to_string())?;
 
-        let signal = oddio::Gain::new(FramesSignal::from(frames.clone()), 1.0);
-        let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
+        let handle = if repeat {
+            let signal = oddio::Gain::new(Cycle::new(frames.clone()), 1.0);
+            let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
+            AudioHandle::Cycle(handle)
+        } else {
+            let signal = oddio::Gain::new(FramesSignal::from(frames.clone()), 1.0);
+            let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
+            AudioHandle::Frame(handle)
+        };
+
         let id = self.sound_id_count;
         self.sounds.insert(id, handle);
         self.sound_id_count += 1;
