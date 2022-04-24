@@ -4,13 +4,18 @@ use cpal::BufferSize;
 use hashbrown::HashMap;
 use log::error;
 use notan_audio::{AudioBackend, AudioSource};
-use oddio::{Cycle, Frames, FramesSignal, Gain, Handle, Mixer, Stop};
+use oddio::{Cycle, FilterHaving, Frames, FramesSignal, Gain, Handle, Mixer, Stop};
 use std::io::Cursor;
 use std::sync::Arc;
 use symphonia::core::io::MediaSourceStream;
 
 type FrameHandle = Handle<Stop<Gain<FramesSignal<[f32; 2]>>>>;
 type CycleHandle = Handle<Stop<Gain<Cycle<[f32; 2]>>>>;
+
+struct AudioInfo {
+    handle: AudioHandle,
+    volume: f32,
+}
 
 enum AudioHandle {
     Frame(FrameHandle),
@@ -23,7 +28,8 @@ pub struct OddioBackend {
     mixer_handle: Handle<Gain<Mixer<[f32; 2]>>>,
     stream: cpal::Stream,
     sources: HashMap<u64, Arc<Frames<[f32; 2]>>>,
-    sounds: HashMap<u64, AudioHandle>,
+    sounds: HashMap<u64, AudioInfo>,
+    volume: f32,
 }
 
 impl OddioBackend {
@@ -74,11 +80,25 @@ impl OddioBackend {
             stream,
             sources: Default::default(),
             sounds: Default::default(),
+            volume: 1.0,
         })
     }
 }
 
 impl AudioBackend for OddioBackend {
+    fn set_global_volume(&mut self, volume: f32) {
+        let v = 1.0 - volume;
+
+        let mut gain = self.mixer_handle.control::<Gain<_>, _>();
+        gain.set_gain(v * 60.0 * -1.0);
+        self.volume = volume;
+        println!("{} {} {}", volume, v, v * 60.0 * -1.0);
+    }
+
+    fn global_volume(&self) -> f32 {
+        self.volume
+    }
+
     fn create_source(&mut self, bytes: &[u8]) -> Result<u64, String> {
         let (mut samples, sample_rate) = decode_bytes(bytes.to_vec())?;
         let stereo = oddio::frame_stereo(&mut samples);
@@ -109,12 +129,86 @@ impl AudioBackend for OddioBackend {
         };
 
         let id = self.sound_id_count;
-        self.sounds.insert(id, handle);
+        self.sounds.insert(
+            id,
+            AudioInfo {
+                handle,
+                volume: 1.0,
+            },
+        );
         self.sound_id_count += 1;
         Ok(id)
     }
 
-    fn play(&mut self, sound: u64) {}
+    fn pause(&mut self, sound: u64) {
+        match self.sounds.get_mut(&sound) {
+            None => log::warn!("Cannot pause sound, invalid id: {}", sound),
+            Some(s) => match &mut s.handle {
+                AudioHandle::Frame(h) => h.control::<Stop<_>, _>().pause(),
+                AudioHandle::Cycle(h) => h.control::<Stop<_>, _>().pause(),
+            },
+        }
+    }
 
-    fn stop(&mut self, sound: u64) {}
+    fn resume(&mut self, sound: u64) {
+        match self.sounds.get_mut(&sound) {
+            None => log::warn!("Cannot resume sound, invalid id: {}", sound),
+            Some(s) => match &mut s.handle {
+                AudioHandle::Frame(h) => h.control::<Stop<_>, _>().resume(),
+                AudioHandle::Cycle(h) => h.control::<Stop<_>, _>().resume(),
+            },
+        }
+    }
+
+    fn stop(&mut self, sound: u64) {
+        match self.sounds.get_mut(&sound) {
+            None => log::warn!("Cannot stop sound, invalid id: {}", sound),
+            Some(s) => match &mut s.handle {
+                AudioHandle::Frame(h) => h.control::<Stop<_>, _>().stop(),
+                AudioHandle::Cycle(h) => h.control::<Stop<_>, _>().stop(),
+            },
+        }
+    }
+
+    fn is_stopped(&mut self, sound: u64) -> bool {
+        match self.sounds.get_mut(&sound) {
+            None => false,
+            Some(s) => match &mut s.handle {
+                AudioHandle::Frame(h) => h.control::<Stop<_>, _>().is_stopped(),
+                AudioHandle::Cycle(h) => h.control::<Stop<_>, _>().is_stopped(),
+            },
+        }
+    }
+
+    fn is_paused(&mut self, sound: u64) -> bool {
+        match self.sounds.get_mut(&sound) {
+            None => false,
+            Some(s) => match &mut s.handle {
+                AudioHandle::Frame(h) => h.control::<Stop<_>, _>().is_paused(),
+                AudioHandle::Cycle(h) => h.control::<Stop<_>, _>().is_paused(),
+            },
+        }
+    }
+
+    fn set_volume(&mut self, sound: u64, volume: f32) {
+        let v = 1.0 - volume;
+
+        match self.sounds.get_mut(&sound) {
+            None => log::warn!("Cannot set volume for sound: {}", sound),
+            Some(s) => {
+                s.volume = volume;
+                match &mut s.handle {
+                    AudioHandle::Frame(h) => h.control::<Gain<_>, _>().set_gain(v * 60.0 * -1.0),
+                    AudioHandle::Cycle(h) => h.control::<Gain<_>, _>().set_gain(v * 60.0 * -1.0),
+                }
+            }
+        }
+    }
+
+    fn volume(&self, sound: u64) -> f32 {
+        match self.sounds.get(&sound) {
+            None => 0.0,
+            Some(s) => s.volume,
+        }
+    }
 }

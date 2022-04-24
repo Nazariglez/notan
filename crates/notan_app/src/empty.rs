@@ -194,9 +194,18 @@ impl DeviceBackend for EmptyDeviceBackend {
 #[derive(Default)]
 struct EmptyAudioBackend {
     id_count: u64,
+    volume: f32,
 }
 
 impl AudioBackend for EmptyAudioBackend {
+    fn set_global_volume(&mut self, volume: f32) {
+        self.volume = volume;
+    }
+
+    fn global_volume(&self) -> f32 {
+        self.volume
+    }
+
     fn create_source(&mut self, _bytes: &[u8]) -> Result<u64, String> {
         let id = self.id_count;
         self.id_count += 1;
@@ -209,7 +218,23 @@ impl AudioBackend for EmptyAudioBackend {
         Ok(id)
     }
 
-    fn play(&mut self, _sound: u64) {}
+    fn pause(&mut self, sound: u64) {}
+
+    fn resume(&mut self, _sound: u64) {}
 
     fn stop(&mut self, _sound: u64) {}
+
+    fn is_stopped(&mut self, sound: u64) -> bool {
+        false
+    }
+
+    fn is_paused(&mut self, sound: u64) -> bool {
+        false
+    }
+
+    fn set_volume(&mut self, sound: u64, volume: f32) {}
+
+    fn volume(&self, sound: u64) -> f32 {
+        0.0
+    }
 }
