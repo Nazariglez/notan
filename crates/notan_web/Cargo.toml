@@ -21,6 +21,8 @@ console_error_panic_hook = "0.1"
 notan_glow = { path = "../notan_glow", version = "0.3.0" }
 notan_graphics = { path = "../notan_graphics", version = "0.3.0" }
 futures-util = "0.3"
+notan_audio = { path = "../notan_audio", version = "0.3.0" }
+notan_oddio = { path = "../notan_oddio", version = "0.3.0" }
 
 [dependencies.web-sys]
 version = "0.3"

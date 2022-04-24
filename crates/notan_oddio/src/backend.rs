@@ -1,9 +1,10 @@
+use crate::decoder::decode_bytes;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::BufferSize;
 use hashbrown::HashMap;
 use log::error;
-use notan_audio::AudioBackend;
-use oddio::{Frames, FramesSignal, Gain, Handle, Mixer, Stop};
+use notan_audio::{AudioBackend, AudioSource};
+use oddio::{Cycle, Frames, FramesSignal, Gain, Handle, Mixer, Stop};
 use std::io::Cursor;
 use std::sync::Arc;
 use symphonia::core::io::MediaSourceStream;
@@ -13,7 +14,7 @@ type AudioHandle = Handle<Stop<Gain<FramesSignal<[f32; 2]>>>>;
 pub struct OddioBackend {
     source_id_count: u64,
     sound_id_count: u64,
-    mixer_handle: Handle<Mixer<[f32; 2]>>,
+    mixer_handle: Handle<Gain<Mixer<[f32; 2]>>>,
     stream: cpal::Stream,
     sources: HashMap<u64, Arc<Frames<[f32; 2]>>>,
     sounds: HashMap<u64, AudioHandle>,
@@ -43,7 +44,7 @@ impl OddioBackend {
             config
         );
 
-        let (mut mixer_handle, mixer) = oddio::split(oddio::Mixer::new());
+        let (mut mixer_handle, mixer) = oddio::split(oddio::Gain::new(oddio::Mixer::new(), 1.0));
 
         let stream = device
             .build_output_stream(
@@ -53,7 +54,7 @@ impl OddioBackend {
                     oddio::run(&mixer, sample_rate.0, frames);
                 },
                 |err| {
-                    log: error!("{}", err);
+                    log::error!("{}", err);
                 },
             )
             .map_err(|e| format!("{:?}", e))?;
@@ -73,18 +74,33 @@ impl OddioBackend {
 
 impl AudioBackend for OddioBackend {
     fn create_source(&mut self, bytes: &[u8]) -> Result<u64, String> {
-        todo!()
+        let (mut samples, sample_rate) = decode_bytes(bytes.to_vec())?;
+        let stereo = oddio::frame_stereo(&mut samples);
+        let frames = oddio::Frames::from_slice(sample_rate, &stereo);
+
+        let id = self.source_id_count;
+        self.sources.insert(id, frames);
+
+        self.sound_id_count += 1;
+
+        Ok(id)
     }
 
-    fn create_sound(&mut self, source: u64) -> Result<u64, String> {
-        todo!()
+    fn play_sound(&mut self, source: u64) -> Result<u64, String> {
+        let frames = self
+            .sources
+            .get(&source)
+            .ok_or_else(|| "Invalid audio source id.".to_string())?;
+
+        let signal = oddio::Gain::new(FramesSignal::from(frames.clone()), 1.0);
+        let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
+        let id = self.sound_id_count;
+        self.sounds.insert(id, handle);
+        self.sound_id_count += 1;
+        Ok(id)
     }
 
-    fn play(&mut self, sound: u64) {
-        todo!()
-    }
+    fn play(&mut self, sound: u64) {}
 
-    fn stop(&mut self, sound: u64) {
-        todo!()
-    }
+    fn stop(&mut self, sound: u64) {}
 }

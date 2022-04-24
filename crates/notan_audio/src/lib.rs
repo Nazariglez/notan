@@ -1,50 +1,46 @@
+use std::sync::Arc;
+
 /// Represent the audio implementation backend
 pub trait AudioBackend {
-    fn create_source(&mut self, info: &AudioSourceInfo) -> Result<u64, String>;
-    fn play(&mut self, source: u64, repeat: bool) -> Result<(), String>;
-    // fn stop(&mut self, source: u64);
+    fn create_source(&mut self, bytes: &[u8]) -> Result<u64, String>;
+    fn play_sound(&mut self, source: u64) -> Result<u64, String>;
+    fn play(&mut self, sound: u64);
+    fn stop(&mut self, sound: u64);
 }
 
-pub struct AudioManager {
+pub struct AudioSource {
+    id: u64,
+}
+
+pub struct SoundId {
+    id: u64,
+}
+
+pub struct Audio {
     backend: Box<dyn AudioBackend>,
     // drop?
 }
 
-impl AudioManager {
+impl Audio {
     pub fn new(backend: Box<dyn AudioBackend>) -> Result<Self, String> {
         Ok(Self { backend })
     }
 
-    pub fn create_audio(&mut self, bytes: &[u8]) {
-        self.backend
-            .create_source(&AudioSourceInfo {
-                bytes: bytes.to_vec(),
-                typ: AudioFileType::Vorbis,
-            })
-            .unwrap();
+    pub fn create_source(&mut self, bytes: &[u8]) -> Result<AudioSource, String> {
+        let id = self.backend.create_source(bytes)?;
+        Ok(AudioSource { id })
     }
 
-    pub fn play(&mut self, id: u64) {
-        self.backend.play(id, false).unwrap();
+    pub fn play_sound(&mut self, source: &AudioSource) -> SoundId {
+        let id = self.backend.play_sound(source.id).unwrap();
+        SoundId { id }
     }
 
-    pub fn stop(&mut self, id: u64) {
-        // self.backend.stop(id);
+    pub fn play(&mut self, sound: &SoundId) {
+        self.backend.play(sound.id);
+    }
+
+    pub fn stop(&mut self, sound: &SoundId) {
+        self.backend.stop(sound.id);
     }
 }
-
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Hash)]
-pub enum AudioFileType {
-    Mp3,
-    Vorbis,
-    Flac,
-    Wav,
-}
-
-pub struct AudioSourceInfo {
-    pub bytes: Vec<u8>,
-    pub typ: AudioFileType,
-}
-
-pub struct AudioSource;
-pub struct AudioSink(u64);
