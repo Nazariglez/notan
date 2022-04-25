@@ -4,7 +4,9 @@ use cpal::BufferSize;
 use hashbrown::HashMap;
 use log::error;
 use notan_audio::{AudioBackend, AudioSource};
-use oddio::{Cycle, FilterHaving, Frames, FramesSignal, Gain, Handle, Mixer, Stop};
+use oddio::{
+    Cycle, FilterHaving, Frames, FramesSignal, Gain, GainControl, Handle, Mixer, Stop, StopControl,
+};
 use std::io::Cursor;
 use std::sync::Arc;
 use symphonia::core::io::MediaSourceStream;
@@ -20,6 +22,22 @@ struct AudioInfo {
 enum AudioHandle {
     Frame(FrameHandle),
     Cycle(CycleHandle),
+}
+
+impl AudioHandle {
+    fn as_stop(&mut self) -> StopControl {
+        match self {
+            AudioHandle::Frame(h) => h.control::<Stop<_>, _>(),
+            AudioHandle::Cycle(h) => h.control::<Stop<_>, _>(),
+        }
+    }
+
+    fn as_gain(&mut self) -> GainControl {
+        match self {
+            AudioHandle::Frame(h) => h.control::<Gain<_>, _>(),
+            AudioHandle::Cycle(h) => h.control::<Gain<_>, _>(),
+        }
+    }
 }
 
 pub struct OddioBackend {
@@ -92,7 +110,6 @@ impl AudioBackend for OddioBackend {
         let mut gain = self.mixer_handle.control::<Gain<_>, _>();
         gain.set_gain(v * 60.0 * -1.0);
         self.volume = volume;
-        println!("{} {} {}", volume, v, v * 60.0 * -1.0);
     }
 
     fn global_volume(&self) -> f32 {
@@ -102,7 +119,7 @@ impl AudioBackend for OddioBackend {
     fn create_source(&mut self, bytes: &[u8]) -> Result<u64, String> {
         let (mut samples, sample_rate) = decode_bytes(bytes.to_vec())?;
         let stereo = oddio::frame_stereo(&mut samples);
-        let frames = oddio::Frames::from_slice(sample_rate, &stereo);
+        let frames = Frames::from_slice(sample_rate, &stereo);
 
         let id = self.source_id_count;
         self.sources.insert(id, frames);
@@ -119,11 +136,11 @@ impl AudioBackend for OddioBackend {
             .ok_or_else(|| "Invalid audio source id.".to_string())?;
 
         let handle = if repeat {
-            let signal = oddio::Gain::new(Cycle::new(frames.clone()), 1.0);
+            let signal = Gain::new(Cycle::new(frames.clone()), 1.0);
             let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
             AudioHandle::Cycle(handle)
         } else {
-            let signal = oddio::Gain::new(FramesSignal::from(frames.clone()), 1.0);
+            let signal = Gain::new(FramesSignal::from(frames.clone()), 1.0);
             let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
             AudioHandle::Frame(handle)
         };
@@ -143,50 +160,35 @@ impl AudioBackend for OddioBackend {
     fn pause(&mut self, sound: u64) {
         match self.sounds.get_mut(&sound) {
             None => log::warn!("Cannot pause sound, invalid id: {}", sound),
-            Some(s) => match &mut s.handle {
-                AudioHandle::Frame(h) => h.control::<Stop<_>, _>().pause(),
-                AudioHandle::Cycle(h) => h.control::<Stop<_>, _>().pause(),
-            },
+            Some(s) => s.handle.as_stop().pause(),
         }
     }
 
     fn resume(&mut self, sound: u64) {
         match self.sounds.get_mut(&sound) {
             None => log::warn!("Cannot resume sound, invalid id: {}", sound),
-            Some(s) => match &mut s.handle {
-                AudioHandle::Frame(h) => h.control::<Stop<_>, _>().resume(),
-                AudioHandle::Cycle(h) => h.control::<Stop<_>, _>().resume(),
-            },
+            Some(s) => s.handle.as_stop().resume(),
         }
     }
 
     fn stop(&mut self, sound: u64) {
         match self.sounds.get_mut(&sound) {
             None => log::warn!("Cannot stop sound, invalid id: {}", sound),
-            Some(s) => match &mut s.handle {
-                AudioHandle::Frame(h) => h.control::<Stop<_>, _>().stop(),
-                AudioHandle::Cycle(h) => h.control::<Stop<_>, _>().stop(),
-            },
+            Some(s) => s.handle.as_stop().stop(),
         }
     }
 
     fn is_stopped(&mut self, sound: u64) -> bool {
         match self.sounds.get_mut(&sound) {
             None => false,
-            Some(s) => match &mut s.handle {
-                AudioHandle::Frame(h) => h.control::<Stop<_>, _>().is_stopped(),
-                AudioHandle::Cycle(h) => h.control::<Stop<_>, _>().is_stopped(),
-            },
+            Some(s) => s.handle.as_stop().is_stopped(),
         }
     }
 
     fn is_paused(&mut self, sound: u64) -> bool {
         match self.sounds.get_mut(&sound) {
             None => false,
-            Some(s) => match &mut s.handle {
-                AudioHandle::Frame(h) => h.control::<Stop<_>, _>().is_paused(),
-                AudioHandle::Cycle(h) => h.control::<Stop<_>, _>().is_paused(),
-            },
+            Some(s) => s.handle.as_stop().is_paused(),
         }
     }
 
@@ -197,10 +199,7 @@ impl AudioBackend for OddioBackend {
             None => log::warn!("Cannot set volume for sound: {}", sound),
             Some(s) => {
                 s.volume = volume;
-                match &mut s.handle {
-                    AudioHandle::Frame(h) => h.control::<Gain<_>, _>().set_gain(v * 60.0 * -1.0),
-                    AudioHandle::Cycle(h) => h.control::<Gain<_>, _>().set_gain(v * 60.0 * -1.0),
-                }
+                s.handle.as_gain().set_gain(v * 60.0 * -1.0);
             }
         }
     }
