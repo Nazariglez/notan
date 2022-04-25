@@ -1,12 +1,11 @@
 use notan::prelude::*;
-use notan_audio::{AudioSource, SoundId};
 
 // todo webaudio https://developer.chrome.com/blog/web-audio-autoplay/#policy-adjustments
 
 #[derive(AppState)]
 struct State {
     source: AudioSource,
-    sound: Option<SoundId>,
+    sound: Option<Sound>,
 }
 
 #[notan_main]

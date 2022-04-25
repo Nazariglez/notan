@@ -210,4 +210,20 @@ impl AudioBackend for OddioBackend {
             Some(s) => s.volume,
         }
     }
+
+    fn clean(&mut self, sources: &[u64], sounds: &[u64]) {
+        sources.iter().for_each(|id| {
+            self.sources.remove(id);
+        });
+
+        sounds.iter().for_each(|id| {
+            self.sounds.remove(id);
+        });
+
+        log::debug!(
+            "Audio resources cleaned: Sources({:?}) - Sounds({:?})",
+            sources,
+            sounds,
+        );
+    }
 }
