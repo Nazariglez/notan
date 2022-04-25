@@ -28,7 +28,7 @@ fn main() -> Result<(), String> {
 
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     if app.keyboard.was_pressed(KeyCode::Space) {
-        let sound = app.audio.play_sound(&state.source, true);
+        let sound = app.audio.play_sound(&state.source, false);
         state.sound = Some(sound);
     } else if app.keyboard.was_pressed(KeyCode::Z) {
         if let Some(id) = &state.sound {
