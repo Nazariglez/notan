@@ -237,4 +237,6 @@ impl AudioBackend for EmptyAudioBackend {
     fn volume(&self, sound: u64) -> f32 {
         0.0
     }
+
+    fn clean(&mut self, sources: &[u64], sounds: &[u64]) {}
 }
