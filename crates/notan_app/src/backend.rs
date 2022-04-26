@@ -1,4 +1,6 @@
 use crate::config::WindowConfig;
+use std::cell::RefCell;
+use std::rc::Rc;
 // use crate::graphics::DeviceBackend;
 use crate::{App, EventIterator};
 use downcast_rs::{impl_downcast, Downcast};
@@ -56,8 +58,8 @@ pub trait BackendSystem: Backend {
     /// Returns the graphics backend implementation
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend>;
 
-    /// Return the audio backend implmentation
-    fn get_audio_backend(&self) -> Box<dyn AudioBackend>;
+    /// Return the audio backend implementation
+    fn get_audio_backend(&self) -> Rc<RefCell<Box<dyn AudioBackend>>>;
 }
 
 /// Represent mouse cursor icon

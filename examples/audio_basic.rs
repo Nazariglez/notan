@@ -21,6 +21,7 @@ fn main() -> Result<(), String> {
             sound: None,
         }
     })
+    .add_config(notan::log::LogConfig::default())
     .draw(draw)
     .build()
 }

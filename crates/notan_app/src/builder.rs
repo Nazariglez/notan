@@ -2,6 +2,7 @@
 
 use crate::assets::{AssetLoader, Assets};
 use crate::config::*;
+use crate::empty::EmptyAudioBackend;
 use crate::graphics::Graphics;
 use crate::handlers::{
     AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler,
@@ -186,7 +187,6 @@ where
 
         let mut graphics = Graphics::new(backend.get_graphics_backend())?;
         let audio = Audio::new(backend.get_audio_backend())?;
-
         let mut app = App::new(Box::new(backend), audio);
 
         let (width, height) = app.window().size();
