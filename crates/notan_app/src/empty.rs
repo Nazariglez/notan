@@ -4,6 +4,8 @@ use crate::{
 };
 use notan_audio::AudioBackend;
 use notan_graphics::prelude::*;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[derive(Default)]
 pub struct EmptyWindowBackend {
@@ -104,8 +106,8 @@ impl BackendSystem for EmptyBackend {
         Box::new(EmptyDeviceBackend::default())
     }
 
-    fn get_audio_backend(&self) -> Box<dyn AudioBackend> {
-        Box::new(EmptyAudioBackend::default())
+    fn get_audio_backend(&self) -> Rc<RefCell<Box<dyn AudioBackend>>> {
+        Rc::new(RefCell::new(Box::new(EmptyAudioBackend::default())))
     }
 }
 
@@ -192,7 +194,7 @@ impl DeviceBackend for EmptyDeviceBackend {
 }
 
 #[derive(Default)]
-struct EmptyAudioBackend {
+pub struct EmptyAudioBackend {
     id_count: u64,
     volume: f32,
 }

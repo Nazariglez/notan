@@ -1,14 +1,16 @@
 use crate::backend::{AudioBackend, AudioSource, Sound};
 use crate::tracker::{ResourceId, ResourceTracker};
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 
 pub struct Audio {
-    backend: Box<dyn AudioBackend>,
+    backend: Rc<RefCell<Box<dyn AudioBackend>>>,
     resource_tracker: Arc<ResourceTracker>,
 }
 
 impl Audio {
-    pub fn new(backend: Box<dyn AudioBackend>) -> Result<Self, String> {
+    pub fn new(backend: Rc<RefCell<Box<dyn AudioBackend>>>) -> Result<Self, String> {
         let resource_tracker = Arc::new(ResourceTracker::default());
         Ok(Self {
             backend,
@@ -18,59 +20,67 @@ impl Audio {
 
     #[inline]
     pub fn create_source(&mut self, bytes: &[u8]) -> Result<AudioSource, String> {
-        let id = self.backend.create_source(bytes)?;
+        let id = self.backend.borrow_mut().create_source(bytes)?;
         Ok(AudioSource::new(id, self.resource_tracker.clone()))
     }
 
     #[inline]
     pub fn play_sound(&mut self, source: &AudioSource, repeat: bool) -> Sound {
-        let id = self.backend.play_sound(source.id, repeat).unwrap();
+        let id = self
+            .backend
+            .borrow_mut()
+            .play_sound(source.id, repeat)
+            .unwrap();
         Sound::new(id, self.resource_tracker.clone())
     }
 
     #[inline]
     pub fn resume(&mut self, sound: &Sound) {
-        self.backend.resume(sound.id);
+        self.backend.borrow_mut().resume(sound.id);
     }
 
     #[inline]
     pub fn stop(&mut self, sound: &Sound) {
-        self.backend.stop(sound.id);
+        self.backend.borrow_mut().stop(sound.id);
     }
 
     #[inline]
     pub fn pause(&mut self, sound: &Sound) {
-        self.backend.pause(sound.id);
+        self.backend.borrow_mut().pause(sound.id);
     }
 
     #[inline]
-    pub fn is_stopped(&mut self, sound: &Sound) -> bool {
-        self.backend.is_stopped(sound.id)
+    pub fn is_stopped(&self, sound: &Sound) -> bool {
+        self.backend.borrow_mut().is_stopped(sound.id)
     }
 
     #[inline]
-    pub fn is_paused(&mut self, sound: &Sound) -> bool {
-        self.backend.is_paused(sound.id)
+    pub fn is_paused(&self, sound: &Sound) -> bool {
+        self.backend.borrow_mut().is_paused(sound.id)
     }
 
     #[inline]
     pub fn set_global_volume(&mut self, volume: f32) {
-        self.backend.set_global_volume(clamp_volume(volume));
+        self.backend
+            .borrow_mut()
+            .set_global_volume(clamp_volume(volume));
     }
 
     #[inline]
-    pub fn global_volume(&mut self) -> f32 {
-        self.backend.global_volume()
+    pub fn global_volume(&self) -> f32 {
+        self.backend.borrow().global_volume()
     }
 
     #[inline]
     pub fn set_volume(&mut self, sound: &Sound, volume: f32) {
-        self.backend.set_volume(sound.id, clamp_volume(volume));
+        self.backend
+            .borrow_mut()
+            .set_volume(sound.id, clamp_volume(volume));
     }
 
     #[inline]
     pub fn volume(&self, sound: &Sound) -> f32 {
-        self.backend.volume(sound.id)
+        self.backend.borrow().volume(sound.id)
     }
 
     #[inline]
@@ -92,7 +102,7 @@ impl Audio {
         // drop resources here to avoid deadlock calling clean
         drop(resources);
 
-        self.backend.clean(&sources, &sounds);
+        self.backend.borrow_mut().clean(&sources, &sounds);
         self.resource_tracker.clean();
     }
 }
