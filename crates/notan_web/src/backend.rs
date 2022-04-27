@@ -1,4 +1,4 @@
-use crate::audio::{fix_webaudio_if_necessary, DummyAudioBackend};
+use crate::audio::fix_webaudio_if_necessary;
 use crate::utils::{request_animation_frame, window_add_event_listener};
 use crate::window::WebWindowBackend;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
@@ -15,21 +15,17 @@ pub struct WebBackend {
     window: Option<WebWindowBackend>,
     events: Rc<RefCell<EventIterator>>,
     exit_requested: bool,
-    audio: Rc<RefCell<Box<dyn AudioBackend>>>,
 }
 
 impl WebBackend {
     pub fn new() -> Result<Self, String> {
         std::panic::set_hook(Box::new(console_error_panic_hook::hook));
         let events = Rc::new(RefCell::new(EventIterator::new()));
-        let audio: Rc<RefCell<Box<dyn AudioBackend>>> =
-            Rc::new(RefCell::new(Box::new(DummyAudioBackend::new())));
 
         Ok(Self {
             window: None,
             events,
             exit_requested: false,
-            audio,
         })
     }
 }
@@ -105,13 +101,8 @@ impl BackendSystem for WebBackend {
     }
 
     fn get_audio_backend(&self) -> Rc<RefCell<Box<dyn AudioBackend>>> {
-        let audio = self.audio.clone();
-        let c = window_add_event_listener("click", move |e: MouseEvent| {
-            *audio.borrow_mut() = Box::new(OddioBackend::new().unwrap());
-        });
-        std::mem::forget(c);
-
-        self.audio.clone()
+        let backend = OddioBackend::new().unwrap();
+        let backend = Rc::new(RefCell::new(Box::new(backend)));
     }
 }
 

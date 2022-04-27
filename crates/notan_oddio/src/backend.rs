@@ -1,4 +1,4 @@
-use crate::decoder::decode_bytes;
+use crate::decoder::frames_from_bytes;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::BufferSize;
 use hashbrown::HashMap;
@@ -10,6 +10,9 @@ use oddio::{
 use std::io::Cursor;
 use std::sync::Arc;
 use symphonia::core::io::MediaSourceStream;
+
+#[cfg(target_arch = "wasm32")]
+use crate::dummy::DummyAudioBackend;
 
 type FrameHandle = Handle<Stop<Gain<FramesSignal<[f32; 2]>>>>;
 type CycleHandle = Handle<Stop<Gain<Cycle<[f32; 2]>>>>;
@@ -41,6 +44,102 @@ impl AudioHandle {
 }
 
 pub struct OddioBackend {
+    inner: Option<InnerBackend>,
+
+    #[cfg(target_arch = "wasm32")]
+    dummy: DummyAudioBackend,
+}
+
+impl OddioBackend {
+    #[cfg(target_arch = "wasm32")]
+    pub fn new() -> Result<Self, String> {
+        Ok(Self {
+            inner: None,
+            dummy: DummyAudioBackend::default(),
+        })
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn new() -> Result<Self, String> {
+        Ok(Self {
+            inner: Some(InnerBackend::new()?),
+        })
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn enable(&mut self) -> Result<(), String> {
+        let mut inner = InnerBackend::new()?;
+        std::mem::swap(&mut inner.sources, &mut self.dummy.sources);
+        inner.source_id_count = self.dummy.id_count;
+        inner.set_global_volume(self.dummy.volume);
+        self.inner = Some(inner);
+        Ok(())
+    }
+}
+
+impl AudioBackend for OddioBackend {
+    #[inline]
+    fn set_global_volume(&mut self, volume: f32) {
+        todo!()
+    }
+
+    #[inline]
+    fn global_volume(&self) -> f32 {
+        todo!()
+    }
+
+    #[inline]
+    fn create_source(&mut self, bytes: &[u8]) -> Result<u64, String> {
+        todo!()
+    }
+
+    #[inline]
+    fn play_sound(&mut self, source: u64, repeat: bool) -> Result<u64, String> {
+        todo!()
+    }
+
+    #[inline]
+    fn pause(&mut self, sound: u64) {
+        todo!()
+    }
+
+    #[inline]
+    fn resume(&mut self, sound: u64) {
+        todo!()
+    }
+
+    #[inline]
+    fn stop(&mut self, sound: u64) {
+        todo!()
+    }
+
+    #[inline]
+    fn is_stopped(&mut self, sound: u64) -> bool {
+        todo!()
+    }
+
+    #[inline]
+    fn is_paused(&mut self, sound: u64) -> bool {
+        todo!()
+    }
+
+    #[inline]
+    fn set_volume(&mut self, sound: u64, volume: f32) {
+        todo!()
+    }
+
+    #[inline]
+    fn volume(&self, sound: u64) -> f32 {
+        todo!()
+    }
+
+    #[inline]
+    fn clean(&mut self, sources: &[u64], sounds: &[u64]) {
+        todo!()
+    }
+}
+
+pub struct InnerBackend {
     source_id_count: u64,
     sound_id_count: u64,
     mixer_handle: Handle<Gain<Mixer<[f32; 2]>>>,
@@ -50,7 +149,7 @@ pub struct OddioBackend {
     volume: f32,
 }
 
-impl OddioBackend {
+impl InnerBackend {
     pub fn new() -> Result<Self, String> {
         let host = cpal::default_host();
         let device = host
@@ -101,9 +200,7 @@ impl OddioBackend {
             volume: 1.0,
         })
     }
-}
 
-impl AudioBackend for OddioBackend {
     fn set_global_volume(&mut self, volume: f32) {
         let v = 1.0 - volume;
 
@@ -117,14 +214,12 @@ impl AudioBackend for OddioBackend {
     }
 
     fn create_source(&mut self, bytes: &[u8]) -> Result<u64, String> {
-        let (mut samples, sample_rate) = decode_bytes(bytes.to_vec())?;
-        let stereo = oddio::frame_stereo(&mut samples);
-        let frames = Frames::from_slice(sample_rate, &stereo);
+        let frames = frames_from_bytes(bytes)?;
 
         let id = self.source_id_count;
         self.sources.insert(id, frames);
 
-        self.sound_id_count += 1;
+        self.source_id_count += 1;
 
         Ok(id)
     }
