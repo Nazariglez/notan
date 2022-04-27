@@ -10,7 +10,7 @@ use notan_app::{
     App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, WindowBackend,
 };
 use notan_audio::AudioBackend;
-use notan_oddio::OddioBackend;
+use notan_oddio::InnerBackend;
 use winit::event::{Event as WEvent, WindowEvent};
 use winit::event_loop::EventLoop;
 
@@ -254,7 +254,7 @@ impl BackendSystem for WinitBackend {
     }
 
     fn get_audio_backend(&self) -> Box<dyn AudioBackend> {
-        let backend = OddioBackend::new().unwrap();
+        let backend = InnerBackend::new().unwrap();
         Box::new(backend)
     }
 }
