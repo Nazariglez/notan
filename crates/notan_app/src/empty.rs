@@ -106,8 +106,8 @@ impl BackendSystem for EmptyBackend {
         Box::new(EmptyDeviceBackend::default())
     }
 
-    fn get_audio_backend(&self) -> Rc<RefCell<Box<dyn AudioBackend>>> {
-        Rc::new(RefCell::new(Box::new(EmptyAudioBackend::default())))
+    fn get_audio_backend(&self) -> Rc<RefCell<dyn AudioBackend>> {
+        Rc::new(RefCell::new(EmptyAudioBackend::default()))
     }
 }
 

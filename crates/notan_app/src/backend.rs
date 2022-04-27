@@ -59,7 +59,7 @@ pub trait BackendSystem: Backend {
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend>;
 
     /// Return the audio backend implementation
-    fn get_audio_backend(&self) -> Rc<RefCell<Box<dyn AudioBackend>>>;
+    fn get_audio_backend(&self) -> Rc<RefCell<dyn AudioBackend>>;
 }
 
 /// Represent mouse cursor icon

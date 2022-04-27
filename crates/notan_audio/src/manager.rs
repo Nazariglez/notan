@@ -5,12 +5,12 @@ use std::rc::Rc;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 
 pub struct Audio {
-    backend: Rc<RefCell<Box<dyn AudioBackend>>>,
+    backend: Rc<RefCell<dyn AudioBackend>>,
     resource_tracker: Arc<ResourceTracker>,
 }
 
 impl Audio {
-    pub fn new(backend: Rc<RefCell<Box<dyn AudioBackend>>>) -> Result<Self, String> {
+    pub fn new(backend: Rc<RefCell<dyn AudioBackend>>) -> Result<Self, String> {
         let resource_tracker = Arc::new(ResourceTracker::default());
         Ok(Self {
             backend,

@@ -8,10 +8,6 @@ use std::sync::Arc;
 
 use crate::decoder::frames_from_bytes;
 
-pub(crate) trait Dummy: AudioBackend + Any {
-    fn as_any(&self) -> &dyn Any;
-}
-
 /// Dummy audio backend used until the user interacts with the browser
 /// This is due security policies of browsers who doesn't allow to
 /// play video or sound until the user interacts directly with it
@@ -33,12 +29,6 @@ impl DummyAudioBackend {
         }
 
         dummy
-    }
-}
-
-impl Dummy for DummyAudioBackend {
-    fn as_any(&self) -> &dyn Any {
-        self
     }
 }
 

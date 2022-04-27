@@ -100,9 +100,16 @@ impl BackendSystem for WebBackend {
         Box::new(backend)
     }
 
-    fn get_audio_backend(&self) -> Rc<RefCell<Box<dyn AudioBackend>>> {
+    fn get_audio_backend(&self) -> Rc<RefCell<dyn AudioBackend>> {
         let backend = OddioBackend::new().unwrap();
-        let backend = Rc::new(RefCell::new(Box::new(backend)));
+        let backend = Rc::new(RefCell::new(backend));
+
+        let b = backend.clone();
+        window_add_event_listener("click", move |_: MouseEvent| {
+            b.borrow_mut().enable().unwrap();
+        });
+
+        backend as _
     }
 }
 
