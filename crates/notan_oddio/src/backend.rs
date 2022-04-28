@@ -43,36 +43,48 @@ impl AudioHandle {
     }
 }
 
-pub struct OddioBackend {
-    inner: Option<InnerBackend>,
+enum BackendImpl {
+    Oddio(InnerBackend),
 
     #[cfg(target_arch = "wasm32")]
-    dummy: DummyAudioBackend,
+    Dummy(DummyAudioBackend),
+}
+
+pub struct OddioBackend {
+    inner: BackendImpl,
 }
 
 impl OddioBackend {
     #[cfg(target_arch = "wasm32")]
     pub fn new() -> Result<Self, String> {
         Ok(Self {
-            inner: None,
-            dummy: DummyAudioBackend::default(),
+            inner: BackendImpl::Dummy(DummyAudioBackend::default()),
         })
     }
 
     #[cfg(not(target_arch = "wasm32"))]
     pub fn new() -> Result<Self, String> {
         Ok(Self {
-            inner: Some(InnerBackend::new()?),
+            inner: BackendImpl::Oddio(InnerBackend::new()?),
         })
     }
 
     #[cfg(target_arch = "wasm32")]
     pub fn enable(&mut self) -> Result<(), String> {
-        let mut inner = InnerBackend::new()?;
-        std::mem::swap(&mut inner.sources, &mut self.dummy.sources);
-        inner.source_id_count = self.dummy.id_count;
-        inner.set_global_volume(self.dummy.volume);
-        self.inner = Some(inner);
+        let inner = if let BackendImpl::Dummy(dummy) = &mut self.inner {
+            let mut inner = InnerBackend::new()?;
+            std::mem::swap(&mut inner.sources, &mut dummy.sources);
+            inner.source_id_count = dummy.id_count;
+            inner.set_global_volume(dummy.volume);
+            Some(inner)
+        } else {
+            None
+        };
+
+        if let Some(inner) = inner {
+            self.inner = BackendImpl::Oddio(inner);
+        }
+
         Ok(())
     }
 }
@@ -80,62 +92,110 @@ impl OddioBackend {
 impl AudioBackend for OddioBackend {
     #[inline]
     fn set_global_volume(&mut self, volume: f32) {
-        todo!()
+        match &mut self.inner {
+            BackendImpl::Oddio(inner) => inner.set_global_volume(volume),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.set_global_volume(volume),
+        }
     }
 
     #[inline]
     fn global_volume(&self) -> f32 {
-        todo!()
+        match &self.inner {
+            BackendImpl::Oddio(inner) => inner.global_volume(),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.global_volume(),
+        }
     }
 
     #[inline]
     fn create_source(&mut self, bytes: &[u8]) -> Result<u64, String> {
-        todo!()
+        match &mut self.inner {
+            BackendImpl::Oddio(inner) => inner.create_source(bytes),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.create_source(bytes),
+        }
     }
 
     #[inline]
     fn play_sound(&mut self, source: u64, repeat: bool) -> Result<u64, String> {
-        todo!()
+        match &mut self.inner {
+            BackendImpl::Oddio(inner) => inner.play_sound(source, repeat),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.play_sound(source, repeat),
+        }
     }
 
     #[inline]
     fn pause(&mut self, sound: u64) {
-        todo!()
+        match &mut self.inner {
+            BackendImpl::Oddio(inner) => inner.pause(sound),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.pause(sound),
+        }
     }
 
     #[inline]
     fn resume(&mut self, sound: u64) {
-        todo!()
+        match &mut self.inner {
+            BackendImpl::Oddio(inner) => inner.resume(sound),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.resume(sound),
+        }
     }
 
     #[inline]
     fn stop(&mut self, sound: u64) {
-        todo!()
+        match &mut self.inner {
+            BackendImpl::Oddio(inner) => inner.stop(sound),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.stop(sound),
+        }
     }
 
     #[inline]
     fn is_stopped(&mut self, sound: u64) -> bool {
-        todo!()
+        match &mut self.inner {
+            BackendImpl::Oddio(inner) => inner.is_stopped(sound),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.is_stopped(sound),
+        }
     }
 
     #[inline]
     fn is_paused(&mut self, sound: u64) -> bool {
-        todo!()
+        match &mut self.inner {
+            BackendImpl::Oddio(inner) => inner.is_paused(sound),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.is_paused(sound),
+        }
     }
 
     #[inline]
     fn set_volume(&mut self, sound: u64, volume: f32) {
-        todo!()
+        match &mut self.inner {
+            BackendImpl::Oddio(inner) => inner.set_volume(sound, volume),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.set_volume(sound, volume),
+        }
     }
 
     #[inline]
     fn volume(&self, sound: u64) -> f32 {
-        todo!()
+        match &self.inner {
+            BackendImpl::Oddio(inner) => inner.volume(sound),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.volume(sound),
+        }
     }
 
     #[inline]
     fn clean(&mut self, sources: &[u64], sounds: &[u64]) {
-        todo!()
+        match &mut self.inner {
+            BackendImpl::Oddio(inner) => inner.clean(sources, sounds),
+            #[cfg(target_arch = "wasm32")]
+            BackendImpl::Dummy(inner) => inner.clean(sources, sounds),
+        }
     }
 }
 
