@@ -12,7 +12,7 @@ use std::sync::Arc;
 use symphonia::core::io::MediaSourceStream;
 
 #[cfg(target_arch = "wasm32")]
-use crate::dummy::DummyAudioBackend;
+use crate::webaudio::DummyAudioBackend;
 
 type FrameHandle = Handle<Stop<Gain<FramesSignal<[f32; 2]>>>>;
 type CycleHandle = Handle<Stop<Gain<Cycle<[f32; 2]>>>>;
@@ -58,7 +58,7 @@ impl OddioBackend {
     #[cfg(target_arch = "wasm32")]
     pub fn new() -> Result<Self, String> {
         Ok(Self {
-            inner: BackendImpl::Dummy(DummyAudioBackend::default()),
+            inner: BackendImpl::Dummy(DummyAudioBackend::new()),
         })
     }
 
@@ -86,6 +86,11 @@ impl OddioBackend {
         }
 
         Ok(())
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn is_enabled(&self) -> bool {
+        matches!(self.inner, BackendImpl::Oddio(_))
     }
 }
 
