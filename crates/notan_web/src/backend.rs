@@ -1,4 +1,4 @@
-use crate::audio::fix_webaudio_if_necessary;
+use crate::audio::{enable_webaudio, fix_webaudio_if_necessary};
 use crate::utils::{request_animation_frame, window_add_event_listener};
 use crate::window::WebWindowBackend;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
@@ -101,15 +101,11 @@ impl BackendSystem for WebBackend {
     }
 
     fn get_audio_backend(&self) -> Rc<RefCell<dyn AudioBackend>> {
-        let backend = OddioBackend::new().unwrap();
-        let backend = Rc::new(RefCell::new(backend));
+        let oddio = OddioBackend::new().unwrap();
+        let backend = Rc::new(RefCell::new(oddio));
 
         let b = backend.clone();
-        let c = window_add_event_listener("click", move |_: MouseEvent| {
-            b.borrow_mut().enable().unwrap();
-        });
-
-        std::mem::forget(c);
+        enable_webaudio(move || b.borrow_mut().enable().unwrap());
 
         backend as _
     }

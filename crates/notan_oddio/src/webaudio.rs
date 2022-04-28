@@ -8,10 +8,12 @@ use std::sync::Arc;
 
 use crate::decoder::frames_from_bytes;
 
+const WARN_TEXT: &'static str =
+    "AudioContext cannot be initiated until the user interacts with the webpage.";
+
 /// Dummy audio backend used until the user interacts with the browser
 /// This is due security policies of browsers who doesn't allow to
 /// play video or sound until the user interacts directly with it
-#[derive(Default)]
 pub(crate) struct DummyAudioBackend {
     pub id_count: u64,
     pub volume: f32,
@@ -20,21 +22,23 @@ pub(crate) struct DummyAudioBackend {
 
 impl DummyAudioBackend {
     pub fn new() -> Self {
-        let dummy: Self = Default::default();
-
         /// Only on debug mode display a warning that the audio context needs an user's interaction to work
         #[cfg(debug_assertions)]
         {
-            log::warn!("DEBUG LOG: AudioContext cannot not be enabled until the user interact with the app. {:p}", &dummy);
+            log::warn!("DEBUG LOG: AudioContext cannot not be enabled until the user interact with the app.");
         }
 
-        dummy
+        Self {
+            id_count: 0,
+            volume: 1.0,
+            sources: Default::default(),
+        }
     }
 }
 
 impl AudioBackend for DummyAudioBackend {
     fn set_global_volume(&mut self, volume: f32) {
-        log::error!("AudioContext needs an user's interaction to work.");
+        log::error!("{}", WARN_TEXT);
         self.volume = volume;
     }
 
@@ -54,22 +58,26 @@ impl AudioBackend for DummyAudioBackend {
     }
 
     fn play_sound(&mut self, _source: u64, _repeat: bool) -> Result<u64, String> {
-        log::error!("AudioContext needs an user's interaction to work.");
+        log::error!("{}", WARN_TEXT);
+        #[cfg(debug_assertions)]
+        {
+            panic!("AudioContext needs an user's interaction to work.");
+        }
         let id = self.id_count;
         self.id_count += 1;
         Ok(id)
     }
 
     fn pause(&mut self, _sound: u64) {
-        log::error!("AudioContext needs an user's interaction to work.");
+        log::error!("{}", WARN_TEXT);
     }
 
     fn resume(&mut self, _sound: u64) {
-        log::error!("AudioContext needs an user's interaction to work.");
+        log::error!("{}", WARN_TEXT);
     }
 
     fn stop(&mut self, _sound: u64) {
-        log::error!("AudioContext needs an user's interaction to work.");
+        log::error!("{}", WARN_TEXT);
     }
 
     fn is_stopped(&mut self, _sound: u64) -> bool {
@@ -81,7 +89,7 @@ impl AudioBackend for DummyAudioBackend {
     }
 
     fn set_volume(&mut self, _sound: u64, _volume: f32) {
-        log::error!("AudioContext needs an user's interaction to work.");
+        log::error!("{}", WARN_TEXT);
     }
 
     fn volume(&self, _sound: u64) -> f32 {
@@ -89,6 +97,6 @@ impl AudioBackend for DummyAudioBackend {
     }
 
     fn clean(&mut self, _sources: &[u64], _sounds: &[u64]) {
-        log::error!("AudioContext needs an user's interaction to work.");
+        log::error!("{}", WARN_TEXT);
     }
 }
