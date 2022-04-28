@@ -105,9 +105,11 @@ impl BackendSystem for WebBackend {
         let backend = Rc::new(RefCell::new(backend));
 
         let b = backend.clone();
-        window_add_event_listener("click", move |_: MouseEvent| {
+        let c = window_add_event_listener("click", move |_: MouseEvent| {
             b.borrow_mut().enable().unwrap();
         });
+
+        std::mem::forget(c);
 
         backend as _
     }
