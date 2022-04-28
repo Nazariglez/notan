@@ -110,6 +110,20 @@ where
     Ok(closure)
 }
 
+pub fn window_remove_event_listener<E>(
+    name: &str,
+    closure: &Closure<dyn FnMut(E)>,
+) -> Result<(), String>
+where
+    E: wasm_bindgen::convert::FromWasmAbi + 'static,
+{
+    let win = web_sys::window().ok_or_else(|| "global window doesn't exists".to_string())?;
+    win.remove_event_listener_with_callback(name, closure.as_ref().unchecked_ref())
+        .map_err(|_| format!("Invalid event name: {}", name))?;
+
+    Ok(())
+}
+
 pub fn canvas_position_from_global(
     canvas: &HtmlCanvasElement,
     evt: web_sys::MouseEvent,
