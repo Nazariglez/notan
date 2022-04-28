@@ -2,6 +2,8 @@ use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse};
 use glutin::event_loop::ControlFlow;
 use notan_app::{FrameState, LoadFileFn, WindowConfig};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[cfg(feature = "drop_files")]
 use notan_app::DroppedFile;
@@ -10,7 +12,7 @@ use notan_app::{
     App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, WindowBackend,
 };
 use notan_audio::AudioBackend;
-use notan_oddio::InnerBackend;
+use notan_oddio::OddioBackend;
 use winit::event::{Event as WEvent, WindowEvent};
 use winit::event_loop::EventLoop;
 
@@ -253,9 +255,9 @@ impl BackendSystem for WinitBackend {
         Box::new(backend)
     }
 
-    fn get_audio_backend(&self) -> Box<dyn AudioBackend> {
-        let backend = InnerBackend::new().unwrap();
-        Box::new(backend)
+    fn get_audio_backend(&self) -> Rc<RefCell<dyn AudioBackend>> {
+        let backend = OddioBackend::new().unwrap();
+        Rc::new(RefCell::new(backend))
     }
 }
 
