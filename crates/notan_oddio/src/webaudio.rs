@@ -3,12 +3,11 @@
 use hashbrown::HashMap;
 use notan_audio::AudioBackend;
 use oddio::Frames;
-use std::any::Any;
 use std::sync::Arc;
 
 use crate::decoder::frames_from_bytes;
 
-const WARN_TEXT: &'static str =
+const WARN_TEXT: &str =
     "AudioContext cannot be initiated until the user interacts with the webpage.";
 
 /// Dummy audio backend used until the user interacts with the browser
@@ -22,7 +21,7 @@ pub(crate) struct DummyAudioBackend {
 
 impl DummyAudioBackend {
     pub fn new() -> Self {
-        /// Only on debug mode display a warning that the audio context needs an user's interaction to work
+        // Only on debug mode display a warning that the audio context needs an user's interaction to work
         #[cfg(debug_assertions)]
         {
             log::warn!("DEBUG LOG: AudioContext cannot not be enabled until the user interact with the app.");
@@ -57,6 +56,7 @@ impl AudioBackend for DummyAudioBackend {
         Ok(id)
     }
 
+    #[allow(unreachable_code)]
     fn play_sound(&mut self, _source: u64, _repeat: bool) -> Result<u64, String> {
         log::error!("{}", WARN_TEXT);
         #[cfg(debug_assertions)]

@@ -2,7 +2,7 @@
 
 use crate::assets::AssetLoader;
 use crate::App;
-use notan_audio::{Audio, AudioSource};
+use notan_audio::AudioSource;
 
 pub fn create_audio_parser() -> AssetLoader {
     AssetLoader::new()

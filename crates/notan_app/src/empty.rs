@@ -224,25 +224,25 @@ impl AudioBackend for EmptyAudioBackend {
         Ok(id)
     }
 
-    fn pause(&mut self, sound: u64) {}
+    fn pause(&mut self, _sound: u64) {}
 
     fn resume(&mut self, _sound: u64) {}
 
     fn stop(&mut self, _sound: u64) {}
 
-    fn is_stopped(&mut self, sound: u64) -> bool {
+    fn is_stopped(&mut self, _sound: u64) -> bool {
         false
     }
 
-    fn is_paused(&mut self, sound: u64) -> bool {
+    fn is_paused(&mut self, _sound: u64) -> bool {
         false
     }
 
-    fn set_volume(&mut self, sound: u64, volume: f32) {}
+    fn set_volume(&mut self, _sound: u64, _volume: f32) {}
 
-    fn volume(&self, sound: u64) -> f32 {
+    fn volume(&self, _sound: u64) -> f32 {
         0.0
     }
 
-    fn clean(&mut self, sources: &[u64], sounds: &[u64]) {}
+    fn clean(&mut self, _sources: &[u64], _sounds: &[u64]) {}
 }
