@@ -218,7 +218,7 @@ impl AudioBackend for EmptyAudioBackend {
         Ok(id)
     }
 
-    fn play_sound(&mut self, _source: u64, _repeat: bool) -> Result<u64, String> {
+    fn play_sound(&mut self, _source: u64, _volume: f32, _repeat: bool) -> Result<u64, String> {
         let id = self.id_count;
         self.id_count += 1;
         Ok(id)

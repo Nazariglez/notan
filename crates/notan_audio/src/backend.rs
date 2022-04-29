@@ -6,7 +6,7 @@ pub trait AudioBackend {
     fn set_global_volume(&mut self, volume: f32);
     fn global_volume(&self) -> f32;
     fn create_source(&mut self, bytes: &[u8]) -> Result<u64, String>;
-    fn play_sound(&mut self, source: u64, repeat: bool) -> Result<u64, String>;
+    fn play_sound(&mut self, source: u64, volume: f32, repeat: bool) -> Result<u64, String>;
     fn pause(&mut self, sound: u64);
     fn resume(&mut self, sound: u64);
     fn stop(&mut self, sound: u64);

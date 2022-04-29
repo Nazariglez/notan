@@ -57,7 +57,7 @@ impl AudioBackend for DummyAudioBackend {
     }
 
     #[allow(unreachable_code)]
-    fn play_sound(&mut self, _source: u64, _repeat: bool) -> Result<u64, String> {
+    fn play_sound(&mut self, _source: u64, volume: f32, _repeat: bool) -> Result<u64, String> {
         log::error!("{}", WARN_TEXT);
         #[cfg(debug_assertions)]
         {

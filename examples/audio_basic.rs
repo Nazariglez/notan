@@ -11,9 +11,11 @@ struct State {
 }
 
 fn play_music(index: usize, app: &mut App, state: &mut State) {
-    let sound = app
-        .audio
-        .play_sound(&state.music[index], state.repeat[index]);
+    let sound = app.audio.play_sound(
+        &state.music[index],
+        state.volume[index],
+        state.repeat[index],
+    );
     state.sound[index] = Some(sound);
 }
 

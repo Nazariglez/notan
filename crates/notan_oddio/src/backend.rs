@@ -113,11 +113,11 @@ impl AudioBackend for OddioBackend {
     }
 
     #[inline]
-    fn play_sound(&mut self, source: u64, repeat: bool) -> Result<u64, String> {
+    fn play_sound(&mut self, source: u64, volume: f32, repeat: bool) -> Result<u64, String> {
         match &mut self.inner {
-            BackendImpl::Oddio(inner) => inner.play_sound(source, repeat),
+            BackendImpl::Oddio(inner) => inner.play_sound(source, volume, repeat),
             #[cfg(target_arch = "wasm32")]
-            BackendImpl::Dummy(inner) => inner.play_sound(source, repeat),
+            BackendImpl::Dummy(inner) => inner.play_sound(source, volume, repeat),
         }
     }
 
@@ -279,18 +279,19 @@ impl InnerBackend {
         Ok(id)
     }
 
-    fn play_sound(&mut self, source: u64, repeat: bool) -> Result<u64, String> {
+    fn play_sound(&mut self, source: u64, volume: f32, repeat: bool) -> Result<u64, String> {
+        let volume = volume.clamp(0.0, 1.0);
         let frames = self
             .sources
             .get(&source)
             .ok_or_else(|| "Invalid audio source id.".to_string())?;
 
         let handle = if repeat {
-            let signal = Gain::new(Cycle::new(frames.clone()), 1.0);
+            let signal = Gain::new(Cycle::new(frames.clone()), volume);
             let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
             AudioHandle::Cycle(handle)
         } else {
-            let signal = Gain::new(FramesSignal::from(frames.clone()), 1.0);
+            let signal = Gain::new(FramesSignal::from(frames.clone()), volume);
             let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
             AudioHandle::Frame(handle)
         };

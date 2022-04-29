@@ -25,11 +25,12 @@ impl Audio {
     }
 
     #[inline]
-    pub fn play_sound(&mut self, source: &AudioSource, repeat: bool) -> Sound {
+    pub fn play_sound(&mut self, source: &AudioSource, volume: f32, repeat: bool) -> Sound {
+        let volume = clamp_volume(volume);
         let id = self
             .backend
             .borrow_mut()
-            .play_sound(source.id, repeat)
+            .play_sound(source.id, volume, repeat)
             .unwrap();
         Sound::new(id, self.resource_tracker.clone())
     }
