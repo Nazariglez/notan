@@ -39,7 +39,7 @@ cpal = "0.13.5"
 members = ["crates/*"]
 
 [features]
-default = ["default_backend"]
+default = ["default_backend", "log", "draw"]
 default_backend = ["notan_backend"]
 log = ["notan_log"]
 glyph = ["notan_glyph"]
