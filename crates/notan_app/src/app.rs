@@ -2,6 +2,8 @@ use crate::keyboard::Keyboard;
 use crate::mouse::Mouse;
 use crate::timer::AppTimer;
 use crate::{Backend, WindowBackend};
+
+#[cfg(feature = "audio")]
 use notan_audio::Audio;
 
 /// Represents the state of the application, always accessible across the event's cycle
@@ -25,6 +27,7 @@ pub struct App {
     /// App timer
     pub timer: AppTimer,
 
+    #[cfg(feature = "audio")]
     /// Audio manager
     pub audio: Audio,
 
@@ -32,11 +35,12 @@ pub struct App {
 }
 
 impl App {
-    pub(crate) fn new(backend: Box<dyn Backend>, audio: Audio) -> Self {
+    pub(crate) fn new(backend: Box<dyn Backend>, #[cfg(feature = "audio")] audio: Audio) -> Self {
         let mouse = Default::default();
         let keyboard = Default::default();
         Self {
             backend,
+            #[cfg(feature = "audio")]
             audio,
             mouse,
             keyboard,
