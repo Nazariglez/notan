@@ -1,6 +1,6 @@
 [package]
 name = "notan_winit"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -13,10 +13,10 @@ description = "Provides a native backend using winit for Notan"
 
 [dependencies]
 log = "0.4"
-notan_app = { path = "../notan_app", version = "0.3.0" }
-notan_glow = { path = "../notan_glow", version = "0.3.0" }
-notan_audio = { path = "../notan_audio", version = "0.3.0", optional = true }
-notan_oddio = { path = "../notan_oddio", version = "0.3.0", optional = true }
+notan_app = { path = "../notan_app", version = "0.4.0" }
+notan_glow = { path = "../notan_glow", version = "0.4.0" }
+notan_audio = { path = "../notan_audio", version = "0.4.0", optional = true }
+notan_oddio = { path = "../notan_oddio", version = "0.4.0", optional = true }
 winit = "0.26"
 glutin = "0.28"
 crossbeam-channel = "0.5"
