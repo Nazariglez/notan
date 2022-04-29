@@ -7,7 +7,7 @@ mod window;
 #[cfg(feature = "drop_files")]
 mod files;
 
-// TODO feature audio
+#[cfg(feature = "audio")]
 mod audio;
 
 pub use backend::*;

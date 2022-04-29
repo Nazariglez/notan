@@ -21,8 +21,8 @@ console_error_panic_hook = "0.1"
 notan_glow = { path = "../notan_glow", version = "0.3.0" }
 notan_graphics = { path = "../notan_graphics", version = "0.3.0" }
 futures-util = "0.3"
-notan_audio = { path = "../notan_audio", version = "0.3.0" }
-notan_oddio = { path = "../notan_oddio", version = "0.3.0" }
+notan_audio = { path = "../notan_audio", version = "0.3.0", optional = true }
+notan_oddio = { path = "../notan_oddio", version = "0.3.0", optional = true }
 
 [dependencies.web-sys]
 version = "0.3"
@@ -51,5 +51,6 @@ features= [
 ]
 
 [features]
+audio = ["notan_app/audio", "notan_audio", "notan_oddio"]
 drop_files = ["web-sys/DragEvent", "web-sys/DataTransfer", "web-sys/FileList", "web-sys/File", "web-sys/DataTransferItemList", "web-sys/DataTransferItem"]
 clipboard = []

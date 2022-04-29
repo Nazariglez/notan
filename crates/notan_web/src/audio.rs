@@ -1,3 +1,4 @@
+#![cfg(feature = "audio")]
 use crate::utils::window_remove_event_listener;
 use js_sys::eval;
 use notan_audio::AudioBackend;

@@ -2,6 +2,7 @@
 
 use crate::assets::{AssetLoader, Assets};
 use crate::config::*;
+#[cfg(feature = "audio")]
 use crate::empty::EmptyAudioBackend;
 use crate::graphics::Graphics;
 use crate::handlers::{
@@ -11,6 +12,7 @@ use crate::handlers::{
 use crate::parsers::*;
 use crate::plugins::*;
 use crate::{App, Backend, BackendSystem, FrameState, GfxExtension, GfxRenderer};
+#[cfg(feature = "audio")]
 use notan_audio::Audio;
 
 pub use crate::handlers::SetupHandler;
@@ -186,8 +188,14 @@ where
         let initialize = backend.initialize(window)?;
 
         let mut graphics = Graphics::new(backend.get_graphics_backend())?;
+
+        #[cfg(feature = "audio")]
         let audio = Audio::new(backend.get_audio_backend())?;
+        #[cfg(feature = "audio")]
         let mut app = App::new(Box::new(backend), audio);
+
+        #[cfg(not(feature = "audio"))]
+        let mut app = App::new(Box::new(backend));
 
         let (width, height) = app.window().size();
         let win_dpi = app.window().dpi();
@@ -303,6 +311,7 @@ where
 
             // Clean possible dropped resources on the backend
             graphics.clean();
+            #[cfg(feature = "audio")]
             app.audio.clean();
 
             if app.closed {

@@ -11,7 +11,9 @@ use notan_app::DroppedFile;
 use notan_app::{
     App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, WindowBackend,
 };
+#[cfg(feature = "audio")]
 use notan_audio::AudioBackend;
+#[cfg(feature = "audio")]
 use notan_oddio::OddioBackend;
 use winit::event::{Event as WEvent, WindowEvent};
 use winit::event_loop::EventLoop;
@@ -255,6 +257,7 @@ impl BackendSystem for WinitBackend {
         Box::new(backend)
     }
 
+    #[cfg(feature = "audio")]
     fn get_audio_backend(&self) -> Rc<RefCell<dyn AudioBackend>> {
         let backend = OddioBackend::new().unwrap();
         Rc::new(RefCell::new(backend))
