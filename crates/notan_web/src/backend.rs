@@ -1,10 +1,13 @@
+#[cfg(feature = "audio")]
 use crate::audio::{enable_webaudio, fix_webaudio_if_necessary};
 use crate::utils::{request_animation_frame, window_add_event_listener};
 use crate::window::WebWindowBackend;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 use notan_app::{FrameState, WindowConfig};
+#[cfg(feature = "audio")]
 use notan_audio::AudioBackend;
 use notan_graphics::DeviceBackend;
+#[cfg(feature = "audio")]
 use notan_oddio::OddioBackend;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -100,6 +103,7 @@ impl BackendSystem for WebBackend {
         Box::new(backend)
     }
 
+    #[cfg(feature = "audio")]
     fn get_audio_backend(&self) -> Rc<RefCell<dyn AudioBackend>> {
         let oddio = OddioBackend::new().unwrap();
         let backend = Rc::new(RefCell::new(oddio));

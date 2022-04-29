@@ -6,8 +6,10 @@ use crate::{App, EventIterator};
 use downcast_rs::{impl_downcast, Downcast};
 use futures::prelude::*;
 use futures::Future;
-use notan_audio::AudioBackend;
 use notan_graphics::DeviceBackend;
+
+#[cfg(feature = "audio")]
+use notan_audio::AudioBackend;
 
 /// Closure returned from the backend's initialize method
 pub type InitializeFn<S, R> = dyn FnOnce(App, S, R) -> Result<(), String>;
@@ -58,6 +60,7 @@ pub trait BackendSystem: Backend {
     /// Returns the graphics backend implementation
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend>;
 
+    #[cfg(feature = "audio")]
     /// Return the audio backend implementation
     fn get_audio_backend(&self) -> Rc<RefCell<dyn AudioBackend>>;
 }

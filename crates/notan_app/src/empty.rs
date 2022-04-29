@@ -2,6 +2,7 @@ use crate::config::WindowConfig;
 use crate::{
     App, Backend, BackendSystem, CursorIcon, EventIterator, FrameState, InitializeFn, WindowBackend,
 };
+#[cfg(feature = "audio")]
 use notan_audio::AudioBackend;
 use notan_graphics::prelude::*;
 use std::cell::RefCell;
@@ -106,6 +107,7 @@ impl BackendSystem for EmptyBackend {
         Box::new(EmptyDeviceBackend::default())
     }
 
+    #[cfg(feature = "audio")]
     fn get_audio_backend(&self) -> Rc<RefCell<dyn AudioBackend>> {
         Rc::new(RefCell::new(EmptyAudioBackend::default()))
     }
@@ -193,12 +195,14 @@ impl DeviceBackend for EmptyDeviceBackend {
     }
 }
 
+#[cfg(feature = "audio")]
 #[derive(Default)]
 pub struct EmptyAudioBackend {
     id_count: u64,
     volume: f32,
 }
 
+#[cfg(feature = "audio")]
 impl AudioBackend for EmptyAudioBackend {
     fn set_global_volume(&mut self, volume: f32) {
         self.volume = volume;

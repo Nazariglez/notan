@@ -3,7 +3,6 @@ pub mod prelude;
 
 pub use notan::*;
 pub use notan_app as app;
-pub use notan_audio as audio;
 pub use notan_graphics as graphics;
 pub use notan_macro::*;
 pub use notan_math as math;
@@ -11,6 +10,9 @@ pub use notan_utils as utils;
 
 #[cfg(feature = "default_backend")]
 pub use notan_backend as backend;
+
+#[cfg(feature = "audio")]
+pub use notan_audio as audio;
 
 #[cfg(feature = "log")]
 pub use notan_log as log;
