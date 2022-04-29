@@ -1,4 +1,3 @@
-use notan::app::keyboard::{KeyCode, Keyboard};
 use notan::draw::*;
 use notan::prelude::*;
 
