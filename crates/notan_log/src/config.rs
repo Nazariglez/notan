@@ -48,6 +48,22 @@ impl LogConfig {
         }
     }
 
+    pub fn debug() -> Self {
+        Self::new(log::LevelFilter::Debug)
+    }
+
+    pub fn info() -> Self {
+        Self::new(log::LevelFilter::Info)
+    }
+
+    pub fn warn() -> Self {
+        Self::new(log::LevelFilter::Warn)
+    }
+
+    pub fn error() -> Self {
+        Self::new(log::LevelFilter::Error)
+    }
+
     /// Changes the level filter
     pub fn level(mut self, level: log::LevelFilter) -> Self {
         self.level = level;
