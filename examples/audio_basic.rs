@@ -1,60 +1,113 @@
+use notan::egui::{self, *};
+use notan::log::LogConfig;
 use notan::prelude::*;
-
-// todo webaudio https://developer.chrome.com/blog/web-audio-autoplay/#policy-adjustments
 
 #[derive(AppState)]
 struct State {
-    source: AudioSource,
+    music: AudioSource,
     sound: Option<Sound>,
+    repeat: bool,
+    volume: f32,
+}
+
+fn play_music(app: &mut App, state: &mut State) {
+    let sound = app.audio.play_sound(&state.music, state.repeat);
+    state.sound = Some(sound);
+}
+
+fn stop_music(app: &mut App, state: &mut State) {
+    if let Some(s) = state.sound.take() {
+        app.audio.stop(&s);
+    }
+}
+
+fn is_playing(app: &mut App, state: &State) -> bool {
+    match &state.sound {
+        Some(s) => !app.audio.is_stopped(s),
+        None => false,
+    }
+}
+
+fn is_paused(app: &mut App, state: &State) -> bool {
+    match &state.sound {
+        Some(s) => app.audio.is_paused(s),
+        None => false,
+    }
+}
+
+fn toggle_music(app: &mut App, state: &mut State) {
+    match &state.sound {
+        None => {}
+        Some(s) => {
+            if app.audio.is_paused(s) {
+                app.audio.resume(s);
+            } else {
+                app.audio.pause(s);
+            }
+        }
+    }
 }
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    notan::init_with(|app: &mut App| {
-        let source = app
-            .audio
-            .create_source(include_bytes!("assets/bipbip.ogg"))
-            .unwrap();
-
-        State {
-            source,
-            sound: None,
-        }
-    })
-    .add_config(notan::log::LogConfig::default())
-    .draw(draw)
-    .build()
+    notan::init_with(setup)
+        .add_config(LogConfig::debug())
+        .add_config(EguiConfig)
+        .add_config(WindowConfig::default().size(300, 300))
+        .draw(draw)
+        .build()
 }
 
-fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
-    if app.keyboard.was_pressed(KeyCode::Space) {
-        let sound = app.audio.play_sound(&state.source, false);
-        state.sound = Some(sound);
-    } else if app.keyboard.was_pressed(KeyCode::Z) {
-        if let Some(id) = &state.sound {
-            app.audio.stop(id);
-        }
+fn setup(app: &mut App) -> State {
+    let music = app
+        .audio
+        .create_source(include_bytes!("assets/jingles_NES00.ogg"))
+        .unwrap();
+
+    State {
+        music,
+        sound: None,
+        repeat: false,
+        volume: 1.0,
     }
+}
 
-    if let Some(id) = &state.sound {
-        let volume = app.audio.volume(id);
-        app.audio.set_volume(id, volume - app.timer.delta_f32());
-    }
+// UI
+fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
+    app.audio.set_global_volume(state.volume);
 
-    // "Random" color bases on the app's time
-    let color = Color::from_rgb(
-        app.timer.time_since_init().cos(),
-        app.timer.time_since_init().sin(),
-        1.0,
-    );
+    let mut output = plugins.egui(|ctx| {
+        egui::Window::new("Controls").show(ctx, |ui| {
+            ui.label("Volume");
+            ui.add(egui::Slider::new(&mut state.volume, 0.0..=1.0));
 
-    // create a renderer object
-    let mut renderer = gfx.create_renderer();
+            ui.add(egui::Checkbox::new(&mut state.repeat, "Repeat"));
 
-    // begin a pass to clear the screen
-    renderer.begin(Some(&ClearOptions::color(color)));
-    renderer.end();
+            let is_playing = is_playing(app, state);
+            if is_playing {
+                let btn = ui.button("Stop");
+                if btn.clicked() {
+                    stop_music(app, state);
+                }
 
-    // render to screen
-    gfx.render(&renderer);
+                let pause = if is_paused(app, state) {
+                    "Resume"
+                } else {
+                    "Pause"
+                };
+                let btn = ui.button(pause);
+                if btn.clicked() {
+                    toggle_music(app, state);
+                }
+            } else {
+                let play = ui.button("Play");
+                if play.clicked() {
+                    play_music(app, state);
+                }
+            }
+        });
+    });
+
+    output.clear_color(Color::GRAY);
+    gfx.render(&output);
 }
