@@ -83,6 +83,10 @@ name = "draw_animation_grid"
 required-features = ["draw"]
 
 [[example]]
+name = "audio_basic"
+required-features = ["log", "egui", "audio"]
+
+[[example]]
 name = "draw_animation_list"
 required-features = ["draw"]
 

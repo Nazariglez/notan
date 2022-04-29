@@ -75,7 +75,14 @@ where
     }
 
     pub fn default_loaders(self) -> Self {
-        self.add_loader(create_texture_parser())
+        let mut s = self.add_loader(create_texture_parser());
+
+        #[cfg(feature = "audio")]
+        {
+            s = s.add_loader(create_audio_parser());
+        }
+
+        s
     }
 
     /// Applies a configuration
