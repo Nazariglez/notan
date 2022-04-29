@@ -2,8 +2,6 @@
 
 use crate::assets::{AssetLoader, Assets};
 use crate::config::*;
-#[cfg(feature = "audio")]
-use crate::empty::EmptyAudioBackend;
 use crate::graphics::Graphics;
 use crate::handlers::{
     AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler,

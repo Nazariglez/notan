@@ -2,7 +2,7 @@ use crate::backend::{AudioBackend, AudioSource, Sound};
 use crate::tracker::{ResourceId, ResourceTracker};
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::{Arc, RwLock, RwLockReadGuard};
+use std::sync::Arc;
 
 pub struct Audio {
     backend: Rc<RefCell<dyn AudioBackend>>,

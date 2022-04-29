@@ -1,6 +1,6 @@
 #[cfg(feature = "audio")]
-use crate::audio::{enable_webaudio, fix_webaudio_if_necessary};
-use crate::utils::{request_animation_frame, window_add_event_listener};
+use crate::audio::enable_webaudio;
+use crate::utils::request_animation_frame;
 use crate::window::WebWindowBackend;
 use notan_app::{App, Backend, BackendSystem, EventIterator, InitializeFn, WindowBackend};
 use notan_app::{FrameState, WindowConfig};
@@ -12,7 +12,6 @@ use notan_oddio::OddioBackend;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::closure::Closure;
-use web_sys::MouseEvent;
 
 pub struct WebBackend {
     window: Option<WebWindowBackend>,

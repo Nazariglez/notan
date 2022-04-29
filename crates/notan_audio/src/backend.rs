@@ -1,5 +1,5 @@
 use crate::tracker::{ResourceId, ResourceTracker};
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 /// Represent the audio implementation backend
 pub trait AudioBackend {
@@ -10,7 +10,9 @@ pub trait AudioBackend {
     fn pause(&mut self, sound: u64);
     fn resume(&mut self, sound: u64);
     fn stop(&mut self, sound: u64);
+    #[allow(clippy::wrong_self_convention)]
     fn is_stopped(&mut self, sound: u64) -> bool;
+    #[allow(clippy::wrong_self_convention)]
     fn is_paused(&mut self, sound: u64) -> bool;
     fn set_volume(&mut self, sound: u64, volume: f32);
     fn volume(&self, sound: u64) -> f32;

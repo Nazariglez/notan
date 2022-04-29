@@ -1,13 +1,12 @@
 #![cfg(feature = "audio")]
 use crate::utils::window_remove_event_listener;
 use js_sys::eval;
-use notan_audio::AudioBackend;
-use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::{JsCast, JsValue};
 
+#[allow(unused)]
 #[inline]
 pub(crate) fn fix_webaudio_if_necessary() {
     // todo check if its chrome?
@@ -105,7 +104,7 @@ pub(crate) fn enable_webaudio<F: FnMut() + 'static>(mut handler: F) {
     ];
 
     let cw = closure_wrapper.clone();
-    let closure = Closure::wrap(Box::new(move |e: JsValue| {
+    let closure = Closure::wrap(Box::new(move |_: JsValue| {
         log::debug!("Enabling WebAudio AudioContext");
         handler();
         let closure = cw.borrow();

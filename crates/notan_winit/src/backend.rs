@@ -1,7 +1,7 @@
 use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse};
 use glutin::event_loop::ControlFlow;
-use notan_app::{FrameState, LoadFileFn, WindowConfig};
+use notan_app::{FrameState, WindowConfig};
 use std::cell::RefCell;
 use std::rc::Rc;
 

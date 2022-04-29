@@ -2,14 +2,9 @@ use crate::decoder::frames_from_bytes;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::BufferSize;
 use hashbrown::HashMap;
-use log::error;
-use notan_audio::{AudioBackend, AudioSource};
-use oddio::{
-    Cycle, FilterHaving, Frames, FramesSignal, Gain, GainControl, Handle, Mixer, Stop, StopControl,
-};
-use std::io::Cursor;
+use notan_audio::AudioBackend;
+use oddio::{Cycle, Frames, FramesSignal, Gain, GainControl, Handle, Mixer, Stop, StopControl};
 use std::sync::Arc;
-use symphonia::core::io::MediaSourceStream;
 
 #[cfg(target_arch = "wasm32")]
 use crate::webaudio::DummyAudioBackend;
@@ -86,11 +81,6 @@ impl OddioBackend {
         }
 
         Ok(())
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    fn is_enabled(&self) -> bool {
-        matches!(self.inner, BackendImpl::Oddio(_))
     }
 }
 
@@ -208,7 +198,7 @@ pub struct InnerBackend {
     source_id_count: u64,
     sound_id_count: u64,
     mixer_handle: Handle<Gain<Mixer<[f32; 2]>>>,
-    stream: cpal::Stream,
+    _stream: cpal::Stream,
     sources: HashMap<u64, Arc<Frames<[f32; 2]>>>,
     sounds: HashMap<u64, AudioInfo>,
     volume: f32,
@@ -219,7 +209,7 @@ impl InnerBackend {
         let host = cpal::default_host();
         let device = host
             .default_output_device()
-            .ok_or_else(|| "No output device available")?;
+            .ok_or("No output device available")?;
 
         let sample_rate = device
             .default_output_config()
@@ -238,7 +228,7 @@ impl InnerBackend {
             config
         );
 
-        let (mut mixer_handle, mixer) = oddio::split(oddio::Gain::new(oddio::Mixer::new(), 1.0));
+        let (mixer_handle, mixer) = oddio::split(oddio::Gain::new(oddio::Mixer::new(), 1.0));
 
         let stream = device
             .build_output_stream(
@@ -259,7 +249,7 @@ impl InnerBackend {
             source_id_count: 0,
             sound_id_count: 0,
             mixer_handle,
-            stream,
+            _stream: stream,
             sources: Default::default(),
             sounds: Default::default(),
             volume: 1.0,
@@ -338,6 +328,7 @@ impl InnerBackend {
         }
     }
 
+    #[allow(clippy::wrong_self_convention)]
     fn is_stopped(&mut self, sound: u64) -> bool {
         match self.sounds.get_mut(&sound) {
             None => false,
@@ -345,6 +336,7 @@ impl InnerBackend {
         }
     }
 
+    #[allow(clippy::wrong_self_convention)]
     fn is_paused(&mut self, sound: u64) -> bool {
         match self.sounds.get_mut(&sound) {
             None => false,

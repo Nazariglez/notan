@@ -12,7 +12,7 @@ use symphonia::default::{get_codecs, get_probe};
 pub(crate) fn frames_from_bytes(bytes: &[u8]) -> Result<Arc<Frames<[f32; 2]>>, String> {
     let (mut samples, sample_rate) = decode_bytes(bytes.to_vec())?;
     let stereo = oddio::frame_stereo(&mut samples);
-    Ok(Frames::from_slice(sample_rate, &stereo))
+    Ok(Frames::from_slice(sample_rate, stereo))
 }
 
 fn decode_bytes(bytes: Vec<u8>) -> Result<(Vec<f32>, u32), String> {
