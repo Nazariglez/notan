@@ -269,7 +269,7 @@ They are:
 - Graphics rendering
 - Text rendering
 - Draw 2D API
-- Audio (wip)
+- Audio 
 - Input (Keyboard, mouse, etc...)
 - Simple UI via egui
 
