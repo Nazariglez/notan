@@ -1,3 +1,4 @@
+use crate::epaint::Primitive;
 use crate::plugin::Output;
 use crate::TextureId;
 use notan_app::{
@@ -209,7 +210,7 @@ impl EguiExtension {
                         height as _,
                     )?
                 }
-                egui::ImageData::Alpha(image) => {
+                egui::ImageData::Font(image) => {
                     debug_assert_eq!(
                         image.width() * image.height(),
                         image.pixels.len(),
@@ -248,7 +249,7 @@ impl EguiExtension {
                 let data = bytemuck::cast_slice(image.pixels.as_ref());
                 create_texture(device, data, width as _, height as _)?
             }
-            egui::ImageData::Alpha(image) => {
+            egui::ImageData::Font(image) => {
                 debug_assert_eq!(
                     image.width() * image.height(),
                     image.pixels.len(),
@@ -275,7 +276,7 @@ impl EguiExtension {
     pub(crate) fn paint_and_update_textures(
         &mut self,
         device: &mut Device,
-        meshes: Vec<egui::ClippedMesh>,
+        meshes: Vec<egui::ClippedPrimitive>,
         textures_delta: &egui::TexturesDelta,
         target: Option<&RenderTexture>,
     ) -> Result<(), String> {
@@ -283,7 +284,7 @@ impl EguiExtension {
             self.set_texture(device, *id, image_delta)?;
         }
 
-        self.paint_meshes(device, meshes, target)?;
+        self.paint_primitives(device, meshes, target)?;
 
         for &id in &textures_delta.free {
             self.free_texture(id);
@@ -292,10 +293,10 @@ impl EguiExtension {
         Ok(())
     }
 
-    fn paint_meshes(
+    fn paint_primitives(
         &mut self,
         device: &mut Device,
-        meshes: Vec<egui::ClippedMesh>,
+        meshes: Vec<egui::ClippedPrimitive>,
         target: Option<&RenderTexture>,
     ) -> Result<(), String> {
         let (width, height) = target.map_or(device.size(), |rt| {
@@ -306,8 +307,19 @@ impl EguiExtension {
         let uniforms: [f32; 3] = [width as _, height as _, 0.0];
         device.set_buffer_data(&self.ubo, &uniforms);
 
-        for egui::ClippedMesh(clip_rect, mesh) in &meshes {
-            self.paint_mesh(device, *clip_rect, mesh, target)?;
+        for egui::ClippedPrimitive {
+            clip_rect,
+            primitive,
+        } in &meshes
+        {
+            match primitive {
+                Primitive::Mesh(mesh) => {
+                    self.paint_mesh(device, *clip_rect, mesh, target)?;
+                }
+                Primitive::Callback(_) => {
+                    // TODO primitve 3d callback
+                }
+            }
         }
 
         Ok(())
@@ -317,12 +329,12 @@ impl EguiExtension {
         &mut self,
         device: &mut Device,
         clip_rect: egui::Rect,
-        mesh: &egui::Mesh,
+        primitive: &egui::Mesh,
         target: Option<&RenderTexture>,
     ) -> Result<(), String> {
-        let vertices: &[f32] = bytemuck::cast_slice(&mesh.vertices);
+        let vertices: &[f32] = bytemuck::cast_slice(&primitive.vertices);
         device.set_buffer_data(&self.vbo, vertices);
-        device.set_buffer_data(&self.ebo, &mesh.indices);
+        device.set_buffer_data(&self.ebo, &primitive.indices);
 
         let (width_in_pixels, height_in_pixels) = target.map_or(device.size(), |rt| {
             (rt.base_width() as _, rt.base_height() as _)
@@ -349,8 +361,8 @@ impl EguiExtension {
 
         let texture = self
             .textures
-            .get(&mesh.texture_id)
-            .ok_or_else(|| format!("Invalid EGUI texture id {:?}", &mesh.texture_id))?;
+            .get(&primitive.texture_id)
+            .ok_or_else(|| format!("Invalid EGUI texture id {:?}", &primitive.texture_id))?;
 
         // webgl2 doesn't have a gl.enable(GL_FRAMEBUFFER_SRGB) so gamma should be fixed by fragment shader
         // to do that a float 0.0 - 1.0 is passed to the shader to indicate if it should or not encode gamma
@@ -375,7 +387,7 @@ impl EguiExtension {
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
         renderer.bind_texture(0, texture);
-        renderer.draw(0, mesh.indices.len() as _);
+        renderer.draw(0, primitive.indices.len() as _);
         renderer.end();
 
         match target {

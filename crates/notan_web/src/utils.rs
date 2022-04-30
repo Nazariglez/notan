@@ -110,6 +110,7 @@ where
     Ok(closure)
 }
 
+#[cfg(feature = "audio")]
 pub fn window_remove_event_listener<E>(
     name: &str,
     closure: &Closure<dyn FnMut(E)>,

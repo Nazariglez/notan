@@ -2,11 +2,16 @@ use crate::config::WindowConfig;
 use crate::{
     App, Backend, BackendSystem, CursorIcon, EventIterator, FrameState, InitializeFn, WindowBackend,
 };
+use notan_graphics::prelude::*;
+
+#[cfg(feature = "audio")]
+use std::cell::RefCell;
+
+#[cfg(feature = "audio")]
+use std::rc::Rc;
+
 #[cfg(feature = "audio")]
 use notan_audio::AudioBackend;
-use notan_graphics::prelude::*;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 #[derive(Default)]
 pub struct EmptyWindowBackend {

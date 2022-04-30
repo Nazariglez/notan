@@ -397,5 +397,15 @@ fn web_cursor(cursor: CursorIcon) -> &'static str {
         CursorIcon::ResizeVertical => "ns-resize",
         CursorIcon::ZoomIn => "zoom-in",
         CursorIcon::ZoomOut => "zoom-out",
+        CursorIcon::ResizeEast => "e-resize",
+        CursorIcon::ResizeSouthEast => "se-resize",
+        CursorIcon::ResizeSouth => "s-resize",
+        CursorIcon::ResizeSouthWest => "sw-resize",
+        CursorIcon::ResizeWest => "w-resize",
+        CursorIcon::ResizeNorthWest => "nw-resize",
+        CursorIcon::ResizeNorth => "n-resize",
+        CursorIcon::ResizeNorthEast => "ne-resize",
+        CursorIcon::ResizeColumn => "col-resize",
+        CursorIcon::ResizeRow => "row-resize",
     }
 }

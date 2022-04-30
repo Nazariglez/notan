@@ -295,6 +295,16 @@ fn translate_cursor(cursor: CursorIcon) -> notan_app::CursorIcon {
         CursorIcon::ResizeVertical => NCursorIcon::ResizeVertical,
         CursorIcon::ZoomIn => NCursorIcon::ZoomIn,
         CursorIcon::ZoomOut => NCursorIcon::ZoomOut,
+        CursorIcon::ResizeEast => NCursorIcon::ResizeEast,
+        CursorIcon::ResizeSouthEast => NCursorIcon::ResizeSouthEast,
+        CursorIcon::ResizeSouth => NCursorIcon::ResizeSouth,
+        CursorIcon::ResizeSouthWest => NCursorIcon::ResizeSouthWest,
+        CursorIcon::ResizeWest => NCursorIcon::ResizeWest,
+        CursorIcon::ResizeNorthWest => NCursorIcon::ResizeNorthWest,
+        CursorIcon::ResizeNorth => NCursorIcon::ResizeNorth,
+        CursorIcon::ResizeNorthEast => NCursorIcon::ResizeNorthEast,
+        CursorIcon::ResizeColumn => NCursorIcon::ResizeColumn,
+        CursorIcon::ResizeRow => NCursorIcon::ResizeRow,
     }
 }
 

@@ -163,5 +163,15 @@ fn winit_cursor(cursor: CursorIcon) -> Option<WCursorIcon> {
         CursorIcon::ResizeVertical => WCursorIcon::NsResize,
         CursorIcon::ZoomIn => WCursorIcon::ZoomIn,
         CursorIcon::ZoomOut => WCursorIcon::ZoomOut,
+        CursorIcon::ResizeEast => WCursorIcon::EResize,
+        CursorIcon::ResizeSouthEast => WCursorIcon::SeResize,
+        CursorIcon::ResizeSouth => WCursorIcon::SResize,
+        CursorIcon::ResizeSouthWest => WCursorIcon::SwResize,
+        CursorIcon::ResizeWest => WCursorIcon::WResize,
+        CursorIcon::ResizeNorthWest => WCursorIcon::NwResize,
+        CursorIcon::ResizeNorth => WCursorIcon::NResize,
+        CursorIcon::ResizeNorthEast => WCursorIcon::NeResize,
+        CursorIcon::ResizeColumn => WCursorIcon::ColResize,
+        CursorIcon::ResizeRow => WCursorIcon::RowResize,
     })
 }

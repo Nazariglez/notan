@@ -52,7 +52,7 @@ drop_files = ["notan_app/drop_files", "notan_backend?/drop_files", "notan_egui?/
 clipboard = ["notan_app/clipboard", "notan_backend?/clipboard", "notan_egui?/clipboard"]
 
 [dev-dependencies]
-egui_demo_lib = "0.17.0"
+egui_demo_lib = "0.18.0"
 
 [[example]]
 name = "app_drop_file"

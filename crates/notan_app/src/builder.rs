@@ -72,12 +72,13 @@ where
         builder.default_loaders()
     }
 
+    #[allow(unreachable_code)]
     pub fn default_loaders(self) -> Self {
-        let mut s = self.add_loader(create_texture_parser());
+        let s = self.add_loader(create_texture_parser());
 
         #[cfg(feature = "audio")]
         {
-            s = s.add_loader(create_audio_parser());
+            return s.add_loader(create_audio_parser());
         }
 
         s

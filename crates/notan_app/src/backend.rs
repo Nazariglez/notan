@@ -1,7 +1,4 @@
 use crate::config::WindowConfig;
-use std::cell::RefCell;
-use std::rc::Rc;
-// use crate::graphics::DeviceBackend;
 use crate::{App, EventIterator};
 use downcast_rs::{impl_downcast, Downcast};
 use futures::prelude::*;
@@ -10,6 +7,12 @@ use notan_graphics::DeviceBackend;
 
 #[cfg(feature = "audio")]
 use notan_audio::AudioBackend;
+
+#[cfg(feature = "audio")]
+use std::cell::RefCell;
+
+#[cfg(feature = "audio")]
+use std::rc::Rc;
 
 /// Closure returned from the backend's initialize method
 pub type InitializeFn<S, R> = dyn FnOnce(App, S, R) -> Result<(), String>;
@@ -94,6 +97,16 @@ pub enum CursorIcon {
     ResizeVertical,
     ZoomIn,
     ZoomOut,
+    ResizeEast,
+    ResizeSouthEast,
+    ResizeSouth,
+    ResizeSouthWest,
+    ResizeWest,
+    ResizeNorthWest,
+    ResizeNorth,
+    ResizeNorthEast,
+    ResizeColumn,
+    ResizeRow,
 }
 
 /// Represents a window
