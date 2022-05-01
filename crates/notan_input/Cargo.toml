@@ -1,0 +1,13 @@
+[package]
+name = "notan_input"
+version = "0.4.0"
+authors = ["Nazarí González <nazari.nz@gmail.com>"]
+edition = "2021"
+readme = "README.md"
+homepage = "https://github.com/Nazariglez/notan"
+repository = "https://github.com/Nazariglez/notan"
+license = "MIT OR Apache-2.0"
+description = "Provides a set of API to manage user's input"
+
+[dependencies]
+hashbrown = "0.12.0"

@@ -2,6 +2,7 @@
 
 # if crate A depends on crate B, B must come before A in this list
 crates=(
+  notan_input
   notan_audio
   notan_utils
   notan_math
