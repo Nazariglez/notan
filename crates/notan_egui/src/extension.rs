@@ -317,14 +317,15 @@ impl EguiExtension {
                     self.paint_mesh(device, *clip_rect, mesh, target)?;
                 }
                 Primitive::Callback(callback) => {
-                    let info = egui::PaintCallbackInfo {
-                        viewport: callback.rect,
-                        clip_rect: *clip_rect,
-                        pixels_per_point: 1.0,
-                        screen_size_px: [width as _, height as _],
-                    };
-                    // TODO primitve 3d callback
-                    callback.call(&info, device);
+                    if callback.rect.is_positive() {
+                        let info = egui::PaintCallbackInfo {
+                            viewport: callback.rect,
+                            clip_rect: *clip_rect,
+                            pixels_per_point: 1.0,
+                            screen_size_px: [width as _, height as _],
+                        };
+                        callback.call(&info, device);
+                    }
                 }
             }
         }
