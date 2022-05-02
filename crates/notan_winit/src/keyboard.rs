@@ -1,5 +1,5 @@
-use notan_app::input::KeyCode;
-use notan_app::Event;
+use notan_core::events::Event;
+use notan_core::keyboard::KeyCode;
 use winit::event::ElementState;
 use winit::event::VirtualKeyCode;
 use winit::event::WindowEvent;

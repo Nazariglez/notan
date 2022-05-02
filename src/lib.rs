@@ -4,9 +4,12 @@ pub mod prelude;
 pub use notan::*;
 pub use notan_app as app;
 pub use notan_graphics as graphics;
+pub use notan_input as input;
 pub use notan_macro::*;
 pub use notan_math as math;
 pub use notan_utils as utils;
+
+pub use notan_core::events::Event;
 
 #[cfg(feature = "default_backend")]
 pub use notan_backend as backend;

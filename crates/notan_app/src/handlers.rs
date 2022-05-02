@@ -1,8 +1,8 @@
 use crate::app::{App, AppState};
 use crate::assets::Assets;
-use crate::events::Event;
 use crate::graphics::{GfxExtension, GfxRenderer, Graphics};
 use crate::plugins::{Plugin, Plugins};
+use notan_core::events::Event;
 
 // Order of params App, AssetManager, Graphics, GlyphManager, Plugins, S, Event
 notan_macro::handler!(Setup<&mut App, &mut Assets, &mut Graphics, &mut Plugins> -> S);

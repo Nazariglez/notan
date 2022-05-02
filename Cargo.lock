@@ -1550,22 +1550,21 @@ dependencies = [
 name = "notan"
 version = "0.4.0"
 dependencies = [
- "cpal",
  "egui_demo_lib",
  "notan_app",
  "notan_audio",
  "notan_backend",
+ "notan_core",
  "notan_draw",
  "notan_egui",
  "notan_glyph",
  "notan_graphics",
+ "notan_input",
  "notan_log",
  "notan_macro",
  "notan_math",
  "notan_text",
  "notan_utils",
- "oddio",
- "symphonia",
 ]
 
 [[package]]
@@ -1580,7 +1579,9 @@ dependencies = [
  "js-sys",
  "log",
  "notan_audio",
+ "notan_core",
  "notan_graphics",
+ "notan_input",
  "notan_macro",
  "notan_math",
  "notan_utils",
@@ -1603,6 +1604,13 @@ version = "0.4.0"
 dependencies = [
  "notan_web",
  "notan_winit",
+]
+
+[[package]]
+name = "notan_core"
+version = "0.4.0"
+dependencies = [
+ "web-sys",
 ]
 
 [[package]]
@@ -1629,6 +1637,7 @@ dependencies = [
  "egui",
  "log",
  "notan_app",
+ "notan_core",
  "notan_macro",
 ]
 
@@ -1675,6 +1684,8 @@ name = "notan_input"
 version = "0.4.0"
 dependencies = [
  "hashbrown 0.12.0",
+ "notan_core",
+ "notan_math",
 ]
 
 [[package]]
@@ -1752,6 +1763,7 @@ dependencies = [
  "log",
  "notan_app",
  "notan_audio",
+ "notan_core",
  "notan_glow",
  "notan_graphics",
  "notan_oddio",
@@ -1770,6 +1782,7 @@ dependencies = [
  "mime_guess",
  "notan_app",
  "notan_audio",
+ "notan_core",
  "notan_glow",
  "notan_oddio",
  "webbrowser",
