@@ -1,14 +1,7 @@
-use crate::Event;
 use hashbrown::{HashMap, HashSet};
+use notan_core::events::Event;
 
-#[derive(Clone, Copy, Hash, Debug, Eq, PartialEq, Ord, PartialOrd)]
-/// Represents a button of a mouse
-pub enum MouseButton {
-    Left,
-    Right,
-    Middle,
-    Other(u8),
-}
+pub use notan_core::mouse::MouseButton;
 
 #[derive(Default)]
 /// Represent the mouse data

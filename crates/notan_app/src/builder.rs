@@ -12,6 +12,9 @@ use crate::plugins::*;
 use crate::{App, Backend, BackendSystem, FrameState, GfxExtension, GfxRenderer};
 #[cfg(feature = "audio")]
 use notan_audio::Audio;
+use notan_input::internals::{
+    clear_keyboard, clear_mouse, process_keyboard_events, process_mouse_events,
+};
 
 pub use crate::handlers::SetupHandler;
 
@@ -264,8 +267,9 @@ where
 
             // Manage each event
             for evt in app.backend.events_iter() {
-                app.keyboard.process_events(&evt, app.timer.delta_f32());
-                app.mouse.process_events(&evt, app.timer.delta_f32());
+                let delta = app.timer.delta_f32();
+                process_keyboard_events(&mut app.keyboard, &evt, delta);
+                process_mouse_events(&mut app.mouse, &evt, delta);
 
                 match plugins.event(app, &mut assets, &evt)? {
                     AppFlow::Skip => {}
@@ -309,8 +313,8 @@ where
                 }
             }
 
-            app.mouse.clear();
-            app.keyboard.clear();
+            clear_mouse(&mut app.mouse);
+            clear_keyboard(&mut app.keyboard);
 
             // Manage post frame event
             let _ = plugins.post_frame(app, &mut assets, &mut graphics)?;

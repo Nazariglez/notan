@@ -1,7 +1,7 @@
 use crate::utils::window_add_event_listener;
 use crate::window::WebWindowBackend;
-use notan_app::input::KeyCode;
-use notan_app::Event;
+use notan_core::events::Event;
+use notan_core::keyboard::KeyCode;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;

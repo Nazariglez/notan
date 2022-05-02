@@ -1,10 +1,10 @@
 use crate::app::App;
 use crate::assets::Assets;
 use crate::builder::AppBuilder;
-use crate::events::Event;
 use crate::Graphics;
 use downcast_rs::{impl_downcast, Downcast};
 use indexmap::IndexMap;
+use notan_core::events::Event;
 use std::any::{Any, TypeId};
 use std::cell::{Ref, RefCell, RefMut};
 

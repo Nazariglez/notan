@@ -1,7 +1,5 @@
 mod config;
 pub mod empty;
-mod keyboard;
-mod mouse;
 pub mod prelude;
 
 mod app;
@@ -14,18 +12,12 @@ mod parsers;
 mod timer;
 
 pub mod assets;
-mod events;
 mod plugins;
-
-pub mod input {
-    pub use super::keyboard::*;
-    pub use super::mouse::*;
-}
 
 pub use app::*;
 pub use backend::*;
-pub use events::*;
 pub use fps_plugin::FpsPlugin;
+pub use notan_core::events::*;
 
 pub use builder::*;
 pub use plugins::*;

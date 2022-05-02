@@ -1,10 +1,11 @@
-use crate::keyboard::Keyboard;
-use crate::mouse::Mouse;
 use crate::timer::AppTimer;
 use crate::{Backend, WindowBackend};
 
 #[cfg(feature = "audio")]
 use notan_audio::Audio;
+
+use notan_input::keyboard::Keyboard;
+use notan_input::mouse::Mouse;
 
 /// Represents the state of the application, always accessible across the event's cycle
 pub trait AppState {}

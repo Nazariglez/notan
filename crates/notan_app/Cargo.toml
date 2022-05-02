@@ -14,6 +14,8 @@ description = "Provides the core API for Notan"
 [dependencies]
 log = "0.4"
 hashbrown = "0.12"
+notan_core = { path = "../notan_core", version = "0.4.0" }
+notan_input = { path = "../notan_input", version = "0.4.0" }
 notan_math = { path = "../notan_math", version = "0.4.0" }
 notan_macro = { path = "../notan_macro", version = "0.4.0" }
 notan_graphics = { path = "../notan_graphics", version = "0.4.0" }
@@ -33,6 +35,6 @@ js-sys = { version = "0.3", optional = true }
 
 [features]
 audio = ["notan_audio"]
-links = []
-drop_files = ["wasm-bindgen-futures", "js-sys", "futures-util", "web-sys", "web-sys/File", "web-sys/Blob"]
-clipboard = []
+links = ["notan_core/links"]
+drop_files = ["notan_core/drop_files", "wasm-bindgen-futures", "js-sys", "futures-util", "web-sys", "web-sys/File", "web-sys/Blob"]
+clipboard = ["notan_core/clipboard"]

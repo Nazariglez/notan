@@ -1,9 +1,10 @@
-use crate::keyboard::*;
-use crate::mouse::*;
 use std::collections::VecDeque;
 
 #[cfg(feature = "drop_files")]
 use std::path::PathBuf;
+
+use crate::keyboard::KeyCode;
+use crate::mouse::MouseButton;
 
 #[derive(Debug, PartialEq, Clone)]
 /// Application events usually received from the user
