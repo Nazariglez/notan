@@ -178,6 +178,10 @@ name = "egui_demo"
 required-features = ["egui", "links"]
 
 [[example]]
+name = "egui_paint"
+required-features = ["egui"]
+
+[[example]]
 name = "egui_render_texture"
 required-features = ["egui"]
 
