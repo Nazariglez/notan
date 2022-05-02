@@ -11,7 +11,7 @@ pub use notan_utils as utils;
 
 pub use notan_core::events::Event;
 
-#[cfg(feature = "default_backend")]
+#[cfg(feature = "backend")]
 pub use notan_backend as backend;
 
 #[cfg(feature = "audio")]

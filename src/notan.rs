@@ -1,9 +1,9 @@
 use crate::app::{AppBuilder, BackendSystem, SetupHandler};
 
-#[cfg(not(feature = "default_backend"))]
+#[cfg(not(feature = "backend"))]
 use crate::app::empty::EmptyBackend as DefaultBackend;
 
-#[cfg(feature = "default_backend")]
+#[cfg(feature = "backend")]
 use notan_backend::DefaultBackend;
 
 /// Initialize the app with the default backend and with an empty state
