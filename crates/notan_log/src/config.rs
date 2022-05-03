@@ -21,13 +21,21 @@ impl Default for LogConfig {
             log::LevelFilter::Warn
         };
 
-        let levels_for = if cfg!(target_arch = "wasm32") {
-            HashMap::new()
-        } else {
-            vec![(String::from("winit"), log::LevelFilter::Warn)]
-                .into_iter()
-                .collect()
-        };
+        let mut disabled = vec![
+            "symphonia_core",
+            "symphonia_codec_vorbis",
+            "symphonia_format_ogg",
+        ];
+
+        if !cfg!(target_arch = "wasm32") {
+            disabled.push("winit");
+        }
+
+        let levels_for = disabled
+            .iter()
+            .map(|id| (id.to_string(), log::LevelFilter::Warn))
+            .into_iter()
+            .collect();
 
         Self {
             level,

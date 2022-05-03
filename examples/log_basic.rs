@@ -3,16 +3,8 @@ use notan::prelude::*;
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    // By default the log level is Debug for debug builds, and Warn for release builds.
-
-    // We'll override to debug always
-    let level = log::LevelFilter::Debug;
-
-    // We use the default config with a custom log level
-    let log_config = log::LogConfig::default().level(level);
-
     notan::init()
-        .add_config(log_config)
+        .add_config(log::LogConfig::debug())
         .initialize(start)
         .build()
 }
