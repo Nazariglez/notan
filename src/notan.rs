@@ -27,14 +27,5 @@ where
     B: BackendSystem + 'static,
     H: SetupHandler<S, Params>,
 {
-    #[cfg(feature = "log_enabled")]
-    {
-        #[cfg(debug_assertions)]
-        crate::log::init();
-
-        #[cfg(not(debug_assertions))]
-        crate::log::init_with_level(crate::log::Level::Warn);
-    }
-
     AppBuilder::new(setup, backend)
 }
