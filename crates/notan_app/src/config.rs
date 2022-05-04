@@ -2,6 +2,7 @@ use crate::backend::Backend;
 use crate::builder::{AppBuilder, BuildConfig};
 
 /// Builder configuration for the window options
+#[derive(Clone)]
 pub struct WindowConfig {
     /// Window's title
     /// `Web: no-op`
@@ -144,8 +145,8 @@ impl<S, B> BuildConfig<S, B> for WindowConfig
 where
     B: Backend,
 {
-    fn apply(self, mut builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
-        builder.window = self;
+    fn apply(&self, mut builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
+        builder.window = self.clone();
         builder
     }
 }

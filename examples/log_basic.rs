@@ -4,7 +4,7 @@ use notan::prelude::*;
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init()
-        .add_config(log::LogConfig::debug())
+        .add_config(log::LogConfig::debug().verbose(true))
         .initialize(start)
         .build()
 }

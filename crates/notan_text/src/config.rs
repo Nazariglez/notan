@@ -8,7 +8,7 @@ where
     S: AppState + 'static,
     B: BackendSystem,
 {
-    fn apply(self, builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
+    fn apply(&self, builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
         builder
             .add_graphic_ext(|gfx: &mut Graphics| TextExtension::new(gfx).unwrap())
             .add_loader(

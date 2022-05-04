@@ -7,7 +7,7 @@ where
     S: AppState + 'static,
     B: BackendSystem,
 {
-    fn apply(self, builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
+    fn apply(&self, builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
         builder
             .add_plugin(EguiPlugin::default())
             .add_graphic_ext(move |gfx: &mut Graphics| EguiExtension::new(gfx).unwrap())

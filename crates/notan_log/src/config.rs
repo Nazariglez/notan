@@ -5,12 +5,14 @@ use std::collections::HashMap;
 use crate::console_error::console_error;
 
 /// Configure the logs output
+#[derive(Clone)]
 pub struct LogConfig {
     level: log::LevelFilter,
     levels_for: HashMap<String, log::LevelFilter>,
     colored: bool,
     date_format: String,
     use_utc: bool,
+    verbose: bool,
 }
 
 impl Default for LogConfig {
@@ -21,28 +23,13 @@ impl Default for LogConfig {
             log::LevelFilter::Warn
         };
 
-        let mut disabled = vec![
-            "symphonia_core",
-            "symphonia_codec_vorbis",
-            "symphonia_format_ogg",
-        ];
-
-        if !cfg!(target_arch = "wasm32") {
-            disabled.push("winit");
-        }
-
-        let levels_for = disabled
-            .iter()
-            .map(|id| (id.to_string(), log::LevelFilter::Warn))
-            .into_iter()
-            .collect();
-
         Self {
             level,
-            levels_for,
+            levels_for: Default::default(),
             colored: cfg!(debug_assertions),
             date_format: String::from("%Y-%m-%d %H:%M:%S"),
             use_utc: false,
+            verbose: false,
         }
     }
 }
@@ -56,18 +43,27 @@ impl LogConfig {
         }
     }
 
+    /// Configure logs to use trace level filter
+    pub fn trace() -> Self {
+        Self::new(log::LevelFilter::Trace)
+    }
+
+    /// Configure logs to use debug level filter
     pub fn debug() -> Self {
         Self::new(log::LevelFilter::Debug)
     }
 
+    /// Configure logs to use info level filter
     pub fn info() -> Self {
         Self::new(log::LevelFilter::Info)
     }
 
+    /// Configure logs to use warn level filter
     pub fn warn() -> Self {
         Self::new(log::LevelFilter::Warn)
     }
 
+    /// Configure logs to use error level filter
     pub fn error() -> Self {
         Self::new(log::LevelFilter::Error)
     }
@@ -101,20 +97,43 @@ impl LogConfig {
         self.use_utc = true;
         self
     }
+
+    /// Log everything including dependencies
+    pub fn verbose(mut self, verbose: bool) -> Self {
+        self.verbose = verbose;
+        self
+    }
 }
 
 impl<S, B> BuildConfig<S, B> for LogConfig
 where
     B: Backend,
 {
-    fn apply(self, builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
+    fn apply(&self, builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
         let Self {
             level,
-            levels_for,
+            mut levels_for,
             colored,
             date_format,
             use_utc,
-        } = self;
+            verbose,
+        } = self.clone();
+
+        if !verbose {
+            let mut disabled = vec![
+                "symphonia_core",
+                "symphonia_codec_vorbis",
+                "symphonia_format_ogg",
+            ];
+
+            if !cfg!(target_arch = "wasm32") {
+                disabled.push("winit");
+            }
+
+            disabled.iter().for_each(|id| {
+                levels_for.insert(id.to_string(), log::LevelFilter::Warn);
+            });
+        }
 
         let mut dispatch = fern::Dispatch::new().level(level);
 
@@ -176,6 +195,10 @@ where
         }
 
         builder
+    }
+
+    fn late_evaluation(&self) -> bool {
+        true
     }
 }
 

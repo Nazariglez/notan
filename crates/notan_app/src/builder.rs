@@ -10,6 +10,7 @@ use crate::handlers::{
 use crate::parsers::*;
 use crate::plugins::*;
 use crate::{App, Backend, BackendSystem, FrameState, GfxExtension, GfxRenderer};
+use indexmap::{IndexMap, IndexSet};
 #[cfg(feature = "audio")]
 use notan_audio::Audio;
 use notan_input::internals::{
@@ -26,7 +27,12 @@ where
     B: Backend,
 {
     /// Applies the configuration on the builder
-    fn apply(self, builder: AppBuilder<S, B>) -> AppBuilder<S, B>;
+    fn apply(&self, builder: AppBuilder<S, B>) -> AppBuilder<S, B>;
+
+    /// This config will be applied before the app is initiated not when is set
+    fn late_evaluation(&self) -> bool {
+        false
+    }
 }
 
 /// The builder is charge of create and configure the application
@@ -44,6 +50,8 @@ pub struct AppBuilder<S, B> {
 
     plugin_callbacks: Vec<Box<dyn FnOnce(&mut App, &mut Assets, &mut Graphics, &mut Plugins)>>,
     extension_callbacks: Vec<Box<dyn FnOnce(&mut App, &mut Assets, &mut Graphics, &mut Plugins)>>,
+
+    late_config: Option<IndexMap<std::any::TypeId, Box<dyn BuildConfig<S, B>>>>,
 
     pub(crate) window: WindowConfig,
 }
@@ -70,6 +78,7 @@ where
             plugin_callbacks: vec![],
             extension_callbacks: vec![],
             window: Default::default(),
+            late_config: Some(Default::default()),
         };
 
         builder.default_loaders()
@@ -88,11 +97,20 @@ where
     }
 
     /// Applies a configuration
-    pub fn add_config<C>(self, config: C) -> Self
+    pub fn add_config<C>(mut self, config: C) -> Self
     where
-        C: BuildConfig<S, B>,
+        C: BuildConfig<S, B> + 'static,
     {
-        config.apply(self)
+        if config.late_evaluation() {
+            if let Some(late_config) = &mut self.late_config {
+                let typ = std::any::TypeId::of::<C>();
+                late_config.insert(typ, Box::new(config));
+            }
+
+            self
+        } else {
+            config.apply(self)
+        }
     }
 
     /// Sets a callback used before the application loop starts running
@@ -177,6 +195,13 @@ where
 
     /// Creates and run the application
     pub fn build(self) -> Result<(), String> {
+        let mut builder = self;
+        if let Some(late_config) = builder.late_config.take() {
+            for (_, config) in late_config {
+                builder = config.apply(builder);
+            }
+        }
+
         let AppBuilder {
             mut backend,
             setup_callback,
@@ -191,7 +216,7 @@ where
             mut extension_callbacks,
             window,
             ..
-        } = self;
+        } = builder;
 
         // let load_file = backend.get_file_loader();
         let initialize = backend.initialize(window)?;
