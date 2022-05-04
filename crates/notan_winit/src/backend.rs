@@ -1,5 +1,5 @@
 use crate::window::WinitWindowBackend;
-use crate::{keyboard, mouse};
+use crate::{keyboard, mouse, touch};
 use glutin::event_loop::ControlFlow;
 use notan_app::{FrameState, WindowConfig};
 
@@ -119,7 +119,14 @@ impl BackendSystem for WinitBackend {
                             add_event(b, &mut request_redraw, evt);
                         }
 
+                        if let Some(evt) = touch::process_events(event, dpi_scale) {
+                            add_event(b, &mut request_redraw, evt);
+                        }
+
                         match event {
+                            WindowEvent::Touch(t) => {
+                                println!("{:?}", t);
+                            }
                             WindowEvent::CloseRequested => {
                                 app.exit();
                             }

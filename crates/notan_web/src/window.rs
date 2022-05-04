@@ -41,6 +41,7 @@ pub struct WebWindowBackend {
 
     pub(crate) mouse_callbacks: MouseCallbacks,
     pub(crate) keyboard_callbacks: KeyboardCallbacks,
+    pub(crate) touch_callbacks: touchCallbacks,
 
     #[cfg(feature = "drop_files")]
     pub(crate) file_callbacks: FileCallbacks,

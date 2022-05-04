@@ -129,12 +129,24 @@ pub fn canvas_position_from_global(
     canvas: &HtmlCanvasElement,
     evt: web_sys::MouseEvent,
 ) -> (i32, i32) {
-    let client_x = evt.client_x() as f32;
-    let client_y = evt.client_y() as f32;
+    let (x, y) = canvas_pos(canvas, evt.client_x(), evt.client_y());
+    (x as _, y as _)
+}
+
+pub fn canvas_position_from_touch(
+    canvas: &HtmlCanvasElement,
+    evt: web_sys::PointerEvent,
+) -> (f32, f32) {
+    canvas_pos(canvas, evt.client_x(), evt.client_y())
+}
+
+fn canvas_pos(canvas: &HtmlCanvasElement, client_x: i32, client_y: i32) -> (f32, f32) {
+    let client_x = client_x as f32;
+    let client_y = client_y as f32;
     let rect = canvas.get_bounding_client_rect();
     let x = client_x - rect.left() as f32;
     let y = client_y - rect.top() as f32;
-    (x as i32, y as i32)
+    (x, y)
 }
 
 pub fn get_notan_size(canvas: &HtmlCanvasElement) -> (i32, i32) {

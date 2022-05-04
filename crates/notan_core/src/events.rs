@@ -45,6 +45,18 @@ pub enum Event {
     /// Keyboard's key was released
     KeyUp { key: KeyCode },
 
+    /// User's touch the screen
+    TouchStart { id: u64, x: f32, y: f32 },
+
+    /// User0s move the touch
+    TouchMove { id: u64, x: f32, y: f32 },
+
+    /// Touch event ends
+    TouchEnd { id: u64, x: f32, y: f32 },
+
+    /// The System cancelled the touch
+    TouchCancelled { id: u64, x: f32, y: f32 },
+
     /// Unicode char pressed
     ReceivedCharacter(char),
 
