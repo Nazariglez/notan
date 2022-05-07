@@ -1,5 +1,6 @@
 use crate::keyboard::{enable_keyboard, KeyboardCallbacks};
 use crate::mouse::{enable_mouse, MouseCallbacks};
+use crate::touch::{enable_touch, PointerCallbacks};
 use crate::utils::{
     canvas_add_event_listener, get_notan_size, get_or_create_canvas, request_animation_frame,
     set_size_dpi, window_add_event_listener,
@@ -41,7 +42,7 @@ pub struct WebWindowBackend {
 
     pub(crate) mouse_callbacks: MouseCallbacks,
     pub(crate) keyboard_callbacks: KeyboardCallbacks,
-    pub(crate) touch_callbacks: touchCallbacks,
+    pub(crate) touch_callbacks: PointerCallbacks,
 
     #[cfg(feature = "drop_files")]
     pub(crate) file_callbacks: FileCallbacks,
@@ -87,6 +88,7 @@ impl WebWindowBackend {
 
         let mouse_callbacks = Default::default();
         let keyboard_callbacks = Default::default();
+        let touch_callbacks = Default::default();
 
         #[cfg(feature = "drop_files")]
         let file_callbacks = Default::default();
@@ -104,6 +106,7 @@ impl WebWindowBackend {
             canvas_parent,
             mouse_callbacks,
             keyboard_callbacks,
+            touch_callbacks,
 
             #[cfg(feature = "drop_files")]
             file_callbacks,
@@ -164,6 +167,7 @@ impl WebWindowBackend {
 
         enable_mouse(&mut self, fullscreen_dispatcher.clone())?;
         enable_keyboard(&mut self, fullscreen_dispatcher.clone())?;
+        enable_touch(&mut self, fullscreen_dispatcher.clone())?;
 
         #[cfg(feature = "drop_files")]
         enable_files(&mut self)?;

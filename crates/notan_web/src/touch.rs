@@ -1,17 +1,20 @@
-use crate::utils::{canvas_add_event_listener, canvas_position_from_global, canvas_position_from_touch, window_add_event_listener};
+use crate::utils::{
+    canvas_add_event_listener, canvas_position_from_global, canvas_position_from_touch,
+    window_add_event_listener,
+};
 use crate::window::WebWindowBackend;
 use notan_core::events::Event;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
-use web_sys::{PointerEvent};
+use web_sys::PointerEvent;
 
 #[derive(Default)]
-pub struct TouchCallbacks {
-    on_start: Option<Closure<dyn FnMut(TouchEvent)>>,
-    on_end: Option<Closure<dyn FnMut(TouchEvent)>>,
-    on_move: Option<Closure<dyn FnMut(TouchEvent)>>,
-    on_cancelled: Option<Closure<dyn FnMut(TouchEvent)>>,
+pub struct PointerCallbacks {
+    on_start: Option<Closure<dyn FnMut(PointerEvent)>>,
+    on_end: Option<Closure<dyn FnMut(PointerEvent)>>,
+    on_move: Option<Closure<dyn FnMut(PointerEvent)>>,
+    on_cancel: Option<Closure<dyn FnMut(PointerEvent)>>,
 }
 
 pub fn enable_touch(
@@ -22,7 +25,7 @@ pub fn enable_touch(
     let add_evt_move = win.add_event_fn();
     let add_evt_start = win.add_event_fn();
     let add_evt_end = win.add_event_fn();
-    let add_evt_cancelled = win.add_event_fn();
+    let add_evt_cancel = win.add_event_fn();
 
     let callbacks = &mut win.touch_callbacks;
     let canvas = win.canvas.clone();
@@ -32,7 +35,9 @@ pub fn enable_touch(
         "pointermove",
         move |e: PointerEvent| {
             if e.pointer_type() == "touch" {
-                let id = e.pointer_id();
+                e.stop_propagation();
+                e.prevent_default();
+                let id = e.pointer_id() as _;
                 let (x, y) = canvas_position_from_touch(&canvas, e);
                 add_evt_move(Event::TouchMove { id, x, y });
             }
@@ -41,60 +46,46 @@ pub fn enable_touch(
 
     let canvas = win.canvas.clone();
     let fullscreen = fullscreen_dispatcher.clone();
-    callbacks.on_down = Some(canvas_add_event_listener(
+    callbacks.on_start = Some(canvas_add_event_listener(
         &win.canvas,
-        "mousedown",
-        move |e: MouseEvent| {
+        "pointerdown",
+        move |e: PointerEvent| {
             (*fullscreen.borrow())();
-            let button = mouse_button_to_nae(e.button());
-            let (x, y) = canvas_position_from_global(&canvas, e);
-            add_evt_down(Event::MouseDown { button, x, y });
+            e.stop_propagation();
+            e.prevent_default();
+            let id = e.pointer_id() as _;
+            let (x, y) = canvas_position_from_touch(&canvas, e);
+            add_evt_start(Event::TouchStart { id, x, y });
         },
     )?);
 
     let canvas = win.canvas.clone();
     let fullscreen = fullscreen_dispatcher.clone();
-    callbacks.on_up = Some(window_add_event_listener(
-        "mouseup",
-        move |e: MouseEvent| {
+    callbacks.on_end = Some(canvas_add_event_listener(
+        &win.canvas,
+        "pointerup",
+        move |e: PointerEvent| {
             (*fullscreen.borrow())();
-            let button = mouse_button_to_nae(e.button());
-            let (x, y) = canvas_position_from_global(&canvas, e);
-            add_evt_up(Event::MouseUp { button, x, y });
+            e.stop_propagation();
+            e.prevent_default();
+            let id = e.pointer_id() as _;
+            let (x, y) = canvas_position_from_touch(&canvas, e);
+            add_evt_end(Event::TouchEnd { id, x, y });
         },
     )?);
 
     let canvas = win.canvas.clone();
     let fullscreen = fullscreen_dispatcher.clone();
-    callbacks.on_left_window = Some(canvas_add_event_listener(
+    callbacks.on_cancel = Some(canvas_add_event_listener(
         &win.canvas,
-        "mouseout",
-        move |e: MouseEvent| {
+        "pointercancel",
+        move |e: PointerEvent| {
             (*fullscreen.borrow())();
-            let (x, y) = canvas_position_from_global(&canvas, e);
-            add_evt_left_window(Event::MouseLeft { x, y });
-        },
-    )?);
-
-    let canvas = win.canvas.clone();
-    let fullscreen = fullscreen_dispatcher.clone();
-    callbacks.on_enter_window = Some(canvas_add_event_listener(
-        &win.canvas,
-        "mouseover",
-        move |e: MouseEvent| {
-            (*fullscreen.borrow())();
-            let (x, y) = canvas_position_from_global(&canvas, e);
-            add_evt_over(Event::MouseEnter { x, y });
-        },
-    )?);
-
-    callbacks.on_wheel = Some(canvas_add_event_listener(
-        &win.canvas,
-        "wheel",
-        move |e: WheelEvent| {
-            let delta_x = e.delta_x() as _;
-            let delta_y = e.delta_y() as _;
-            add_evt_wheel(Event::MouseWheel { delta_x, delta_y });
+            e.stop_propagation();
+            e.prevent_default();
+            let id = e.pointer_id() as _;
+            let (x, y) = canvas_position_from_touch(&canvas, e);
+            add_evt_cancel(Event::TouchCancel { id, x, y });
         },
     )?);
 

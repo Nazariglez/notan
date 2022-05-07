@@ -13,13 +13,13 @@ use crate::{App, Backend, BackendSystem, FrameState, GfxExtension, GfxRenderer};
 use indexmap::{IndexMap, IndexSet};
 #[cfg(feature = "audio")]
 use notan_audio::Audio;
+use notan_core::events::{Event, EventIterator};
+use notan_core::mouse::MouseButton;
 use notan_input::internals::{
     clear_keyboard, clear_mouse, process_keyboard_events, process_mouse_events,
 };
 
 pub use crate::handlers::SetupHandler;
-
-//TODO read this https://floooh.github.io/2017/05/15/oryol-spirv.html
 
 /// Configurations used at build time
 pub trait BuildConfig<S, B>
@@ -53,6 +53,8 @@ pub struct AppBuilder<S, B> {
 
     late_config: Option<IndexMap<std::any::TypeId, Box<dyn BuildConfig<S, B>>>>,
 
+    use_touch_as_mouse: bool,
+
     pub(crate) window: WindowConfig,
 }
 
@@ -79,13 +81,14 @@ where
             extension_callbacks: vec![],
             window: Default::default(),
             late_config: Some(Default::default()),
+            use_touch_as_mouse: true,
         };
 
         builder.default_loaders()
     }
 
     #[allow(unreachable_code)]
-    pub fn default_loaders(self) -> Self {
+    fn default_loaders(self) -> Self {
         let s = self.add_loader(create_texture_parser());
 
         #[cfg(feature = "audio")]
@@ -94,6 +97,12 @@ where
         }
 
         s
+    }
+
+    /// Converts touch events as mouse events
+    pub fn touch_as_mouse(mut self, enabled: bool) -> Self {
+        self.use_touch_as_mouse = enabled;
+        self
     }
 
     /// Applies a configuration
@@ -215,6 +224,7 @@ where
             mut plugin_callbacks,
             mut extension_callbacks,
             window,
+            use_touch_as_mouse,
             ..
         } = builder;
 
@@ -265,6 +275,8 @@ where
             cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
         }
 
+        let mut current_touch_id: Option<u64> = None;
+
         if let Err(e) = initialize(app, state, move |app, mut state| {
             let win_size = app.window().size();
             if graphics.size() != win_size {
@@ -290,9 +302,15 @@ where
 
             assets.tick((app, &mut graphics, &mut plugins, &mut state))?;
 
+            let delta = app.timer.delta_f32();
+
             // Manage each event
-            for evt in app.backend.events_iter() {
-                let delta = app.timer.delta_f32();
+            let mut events = app.backend.events_iter();
+            while let Some(evt) = events.next() {
+                if use_touch_as_mouse {
+                    touch_as_mouse(&mut current_touch_id, &mut events, &evt);
+                }
+
                 process_keyboard_events(&mut app.keyboard, &evt, delta);
                 process_mouse_events(&mut app.mouse, &evt, delta);
 
@@ -359,5 +377,56 @@ where
         }
 
         Ok(())
+    }
+}
+
+#[inline]
+fn touch_as_mouse(current_touch_id: &mut Option<u64>, events: &mut EventIterator, evt: &Event) {
+    match evt {
+        Event::TouchStart { id, x, y } => {
+            if current_touch_id.is_none() || current_touch_id.unwrap() == *id {
+                *current_touch_id = Some(*id);
+                events.push_front(Event::MouseDown {
+                    button: MouseButton::Left,
+                    x: *x as _,
+                    y: *y as _,
+                });
+            }
+        }
+        Event::TouchMove { id, x, y } => {
+            if let Some(last_id) = current_touch_id {
+                if last_id == id {
+                    events.push_front(Event::MouseMove {
+                        x: *x as _,
+                        y: *y as _,
+                    });
+                }
+            }
+        }
+        Event::TouchEnd { id, x, y } => {
+            if let Some(last_id) = current_touch_id {
+                if last_id == id {
+                    *current_touch_id = None;
+                    events.push_front(Event::MouseUp {
+                        button: MouseButton::Left,
+                        x: *x as _,
+                        y: *y as _,
+                    });
+                }
+            }
+        }
+        Event::TouchCancel { id, x, y } => {
+            if let Some(last_id) = current_touch_id {
+                if last_id == id {
+                    *current_touch_id = None;
+                    events.push_front(Event::MouseUp {
+                        button: MouseButton::Left,
+                        x: *x as _,
+                        y: *y as _,
+                    });
+                }
+            }
+        }
+        _ => {}
     }
 }

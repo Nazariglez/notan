@@ -20,7 +20,7 @@ pub fn process_events(event: &WindowEvent, scale_factor: f64) -> Option<Event> {
                 TouchPhase::Started => Event::TouchStart { id, x, y },
                 TouchPhase::Moved => Event::TouchMove { id, x, y },
                 TouchPhase::Ended => Event::TouchEnd { id, x, y },
-                TouchPhase::Cancelled => Event::TouchCancelled { id, x, y },
+                TouchPhase::Cancelled => Event::TouchCancel { id, x, y },
             })
         }
         _ => None,
