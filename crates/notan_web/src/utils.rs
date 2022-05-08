@@ -65,9 +65,16 @@ pub fn get_or_create_canvas(doc: &Document, canvas_id: &str) -> Result<HtmlCanva
             c
         }
     };
-    canvas
+
+    let canvas_element = canvas
         .dyn_into::<HtmlCanvasElement>()
-        .map_err(|e| format!("{:?}", e))
+        .map_err(|e| format!("{:?}", e))?;
+
+    if let Err(e) = canvas_element.style().set_property("touch-action", "none") {
+        log::error!("Cannot set touch-action: none {:?}", e);
+    }
+
+    Ok(canvas_element)
 }
 
 pub fn canvas_add_event_listener<F, E>(
