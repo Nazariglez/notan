@@ -152,6 +152,3 @@ impl Mouse {
         }
     }
 }
-
-//TODO touch
-//TODO pointers (mix of mouse and touch)

@@ -16,6 +16,7 @@ pub struct EguiPlugin {
     ctx: egui::Context,
     raw_input: egui::RawInput,
     platform_output: Option<egui::PlatformOutput>,
+    latest_evt_was_touch: bool,
 }
 
 impl EguiPlugin {
@@ -121,6 +122,8 @@ impl Plugin for EguiPlugin {
             command: command_modifier,
         };
 
+        let mut is_touch_end = false;
+
         match event {
             Event::Exit => {}
             Event::WindowMove { .. } => {}
@@ -151,7 +154,11 @@ impl Plugin for EguiPlugin {
                         button: btn,
                         pressed: false,
                         modifiers,
-                    })
+                    });
+
+                    if self.latest_evt_was_touch {
+                        self.add_event(egui::Event::PointerGone);
+                    }
                 }
             }
             Event::MouseWheel { delta_x, delta_y } => {
@@ -218,7 +225,44 @@ impl Plugin for EguiPlugin {
                     ..Default::default()
                 });
             }
+            Event::TouchStart { id, x, y } => self.add_event(egui::Event::Touch {
+                device_id: egui::TouchDeviceId(0),
+                id: egui::TouchId(*id),
+                phase: egui::TouchPhase::Start,
+                pos: (*x, *y).into(),
+                force: 0.0,
+            }),
+            Event::TouchMove { id, x, y } => self.add_event(egui::Event::Touch {
+                device_id: egui::TouchDeviceId(0),
+                id: egui::TouchId(*id),
+                phase: egui::TouchPhase::Move,
+                pos: (*x, *y).into(),
+                force: 0.0,
+            }),
+            Event::TouchEnd { id, x, y } => {
+                self.add_event(egui::Event::Touch {
+                    device_id: egui::TouchDeviceId(0),
+                    id: egui::TouchId(*id),
+                    phase: egui::TouchPhase::End,
+                    pos: (*x, *y).into(),
+                    force: 0.0,
+                });
+
+                is_touch_end = true;
+            }
+            Event::TouchCancel { id, x, y } => {
+                self.add_event(egui::Event::Touch {
+                    device_id: egui::TouchDeviceId(0),
+                    id: egui::TouchId(*id),
+                    phase: egui::TouchPhase::Cancel,
+                    pos: (*x, *y).into(),
+                    force: 0.0,
+                });
+                is_touch_end = true;
+            }
         }
+
+        self.latest_evt_was_touch = is_touch_end;
 
         Ok(AppFlow::Next)
     }

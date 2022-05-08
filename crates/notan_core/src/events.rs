@@ -45,6 +45,18 @@ pub enum Event {
     /// Keyboard's key was released
     KeyUp { key: KeyCode },
 
+    /// User's touch the screen
+    TouchStart { id: u64, x: f32, y: f32 },
+
+    /// User0s move the touch
+    TouchMove { id: u64, x: f32, y: f32 },
+
+    /// Touch event ends
+    TouchEnd { id: u64, x: f32, y: f32 },
+
+    /// The System cancelled the touch
+    TouchCancel { id: u64, x: f32, y: f32 },
+
     /// Unicode char pressed
     ReceivedCharacter(char),
 
@@ -97,14 +109,19 @@ impl EventIterator {
         Default::default()
     }
 
-    /// Remove and return the last element on the queue
-    pub fn pop(&mut self) -> Option<Event> {
+    /// Remove and return the first element on the queue
+    pub fn pop_front(&mut self) -> Option<Event> {
         self.0.pop_front()
     }
 
-    /// Add an event at the beginning of the list
+    /// Add an event at the end of the list
     pub fn push(&mut self, evt: Event) {
         self.0.push_back(evt);
+    }
+
+    /// Add an event at the beginning of the list
+    pub fn push_front(&mut self, evt: Event) {
+        self.0.push_front(evt);
     }
 
     /// Return the events and clear the list
@@ -117,6 +134,6 @@ impl Iterator for EventIterator {
     type Item = Event;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.pop()
+        self.pop_front()
     }
 }

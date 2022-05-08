@@ -1,6 +1,7 @@
 mod backend;
 mod keyboard;
 mod mouse;
+mod touch;
 mod utils;
 mod window;
 

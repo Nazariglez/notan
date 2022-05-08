@@ -45,6 +45,7 @@ features= [
     "MouseEvent",
     "WheelEvent",
     "KeyboardEvent",
+    "PointerEvent",
     "CssStyleDeclaration",
 
     "Clipboard",

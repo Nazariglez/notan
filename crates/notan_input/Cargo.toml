@@ -13,3 +13,4 @@ description = "Provides a set of API to manage user's input"
 notan_core = { path = "../notan_core", version = "0.4.0" }
 notan_math = { path = "../notan_math", version = "0.4.0" }
 hashbrown = "0.12.0"
+log = "0.4"
