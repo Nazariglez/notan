@@ -106,6 +106,7 @@ impl WinitWindowBackend {
                 opengl_version: (3, 3),
                 opengles_version: (3, 0),
             })
+            .with_srgb(true)
             .with_gl_profile(glutin::GlProfile::Core)
             .with_multisampling(config.multisampling)
             .build_windowed(builder, event_loop)
