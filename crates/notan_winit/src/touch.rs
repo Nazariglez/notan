@@ -1,7 +1,4 @@
-use glutin::dpi::LogicalPosition;
-
 use notan_core::events::Event;
-use winit::event::ElementState;
 use winit::event::{Touch, TouchPhase, WindowEvent};
 
 pub fn process_events(event: &WindowEvent, scale_factor: f64) -> Option<Event> {
