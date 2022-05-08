@@ -10,7 +10,7 @@ use crate::handlers::{
 use crate::parsers::*;
 use crate::plugins::*;
 use crate::{App, Backend, BackendSystem, FrameState, GfxExtension, GfxRenderer};
-use indexmap::{IndexMap, IndexSet};
+use indexmap::IndexMap;
 #[cfg(feature = "audio")]
 use notan_audio::Audio;
 use notan_core::events::{Event, EventIterator};

@@ -1,7 +1,4 @@
-use crate::utils::{
-    canvas_add_event_listener, canvas_position_from_global, canvas_position_from_touch,
-    window_add_event_listener,
-};
+use crate::utils::{canvas_add_event_listener, canvas_position_from_touch};
 use crate::window::WebWindowBackend;
 use notan_core::events::Event;
 use std::cell::RefCell;

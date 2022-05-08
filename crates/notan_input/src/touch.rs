@@ -2,11 +2,12 @@ use hashbrown::{HashMap, HashSet};
 use notan_core::events::Event;
 
 /// Represent a pointer event
+#[derive(Debug)]
 struct Pointer {
-    /// Pointer id
-    id: u8,
+    /// Pointer index
+    _index: u8,
     /// Platform id set by the backend
-    platform_id: u64,
+    _platform_id: u64,
     /// x position
     x: f32,
     /// y position
@@ -83,8 +84,8 @@ impl Touch {
                     Some(index) => {
                         self.pointer_index.insert(*id, index);
                         self.pointers[index] = Some(Pointer {
-                            id: index as _,
-                            platform_id: *id,
+                            _index: index as _,
+                            _platform_id: *id,
                             x: *x,
                             y: *y,
                         });
