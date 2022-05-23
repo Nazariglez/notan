@@ -1787,7 +1787,6 @@ dependencies = [
  "notan_glow",
  "notan_oddio",
  "webbrowser",
- "winit",
 ]
 
 [[package]]

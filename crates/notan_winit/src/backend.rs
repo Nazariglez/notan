@@ -19,8 +19,8 @@ use std::cell::RefCell;
 #[cfg(feature = "audio")]
 use std::rc::Rc;
 
-use winit::event::{Event as WEvent, WindowEvent};
-use winit::event_loop::EventLoop;
+use glutin::event::{Event as WEvent, WindowEvent};
+use glutin::event_loop::EventLoop;
 
 pub struct WinitBackend {
     window: Option<WinitWindowBackend>,

@@ -1,10 +1,10 @@
+use glutin::dpi::LogicalSize;
+use glutin::event_loop::EventLoop;
 use glutin::window::Fullscreen::Borderless;
+use glutin::window::{CursorIcon as WCursorIcon, Window, WindowBuilder};
 use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
-use winit::dpi::LogicalSize;
-use winit::event_loop::EventLoop;
-use winit::window::{CursorIcon as WCursorIcon, Window, WindowBuilder};
 
 pub struct WinitWindowBackend {
     pub(crate) gl_ctx: ContextWrapper<PossiblyCurrent, Window>,
