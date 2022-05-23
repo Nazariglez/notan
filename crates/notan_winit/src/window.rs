@@ -86,7 +86,9 @@ impl WinitWindowBackend {
             .with_title(&config.title)
             .with_inner_size(LogicalSize::new(config.width, config.height))
             .with_maximized(config.maximized)
-            .with_resizable(config.resizable);
+            .with_resizable(config.resizable)
+            .with_transparent(config.transparent)
+            .with_decorations(config.decorations);
 
         /* TODO: this should be exposed to notan to be enabled/disabled but
         seems like is not working on mac I think... */

@@ -98,7 +98,8 @@ impl BackendSystem for WebBackend {
 
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend> {
         let win = self.window.as_ref().unwrap();
-        let backend = notan_glow::GlowBackend::new(&win.canvas, win.antialias).unwrap();
+        let backend =
+            notan_glow::GlowBackend::new(&win.canvas, win.antialias, win.transparent).unwrap();
         Box::new(backend)
     }
 

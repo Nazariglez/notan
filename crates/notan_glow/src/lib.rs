@@ -41,8 +41,12 @@ pub struct GlowBackend {
 
 impl GlowBackend {
     #[cfg(target_arch = "wasm32")]
-    pub fn new(canvas: &web_sys::HtmlCanvasElement, antialias: bool) -> Result<Self, String> {
-        let (gl, api) = utils::create_gl_context(canvas, antialias)?;
+    pub fn new(
+        canvas: &web_sys::HtmlCanvasElement,
+        antialias: bool,
+        transparent: bool,
+    ) -> Result<Self, String> {
+        let (gl, api) = utils::create_gl_context(canvas, antialias, transparent)?;
         Self::from(gl, &api)
     }
 

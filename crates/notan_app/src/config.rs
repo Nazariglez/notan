@@ -46,6 +46,13 @@ pub struct WindowConfig {
 
     /// Inner loop will run only after an input event
     pub lazy_loop: bool,
+
+    /// Background as transparent
+    pub transparent: bool,
+
+    /// Enable decorations
+    /// `Web: Does nothing`
+    pub decorations: bool,
 }
 
 impl Default for WindowConfig {
@@ -63,6 +70,8 @@ impl Default for WindowConfig {
             multisampling: 0,
             canvas_auto_resolution: true,
             lazy_loop: false,
+            transparent: false,
+            decorations: true,
         }
     }
 }
@@ -137,6 +146,18 @@ impl WindowConfig {
     /// Enable or disable that the size of the canvas will automatically use the device pixel ratio
     pub fn canvas_auto_resolution(mut self, enabled: bool) -> Self {
         self.canvas_auto_resolution = enabled;
+        self
+    }
+
+    /// Set the background as transparent
+    pub fn transparent(mut self) -> Self {
+        self.transparent = true;
+        self
+    }
+
+    /// Enable or disable decorations
+    pub fn decorations(mut self, decorations: bool) -> Self {
+        self.decorations = decorations;
         self
     }
 }

@@ -27,6 +27,7 @@ pub struct WebWindowBackend {
     pub lazy: Rc<RefCell<bool>>,
 
     pub(crate) antialias: bool,
+    pub(crate) transparent: bool,
 
     events: Rc<RefCell<EventIterator>>,
 
@@ -94,6 +95,7 @@ impl WebWindowBackend {
         let file_callbacks = Default::default();
 
         let antialias = config.multisampling != 0;
+        let transparent = config.transparent;
 
         let dpi = window.device_pixel_ratio();
         let lazy = Rc::new(RefCell::new(config.lazy_loop));
@@ -121,6 +123,7 @@ impl WebWindowBackend {
             _context_menu_callback_ref: context_menu_callback_ref,
             config,
             antialias,
+            transparent,
             dpi,
             lazy,
 
