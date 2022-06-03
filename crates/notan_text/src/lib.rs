@@ -120,6 +120,10 @@ impl TextExtension {
     pub fn glyph_brush_mut(&mut self) -> &mut GlyphBrush {
         &mut self.glyph_brush
     }
+
+    pub fn texture(&self) -> &Texture {
+        self.glyph_brush.texture()
+    }
 }
 
 impl GfxExtension<Text<'_>> for TextExtension {}

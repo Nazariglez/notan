@@ -139,17 +139,19 @@ impl TextPainter {
                     let a = a * d.alpha;
 
                     let matrix = d.transform;
-                    let xyz1 = matrix * Vec3::new(x1, y1, 1.0);
-                    let xyz2 = matrix * Vec3::new(x2, y2, 1.0);
-                    let (x1, y1, x2, y2) = (xyz1.x, xyz1.y, xyz2.x, xyz2.y);
 
-                    #[rustfmt::skip]
-                    vertices.extend_from_slice(&[
-                        x1, y1, u1, v1, r, g, b, a,
-                        x2, y1, u2, v1, r, g, b, a,
-                        x1, y2, u1, v2, r, g, b, a,
-                        x2, y2, u2, v2, r, g, b, a,
-                    ]);
+                    let verts = [
+                        [x1, y1, u1, v1],
+                        [x2, y1, u2, v1],
+                        [x1, y2, u1, v2],
+                        [x2, y2, u2, v2],
+                    ];
+
+                    // compute the matrices and push the vertices and attributes
+                    verts.into_iter().enumerate().for_each(|(i, [x, y, u, v])| {
+                        let xyz = matrix * Vec3::new(x, y, 1.0);
+                        vertices.extend_from_slice(&[xyz.x, xyz.y, u, v, r, g, b, a]);
+                    });
 
                     let n = ((start as u32) + (i as u32)) * 4;
 
