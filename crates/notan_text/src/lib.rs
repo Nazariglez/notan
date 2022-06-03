@@ -8,7 +8,7 @@ use notan_glyph::{
 };
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::ClearOptions;
-use notan_graphics::{Device, RenderTexture, Renderer};
+use notan_graphics::{Device, RenderTexture, Renderer, Texture};
 use std::any::TypeId;
 use std::collections::HashMap;
 use std::ops::DerefMut;
