@@ -148,7 +148,7 @@ impl TextPainter {
                     ];
 
                     // compute the matrices and push the vertices and attributes
-                    verts.into_iter().enumerate().for_each(|(i, [x, y, u, v])| {
+                    verts.into_iter().for_each(|[x, y, u, v]| {
                         let xyz = matrix * Vec3::new(x, y, 1.0);
                         vertices.extend_from_slice(&[xyz.x, xyz.y, u, v, r, g, b, a]);
                     });
