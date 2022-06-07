@@ -1,6 +1,5 @@
 use notan::draw::*;
 use notan::prelude::*;
-use std::ops::Rem;
 
 const COLS: usize = 4;
 const NUMBERS: usize = COLS * COLS;
@@ -9,9 +8,6 @@ const BOARD_SIZE: f32 = COLS as f32 * TILE_SIZE;
 
 const FILL_COLOR: Color = Color::from_rgb(0.9, 0.9, 0.9);
 const OUTLINE_COLOR: Color = Color::from_rgb(0.0, 0.8, 0.7);
-const TEXT_COLOR: Color = Color::BLACK;
-
-// TODO resolve and reset
 
 #[notan_main]
 fn main() -> Result<(), String> {
@@ -36,8 +32,13 @@ fn update(app: &mut App, state: &mut State) {
                 };
 
                 state.board.move_tile((x, y), (tx, ty));
+                return;
             }
         }
+    }
+
+    if state.board.is_solved() && app.mouse.was_pressed(MouseButton::Left) {
+        state.reset();
     }
 }
 
@@ -63,6 +64,29 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
             let value = state.board.value(x, y);
             draw_tile(&mut draw, &state.font, x, y, value);
         }
+    }
+
+    if state.board.is_solved() {
+        let (ww, hh) = gfx.size();
+        let (ww, hh) = (ww as f32, hh as f32);
+
+        draw.rect((0.0, 0.0), (ww, hh))
+            .color(Color::BLACK)
+            .alpha(0.7);
+
+        draw.text(&state.font, "Done!")
+            .color(Color::ORANGE)
+            .size(74.0)
+            .position(ww * 0.5, hh * 0.5)
+            .h_align_center()
+            .v_align_bottom();
+
+        draw.text(&state.font, "Tap to reset")
+            .color(Color::GRAY)
+            .size(54.0)
+            .v_align_top()
+            .h_align_center()
+            .position(ww * 0.5, hh * 0.5 + 20.0);
     }
 
     gfx.render(&draw);
@@ -107,6 +131,10 @@ impl State {
 
         Self { font, board }
     }
+
+    fn reset(&mut self) {
+        self.board = Board::new();
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -125,18 +153,22 @@ impl Board {
     /// Create a new board using random numbers
     fn new() -> Self {
         let mut bag = get_bag_of_numbers();
-        let mut grid = [0; NUMBERS].map(|i| *bag.item().unwrap());
+        let grid = [0; NUMBERS].map(|_| *bag.item().unwrap());
         Self { grid }
+    }
+
+    fn is_solved(&self) -> bool {
+        for i in 0..NUMBERS - 1 {
+            if self.grid[i] != i as u8 + 1 {
+                return false;
+            }
+        }
+        true
     }
 
     fn value(&self, x: usize, y: usize) -> u8 {
         let index = index_from_point(x, y);
         self.grid[index]
-    }
-
-    fn set_value(&mut self, x: usize, y: usize, n: u8) {
-        let index = index_from_point(x, y);
-        self.grid[index] = n;
     }
 
     fn is_empty(&self, x: usize, y: usize) -> bool {
@@ -182,10 +214,4 @@ fn get_bag_of_numbers() -> ShuffleBag<u8> {
 fn index_from_point(x: usize, y: usize) -> usize {
     debug_assert!(x < COLS || y < COLS, "Point index out of bounds.");
     y * COLS + x
-}
-
-#[inline]
-fn point_from_index(index: usize) -> (usize, usize) {
-    debug_assert!(index < NUMBERS - 1, "Index out of bounds");
-    (index.rem(COLS), index / COLS)
 }
