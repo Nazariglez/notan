@@ -44,9 +44,13 @@ impl InnerPipeline {
     pub fn use_attrs(&mut self, buffer: u64, attrs: &VertexAttributes) -> bool {
         let mut reset = false;
         attrs.attrs.iter().for_each(|attr| {
-            if let Some(old_id) = self.attrs_bound_to.insert(attr.location, buffer) {
-                if old_id != buffer {
-                    reset = true;
+            let old = self.attrs_bound_to.insert(attr.location, buffer);
+            match old {
+                None => reset = true,
+                Some(old_id) => {
+                    if old_id != buffer {
+                        reset = true;
+                    }
                 }
             }
         });

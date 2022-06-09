@@ -382,7 +382,7 @@ impl DeviceBackend for GlowBackend {
     fn render(&mut self, commands: &[Commands], target: Option<u64>) {
         commands.iter().for_each(|cmd| {
             use Commands::*;
-            // log::trace!("Render cmd: {:?}", cmd);
+            // println!("Render cmd: {:?}", cmd);
 
             match cmd {
                 Begin {
