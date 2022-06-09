@@ -69,8 +69,9 @@ impl InnerBuffer {
     }
 
     #[inline]
-    pub fn bind(&mut self, gl: &Context, pipeline_id: Option<u64>) {
-        let pipeline_changed = pipeline_id.is_some() && pipeline_id != self.last_pipeline;
+    pub fn bind(&mut self, gl: &Context, pipeline_id: Option<u64>, reset_attrs: bool) {
+        let pipeline_changed =
+            pipeline_id.is_some() && (pipeline_id != self.last_pipeline || reset_attrs);
         if pipeline_changed {
             self.last_pipeline = pipeline_id;
         };

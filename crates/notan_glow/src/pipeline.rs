@@ -1,5 +1,6 @@
 use crate::to_glow::*;
 use glow::*;
+use hashbrown::HashMap;
 use notan_graphics::prelude::*;
 
 pub(crate) struct InnerPipeline {
@@ -8,6 +9,7 @@ pub(crate) struct InnerPipeline {
     pub program: Program,
     pub vao: VertexArray,
     pub uniform_locations: Vec<UniformLocation>,
+    pub attrs_bound_to: HashMap<u32, u64>,
 }
 
 #[inline]
@@ -36,6 +38,20 @@ impl InnerPipeline {
         let (stride, attrs) = get_inner_attrs(attrs);
 
         create_pipeline(gl, vertex_source, fragment_source, stride, attrs)
+    }
+
+    // register the buffer id for each element in case we need to reset the vao attrs when the buffer change
+    pub fn use_attrs(&mut self, buffer: u64, attrs: &VertexAttributes) -> bool {
+        let mut reset = false;
+        attrs.attrs.iter().for_each(|attr| {
+            if let Some(old_id) = self.attrs_bound_to.insert(attr.location, buffer) {
+                if old_id != buffer {
+                    reset = true;
+                }
+            }
+        });
+
+        reset
     }
 
     #[inline(always)]
@@ -273,6 +289,7 @@ fn create_pipeline(
         program,
         vao,
         uniform_locations,
+        attrs_bound_to: HashMap::default(),
     })
 }
 

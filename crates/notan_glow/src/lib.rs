@@ -221,9 +221,10 @@ impl GlowBackend {
 
     fn bind_buffer(&mut self, id: u64) {
         if let Some(buffer) = self.buffers.get_mut(&id) {
-            match &buffer.kind {
+            let reset_attrs = match &buffer.kind {
                 Kind::Index => {
                     self.using_indices = true;
+                    false
                 }
                 Kind::Uniform(_slot, _name) => {
                     if !buffer.block_binded {
@@ -232,11 +233,15 @@ impl GlowBackend {
                             self.pipelines.get(&self.current_pipeline).as_ref().unwrap(),
                         );
                     }
+                    false
                 }
-                _ => {}
-            }
+                Kind::Vertex(attrs) => match self.pipelines.get_mut(&self.current_pipeline) {
+                    Some(pip) => pip.use_attrs(id, attrs),
+                    _ => false,
+                },
+            };
 
-            buffer.bind(&self.gl, Some(self.current_pipeline));
+            buffer.bind(&self.gl, Some(self.current_pipeline), reset_attrs);
         }
     }
 
@@ -344,7 +349,7 @@ impl DeviceBackend for GlowBackend {
         let (stride, inner_attrs) = get_inner_attrs(attrs);
         let kind = Kind::Vertex(VertexAttributes::new(stride, inner_attrs, step_mode));
         let mut inner_buffer = InnerBuffer::new(&self.gl, kind, true)?;
-        inner_buffer.bind(&self.gl, Some(self.current_pipeline));
+        inner_buffer.bind(&self.gl, Some(self.current_pipeline), false);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
@@ -352,7 +357,7 @@ impl DeviceBackend for GlowBackend {
 
     fn create_index_buffer(&mut self) -> Result<u64, String> {
         let mut inner_buffer = InnerBuffer::new(&self.gl, Kind::Index, true)?;
-        inner_buffer.bind(&self.gl, Some(self.current_pipeline));
+        inner_buffer.bind(&self.gl, Some(self.current_pipeline), false);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
@@ -361,7 +366,7 @@ impl DeviceBackend for GlowBackend {
     fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<u64, String> {
         let mut inner_buffer =
             InnerBuffer::new(&self.gl, Kind::Uniform(slot, name.to_string()), true)?;
-        inner_buffer.bind(&self.gl, Some(self.current_pipeline));
+        inner_buffer.bind(&self.gl, Some(self.current_pipeline), false);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
@@ -369,7 +374,7 @@ impl DeviceBackend for GlowBackend {
 
     fn set_buffer_data(&mut self, id: u64, data: &[u8]) {
         if let Some(buffer) = self.buffers.get_mut(&id) {
-            buffer.bind(&self.gl, None);
+            buffer.bind(&self.gl, None, false);
             buffer.update(&self.gl, data);
         }
     }
