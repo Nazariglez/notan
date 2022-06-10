@@ -32,6 +32,8 @@ pub struct TextureInfo {
     pub format: TextureFormat,
     pub min_filter: TextureFilter,
     pub mag_filter: TextureFilter,
+    pub wrap_x: TextureWrap,
+    pub wrap_y: TextureWrap,
     pub bytes: Option<Vec<u8>>,
     pub premultiplied_alpha: bool,
 
@@ -45,6 +47,8 @@ impl Default for TextureInfo {
             format: TextureFormat::Rgba32,
             mag_filter: TextureFilter::Nearest,
             min_filter: TextureFilter::Nearest,
+            wrap_x: TextureWrap::Clamp,
+            wrap_y: TextureWrap::Clamp,
             width: 1,
             height: 1,
             bytes: None,
@@ -217,6 +221,12 @@ pub enum TextureFilter {
     Nearest,
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum TextureWrap {
+    Clamp,
+    Repeat,
+}
+
 enum TextureKind<'a> {
     Texture(&'a [u8]),
     Bytes(&'a [u8]),
@@ -281,6 +291,13 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
     pub fn with_filter(mut self, min: TextureFilter, mag: TextureFilter) -> Self {
         self.info.min_filter = min;
         self.info.mag_filter = mag;
+        self
+    }
+
+    /// Set the texture wrap modes (x -> s, y -> t)
+    pub fn with_wrap(mut self, x: TextureWrap, y: TextureWrap) -> Self {
+        self.info.wrap_x = x;
+        self.info.wrap_y = y;
         self
     }
 

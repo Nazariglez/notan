@@ -69,13 +69,13 @@ pub(crate) unsafe fn create_texture(
     gl.tex_parameter_i32(
         glow::TEXTURE_2D,
         glow::TEXTURE_WRAP_S,
-        glow::CLAMP_TO_EDGE as _,
+        info.wrap_x.to_glow() as _,
     );
 
     gl.tex_parameter_i32(
         glow::TEXTURE_2D,
         glow::TEXTURE_WRAP_T,
-        glow::CLAMP_TO_EDGE as _,
+        info.wrap_y.to_glow() as _,
     );
 
     gl.tex_parameter_i32(
@@ -87,16 +87,6 @@ pub(crate) unsafe fn create_texture(
         glow::TEXTURE_2D,
         glow::TEXTURE_MIN_FILTER,
         info.min_filter.to_glow() as _,
-    );
-    gl.tex_parameter_i32(
-        glow::TEXTURE_2D,
-        glow::TEXTURE_WRAP_S,
-        glow::CLAMP_TO_EDGE as _,
-    );
-    gl.tex_parameter_i32(
-        glow::TEXTURE_2D,
-        glow::TEXTURE_WRAP_T,
-        glow::CLAMP_TO_EDGE as _,
     );
 
     let depth = TextureFormat::Depth16 == info.format;

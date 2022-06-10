@@ -112,6 +112,16 @@ impl ToGlow for VertexFormat {
     }
 }
 
+impl ToGlow for TextureWrap {
+    fn to_glow(&self) -> u32 {
+        use TextureWrap::*;
+        match self {
+            Clamp => glow::CLAMP_TO_EDGE,
+            Repeat => glow::REPEAT,
+        }
+    }
+}
+
 impl ToGlow for TextureFilter {
     fn to_glow(&self) -> u32 {
         use TextureFilter::*;

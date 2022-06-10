@@ -34,6 +34,7 @@ pub trait DeviceBackend {
         vertex_source: &[u8],
         fragment_source: &[u8],
         vertex_attrs: &[VertexAttr],
+        texture_locations: &[(u32, String)],
         options: PipelineOptions,
     ) -> Result<u64, String>;
 
@@ -209,6 +210,7 @@ impl Device {
         vertex_source: &[u8],
         fragment_source: &[u8],
         vertex_attrs: &[VertexAttr],
+        texture_locations: &[(u32, String)],
         options: PipelineOptions,
     ) -> Result<Pipeline, String> {
         let stride = vertex_attrs
@@ -219,6 +221,7 @@ impl Device {
             vertex_source,
             fragment_source,
             vertex_attrs,
+            texture_locations,
             options.clone(),
         )?;
 
@@ -236,6 +239,7 @@ impl Device {
         vertex_source: &ShaderSource,
         fragment_source: &ShaderSource,
         vertex_attrs: &[VertexAttr],
+        texture_locations: &[(u32, String)],
         options: PipelineOptions,
     ) -> Result<Pipeline, String> {
         let api = self.backend.api_name();
@@ -245,7 +249,13 @@ impl Device {
         let fragment = fragment_source
             .get_source(api)
             .ok_or(format!("Fragment shader for api '{}' not available.", api))?;
-        self.inner_create_pipeline_from_raw(vertex, fragment, vertex_attrs, options)
+        self.inner_create_pipeline_from_raw(
+            vertex,
+            fragment,
+            vertex_attrs,
+            texture_locations,
+            options,
+        )
     }
 
     #[inline(always)]
