@@ -276,7 +276,7 @@ fn create_pipeline(
     #[cfg(debug_assertions)]
     let mut not_used_textures: HashSet<String> = texture_locations
         .into_iter()
-        .map(|(loc, id)| id.clone())
+        .map(|(_loc, id)| id.clone())
         .collect();
 
     let uniform_locations = unsafe {
