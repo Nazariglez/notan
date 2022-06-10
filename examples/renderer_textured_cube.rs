@@ -30,7 +30,7 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 
     layout(location = 0) out vec4 outColor;
 
-    layout(set = 0, binding = 0) uniform sampler2D u_texture;
+    layout(location = 0) uniform sampler2D u_texture;
 
     void main() {
         outColor = texture(u_texture, v_texcoord);
@@ -69,6 +69,7 @@ fn setup(gfx: &mut Graphics) -> State {
         .create_pipeline()
         .from(&VERT, &FRAG)
         .with_vertex_info(&vertex_info)
+        .with_texture_location(0, "u_texture")
         .with_depth_stencil(DepthStencil {
             write: true,
             compare: CompareMode::Less,
