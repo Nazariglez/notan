@@ -301,7 +301,7 @@ fn create_pipeline(
                             }
 
                             // register the texgture uniform loc under the new loc provided by the user
-                            texture_locations_map.insert(tloc, loc);
+                            texture_locations_map.insert(tloc, loc.clone());
                         }
 
                         Some(loc)
