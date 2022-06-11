@@ -40,17 +40,14 @@ impl InnerTexture {
 
 #[inline]
 fn gl_slot(slot: u32) -> Result<u32, String> {
-    Ok(match slot {
-        0 => glow::TEXTURE0,
-        1 => glow::TEXTURE1,
-        2 => glow::TEXTURE2,
-        3 => glow::TEXTURE3,
-        4 => glow::TEXTURE4,
-        5 => glow::TEXTURE5,
-        6 => glow::TEXTURE6,
-        7 => glow::TEXTURE7,
-        _ => return Err(format!("Unsupported texture slot '{}'", slot)),
-    })
+    if slot < 16 {
+        Ok(glow::TEXTURE0 + slot)
+    } else {
+        Err(format!(
+            "Unsupported texture slot '{}', You can use up to 6.",
+            slot
+        ))
+    }
 }
 
 pub(crate) unsafe fn create_texture(
