@@ -1,7 +1,10 @@
 use crate::to_glow::*;
 use glow::*;
-use hashbrown::{HashMap, HashSet};
+use hashbrown::HashMap;
 use notan_graphics::prelude::*;
+
+#[cfg(debug_assertions)]
+use hashbrown::HashSet;
 
 pub(crate) struct InnerPipeline {
     pub vertex: Shader,

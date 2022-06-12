@@ -46,7 +46,7 @@ pub trait DrawTransform {
     #[inline]
     /// Set the matrix rotation using degrees
     fn rotate_degrees(&mut self, deg: f32) -> &mut Self {
-        self.rotate(deg * notan_math::DEG_TO_RAD)
+        self.rotate(deg.to_radians())
     }
 
     /// Set the matrix skew
@@ -79,7 +79,7 @@ pub trait DrawTransform {
     #[inline]
     /// Set the matrix rotation using degrees from the point given
     fn rotate_degrees_from(&mut self, point: (f32, f32), deg: f32) -> &mut Self {
-        self.rotate_from(point, deg * notan_math::DEG_TO_RAD)
+        self.rotate_from(point, deg.to_radians())
     }
 
     /// Set the matrix scale from the point given
