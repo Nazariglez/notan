@@ -101,7 +101,7 @@ const GLYPH_FRAGMENT: ShaderSource = fragment_shader! {
     #version 450
     precision mediump float;
 
-    layout(set = 0, binding = 0) uniform sampler2D font_sampler;
+    layout(location = 0) uniform sampler2D font_sampler;
 
     layout(location = 0) in vec2 f_tex_pos;
     layout(location = 1) in vec4 f_color;
@@ -210,6 +210,7 @@ fn create_pipeline(gfx: &mut Graphics, info: &VertexInfo) -> Result<Pipeline, St
             dst: BlendFactor::InverseSourceAlpha,
             op: BlendOperation::Add,
         })
+        .with_texture_location(0, "font_sampler")
         // TODO depth stencil and culling
         .build()
 }

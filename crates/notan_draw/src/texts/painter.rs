@@ -37,7 +37,7 @@ const TEXT_FRAGMENT: ShaderSource = fragment_shader! {
     layout(location = 0) in vec2 v_uvs;
     layout(location = 1) in vec4 v_color;
 
-    layout(set = 0, binding = 0) uniform sampler2D u_texture;
+    layout(location = 0) uniform sampler2D u_texture;
 
     layout(location = 0) out vec4 color;
 
@@ -240,5 +240,6 @@ pub fn create_text_pipeline(
         .from(&TEXT_VERTEX, fragment)
         .with_vertex_info(&vertex_info())
         .with_color_blend(BlendMode::NORMAL)
+        .with_texture_location(0, "u_texture")
         .build()
 }
