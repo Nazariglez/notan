@@ -133,6 +133,7 @@ impl DeviceBackend for EmptyDeviceBackend {
         _vertex_source: &[u8],
         _fragment_source: &[u8],
         _vertex_attrs: &[VertexAttr],
+        _texture_locations: &[(u32, String)],
         _options: PipelineOptions,
     ) -> Result<u64, String> {
         self.id_count += 1;

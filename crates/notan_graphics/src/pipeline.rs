@@ -81,6 +81,7 @@ pub struct PipelineBuilder<'a, 'b> {
     attrs: Vec<VertexAttr>,
     options: PipelineOptions,
     shaders: Option<ShaderKind<'b>>,
+    texture_locations: Vec<(u32, String)>,
 }
 
 impl<'a, 'b> PipelineBuilder<'a, 'b> {
@@ -90,6 +91,7 @@ impl<'a, 'b> PipelineBuilder<'a, 'b> {
             attrs: vec![],
             options: Default::default(),
             shaders: None,
+            texture_locations: vec![],
         }
     }
 
@@ -109,6 +111,12 @@ impl<'a, 'b> PipelineBuilder<'a, 'b> {
     /// Set the vertex structure info for a vertex buffer
     pub fn with_vertex_info(mut self, info: &VertexInfo) -> Self {
         self.attrs.extend(&info.attrs);
+        self
+    }
+
+    /// Map uniform location to a texture id
+    pub fn with_texture_location(mut self, location: u32, id: &str) -> Self {
+        self.texture_locations.push((location, id.to_string()));
         self
     }
 
@@ -151,13 +159,22 @@ impl<'a, 'b> PipelineBuilder<'a, 'b> {
     /// Build the pipeline with the data set on the builder
     pub fn build(self) -> Result<Pipeline, String> {
         match self.shaders {
-            Some(ShaderKind::Source { vertex, fragment }) => {
-                self.device
-                    .inner_create_pipeline(vertex, fragment, &self.attrs, self.options)
+            Some(ShaderKind::Source { vertex, fragment }) => self.device.inner_create_pipeline(
+                vertex,
+                fragment,
+                &self.attrs,
+                &self.texture_locations,
+                self.options,
+            ),
+            Some(ShaderKind::Raw { vertex, fragment }) => {
+                self.device.inner_create_pipeline_from_raw(
+                    vertex,
+                    fragment,
+                    &self.attrs,
+                    &self.texture_locations,
+                    self.options,
+                )
             }
-            Some(ShaderKind::Raw { vertex, fragment }) => self
-                .device
-                .inner_create_pipeline_from_raw(vertex, fragment, &self.attrs, self.options),
             _ => Err("Vertex and Fragment shaders should be present".to_string()),
         }
     }

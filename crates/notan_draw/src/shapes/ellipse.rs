@@ -44,7 +44,7 @@ impl Ellipse {
     }
 
     pub fn rotate_degrees(&mut self, deg: f32) -> &mut Self {
-        self.rotation = deg * notan_math::DEG_TO_RAD;
+        self.rotation = deg.to_radians();
         self
     }
 

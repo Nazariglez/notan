@@ -60,7 +60,7 @@ const PIXEL_INVERT_FRAGMENT: ShaderSource = notan::fragment_shader! {
     layout(location = 0) out vec4 outColor;
     layout(location = 0) in vec2 v_texcoord;
 
-    layout(set = 0, binding = 0) uniform sampler2D u_texture;
+    layout(location = 0) uniform sampler2D u_texture;
     layout(set = 0, binding = 0) uniform Locals {
         vec2 u_tex_size;
         float u_value;
@@ -106,6 +106,7 @@ impl PostProcessTarget {
             .from(&IMAGE_VERTEX, &PIXEL_INVERT_FRAGMENT)
             .with_color_blend(BlendMode::NORMAL)
             .with_vertex_info(&vertex_info)
+            .with_texture_location(0, "u_texture")
             .build()
             .unwrap();
 

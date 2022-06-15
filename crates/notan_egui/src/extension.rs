@@ -71,7 +71,7 @@ const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
     layout(location = 1) in vec2 v_tc;
     layout(location = 2) in float v_need_gamma_fix;
 
-    layout(set = 0, binding = 0) uniform sampler2D u_sampler;
+    layout(location = 0) uniform sampler2D u_sampler;
 
     layout(location = 0) out vec4 color;
 
@@ -139,6 +139,7 @@ impl EguiExtension {
                 BlendFactor::One,
             ))
             .with_cull_mode(CullMode::None)
+            .with_texture_location(0, "u_sampler")
             .build()?;
 
         let vbo = gfx.create_vertex_buffer().with_info(&vertex_info).build()?;

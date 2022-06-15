@@ -62,6 +62,7 @@ pub fn create_image_pipeline(
         .from(&IMAGE_VERTEX, fragment)
         .with_vertex_info(&vertex_info())
         .with_color_blend(BlendMode::NORMAL)
+        .with_texture_location(0, "u_texture")
         .build()
 }
 

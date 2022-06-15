@@ -40,17 +40,14 @@ impl InnerTexture {
 
 #[inline]
 fn gl_slot(slot: u32) -> Result<u32, String> {
-    Ok(match slot {
-        0 => glow::TEXTURE0,
-        1 => glow::TEXTURE1,
-        2 => glow::TEXTURE2,
-        3 => glow::TEXTURE3,
-        4 => glow::TEXTURE4,
-        5 => glow::TEXTURE5,
-        6 => glow::TEXTURE6,
-        7 => glow::TEXTURE7,
-        _ => return Err(format!("Unsupported texture slot '{}'", slot)),
-    })
+    if slot < 16 {
+        Ok(glow::TEXTURE0 + slot)
+    } else {
+        Err(format!(
+            "Unsupported texture slot '{}', You can use up to 6.",
+            slot
+        ))
+    }
 }
 
 pub(crate) unsafe fn create_texture(
@@ -69,13 +66,13 @@ pub(crate) unsafe fn create_texture(
     gl.tex_parameter_i32(
         glow::TEXTURE_2D,
         glow::TEXTURE_WRAP_S,
-        glow::CLAMP_TO_EDGE as _,
+        info.wrap_x.to_glow() as _,
     );
 
     gl.tex_parameter_i32(
         glow::TEXTURE_2D,
         glow::TEXTURE_WRAP_T,
-        glow::CLAMP_TO_EDGE as _,
+        info.wrap_y.to_glow() as _,
     );
 
     gl.tex_parameter_i32(
@@ -87,16 +84,6 @@ pub(crate) unsafe fn create_texture(
         glow::TEXTURE_2D,
         glow::TEXTURE_MIN_FILTER,
         info.min_filter.to_glow() as _,
-    );
-    gl.tex_parameter_i32(
-        glow::TEXTURE_2D,
-        glow::TEXTURE_WRAP_S,
-        glow::CLAMP_TO_EDGE as _,
-    );
-    gl.tex_parameter_i32(
-        glow::TEXTURE_2D,
-        glow::TEXTURE_WRAP_T,
-        glow::CLAMP_TO_EDGE as _,
     );
 
     let depth = TextureFormat::Depth16 == info.format;

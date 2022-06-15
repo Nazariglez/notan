@@ -1,6 +1,10 @@
 use crate::to_glow::*;
 use glow::*;
+use hashbrown::HashMap;
 use notan_graphics::prelude::*;
+
+#[cfg(debug_assertions)]
+use hashbrown::HashSet;
 
 pub(crate) struct InnerPipeline {
     pub vertex: Shader,
@@ -8,6 +12,8 @@ pub(crate) struct InnerPipeline {
     pub program: Program,
     pub vao: VertexArray,
     pub uniform_locations: Vec<UniformLocation>,
+    pub attrs_bound_to: HashMap<u32, u64>,
+    pub texture_locations: HashMap<u32, UniformLocation>,
 }
 
 #[inline]
@@ -32,10 +38,36 @@ impl InnerPipeline {
         vertex_source: &str,
         fragment_source: &str,
         attrs: &[VertexAttr],
+        texture_locations: &[(u32, String)],
     ) -> Result<Self, String> {
         let (stride, attrs) = get_inner_attrs(attrs);
 
-        create_pipeline(gl, vertex_source, fragment_source, stride, attrs)
+        create_pipeline(
+            gl,
+            vertex_source,
+            fragment_source,
+            stride,
+            attrs,
+            texture_locations,
+        )
+    }
+
+    // register the buffer id for each element in case we need to reset the vao attrs when the buffer change
+    pub fn use_attrs(&mut self, buffer: u64, attrs: &VertexAttributes) -> bool {
+        let mut reset = false;
+        attrs.attrs.iter().for_each(|attr| {
+            let old = self.attrs_bound_to.insert(attr.location, buffer);
+            match old {
+                None => reset = true,
+                Some(old_id) => {
+                    if old_id != buffer {
+                        reset = true;
+                    }
+                }
+            }
+        });
+
+        reset
     }
 
     #[inline(always)]
@@ -236,10 +268,19 @@ fn create_pipeline(
     fragment_source: &str,
     _stride: i32,
     _attrs: Vec<InnerAttr>,
+    texture_locations: &[(u32, String)],
 ) -> Result<InnerPipeline, String> {
     let vertex = create_shader(gl, glow::VERTEX_SHADER, vertex_source)?;
     let fragment = create_shader(gl, glow::FRAGMENT_SHADER, fragment_source)?;
     let program = create_program(gl, vertex, fragment)?;
+
+    let mut texture_locations_map = HashMap::default();
+
+    #[cfg(debug_assertions)]
+    let mut not_used_textures: HashSet<String> = texture_locations
+        .into_iter()
+        .map(|(_loc, id)| id.clone())
+        .collect();
 
     let uniform_locations = unsafe {
         let count = gl.get_active_uniforms(program);
@@ -247,7 +288,27 @@ fn create_pipeline(
             .into_iter()
             .filter_map(|index| match gl.get_active_uniform(program, index) {
                 Some(u) => match gl.get_uniform_location(program, &u.name) {
-                    Some(loc) => Some(loc),
+                    Some(loc) => {
+                        let tex_loc = texture_locations.iter().find_map(|(tloc, id)| {
+                            if id == &u.name {
+                                Some(*tloc)
+                            } else {
+                                None
+                            }
+                        });
+
+                        if let Some(tloc) = tex_loc {
+                            #[cfg(debug_assertions)]
+                            {
+                                not_used_textures.remove(&u.name);
+                            }
+
+                            // register the texgture uniform loc under the new loc provided by the user
+                            texture_locations_map.insert(tloc, loc.clone());
+                        }
+
+                        Some(loc)
+                    }
                     _ => {
                         // inform about uniforms outside of blocks that are missing
                         if !u.name.contains("") {
@@ -261,6 +322,13 @@ fn create_pipeline(
             .collect::<Vec<_>>()
     };
 
+    #[cfg(debug_assertions)]
+    {
+        for name in not_used_textures.iter() {
+            panic!("Wrong texture location id: {}", name);
+        }
+    }
+
     let vao = unsafe {
         let vao = gl.create_vertex_array()?;
         gl.bind_vertex_array(Some(vao));
@@ -273,6 +341,8 @@ fn create_pipeline(
         program,
         vao,
         uniform_locations,
+        attrs_bound_to: HashMap::default(),
+        texture_locations: texture_locations_map,
     })
 }
 

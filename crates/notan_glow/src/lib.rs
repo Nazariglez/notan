@@ -221,9 +221,10 @@ impl GlowBackend {
 
     fn bind_buffer(&mut self, id: u64) {
         if let Some(buffer) = self.buffers.get_mut(&id) {
-            match &buffer.kind {
+            let reset_attrs = match &buffer.kind {
                 Kind::Index => {
                     self.using_indices = true;
+                    false
                 }
                 Kind::Uniform(_slot, _name) => {
                     if !buffer.block_binded {
@@ -232,32 +233,55 @@ impl GlowBackend {
                             self.pipelines.get(&self.current_pipeline).as_ref().unwrap(),
                         );
                     }
+                    false
                 }
-                _ => {}
-            }
+                Kind::Vertex(attrs) => match self.pipelines.get_mut(&self.current_pipeline) {
+                    Some(pip) => pip.use_attrs(id, attrs),
+                    _ => false,
+                },
+            };
 
-            buffer.bind(&self.gl, Some(self.current_pipeline));
+            buffer.bind(&self.gl, Some(self.current_pipeline), reset_attrs);
         }
     }
 
     fn bind_texture(&mut self, id: u64, slot: u32, location: u32) {
-        let is_srgba = if let Some(texture) = self.textures.get(&id) {
-            texture.bind(&self.gl, slot, self.get_uniform_loc(&location));
-            texture.is_srgba
-        } else {
-            false
-        };
+        if let Some(pip) = self.pipelines.get(&self.current_pipeline) {
+            let is_srgba = if let Some(texture) = self.textures.get(&id) {
+                if cfg!(debug_assertions) {
+                    if !pip.texture_locations.contains_key(&location) {
+                        log::warn!("Uniform location {} for texture {} should be declared when the pipeline is created.", location, id);
+                    }
+                }
 
-        if is_srgba {
-            self.enable_srgba();
-        } else {
-            self.disable_srgba();
+                let loc = pip
+                    .texture_locations
+                    .get(&location)
+                    .unwrap_or_else(|| self.get_texture_uniform_loc(&location));
+                texture.bind(&self.gl, slot, loc);
+                texture.is_srgba
+            } else {
+                false
+            };
+
+            if is_srgba {
+                self.enable_srgba();
+            } else {
+                self.disable_srgba();
+            }
         }
     }
 
     #[inline(always)]
-    fn get_uniform_loc<'a>(&'a self, location: &'a u32) -> &'a UniformLocation {
-        &self.current_uniforms[*location as usize]
+    fn get_texture_uniform_loc<'a>(&'a self, location: &'a u32) -> &'a UniformLocation {
+        if cfg!(debug_assertions) {
+            self.current_uniforms.get(*location as usize)
+                .as_ref()
+                .ok_or_else(|| format!("Invalid uniform location {}, this could means that you're trying to access a unifor not used in the shader code.", location))
+                .unwrap()
+        } else {
+            &self.current_uniforms[*location as usize]
+        }
     }
 
     fn clean_buffer(&mut self, id: u64) {
@@ -320,13 +344,19 @@ impl DeviceBackend for GlowBackend {
         vertex_source: &[u8],
         fragment_source: &[u8],
         vertex_attrs: &[VertexAttr],
+        texture_locations: &[(u32, String)],
         options: PipelineOptions,
     ) -> Result<u64, String> {
         let vertex_source = std::str::from_utf8(vertex_source).map_err(|e| e.to_string())?;
         let fragment_source = std::str::from_utf8(fragment_source).map_err(|e| e.to_string())?;
 
-        let inner_pipeline =
-            InnerPipeline::new(&self.gl, vertex_source, fragment_source, vertex_attrs)?;
+        let inner_pipeline = InnerPipeline::new(
+            &self.gl,
+            vertex_source,
+            fragment_source,
+            vertex_attrs,
+            texture_locations,
+        )?;
         inner_pipeline.bind(&self.gl, &options);
 
         self.pipeline_count += 1;
@@ -344,7 +374,7 @@ impl DeviceBackend for GlowBackend {
         let (stride, inner_attrs) = get_inner_attrs(attrs);
         let kind = Kind::Vertex(VertexAttributes::new(stride, inner_attrs, step_mode));
         let mut inner_buffer = InnerBuffer::new(&self.gl, kind, true)?;
-        inner_buffer.bind(&self.gl, Some(self.current_pipeline));
+        inner_buffer.bind(&self.gl, Some(self.current_pipeline), false);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
@@ -352,7 +382,7 @@ impl DeviceBackend for GlowBackend {
 
     fn create_index_buffer(&mut self) -> Result<u64, String> {
         let mut inner_buffer = InnerBuffer::new(&self.gl, Kind::Index, true)?;
-        inner_buffer.bind(&self.gl, Some(self.current_pipeline));
+        inner_buffer.bind(&self.gl, Some(self.current_pipeline), false);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
@@ -361,7 +391,7 @@ impl DeviceBackend for GlowBackend {
     fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<u64, String> {
         let mut inner_buffer =
             InnerBuffer::new(&self.gl, Kind::Uniform(slot, name.to_string()), true)?;
-        inner_buffer.bind(&self.gl, Some(self.current_pipeline));
+        inner_buffer.bind(&self.gl, Some(self.current_pipeline), false);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         Ok(self.buffer_count)
@@ -369,7 +399,7 @@ impl DeviceBackend for GlowBackend {
 
     fn set_buffer_data(&mut self, id: u64, data: &[u8]) {
         if let Some(buffer) = self.buffers.get_mut(&id) {
-            buffer.bind(&self.gl, None);
+            buffer.bind(&self.gl, None, false);
             buffer.update(&self.gl, data);
         }
     }
@@ -377,7 +407,7 @@ impl DeviceBackend for GlowBackend {
     fn render(&mut self, commands: &[Commands], target: Option<u64>) {
         commands.iter().for_each(|cmd| {
             use Commands::*;
-            // log::trace!("Render cmd: {:?}", cmd);
+            // println!("Render cmd: {:?}", cmd);
 
             match cmd {
                 Begin {
