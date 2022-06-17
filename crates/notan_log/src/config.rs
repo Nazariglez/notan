@@ -5,13 +5,12 @@ use std::collections::HashMap;
 use crate::console_error::console_error;
 
 /// Configure the logs output
+/// Logs will show a timestamp using the UTC time with format [year]-[month]-[day] [hour]:[minutes]:[seconds]
 #[derive(Clone)]
 pub struct LogConfig {
     level: log::LevelFilter,
     levels_for: HashMap<String, log::LevelFilter>,
     colored: bool,
-    date_format: String,
-    use_utc: bool,
     verbose: bool,
 }
 
@@ -27,8 +26,6 @@ impl Default for LogConfig {
             level,
             levels_for: Default::default(),
             colored: cfg!(debug_assertions),
-            date_format: String::from("%Y-%m-%d %H:%M:%S"),
-            use_utc: false,
             verbose: false,
         }
     }
@@ -86,18 +83,6 @@ impl LogConfig {
         self
     }
 
-    /// Set the date format (Defaults to "%Y-%m-%d %H:%M:%S")
-    pub fn date_format(mut self, format: &str) -> Self {
-        self.date_format = format.to_string();
-        self
-    }
-
-    /// Set the date to UTC instead of Local
-    pub fn use_utc(mut self) -> Self {
-        self.use_utc = true;
-        self
-    }
-
     /// Log everything including dependencies
     pub fn verbose(mut self, verbose: bool) -> Self {
         self.verbose = verbose;
@@ -114,8 +99,6 @@ where
             level,
             mut levels_for,
             colored,
-            date_format,
-            use_utc,
             verbose,
         } = self.clone();
 
@@ -154,15 +137,9 @@ where
                 .trace(Color::BrightBlack);
 
             dispatch = dispatch.format(move |out, message, record| {
-                let date = if use_utc {
-                    chrono::Utc::now().format(&date_format)
-                } else {
-                    chrono::Local::now().format(&date_format)
-                };
-
                 out.finish(format_args!(
                     "{date} [{target}] {level}: {message}",
-                    date = date,
+                    date = get_time(),
                     target = record.target(),
                     level = format_args!(
                         "{}\x1b[{}m",
@@ -174,15 +151,9 @@ where
             });
         } else {
             dispatch = dispatch.format(move |out, message, record| {
-                let date = if use_utc {
-                    chrono::Utc::now().format(&date_format)
-                } else {
-                    chrono::Local::now().format(&date_format)
-                };
-
                 out.finish(format_args!(
                     "{date} [{target}] {level}: {message}",
-                    date = date,
+                    date = get_time(),
                     target = record.target(),
                     level = record.level(),
                     message = message,
@@ -200,6 +171,27 @@ where
     fn late_evaluation(&self) -> bool {
         true
     }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn get_time() -> String {
+    let format =
+        time::format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
+    time::OffsetDateTime::now_utc().format(&format).unwrap()
+}
+
+#[cfg(target_arch = "wasm32")]
+fn get_time() -> String {
+    let now = js_sys::Date::new_0();
+    format!(
+        "{}-{}-{} {}:{}:{}",
+        now.get_utc_full_year(),
+        now.get_utc_month(),
+        now.get_utc_day(),
+        now.get_utc_hours(),
+        now.get_utc_minutes(),
+        now.get_utc_seconds()
+    )
 }
 
 #[cfg(target_arch = "wasm32")]
