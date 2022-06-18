@@ -37,6 +37,7 @@ pub struct GlowBackend {
     limits: Limits,
     current_uniforms: Vec<UniformLocation>,
     drawing_srgba: bool,
+    drawing_to_render_texture: bool,
 }
 
 impl GlowBackend {
@@ -102,6 +103,7 @@ impl GlowBackend {
             limits,
             current_uniforms: vec![],
             drawing_srgba: false,
+            drawing_to_render_texture: false,
         })
     }
 }
@@ -137,7 +139,7 @@ impl GlowBackend {
     }
 
     fn begin(
-        &self,
+        &mut self,
         target: Option<u64>,
         color: &Option<Color>,
         depth: &Option<f32>,
@@ -151,12 +153,14 @@ impl GlowBackend {
         let (width, height, dpi) = match render_target {
             Some(rt) => {
                 rt.bind(&self.gl);
+                self.drawing_to_render_texture = true;
                 (rt.size.0, rt.size.1, 1.0)
             }
             None => {
                 unsafe {
                     self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
                 }
+                self.drawing_to_render_texture = false;
                 (self.size.0, self.size.1, self.dpi)
             }
         };
@@ -167,7 +171,11 @@ impl GlowBackend {
     }
 
     #[inline]
-    fn viewport(&self, x: f32, y: f32, width: f32, height: f32, dpi: f32) {
+    fn viewport(&self, mut x: f32, mut y: f32, width: f32, height: f32, dpi: f32) {
+        if !self.drawing_to_render_texture {
+            y = (self.size.1 as f32 - (height + y)) * dpi;
+            x = x * dpi;
+        }
         let ww = width * dpi;
         let hh = height * dpi;
 
@@ -202,6 +210,7 @@ impl GlowBackend {
         }
 
         self.using_indices = false;
+        self.drawing_to_render_texture = false;
     }
 
     fn clean_pipeline(&mut self, id: u64) {
