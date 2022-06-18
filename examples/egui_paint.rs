@@ -4,12 +4,14 @@ use notan::prelude::*;
 #[derive(AppState)]
 struct State {
     triangle: Triangle,
+    angle: f32,
 }
 
 impl State {
     pub fn new(gfx: &mut Graphics) -> Self {
         Self {
             triangle: Triangle::new(gfx),
+            angle: 0.0,
         }
     }
 }
@@ -17,6 +19,7 @@ impl State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(State::new)
+        .add_config(WindowConfig::new().lazy_loop())
         .add_config(EguiConfig)
         .draw(draw)
         .build()
@@ -26,18 +29,18 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     let mut output = plugins.egui(|ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::Frame::canvas(ui.style()).show(ui, |ui| {
-                let (rect, _) =
-                    ui.allocate_exact_size(egui::Vec2::splat(200.0), egui::Sense::drag());
+                let (rect, response) =
+                    ui.allocate_exact_size(egui::Vec2::splat(300.0), egui::Sense::drag());
+                state.angle += response.drag_delta().x * 0.01;
 
-                // TODO angle https://github.com/emilk/egui/blob/master/egui_demo_app/src/apps/custom3d.rs
-
+                // Pass as callback the triangle to be draw
                 let triangle = state.triangle.clone();
+                let angle = state.angle;
                 let callback = egui::PaintCallback {
                     rect,
                     callback: std::sync::Arc::new(move |info, ctx| {
                         if let Some(device) = ctx.downcast_mut::<Device>() {
-                            println!("{:?}, {:?}", info.viewport, info.clip_rect);
-                            triangle.draw(device, info);
+                            triangle.draw(device, info, angle); // draw the triangle
                         }
                     }),
                 };
@@ -51,9 +54,7 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
 
     output.clear_color(Color::BLACK);
 
-    if output.needs_repaint() {
-        gfx.render(&output);
-    }
+    gfx.render(&output);
 }
 
 // --- TRIANGLE
@@ -66,9 +67,14 @@ const VERT: ShaderSource = notan::vertex_shader! {
 
     layout(location = 0) out vec3 v_color;
 
+    layout(set = 0, binding = 0) uniform Locals {
+        float u_angle;
+    };
+
     void main() {
         v_color = a_color;
-        gl_Position = vec4(a_pos - 0.5, 0.0, 1.0);
+        gl_Position = vec4(a_pos, 0.0, 1.0);
+        gl_Position.x *= cos(u_angle);
     }
     "#
 };
@@ -92,13 +98,11 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 struct Triangle {
     pipeline: Pipeline,
     vbo: Buffer,
-    clear_options: ClearOptions,
+    ubo: Buffer,
 }
 
 impl Triangle {
     fn new(gfx: &mut Graphics) -> Self {
-        let clear_options = ClearOptions::color(Color::new(0.1, 0.2, 0.3, 1.0));
-
         let vertex_info = VertexInfo::new()
             .attr(0, VertexFormat::Float32x2)
             .attr(1, VertexFormat::Float32x3);
@@ -112,9 +116,9 @@ impl Triangle {
 
         #[rustfmt::skip]
         let vertices = [
-            0.5, 1.0,   1.0, 0.2, 0.3,
-            0.0, 0.0,   0.1, 1.0, 0.3,
-            1.0, 0.0,   0.1, 0.2, 1.0,
+            0.0, 1.0,   1.0, 0.2, 0.3,
+            -1.0, -1.0,   0.1, 1.0, 0.3,
+            1.0, -1.0,   0.1, 0.2, 1.0,
         ];
 
         let vbo = gfx
@@ -124,40 +128,42 @@ impl Triangle {
             .build()
             .unwrap();
 
-        Self {
-            clear_options,
-            pipeline,
-            vbo,
-        }
+        let ubo = gfx
+            .create_uniform_buffer(0, "Locals")
+            .with_data(&[0.0])
+            .build()
+            .unwrap();
+
+        Self { pipeline, vbo, ubo }
     }
 
-    fn draw(&self, device: &mut Device, info: &egui::PaintCallbackInfo) {
+    fn draw(&self, device: &mut Device, info: &egui::PaintCallbackInfo, angle: f32) {
+        // update angle
+        device.set_buffer_data(&self.ubo, &[angle]);
+
+        // create a new renderer
         let mut renderer = device.create_renderer();
-        // renderer.set_size(info.viewport.width() as _, info.viewport.height() as _);
 
-        let screen_height = device.size().1 as f32 * device.dpi() as f32;
-        // renderer.set_scissors(
-        //     info.viewport.min.x,
-        //     -screen_height + info.viewport.max.y - 100.0,
-        //     info.viewport.width(),
-        //     info.viewport.height(),
-        // );
-        renderer.begin(Some(&self.clear_options));
+        // set scissors using the clip_rect passed by egui
+        renderer.set_scissors(
+            info.clip_rect.min.x,
+            info.clip_rect.min.y,
+            info.clip_rect.width(),
+            info.clip_rect.height(),
+        );
 
+        // start the pass
+        renderer.begin(None);
+
+        // set the viewport using the rect passed by egui
         renderer.set_viewport(
             info.viewport.min.x,
-            screen_height - info.viewport.max.y,
+            info.viewport.min.y,
             info.viewport.width(),
             info.viewport.height(),
         );
 
-        // renderer.set_scissors(
-        //     info.clip_rect.min.x,
-        //     info.clip_rect.min.y,
-        //     info.clip_rect.width(),
-        //     info.clip_rect.height(),
-        // );
-
+        // draw the triangle
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_buffer(&self.vbo);
         renderer.draw(0, 3);

@@ -1,6 +1,7 @@
 use crate::epaint::Primitive;
 use crate::plugin::Output;
 use crate::TextureId;
+use egui::Rect;
 use notan_app::{
     BlendFactor, BlendMode, Buffer, CullMode, Device, Graphics, Pipeline, RenderTexture,
     ShaderSource, Texture, TextureFilter, TextureFormat, VertexFormat, VertexInfo,
@@ -318,11 +319,16 @@ impl EguiExtension {
                     self.paint_mesh(device, *clip_rect, mesh, target)?;
                 }
                 Primitive::Callback(callback) => {
+                    let rect = Rect {
+                        min: callback.rect.min,
+                        max: clip_rect.max.min(callback.rect.max),
+                    };
+
                     if callback.rect.is_positive() {
                         let info = egui::PaintCallbackInfo {
                             viewport: callback.rect,
-                            clip_rect: *clip_rect,
-                            pixels_per_point: 1.0,
+                            clip_rect: rect,
+                            pixels_per_point: device.dpi() as _,
                             screen_size_px: [width as _, height as _],
                         };
                         callback.call(&info, device);
