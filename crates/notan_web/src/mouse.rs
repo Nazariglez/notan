@@ -47,6 +47,8 @@ pub fn enable_mouse(
         &win.canvas,
         "mousemove",
         move |e: MouseEvent| {
+            e.stop_propagation();
+            e.prevent_default();
             let (x, y) = canvas_position_from_global(&canvas, e);
             add_evt_move(Event::MouseMove { x, y });
         },
@@ -59,6 +61,8 @@ pub fn enable_mouse(
         "mousedown",
         move |e: MouseEvent| {
             (*fullscreen.borrow())();
+            e.stop_propagation();
+            e.prevent_default();
             let button = mouse_button_to_nae(e.button());
             let (x, y) = canvas_position_from_global(&canvas, e);
             add_evt_down(Event::MouseDown { button, x, y });
@@ -71,6 +75,8 @@ pub fn enable_mouse(
         "mouseup",
         move |e: MouseEvent| {
             (*fullscreen.borrow())();
+            e.stop_propagation();
+            e.prevent_default();
             let button = mouse_button_to_nae(e.button());
             let (x, y) = canvas_position_from_global(&canvas, e);
             add_evt_up(Event::MouseUp { button, x, y });
@@ -84,6 +90,8 @@ pub fn enable_mouse(
         "mouseout",
         move |e: MouseEvent| {
             (*fullscreen.borrow())();
+            e.stop_propagation();
+            e.prevent_default();
             let (x, y) = canvas_position_from_global(&canvas, e);
             add_evt_left_window(Event::MouseLeft { x, y });
         },
@@ -96,6 +104,8 @@ pub fn enable_mouse(
         "mouseover",
         move |e: MouseEvent| {
             (*fullscreen.borrow())();
+            e.stop_propagation();
+            e.prevent_default();
             let (x, y) = canvas_position_from_global(&canvas, e);
             add_evt_over(Event::MouseEnter { x, y });
         },
@@ -108,6 +118,8 @@ pub fn enable_mouse(
             let delta_x = e.delta_x() as _;
             let delta_y = e.delta_y() as _;
             add_evt_wheel(Event::MouseWheel { delta_x, delta_y });
+            e.stop_propagation();
+            e.prevent_default();
         },
     )?);
 

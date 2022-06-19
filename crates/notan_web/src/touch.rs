@@ -47,12 +47,14 @@ pub fn enable_touch(
         &win.canvas,
         "pointerdown",
         move |e: PointerEvent| {
-            (*fullscreen.borrow())();
-            e.stop_propagation();
-            e.prevent_default();
-            let id = e.pointer_id() as _;
-            let (x, y) = canvas_position_from_touch(&canvas, e);
-            add_evt_start(Event::TouchStart { id, x, y });
+            if e.pointer_type() == "touch" {
+                (*fullscreen.borrow())();
+                e.stop_propagation();
+                e.prevent_default();
+                let id = e.pointer_id() as _;
+                let (x, y) = canvas_position_from_touch(&canvas, e);
+                add_evt_start(Event::TouchStart { id, x, y });
+            }
         },
     )?);
 
@@ -62,12 +64,14 @@ pub fn enable_touch(
         &win.canvas,
         "pointerup",
         move |e: PointerEvent| {
-            (*fullscreen.borrow())();
-            e.stop_propagation();
-            e.prevent_default();
-            let id = e.pointer_id() as _;
-            let (x, y) = canvas_position_from_touch(&canvas, e);
-            add_evt_end(Event::TouchEnd { id, x, y });
+            if e.pointer_type() == "touch" {
+                (*fullscreen.borrow())();
+                e.stop_propagation();
+                e.prevent_default();
+                let id = e.pointer_id() as _;
+                let (x, y) = canvas_position_from_touch(&canvas, e);
+                add_evt_end(Event::TouchEnd { id, x, y });
+            }
         },
     )?);
 
@@ -77,12 +81,14 @@ pub fn enable_touch(
         &win.canvas,
         "pointercancel",
         move |e: PointerEvent| {
-            (*fullscreen.borrow())();
-            e.stop_propagation();
-            e.prevent_default();
-            let id = e.pointer_id() as _;
-            let (x, y) = canvas_position_from_touch(&canvas, e);
-            add_evt_cancel(Event::TouchCancel { id, x, y });
+            if e.pointer_type() == "touch" {
+                (*fullscreen.borrow())();
+                e.stop_propagation();
+                e.prevent_default();
+                let id = e.pointer_id() as _;
+                let (x, y) = canvas_position_from_touch(&canvas, e);
+                add_evt_cancel(Event::TouchCancel { id, x, y });
+            }
         },
     )?);
 
