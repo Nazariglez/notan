@@ -18,6 +18,7 @@ pub struct EmptyWindowBackend {
     size: (i32, i32),
     is_fullscreen: bool,
     lazy: bool,
+    caputed: bool,
 }
 
 impl WindowBackend for EmptyWindowBackend {
@@ -57,6 +58,14 @@ impl WindowBackend for EmptyWindowBackend {
 
     fn cursor(&self) -> CursorIcon {
         CursorIcon::Default
+    }
+
+    fn set_capture_mouse(&mut self, capture: bool) {
+        self.caputed = capture;
+    }
+
+    fn capture_mouse(&self) -> bool {
+        self.caputed
     }
 }
 

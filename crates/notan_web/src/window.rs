@@ -285,6 +285,14 @@ impl WindowBackend for WebWindowBackend {
     fn cursor(&self) -> CursorIcon {
         self.cursor
     }
+
+    fn set_capture_mouse(&mut self, capture: bool) {
+        todo!()
+    }
+
+    fn capture_mouse(&self) -> bool {
+        todo!()
+    }
 }
 
 unsafe impl Send for WebWindowBackend {}

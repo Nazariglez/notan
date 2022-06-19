@@ -11,7 +11,7 @@ pub struct WinitWindowBackend {
     pub(crate) scale_factor: f64,
     pub(crate) lazy: bool,
     cursor: CursorIcon,
-    // win: WindowedContext<PossiblyCurrent>,
+    captured: bool,
 }
 
 impl WindowBackend for WinitWindowBackend {
@@ -78,6 +78,16 @@ impl WindowBackend for WinitWindowBackend {
     fn cursor(&self) -> CursorIcon {
         self.cursor
     }
+
+    fn set_capture_mouse(&mut self, capture: bool) {
+        self.captured = capture;
+        log::warn!("Not implemented yet. Awaiting for Winit 0.27");
+        // TODO
+    }
+
+    fn capture_mouse(&self) -> bool {
+        self.captured
+    }
 }
 
 impl WinitWindowBackend {
@@ -127,6 +137,7 @@ impl WinitWindowBackend {
             scale_factor,
             lazy: config.lazy_loop,
             cursor: CursorIcon::Default,
+            captured: false,
         })
     }
 
