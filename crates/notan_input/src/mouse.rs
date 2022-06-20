@@ -2,6 +2,7 @@ use hashbrown::{HashMap, HashSet};
 use notan_core::events::Event;
 
 pub use notan_core::mouse::MouseButton;
+use notan_math::Vec2;
 
 #[derive(Default)]
 /// Represent the mouse data
@@ -16,6 +17,8 @@ pub struct Mouse {
     pub down: HashMap<MouseButton, f32>,
     /// released buttons
     pub released: HashSet<MouseButton>,
+    /// wheel delta
+    pub wheel_delta: Vec2,
 }
 
 impl Mouse {
@@ -122,6 +125,9 @@ impl Mouse {
 
     #[inline]
     pub(crate) fn process_events(&mut self, evt: &Event, delta: f32) {
+        self.wheel_delta.x = 0.0;
+        self.wheel_delta.y = 0.0;
+
         match evt {
             Event::MouseMove { x, y } => {
                 self.x = *x as f32;
@@ -147,6 +153,10 @@ impl Mouse {
                     self.down.insert(*button, 0.0);
                     self.pressed.insert(*button);
                 }
+            }
+            Event::MouseWheel { delta_x, delta_y } => {
+                self.wheel_delta.x = *delta_x;
+                self.wheel_delta.y = *delta_y;
             }
             _ => {}
         }
