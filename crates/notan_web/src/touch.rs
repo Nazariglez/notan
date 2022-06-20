@@ -76,7 +76,6 @@ pub fn enable_touch(
     )?);
 
     let canvas = win.canvas.clone();
-    let fullscreen = fullscreen_dispatcher.clone();
     callbacks.on_cancel = Some(canvas_add_event_listener(
         &win.canvas,
         "pointercancel",
