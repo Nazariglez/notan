@@ -117,6 +117,29 @@ where
     Ok(closure)
 }
 
+pub fn document_add_event_listener<F, E>(
+    name: &str,
+    handler: F,
+) -> Result<Closure<dyn FnMut(E)>, String>
+where
+    E: wasm_bindgen::convert::FromWasmAbi + 'static,
+    F: FnMut(E) + 'static,
+{
+    let doc = web_sys::window()
+        .ok_or_else(|| "global window doesn't exists".to_string())?
+        .document()
+        .ok_or("Can't access document dom object ")?;
+
+    let mut handler = handler;
+    let closure = Closure::wrap(Box::new(move |e: E| {
+        handler(e);
+    }) as Box<dyn FnMut(_)>);
+
+    doc.add_event_listener_with_callback(name, closure.as_ref().unchecked_ref())
+        .map_err(|_| format!("Invalid event name: {}", name))?;
+    Ok(closure)
+}
+
 #[cfg(feature = "audio")]
 pub fn window_remove_event_listener<E>(
     name: &str,

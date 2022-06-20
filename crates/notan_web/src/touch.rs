@@ -82,7 +82,6 @@ pub fn enable_touch(
         "pointercancel",
         move |e: PointerEvent| {
             if e.pointer_type() == "touch" {
-                (*fullscreen.borrow())();
                 e.stop_propagation();
                 e.prevent_default();
                 let id = e.pointer_id() as _;
