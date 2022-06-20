@@ -54,6 +54,9 @@ pub struct WebWindowBackend {
     pub(crate) frame_requested: Rc<RefCell<bool>>,
 
     cursor: CursorIcon,
+
+    capture_requested: Rc<RefCell<Option<bool>>>,
+    pub(crate) captured: Rc<RefCell<bool>>,
 }
 
 impl WebWindowBackend {
@@ -82,6 +85,7 @@ impl WebWindowBackend {
         let fullscreen_requested = Rc::new(RefCell::new(None));
         let fullscreen_last_size = Rc::new(RefCell::new(None));
         let fullscreen_callback_ref = None;
+        let capture_requested = Rc::new(RefCell::new(None));
 
         let min_size = config.min_size;
         let max_size = config.max_size;
@@ -131,6 +135,8 @@ impl WebWindowBackend {
             frame_requested,
 
             cursor: CursorIcon::Default,
+            capture_requested,
+            captured: Rc::new(RefCell::new(false)),
         };
 
         win.init()
@@ -285,6 +291,14 @@ impl WindowBackend for WebWindowBackend {
     fn cursor(&self) -> CursorIcon {
         self.cursor
     }
+
+    fn set_capture_cursor(&mut self, capture: bool) {
+        *self.capture_requested.borrow_mut() = Some(capture);
+    }
+
+    fn capture_cursor(&self) -> bool {
+        *self.captured.borrow()
+    }
 }
 
 unsafe impl Send for WebWindowBackend {}
@@ -323,6 +337,9 @@ fn fullscreen_dispatcher_callback(win: &mut WebWindowBackend) -> Rc<RefCell<dyn 
     let canvas = win.canvas.clone();
     let doc = win.document.clone();
     let last_size = win.fullscreen_last_size.clone();
+
+    let captured_request = win.capture_requested.clone();
+
     Rc::new(RefCell::new(move || {
         if let Some(full) = fullscreen_requested.borrow_mut().take() {
             if full {
@@ -334,6 +351,14 @@ fn fullscreen_dispatcher_callback(win: &mut WebWindowBackend) -> Rc<RefCell<dyn 
                 }
             } else {
                 doc.exit_fullscreen();
+            }
+        }
+
+        if let Some(capture) = captured_request.borrow_mut().take() {
+            if capture {
+                canvas.request_pointer_lock();
+            } else {
+                doc.exit_pointer_lock();
             }
         }
     }))

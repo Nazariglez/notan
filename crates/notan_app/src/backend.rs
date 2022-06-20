@@ -150,4 +150,10 @@ pub trait WindowBackend {
 
     /// Returns the current cursor icon
     fn cursor(&self) -> CursorIcon;
+
+    /// Confine the mouse on the app
+    fn set_capture_cursor(&mut self, capture: bool);
+
+    /// Returns if the mouse is confined in the app
+    fn capture_cursor(&self) -> bool;
 }
