@@ -292,11 +292,11 @@ impl WindowBackend for WebWindowBackend {
         self.cursor
     }
 
-    fn set_capture_mouse(&mut self, capture: bool) {
+    fn set_capture_cursor(&mut self, capture: bool) {
         *self.capture_requested.borrow_mut() = Some(capture);
     }
 
-    fn capture_mouse(&self) -> bool {
+    fn capture_cursor(&self) -> bool {
         *self.captured.borrow()
     }
 }

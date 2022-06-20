@@ -60,11 +60,11 @@ impl WindowBackend for EmptyWindowBackend {
         CursorIcon::Default
     }
 
-    fn set_capture_mouse(&mut self, capture: bool) {
+    fn set_capture_cursor(&mut self, capture: bool) {
         self.caputed = capture;
     }
 
-    fn capture_mouse(&self) -> bool {
+    fn capture_cursor(&self) -> bool {
         self.caputed
     }
 }

@@ -79,13 +79,23 @@ impl WindowBackend for WinitWindowBackend {
         self.cursor
     }
 
-    fn set_capture_mouse(&mut self, capture: bool) {
-        self.captured = capture;
-        log::warn!("Not implemented yet. Awaiting for Winit 0.27");
-        // TODO
+    fn set_capture_cursor(&mut self, capture: bool) {
+        if capture == self.captured {
+            return;
+        }
+
+        let is_macos = cfg!(target_os = "macos");
+        if is_macos {
+            log::warn!("Capture cursor is not implemented yet on MacOS. Awaiting for Winit 0.27");
+            return;
+        }
+
+        if self.window().set_cursor_grab(capture).is_ok() {
+            self.captured = capture;
+        }
     }
 
-    fn capture_mouse(&self) -> bool {
+    fn capture_cursor(&self) -> bool {
         self.captured
     }
 }
