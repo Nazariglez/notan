@@ -1,3 +1,7 @@
-pub use instant::{Duration, Instant};
+#[cfg(feature = "save_file")]
+mod save_file;
 
-// TODO move rand here
+#[cfg(feature = "save_file")]
+pub use save_file::*;
+
+pub use instant::{Duration, Instant};
