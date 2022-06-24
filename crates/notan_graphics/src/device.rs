@@ -373,6 +373,11 @@ impl Device {
 
     #[inline]
     pub fn set_buffer_data<T: BufferDataType>(&mut self, buffer: &Buffer, data: &[T]) {
+        #[cfg(debug_assertions)]
+        if !buffer.is_initialized() {
+            buffer.initialize();
+        }
+
         self.backend
             .set_buffer_data(buffer.id(), bytemuck::cast_slice(data));
     }
