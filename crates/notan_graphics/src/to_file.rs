@@ -18,9 +18,7 @@ pub(crate) fn save_to_png_file<P: AsRef<std::path::Path>>(
     let len = width * height * bpp;
 
     let mut bytes = vec![0; len];
-    gfx.read_pixels(texture)
-        // frame
-        .read_to(&mut bytes)?;
+    gfx.read_pixels(texture).read_to(&mut bytes)?;
 
     if inverse {
         bytes = bytes.chunks(width * bpp).rev().flatten().cloned().collect();
