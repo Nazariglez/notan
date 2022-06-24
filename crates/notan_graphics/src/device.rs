@@ -358,6 +358,20 @@ impl Device {
         bytes: &mut [u8],
         opts: &TextureRead,
     ) -> Result<(), String> {
+        // Check if the buffer size is enough to read the pixels
+        if cfg!(debug_assertions) {
+            let size = (texture.width() * texture.height()) as usize;
+            let bbp = texture.format().bytes_per_pixel() as usize;
+            let len = size * bbp;
+            debug_assert_eq!(
+                len,
+                bytes.len(),
+                "To read the pixels the texture {} needs at a buffer of {} len",
+                texture.id(),
+                len
+            );
+        }
+
         self.backend.read_pixels(texture.id(), bytes, opts)
     }
 
@@ -373,6 +387,11 @@ impl Device {
 
     #[inline]
     pub fn set_buffer_data<T: BufferDataType>(&mut self, buffer: &Buffer, data: &[T]) {
+        #[cfg(debug_assertions)]
+        if !buffer.is_initialized() {
+            buffer.initialize();
+        }
+
         self.backend
             .set_buffer_data(buffer.id(), bytemuck::cast_slice(data));
     }

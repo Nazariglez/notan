@@ -11,6 +11,9 @@ pub mod texture;
 
 pub mod prelude;
 
+#[cfg(feature = "texture_to_file")]
+mod to_file;
+
 pub use device::*;
 pub use limits::*;
 pub use render_texture::*;

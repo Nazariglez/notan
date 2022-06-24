@@ -59,9 +59,16 @@ impl Default for TextureInfo {
 }
 
 impl TextureInfo {
+    #[inline]
+    pub fn bytes_per_pixel(&self) -> u8 {
+        self.format.bytes_per_pixel()
+    }
+}
+
+impl TextureFormat {
     pub fn bytes_per_pixel(&self) -> u8 {
         use TextureFormat::*;
-        match self.format {
+        match self {
             R8 | SRgba8 => 1,
             _ => 4,
         }
@@ -191,6 +198,15 @@ impl Texture {
 
     pub fn base_size(&self) -> (f32, f32) {
         (self.width as _, self.height as _)
+    }
+
+    #[cfg(feature = "texture_to_file")]
+    pub fn to_file<P: AsRef<std::path::Path>>(
+        &self,
+        gfx: &mut Device,
+        path: P,
+    ) -> Result<(), String> {
+        crate::to_file::save_to_png_file(gfx, self, false, path)
     }
 }
 

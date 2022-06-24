@@ -18,3 +18,7 @@ parking_lot = "0.12"
 image = { version = "0.24", default-features = false, features = ["jpeg", "png"] }
 notan_math = { path = "../notan_math", version = "0.4.2" }
 notan_macro = { path = "../notan_macro", version = "0.4.2" }
+notan_utils = { path = "../notan_utils", version = "0.4.2" }
+
+[features]
+texture_to_file = ["notan_utils/save_file"]

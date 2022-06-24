@@ -13,3 +13,12 @@ description = "Provides a simple set of utils Notan"
 
 [dependencies]
 instant = { version = "0.1", features = ["wasm-bindgen"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { version = "0.2.80", optional = true }
+js-sys = { version = "0.3", optional = true }
+web-sys = { version = "0.3", optional = true }
+mime_guess = { version = "2.0", optional = true }
+
+[features]
+save_file = ["mime_guess", "wasm-bindgen", "js-sys", "web-sys", "web-sys?/Window", "web-sys?/Blob", "web-sys?/BlobPropertyBag", "web-sys?/Url", "web-sys?/Element", "web-sys?/HtmlAnchorElement"]

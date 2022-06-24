@@ -1661,6 +1661,7 @@ dependencies = [
  "log",
  "notan_macro",
  "notan_math",
+ "notan_utils",
  "parking_lot 0.12.0",
 ]
 
@@ -1738,6 +1739,10 @@ name = "notan_utils"
 version = "0.4.2"
 dependencies = [
  "instant",
+ "js-sys",
+ "mime_guess",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
