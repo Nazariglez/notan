@@ -196,6 +196,10 @@ name = "egui_texture"
 required-features = ["egui"]
 
 [[example]]
+name = "game_15_puzzle"
+required-features = ["draw"]
+
+[[example]]
 name = "game_of_life"
 required-features = ["draw"]
 
@@ -253,4 +257,8 @@ required-features = ["text"]
 
 [[example]]
 name = "window_fullscreen"
+required-features = ["draw"]
+
+[[example]]
+name = "window_transparent"
 required-features = ["draw"]

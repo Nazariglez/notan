@@ -195,8 +195,9 @@ impl<'a, F: Font + Sync, H: BuildHasher> RenderQueueBuilder<'a, F, H> {
         } = self;
 
         let (width, height) = size.unwrap_or_else(|| device.size());
-        let projection = transform
-            .unwrap_or_else(|| Mat4::orthographic_lh(0.0, width as _, height as _, 0.0, -1.0, 1.0));
+        let projection = transform.unwrap_or_else(|| {
+            Mat4::orthographic_rh_gl(0.0, width as _, height as _, 0.0, -1.0, 1.0)
+        });
 
         pipeline.create_renderer(
             device,
