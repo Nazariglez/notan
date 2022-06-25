@@ -84,19 +84,12 @@ impl Renderer {
     }
 
     pub fn bind_buffer(&mut self, buffer: &Buffer) {
-        #[cfg(debug_assertions)]
-        debug_assert!(
-            buffer.is_initialized(),
-            "Binding buffer {:?} id({}) without data can cause undefined behavior.",
-            buffer.usage,
-            buffer.id()
-        );
-
         self.commands.push(Commands::BindBuffer { id: buffer.id() });
     }
 
     pub fn bind_buffers(&mut self, buffers: &[&Buffer]) {
-        buffers.iter().for_each(|b| self.bind_buffer(b));
+        self.commands
+            .extend(buffers.iter().map(|b| Commands::BindBuffer { id: b.id() }));
     }
 
     pub fn draw(&mut self, offset: i32, count: i32) {

@@ -22,9 +22,6 @@ pub struct Buffer {
     _id_ref: Arc<BufferIdRef>,
     pub usage: BufferUsage,
     pub draw: Option<DrawType>,
-
-    #[cfg(debug_assertions)]
-    pub(crate) initialized: Arc<std::sync::atomic::AtomicBool>,
 }
 
 impl Buffer {
@@ -41,28 +38,12 @@ impl Buffer {
             _id_ref: id_ref,
             usage,
             draw,
-
-            #[cfg(debug_assertions)]
-            initialized: Arc::new(Default::default()),
         }
     }
 
     #[inline(always)]
     pub fn id(&self) -> u64 {
         self.id
-    }
-
-    #[cfg(debug_assertions)]
-    #[inline]
-    pub(crate) fn initialize(&self) {
-        self.initialized
-            .store(true, std::sync::atomic::Ordering::Relaxed);
-    }
-
-    #[cfg(debug_assertions)]
-    #[inline]
-    pub(crate) fn is_initialized(&self) -> bool {
-        self.initialized.load(std::sync::atomic::Ordering::Relaxed)
     }
 }
 
