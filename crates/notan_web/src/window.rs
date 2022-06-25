@@ -2,8 +2,8 @@ use crate::keyboard::{enable_keyboard, KeyboardCallbacks};
 use crate::mouse::{enable_mouse, MouseCallbacks};
 use crate::touch::{enable_touch, PointerCallbacks};
 use crate::utils::{
-    canvas_add_event_listener, get_notan_size, get_or_create_canvas, request_animation_frame,
-    set_size_dpi, window_add_event_listener,
+    canvas_add_event_listener, canvas_visible, get_notan_size, get_or_create_canvas,
+    request_animation_frame, set_size_dpi, window_add_event_listener,
 };
 use notan_app::{CursorIcon, WindowConfig};
 use notan_app::{Event, EventIterator, WindowBackend};
@@ -28,6 +28,7 @@ pub struct WebWindowBackend {
 
     pub(crate) antialias: bool,
     pub(crate) transparent: bool,
+    pub(crate) visible: bool,
 
     events: Rc<RefCell<EventIterator>>,
 
@@ -72,6 +73,9 @@ impl WebWindowBackend {
             .ok_or("Can't access document dom object ")?;
 
         let canvas = get_or_create_canvas(&document, "notan_canvas")?;
+
+        let visible = config.visible;
+        canvas_visible(&canvas, visible);
 
         let canvas_parent = canvas
             .parent_element()
@@ -137,6 +141,7 @@ impl WebWindowBackend {
             cursor: CursorIcon::Default,
             capture_requested,
             captured: Rc::new(RefCell::new(false)),
+            visible,
         };
 
         win.init()
@@ -298,6 +303,17 @@ impl WindowBackend for WebWindowBackend {
 
     fn capture_cursor(&self) -> bool {
         *self.captured.borrow()
+    }
+
+    fn set_visible(&mut self, visible: bool) {
+        if self.visible != visible {
+            self.visible = visible;
+            canvas_visible(&self.canvas, visible);
+        }
+    }
+
+    fn visible(&self) -> bool {
+        self.visible
     }
 }
 

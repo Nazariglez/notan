@@ -179,6 +179,15 @@ fn canvas_pos(canvas: &HtmlCanvasElement, client_x: i32, client_y: i32) -> (f32,
     (x, y)
 }
 
+pub fn canvas_visible(canvas: &HtmlCanvasElement, visible: bool) {
+    if let Err(e) = canvas
+        .style()
+        .set_property("display", if visible { "block" } else { "none" })
+    {
+        log::error!("{:?}", e);
+    }
+}
+
 pub fn get_notan_size(canvas: &HtmlCanvasElement) -> (i32, i32) {
     let width = canvas
         .get_attribute("notan-width")

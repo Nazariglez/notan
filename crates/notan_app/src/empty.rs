@@ -19,6 +19,7 @@ pub struct EmptyWindowBackend {
     is_fullscreen: bool,
     lazy: bool,
     caputed: bool,
+    visible: bool,
 }
 
 impl WindowBackend for EmptyWindowBackend {
@@ -66,6 +67,14 @@ impl WindowBackend for EmptyWindowBackend {
 
     fn capture_cursor(&self) -> bool {
         self.caputed
+    }
+
+    fn set_visible(&mut self, visible: bool) {
+        self.visible = visible;
+    }
+
+    fn visible(&self) -> bool {
+        self.visible
     }
 }
 

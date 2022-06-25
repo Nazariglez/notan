@@ -156,4 +156,10 @@ pub trait WindowBackend {
 
     /// Returns if the mouse is confined in the app
     fn capture_cursor(&self) -> bool;
+
+    /// Hide or show the window
+    fn set_visible(&mut self, visible: bool);
+
+    /// Returns if the window is visible
+    fn visible(&self) -> bool;
 }
