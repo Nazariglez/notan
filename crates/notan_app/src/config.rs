@@ -53,6 +53,9 @@ pub struct WindowConfig {
     /// Enable decorations
     /// `Web: Does nothing`
     pub decorations: bool,
+
+    /// Hide the windows
+    pub visible: bool,
 }
 
 impl Default for WindowConfig {
@@ -72,6 +75,7 @@ impl Default for WindowConfig {
             lazy_loop: false,
             transparent: false,
             decorations: true,
+            visible: true,
         }
     }
 }
@@ -158,6 +162,12 @@ impl WindowConfig {
     /// Enable or disable decorations
     pub fn decorations(mut self, decorations: bool) -> Self {
         self.decorations = decorations;
+        self
+    }
+
+    /// Hide or show the window
+    pub fn visible(mut self, visible: bool) -> Self {
+        self.visible = visible;
         self
     }
 }

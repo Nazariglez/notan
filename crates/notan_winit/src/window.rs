@@ -12,6 +12,7 @@ pub struct WinitWindowBackend {
     pub(crate) lazy: bool,
     cursor: CursorIcon,
     captured: bool,
+    visible: bool,
 }
 
 impl WindowBackend for WinitWindowBackend {
@@ -98,6 +99,17 @@ impl WindowBackend for WinitWindowBackend {
     fn capture_cursor(&self) -> bool {
         self.captured
     }
+
+    fn set_visible(&mut self, visible: bool) {
+        if self.visible != visible {
+            self.visible = visible;
+            self.window().set_visible(visible);
+        }
+    }
+
+    fn visible(&self) -> bool {
+        self.visible
+    }
 }
 
 impl WinitWindowBackend {
@@ -108,6 +120,7 @@ impl WinitWindowBackend {
             .with_maximized(config.maximized)
             .with_resizable(config.resizable)
             .with_transparent(config.transparent)
+            .with_visible(config.visible)
             .with_decorations(config.decorations);
 
         /* TODO: this should be exposed to notan to be enabled/disabled but
@@ -148,6 +161,7 @@ impl WinitWindowBackend {
             lazy: config.lazy_loop,
             cursor: CursorIcon::Default,
             captured: false,
+            visible: config.visible,
         })
     }
 
