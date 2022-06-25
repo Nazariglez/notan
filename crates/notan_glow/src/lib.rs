@@ -230,6 +230,15 @@ impl GlowBackend {
 
     fn bind_buffer(&mut self, id: u64) {
         if let Some(buffer) = self.buffers.get_mut(&id) {
+            #[cfg(debug_assertions)]
+            {
+                debug_assert!(
+                    buffer.initialized,
+                    "Buffer {} -> id({}) is doesn't contain data. This can cause Undefined behavior.",
+                    buffer.kind,
+                    id
+                )
+            }
             let reset_attrs = match &buffer.kind {
                 Kind::Index => {
                     self.using_indices = true;

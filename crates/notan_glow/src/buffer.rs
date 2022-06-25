@@ -1,6 +1,7 @@
 use crate::pipeline::VertexAttributes;
 use crate::pipeline::*;
 use glow::*;
+use std::fmt::Formatter;
 
 //https://sotrh.github.io/learn-wgpu/beginner/tutorial6-uniforms/#a-perspective-camera
 //https://wgld.org/d/webgl2/w009.html
@@ -9,6 +10,16 @@ pub(crate) enum Kind {
     Vertex(VertexAttributes),
     Index,
     Uniform(u32, String),
+}
+
+impl std::fmt::Display for Kind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Kind::Vertex(_) => write!(f, "Vertex"),
+            Kind::Index => write!(f, "Index"),
+            Kind::Uniform(loc, id) => write!(f, "Uniform(location: {}, id: {})", loc, id),
+        }
+    }
 }
 
 pub(crate) struct InnerBuffer {
@@ -24,6 +35,9 @@ pub(crate) struct InnerBuffer {
     draw_target: u32,
     pub(crate) kind: Kind,
     last_pipeline: Option<u64>,
+
+    #[cfg(debug_assertions)]
+    pub(crate) initialized: bool,
 }
 
 impl InnerBuffer {
@@ -65,6 +79,9 @@ impl InnerBuffer {
             draw_target,
             kind,
             last_pipeline: None,
+
+            #[cfg(debug_assertions)]
+            initialized: false,
         })
     }
 
@@ -117,6 +134,11 @@ impl InnerBuffer {
             } else {
                 gl.buffer_sub_data_u8_slice(self.draw_target, 0, data);
             }
+        }
+
+        #[cfg(debug_assertions)]
+        {
+            self.initialized = true;
         }
     }
 
