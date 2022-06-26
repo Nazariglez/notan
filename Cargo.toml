@@ -256,6 +256,10 @@ name = "text_hello"
 required-features = ["text"]
 
 [[example]]
+name = "texture_to_file"
+required-features = ["draw", "texture_to_file"]
+
+[[example]]
 name = "window_fullscreen"
 required-features = ["draw"]
 

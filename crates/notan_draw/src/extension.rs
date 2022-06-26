@@ -13,6 +13,13 @@ impl CreateDraw for Graphics {
     }
 }
 
+impl CreateDraw for RenderTexture {
+    fn create_draw(&self) -> Draw {
+        let (width, height) = self.size();
+        Draw::new(width as _, height as _)
+    }
+}
+
 pub struct DrawExtension {
     manager: DrawManager,
 }
