@@ -1,6 +1,6 @@
 [package]
 name = "notan_math"
-version = "0.4.2"
+version = "0.5.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -13,7 +13,7 @@ description = "Provides simple set of math's utils for Notan"
 
 [dependencies]
 rand_pcg = "0.3"
-glam = { version = "0.20", features = ["scalar-math"] }
+glam = { version = "0.21", features = ["scalar-math"] }
 rand = { version = "0.8"}
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
