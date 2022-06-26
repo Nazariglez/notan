@@ -174,7 +174,7 @@ impl GlowBackend {
     fn viewport(&self, mut x: f32, mut y: f32, width: f32, height: f32, dpi: f32) {
         if !self.drawing_to_render_texture {
             y = (self.size.1 as f32 - (height + y)) * dpi;
-            x = x * dpi;
+            x *= dpi;
         }
         let ww = width * dpi;
         let hh = height * dpi;
@@ -266,10 +266,9 @@ impl GlowBackend {
     fn bind_texture(&mut self, id: u64, slot: u32, location: u32) {
         if let Some(pip) = self.pipelines.get(&self.current_pipeline) {
             let is_srgba = if let Some(texture) = self.textures.get(&id) {
-                if cfg!(debug_assertions) {
-                    if !pip.texture_locations.contains_key(&location) {
-                        log::warn!("Uniform location {} for texture {} should be declared when the pipeline is created.", location, id);
-                    }
+                #[cfg(debug_assertions)]
+                if !pip.texture_locations.contains_key(&location) {
+                    log::warn!("Uniform location {} for texture {} should be declared when the pipeline is created.", location, id);
                 }
 
                 let loc = pip

@@ -1,6 +1,5 @@
 use crate::texture::*;
 use crate::{Device, DropManager, Renderer, ResourceId};
-use image::ColorType;
 use std::ops::Deref;
 use std::sync::Arc;
 

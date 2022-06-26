@@ -278,7 +278,7 @@ fn create_pipeline(
 
     #[cfg(debug_assertions)]
     let mut not_used_textures: HashSet<String> = texture_locations
-        .into_iter()
+        .iter()
         .map(|(_loc, id)| id.clone())
         .collect();
 
@@ -304,7 +304,11 @@ fn create_pipeline(
                             }
 
                             // register the texgture uniform loc under the new loc provided by the user
+                            #[cfg(target_arch = "wasm32")]
                             texture_locations_map.insert(tloc, loc.clone());
+
+                            #[cfg(not(target_arch = "wasm32"))]
+                            texture_locations_map.insert(tloc, loc);
                         }
 
                         Some(loc)

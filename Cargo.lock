@@ -1723,6 +1723,7 @@ version = "0.5.0"
 dependencies = [
  "instant",
  "js-sys",
+ "log",
  "mime_guess",
  "wasm-bindgen",
  "web-sys",

@@ -22,22 +22,22 @@ pub fn save_file<P: AsRef<Path>>(path: P, bytes: &[u8]) -> Result<(), String> {
         .unwrap_or("")
         .to_string();
 
-    let mut u8_buff = Uint8Array::new_with_length(bytes.len() as _);
-    u8_buff.copy_from(&bytes);
+    let u8_buff = Uint8Array::new_with_length(bytes.len() as _);
+    u8_buff.copy_from(bytes);
 
-    let mut array = Array::new();
+    let array = Array::new();
     array.push(&u8_buff.buffer());
 
     let blob = web_sys::Blob::new_with_u8_array_sequence_and_options(
         &array,
-        &web_sys::BlobPropertyBag::new().type_(&mime),
+        web_sys::BlobPropertyBag::new().type_(&mime),
     )
-    .map_err(|_| format!("Cannot create a blob from file"))?;
+    .map_err(|_| "Cannot create a blob from file".to_string())?;
 
     let url = web_sys::Url::create_object_url_with_blob(&blob)
-        .map_err(|_| format!("Cannot create a blob from file"))?;
+        .map_err(|_| "Cannot create a blob from file".to_string())?;
 
-    let mut a = web_sys::window()
+    let a = web_sys::window()
         .unwrap()
         .document()
         .unwrap()
@@ -52,7 +52,9 @@ pub fn save_file<P: AsRef<Path>>(path: P, bytes: &[u8]) -> Result<(), String> {
     a.set_download(p.file_name().unwrap().to_str().unwrap());
     a.click();
 
-    Url::revoke_object_url(&url);
+    if let Err(e) = Url::revoke_object_url(&url) {
+        log::error!("{:?}", e);
+    }
 
     Ok(())
 }

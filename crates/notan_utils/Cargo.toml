@@ -13,6 +13,7 @@ description = "Provides a simple set of utils Notan"
 
 [dependencies]
 instant = { version = "0.1", features = ["wasm-bindgen"] }
+log = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2.81", optional = true }

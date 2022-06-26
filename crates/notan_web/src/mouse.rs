@@ -95,8 +95,8 @@ pub fn enable_mouse(
     let canvas = win.canvas.clone();
     let fullscreen = fullscreen_dispatcher.clone();
     let captured = win.captured.clone();
-    let last_x = last_x_ref.clone();
-    let last_y = last_y_ref.clone();
+    let last_x = last_x_ref;
+    let last_y = last_y_ref;
     callbacks.on_up = Some(window_add_event_listener(
         "mouseup",
         move |e: MouseEvent| {
@@ -179,7 +179,7 @@ fn get_x_y(
     let (x, y) = if captured {
         (*last_x + e.movement_x(), *last_y + e.movement_y())
     } else {
-        canvas_position_from_global(&canvas, e)
+        canvas_position_from_global(canvas, e)
     };
     *last_x = x;
     *last_y = y;

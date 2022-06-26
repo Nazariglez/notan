@@ -24,7 +24,7 @@ pub(crate) fn save_to_png_file<P: AsRef<std::path::Path>>(
         bytes = bytes.chunks(width * bpp).rev().flatten().cloned().collect();
     }
 
-    let mut p = path.as_ref().clone();
+    let p = path.as_ref();
     p.with_extension(".png");
 
     let typ = match bpp {
