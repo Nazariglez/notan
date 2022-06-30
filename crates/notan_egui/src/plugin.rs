@@ -17,6 +17,7 @@ pub struct EguiPlugin {
     raw_input: egui::RawInput,
     platform_output: Option<egui::PlatformOutput>,
     latest_evt_was_touch: bool,
+    needs_repaint: bool,
 }
 
 impl EguiPlugin {
@@ -34,6 +35,12 @@ impl EguiPlugin {
             textures_delta,
             shapes,
         } = self.ctx.run(new_input, run_ui);
+
+        // On post frame needs repaint is set to false
+        // set it again if true after a egui output.
+        if !self.needs_repaint {
+            self.needs_repaint = needs_repaint;
+        }
 
         self.platform_output = Some(platform_output);
 
@@ -293,7 +300,13 @@ impl Plugin for EguiPlugin {
                 ..
             } = platform_output;
 
-            app.window().set_cursor(translate_cursor(cursor_icon));
+            {
+                let win = app.window();
+                win.set_cursor(translate_cursor(cursor_icon));
+                if self.needs_repaint && win.lazy_loop() {
+                    win.request_frame();
+                }
+            }
 
             #[cfg(not(feature = "links"))]
             let _ = open_url;
@@ -308,6 +321,7 @@ impl Plugin for EguiPlugin {
             }
         }
 
+        self.needs_repaint = false;
         Ok(AppFlow::Next)
     }
 }

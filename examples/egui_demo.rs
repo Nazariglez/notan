@@ -22,15 +22,11 @@ fn main() -> Result<(), String> {
         .build()
 }
 
-fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
+fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     let mut output = plugins.egui(|ctx| state.demo.ui(ctx));
     output.clear_color(Color::BLACK);
 
     if output.needs_repaint() {
         gfx.render(&output);
-
-        // using the lazy loop we can check if egui demo needs repaint
-        // to ask for the next frame in case it's drawing an animation
-        app.window().request_frame();
     }
 }
