@@ -101,7 +101,7 @@ const GLYPH_FRAGMENT: ShaderSource = fragment_shader! {
     #version 450
     precision mediump float;
 
-    layout(location = 0) uniform sampler2D font_sampler;
+    layout(binding = 0) uniform sampler2D font_sampler;
 
     layout(location = 0) in vec2 f_tex_pos;
     layout(location = 1) in vec4 f_color;
