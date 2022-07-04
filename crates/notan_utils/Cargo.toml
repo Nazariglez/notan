@@ -1,6 +1,6 @@
 [package]
 name = "notan_utils"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
