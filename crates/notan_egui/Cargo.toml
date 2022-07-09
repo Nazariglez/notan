@@ -14,7 +14,7 @@ description = "Provides EGUI support for Notan"
 [dependencies]
 log = "0.4"
 egui = { version = "0.18.1", features = ["bytemuck"] }
-bytemuck = "1.9"
+bytemuck = "1.10"
 notan_core = { path = "../notan_core", version = "0.5.1" }
 notan_app = { path = "../notan_app", version = "0.5.1" }
 notan_macro = { path = "../notan_macro", version = "0.5.1" }

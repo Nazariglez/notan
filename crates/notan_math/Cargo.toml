@@ -13,7 +13,7 @@ description = "Provides simple set of math's utils for Notan"
 
 [dependencies]
 rand_pcg = "0.3"
-glam = { version = "0.21", features = ["scalar-math"] }
+glam = { version = "0.21", features = ["scalar-math", "bytemuck"] }
 rand = { version = "0.8"}
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

@@ -13,7 +13,7 @@ description = "Provides support for OpenGL, OpenGL ES and WebGL for Notan"
 
 [dependencies]
 log = "0.4"
-bytemuck = "1.9"
+bytemuck = "1.10"
 glow = "0.11"
 notan_graphics = { path= "../notan_graphics", version = "0.5.1" }
 hashbrown = "0.12"
