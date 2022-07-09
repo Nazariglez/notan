@@ -60,7 +60,7 @@ const PIXEL_INVERT_FRAGMENT: ShaderSource = notan::fragment_shader! {
     layout(location = 0) out vec4 outColor;
     layout(location = 0) in vec2 v_texcoord;
 
-    layout(location = 0) uniform sampler2D u_texture;
+    layout(binding = 0) uniform sampler2D u_texture;
     layout(set = 0, binding = 0) uniform Locals {
         vec2 u_tex_size;
         float u_value;

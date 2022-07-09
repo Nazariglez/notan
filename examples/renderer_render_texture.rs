@@ -27,7 +27,7 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 
     layout(location = 0) out vec4 outColor;
 
-    layout(location = 0) uniform sampler2D u_texture;
+    layout(binding = 0) uniform sampler2D u_texture;
     void main() {
         outColor = texture(u_texture, v_texcoord);
     }

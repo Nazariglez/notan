@@ -30,7 +30,7 @@ const FRAG: ShaderSource = notan::fragment_shader! {
 
     layout(location = 0) out vec4 outColor;
 
-    layout(location = 0) uniform sampler2D u_texture;
+    layout(binding = 0) uniform sampler2D u_texture;
 
     void main() {
         outColor = texture(u_texture, v_texcoord);
@@ -140,7 +140,7 @@ fn setup(gfx: &mut Graphics) -> State {
 
     let uniform_buffer = gfx
         .create_uniform_buffer(0, "Locals")
-        .with_data(&mvp.to_cols_array())
+        .with_data(&[mvp])
         .build()
         .unwrap();
 
