@@ -1564,6 +1564,7 @@ dependencies = [
 name = "notan_app"
 version = "0.5.1"
 dependencies = [
+ "bytemuck",
  "downcast-rs",
  "futures",
  "futures-util",

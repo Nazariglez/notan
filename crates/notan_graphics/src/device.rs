@@ -386,12 +386,22 @@ impl Device {
     }
 
     #[inline]
-    pub fn set_buffer_data<T: BufferDataType>(&mut self, buffer: &Buffer, data: &[T]) {
+    pub fn set_buffer_data<T: bytemuck::Pod>(&mut self, buffer: &Buffer, data: &[T]) {
         self.backend
-            .set_buffer_data(buffer.id(), bytemuck::cast_slice(data));
+            .set_buffer_data(buffer.id(), data.cast_as_bytes(self));
     }
 }
 
-pub trait BufferDataType: bytemuck::Pod {}
-impl BufferDataType for u32 {}
-impl BufferDataType for f32 {}
+trait CastAsBytes {
+    fn cast_as_bytes(&self, device: &Device) -> &[u8];
+}
+
+impl<T> CastAsBytes for &[T]
+where
+    T: bytemuck::Pod,
+{
+    #[inline]
+    fn cast_as_bytes(&self, _device: &Device) -> &[u8] {
+        bytemuck::cast_slice(self)
+    }
+}
