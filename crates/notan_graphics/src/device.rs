@@ -1,5 +1,6 @@
 use crate::buffer::*;
 use crate::commands::*;
+use crate::crevice::std140::{AsStd140, Std140};
 use crate::limits::Limits;
 use crate::pipeline::*;
 use crate::render_texture::*;
@@ -8,7 +9,6 @@ use crate::shader::*;
 use crate::texture::*;
 use parking_lot::RwLock;
 use std::sync::Arc;
-pub use crevice::std140::{AsStd140, Std140};
 
 /// Device resource ID, used to know which resource was dropped
 #[derive(Debug)]
@@ -398,43 +398,54 @@ pub trait BufferData {
 }
 
 impl<T> BufferData for &[T]
-    where T: bytemuck::Pod {
-
+where
+    T: bytemuck::Pod,
+{
     #[inline]
     fn upload(&self, device: &mut Device, id: u64) {
         println!("regular buffer");
-        device.backend.set_buffer_data(id, bytemuck::cast_slice(self));
+        device
+            .backend
+            .set_buffer_data(id, bytemuck::cast_slice(self));
     }
 }
 
 impl<const N: usize, T> BufferData for &[T; N]
-    where T: bytemuck::Pod {
-
+where
+    T: bytemuck::Pod,
+{
     #[inline]
     fn upload(&self, device: &mut Device, id: u64) {
         println!("regular buffer");
-        device.backend.set_buffer_data(id, bytemuck::cast_slice(self.as_slice()));
+        device
+            .backend
+            .set_buffer_data(id, bytemuck::cast_slice(self.as_slice()));
     }
 }
 
-// impl<T> BufferData for T
-// where T: Uniform {
-//
-//     #[inline]
-//     fn upload(&self, device: &mut Device, id: u64) {
-//         println!("unoform bugger");
-//         // TODO check opengl version or driver if it uses std140 to layout or not
-//         device.backend.set_buffer_data(id, self.as_std140().as_bytes());
-//     }
-// }
+impl<T> BufferData for &Vec<T>
+where
+    T: bytemuck::Pod,
+{
+    #[inline]
+    fn upload(&self, device: &mut Device, id: u64) {
+        println!("regular buffer");
+        device
+            .backend
+            .set_buffer_data(id, bytemuck::cast_slice(self.as_slice()));
+    }
+}
 
 impl<T> BufferData for &T
-    where T: Uniform {
-
+where
+    T: Uniform,
+{
     #[inline]
     fn upload(&self, device: &mut Device, id: u64) {
         println!("unoform bugger");
         // TODO check opengl version or driver if it uses std140 to layout or not
-        device.backend.set_buffer_data(id, self.as_std140().as_bytes());
+        device
+            .backend
+            .set_buffer_data(id, self.as_std140().as_bytes());
     }
 }

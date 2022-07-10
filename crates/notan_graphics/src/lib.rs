@@ -11,6 +11,8 @@ pub mod texture;
 
 pub mod prelude;
 
+pub use crevice_notan as crevice;
+
 #[cfg(feature = "texture_to_file")]
 mod to_file;
 
