@@ -90,14 +90,16 @@ where
 
     #[allow(unreachable_code)]
     fn default_loaders(self) -> Self {
-        let s = self.add_loader(create_texture_parser());
-
         #[cfg(feature = "audio")]
         {
-            return s.add_loader(create_audio_parser());
+            self.add_loader(create_texture_parser())
+                .add_loader(create_audio_parser())
         }
 
-        s
+        #[cfg(not(feature = "audio"))]
+        {
+            self.add_loader(create_texture_parser())
+        }
     }
 
     /// Converts touch events as mouse events

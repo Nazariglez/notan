@@ -142,7 +142,7 @@ fn setup(gfx: &mut Graphics) -> State {
 
     let uniform_buffer = gfx
         .create_uniform_buffer(0, "Locals")
-        .with_data(&mvp.to_cols_array())
+        .with_data(&mvp)
         .build()
         .unwrap();
 
@@ -173,8 +173,8 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     state.angle += 0.6 * app.timer.delta_f32();
 }
 
-fn rotated_matrix(base: Mat4, angle: f32) -> [f32; 16] {
+fn rotated_matrix(base: Mat4, angle: f32) -> Mat4 {
     let rot_x = Mat4::from_rotation_x(angle);
     let rot_y = Mat4::from_rotation_y(angle);
-    (base * rot_x * rot_y).to_cols_array()
+    base * rot_x * rot_y
 }

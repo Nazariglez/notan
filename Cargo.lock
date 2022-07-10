@@ -494,21 +494,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "crevice"
+name = "crevice_notan"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a843181f42b85f7b5c7742c95aeff6f3a35416d8e760158e219c6bb993248d3"
+checksum = "4ec265e0692fb0e8e22a565ec89f2a4f01bc3cb78da13c7b88ae62cc36338e6d"
 dependencies = [
  "bytemuck",
- "crevice-derive",
+ "crevice_notan-derive",
+ "glam",
  "mint",
 ]
 
 [[package]]
-name = "crevice-derive"
+name = "crevice_notan-derive"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2320c07ceb3e491e2bd09ade90a91c29a42d9553f1bde60c945cb5c34958b26e"
+checksum = "d4d871b3b5088a354bd255c573d3eae61be08af5072ed24434213962f8c3d545"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -936,6 +937,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "781aa11be58ef14b0cd7326618afcbd9cdb5ba686bdab7193d87cdc322cd7033"
 dependencies = [
  "bytemuck",
+ "mint",
 ]
 
 [[package]]
@@ -1666,7 +1668,7 @@ name = "notan_graphics"
 version = "0.5.1"
 dependencies = [
  "bytemuck",
- "crevice",
+ "crevice_notan",
  "image",
  "log",
  "notan_macro",
