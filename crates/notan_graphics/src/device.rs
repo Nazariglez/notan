@@ -462,3 +462,37 @@ where
         data.extend_from_slice(self.as_std140().as_bytes());
     }
 }
+
+macro_rules! uniform_impl {
+    ( $( $typ:ty, )* ) => {
+        $(
+            impl Uniform for $typ {}
+        )*
+    }
+}
+
+uniform_impl! {
+    notan_math::Vec2,
+    notan_math::Vec3,
+    notan_math::Vec4,
+
+    notan_math::IVec2,
+    notan_math::IVec3,
+    notan_math::IVec4,
+
+    notan_math::UVec2,
+    notan_math::UVec3,
+    notan_math::UVec4,
+
+    notan_math::DVec2,
+    notan_math::DVec3,
+    notan_math::DVec4,
+
+    notan_math::Mat2,
+    notan_math::Mat3,
+    notan_math::Mat4,
+
+    notan_math::DMat2,
+    notan_math::DMat3,
+    notan_math::DMat4,
+}
