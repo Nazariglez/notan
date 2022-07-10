@@ -496,6 +496,8 @@ dependencies = [
 [[package]]
 name = "crevice_notan"
 version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ec265e0692fb0e8e22a565ec89f2a4f01bc3cb78da13c7b88ae62cc36338e6d"
 dependencies = [
  "bytemuck",
  "crevice_notan-derive",
@@ -506,6 +508,8 @@ dependencies = [
 [[package]]
 name = "crevice_notan-derive"
 version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4d871b3b5088a354bd255c573d3eae61be08af5072ed24434213962f8c3d545"
 dependencies = [
  "proc-macro2",
  "quote",

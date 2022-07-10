@@ -14,8 +14,7 @@ description = "Provides simple graphics API for Notan"
 [dependencies]
 log = "0.4"
 bytemuck = "1.10"
-#crevice = { version = "0.11", features = ["glam"] }
-crevice_notan = { version = "0.11", path = "../../../crevice_notan", features = ["glam"] }
+crevice_notan = { version = "0.11", features = ["glam"] }
 parking_lot = "0.12"
 image = { version = "0.24", default-features = false, features = ["jpeg", "png"] }
 notan_math = { path = "../notan_math", version = "0.5.1" }

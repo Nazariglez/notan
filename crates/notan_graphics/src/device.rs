@@ -297,7 +297,7 @@ impl Device {
         &mut self,
         slot: u32,
         name: &str,
-        data: Option<&[f32]>,
+        data: Option<Vec<u8>>,
     ) -> Result<Buffer, String> {
         //debug_assert!(current_pipeline.is_some()) //pipeline should be already binded
         let id = self.backend.create_uniform_buffer(slot, name)?;
@@ -309,7 +309,7 @@ impl Device {
         );
 
         if let Some(d) = data {
-            self.set_buffer_data(&buffer, d);
+            self.set_buffer_data(&buffer, &d);
         }
 
         Ok(buffer)
@@ -395,6 +395,7 @@ impl Device {
 pub trait Uniform: AsStd140 {}
 pub trait BufferData {
     fn upload(&self, device: &mut Device, id: u64);
+    fn save_as_bytes(&self, _data: &mut Vec<u8>) {}
 }
 
 impl<T> BufferData for &[T]
@@ -403,10 +404,13 @@ where
 {
     #[inline]
     fn upload(&self, device: &mut Device, id: u64) {
-        println!("regular buffer");
         device
             .backend
             .set_buffer_data(id, bytemuck::cast_slice(self));
+    }
+
+    fn save_as_bytes(&self, data: &mut Vec<u8>) {
+        data.extend_from_slice(bytemuck::cast_slice(self));
     }
 }
 
@@ -416,10 +420,13 @@ where
 {
     #[inline]
     fn upload(&self, device: &mut Device, id: u64) {
-        println!("regular buffer");
         device
             .backend
             .set_buffer_data(id, bytemuck::cast_slice(self.as_slice()));
+    }
+
+    fn save_as_bytes(&self, data: &mut Vec<u8>) {
+        data.extend_from_slice(bytemuck::cast_slice(self.as_slice()));
     }
 }
 
@@ -429,10 +436,13 @@ where
 {
     #[inline]
     fn upload(&self, device: &mut Device, id: u64) {
-        println!("regular buffer");
         device
             .backend
             .set_buffer_data(id, bytemuck::cast_slice(self.as_slice()));
+    }
+
+    fn save_as_bytes(&self, data: &mut Vec<u8>) {
+        data.extend_from_slice(bytemuck::cast_slice(self.as_slice()));
     }
 }
 
@@ -442,10 +452,13 @@ where
 {
     #[inline]
     fn upload(&self, device: &mut Device, id: u64) {
-        println!("unoform bugger");
         // TODO check opengl version or driver if it uses std140 to layout or not
         device
             .backend
             .set_buffer_data(id, self.as_std140().as_bytes());
+    }
+
+    fn save_as_bytes(&self, data: &mut Vec<u8>) {
+        data.extend_from_slice(self.as_std140().as_bytes());
     }
 }
