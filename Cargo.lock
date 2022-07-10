@@ -1543,7 +1543,7 @@ dependencies = [
 
 [[package]]
 name = "notan"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "egui_demo_lib",
  "notan_app",
@@ -1564,7 +1564,7 @@ dependencies = [
 
 [[package]]
 name = "notan_app"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "bytemuck",
  "downcast-rs",
@@ -1589,14 +1589,14 @@ dependencies = [
 
 [[package]]
 name = "notan_audio"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "parking_lot 0.12.1",
 ]
 
 [[package]]
 name = "notan_backend"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "notan_web",
  "notan_winit",
@@ -1604,14 +1604,14 @@ dependencies = [
 
 [[package]]
 name = "notan_core"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "web-sys",
 ]
 
 [[package]]
 name = "notan_draw"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "log",
  "lyon",
@@ -1627,7 +1627,7 @@ dependencies = [
 
 [[package]]
 name = "notan_egui"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "bytemuck",
  "egui",
@@ -1639,7 +1639,7 @@ dependencies = [
 
 [[package]]
 name = "notan_glow"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "bytemuck",
  "glow",
@@ -1653,7 +1653,7 @@ dependencies = [
 
 [[package]]
 name = "notan_glyph"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "bytemuck",
  "glyph_brush",
@@ -1665,7 +1665,7 @@ dependencies = [
 
 [[package]]
 name = "notan_graphics"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "bytemuck",
  "crevice_notan",
@@ -1679,7 +1679,7 @@ dependencies = [
 
 [[package]]
 name = "notan_input"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "hashbrown",
  "log",
@@ -1689,7 +1689,7 @@ dependencies = [
 
 [[package]]
 name = "notan_log"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "console_log",
  "fern",
@@ -1702,7 +1702,7 @@ dependencies = [
 
 [[package]]
 name = "notan_macro"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "glsl-to-spirv",
  "num",
@@ -1715,7 +1715,7 @@ dependencies = [
 
 [[package]]
 name = "notan_math"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "getrandom",
  "glam",
@@ -1725,7 +1725,7 @@ dependencies = [
 
 [[package]]
 name = "notan_oddio"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "cpal",
  "hashbrown",
@@ -1737,7 +1737,7 @@ dependencies = [
 
 [[package]]
 name = "notan_text"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "log",
  "notan_app",
@@ -1748,7 +1748,7 @@ dependencies = [
 
 [[package]]
 name = "notan_utils"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "instant",
  "js-sys",
@@ -1760,7 +1760,7 @@ dependencies = [
 
 [[package]]
 name = "notan_web"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "console_error_panic_hook",
  "futures-util",
@@ -1779,7 +1779,7 @@ dependencies = [
 
 [[package]]
 name = "notan_winit"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "crossbeam-channel",
  "glutin",

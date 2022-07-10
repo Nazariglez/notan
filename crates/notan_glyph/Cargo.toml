@@ -1,6 +1,6 @@
 [package]
 name = "notan_glyph"
-version = "0.5.1"
+version = "0.6.0"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/Nazariglez/notan"
@@ -11,9 +11,9 @@ description = "Provides glyph's support for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4"
-glyph_brush = "0.7"
-bytemuck = "1.10"
-notan_app = { path = "../notan_app", version = "0.5.1" }
-notan_graphics = { path = "../notan_graphics", version = "0.5.1" }
-notan_math = { path = "../notan_math", version = "0.5.1" }
+log = "0.4.17"
+glyph_brush = "0.7.4"
+bytemuck = "1.10.0"
+notan_app = { path = "../notan_app", version = "0.6.0" }
+notan_graphics = { path = "../notan_graphics", version = "0.6.0" }
+notan_math = { path = "../notan_math", version = "0.6.0" }
