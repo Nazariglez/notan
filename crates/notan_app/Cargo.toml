@@ -1,6 +1,6 @@
 [package]
 name = "notan_app"
-version = "0.5.1"
+version = "0.6.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -12,27 +12,27 @@ description = "Provides the core API for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4"
-hashbrown = "0.12"
-notan_core = { path = "../notan_core", version = "0.5.1" }
-notan_input = { path = "../notan_input", version = "0.5.1" }
-notan_math = { path = "../notan_math", version = "0.5.1" }
-notan_macro = { path = "../notan_macro", version = "0.5.1" }
-notan_graphics = { path = "../notan_graphics", version = "0.5.1" }
-notan_utils = { path = "../notan_utils", version = "0.5.1" }
-notan_audio = { path = "../notan_audio", version = "0.5.1", optional = true }
-downcast-rs = "1.2"
-indexmap = "1.9"
-futures = "0.3"
+log = "0.4.17"
+hashbrown = "0.12.2"
+notan_core = { path = "../notan_core", version = "0.6.0" }
+notan_input = { path = "../notan_input", version = "0.6.0" }
+notan_math = { path = "../notan_math", version = "0.6.0" }
+notan_macro = { path = "../notan_macro", version = "0.6.0" }
+notan_graphics = { path = "../notan_graphics", version = "0.6.0" }
+notan_utils = { path = "../notan_utils", version = "0.6.0" }
+notan_audio = { path = "../notan_audio", version = "0.6.0", optional = true }
+downcast-rs = "1.2.0"
+indexmap = "1.9.1"
+futures = "0.3.21"
 platter = { version = "0.1.4", features = ["web-sys"] }
-parking_lot = "0.12"
-bytemuck = "1.10"
+parking_lot = "0.12.1"
+bytemuck = "1.10.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = { version = "0.3", optional = true }
-wasm-bindgen-futures = { version = "0.4", optional = true }
-futures-util = { version = "0.3", optional = true }
-js-sys = { version = "0.3", optional = true }
+web-sys = { version = "0.3.58", optional = true }
+wasm-bindgen-futures = { version = "0.4.31", optional = true }
+futures-util = { version = "0.3.21", optional = true }
+js-sys = { version = "0.3.58", optional = true }
 
 [features]
 audio = ["notan_audio"]
