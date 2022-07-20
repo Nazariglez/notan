@@ -383,8 +383,8 @@ impl EguiExtension {
         // to do that a float 0.0 - 1.0 is passed to the shader to indicate if it should or not encode gamma
         if cfg!(target_arch = "wasm32") {
             let is_srgb = matches!(texture.format(), TextureFormat::SRgba8);
-            let ww = width_in_pixels as _;
-            let hh = height_in_pixels as _;
+            let ww: f32 = width_in_pixels as _;
+            let hh: f32 = height_in_pixels as _;
 
             if is_srgb && !self.need_gamma_fix {
                 self.need_gamma_fix = true;
