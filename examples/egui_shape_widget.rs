@@ -35,8 +35,8 @@ fn main() -> Result<(), String> {
     let win_config = WindowConfig::new()
         .size(WIDTH, HEIGHT)
         .multisampling(8)
-        .lazy_loop()
-        .vsync();
+        .lazy_loop(true)
+        .vsync(true);
 
     notan::init_with(State::default)
         .add_config(win_config)

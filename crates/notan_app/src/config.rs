@@ -93,8 +93,8 @@ impl WindowConfig {
     }
 
     /// Inner loop will run only after an input event
-    pub fn lazy_loop(mut self) -> Self {
-        self.lazy_loop = true;
+    pub fn lazy_loop(mut self, lazy: bool) -> Self {
+        self.lazy_loop = lazy;
         self
     }
 
@@ -106,8 +106,8 @@ impl WindowConfig {
     }
 
     /// Enable fullscreen mode
-    pub fn fullscreen(mut self) -> Self {
-        self.fullscreen = true;
+    pub fn fullscreen(mut self, fullscreen: bool) -> Self {
+        self.fullscreen = fullscreen;
         self
     }
 
@@ -124,20 +124,20 @@ impl WindowConfig {
     }
 
     /// Starts the window maximized
-    pub fn maximized(mut self) -> Self {
-        self.maximized = true;
+    pub fn maximized(mut self, maximized: bool) -> Self {
+        self.maximized = maximized;
         self
     }
 
     /// Allow the window to be resizable
-    pub fn resizable(mut self) -> Self {
-        self.resizable = true;
+    pub fn resizable(mut self, resizable: bool) -> Self {
+        self.resizable = resizable;
         self
     }
 
     /// Enable vsync
-    pub fn vsync(mut self) -> Self {
-        self.vsync = true;
+    pub fn vsync(mut self, vsync: bool) -> Self {
+        self.vsync = vsync;
         self
     }
 
@@ -154,8 +154,8 @@ impl WindowConfig {
     }
 
     /// Set the background as transparent
-    pub fn transparent(mut self) -> Self {
-        self.transparent = true;
+    pub fn transparent(mut self, transparent: bool) -> Self {
+        self.transparent = transparent;
         self
     }
 

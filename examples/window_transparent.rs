@@ -3,7 +3,7 @@ use notan::prelude::*;
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win = WindowConfig::default().transparent().decorations(false);
+    let win = WindowConfig::default().transparent(true).decorations(false);
     notan::init()
         .add_config(win)
         .add_config(DrawConfig) // Simple way to add the draw extension
