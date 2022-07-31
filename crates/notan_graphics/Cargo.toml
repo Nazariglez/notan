@@ -14,12 +14,12 @@ description = "Provides simple graphics API for Notan"
 [dependencies]
 log = "0.4.17"
 bytemuck = "1.10.0"
-crevice_notan = { version = "0.11.0", features = ["glam"] }
 parking_lot = "0.12.1"
 image = { version = "0.24.2", default-features = false, features = ["jpeg", "png"] }
 notan_math = { path = "../notan_math", version = "0.6.0" }
 notan_macro = { path = "../notan_macro", version = "0.6.0" }
 notan_utils = { path = "../notan_utils", version = "0.6.0" }
+glsl-layout = { git = "https://github.com/Nazariglez/glsl-layout", branch="f/glam", features = ["glam"] }
 
 [features]
 texture_to_file = ["notan_utils/save_file"]
