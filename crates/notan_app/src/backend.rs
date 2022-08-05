@@ -57,7 +57,7 @@ pub trait BackendSystem: Backend {
 
     /// Returns a function that load files
     fn get_file_loader(&self) -> LoadFileFn {
-        Box::new(|path| Box::new(platter::load_file(path).map_err(|e| e.to_string())))
+        Box::new(|path| Box::new(platter2::load_file(path).map_err(|e| e.to_string())))
     }
 
     /// Returns the graphics backend implementation

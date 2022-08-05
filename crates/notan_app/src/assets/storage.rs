@@ -17,7 +17,7 @@ pub struct AssetStorage {
 impl AssetStorage {
     pub(crate) fn register(&mut self, id: &str, type_id: TypeId) -> DoneSignal {
         #[allow(clippy::unnecessary_to_owned)]
-        let fut = Box::pin(platter::load_file(id.to_string()).map_err(|e| e.to_string()));
+        let fut = Box::pin(platter2::load_file(id.to_string()).map_err(|e| e.to_string()));
         let state = LoadWrapper::new(id, fut, type_id);
         let loaded = state.loaded.clone();
         log::info!("to load -> {} {:?}", id, state.type_id);

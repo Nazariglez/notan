@@ -15,9 +15,9 @@ description = "Provides a web/wasm32 backend for Notan"
 log = "0.4.17"
 notan_core = { path = "../notan_core", version = "0.6.0" }
 notan_app = { path = "../notan_app", version = "0.6.0" }
-wasm-bindgen = "0.2.81"
+wasm-bindgen = "0.2.82"
 js-sys = "0.3.58"
-wasm-bindgen-futures = "0.4.31"
+wasm-bindgen-futures = "0.4.32"
 console_error_panic_hook = "0.1.7"
 notan_glow = { path = "../notan_glow", version = "0.6.0" }
 notan_graphics = { path = "../notan_graphics", version = "0.6.0" }

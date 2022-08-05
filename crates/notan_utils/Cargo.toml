@@ -16,7 +16,7 @@ instant = { version = "0.1.12", features = ["wasm-bindgen"] }
 log = "0.4.17"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { version = "0.2.81", optional = true }
+wasm-bindgen = { version = "0.2.82", optional = true }
 js-sys = { version = "0.3.58", optional = true }
 web-sys = { version = "0.3.58", optional = true }
 mime_guess = { version = "2.0.4", optional = true }

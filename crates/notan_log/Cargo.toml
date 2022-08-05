@@ -21,5 +21,5 @@ time = { version = "0.3.11", features = ["formatting", "local-offset"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_log = "0.2.0"
-wasm-bindgen = "0.2.81"
+wasm-bindgen = "0.2.82"
 js-sys = "0.3.58"
