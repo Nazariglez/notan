@@ -19,7 +19,7 @@ image = { version = "0.24.2", default-features = false, features = ["jpeg", "png
 notan_math = { path = "../notan_math", version = "0.6.0" }
 notan_macro = { path = "../notan_macro", version = "0.6.0" }
 notan_utils = { path = "../notan_utils", version = "0.6.0" }
-glsl-layout = { git = "https://github.com/Nazariglez/glsl-layout", branch="f/glam", features = ["glam"] }
+glsl-layout = { version = "0.4.2", features = ["glam"] }
 
 [features]
 texture_to_file = ["notan_utils/save_file"]

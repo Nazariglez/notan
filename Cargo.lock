@@ -936,8 +936,9 @@ dependencies = [
 
 [[package]]
 name = "glsl-layout"
-version = "0.4.1"
-source = "git+https://github.com/Nazariglez/glsl-layout?branch=f/glam#4eec6341e19e079799caba388df32d2d2e8f29ee"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8d46c62504b82f2e89ce78e0483de4825b1d553748159b6168fa3efca84e16b"
 dependencies = [
  "glam",
  "glsl-layout-derive",
@@ -946,7 +947,8 @@ dependencies = [
 [[package]]
 name = "glsl-layout-derive"
 version = "0.4.0"
-source = "git+https://github.com/Nazariglez/glsl-layout?branch=f/glam#4eec6341e19e079799caba388df32d2d2e8f29ee"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b870f33b0cec52fd0347c09722c2f9a85e9a4e9aa5c0453e75dedc12bde7ddb8"
 dependencies = [
  "proc-macro2",
  "quote",
