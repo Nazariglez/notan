@@ -3,7 +3,12 @@ use notan::prelude::*;
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    notan::init().add_config(EguiConfig).draw(draw).build()
+    let win = WindowConfig::new().vsync(true).high_dpi(true);
+    notan::init()
+        .add_config(win)
+        .add_config(EguiConfig)
+        .draw(draw)
+        .build()
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {

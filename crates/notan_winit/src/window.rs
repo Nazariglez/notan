@@ -1,7 +1,8 @@
 use glutin::dpi::LogicalSize;
 use glutin::event_loop::EventLoop;
+use glutin::platform::macos::WindowBuilderExtMacOS;
 use glutin::window::Fullscreen::Borderless;
-use glutin::window::{CursorIcon as WCursorIcon, Window, WindowBuilder};
+use glutin::window::{CursorGrabMode, CursorIcon as WCursorIcon, Window, WindowBuilder};
 use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
@@ -13,6 +14,7 @@ pub struct WinitWindowBackend {
     cursor: CursorIcon,
     captured: bool,
     visible: bool,
+    high_dpi: bool,
 }
 
 impl WindowBackend for WinitWindowBackend {
@@ -41,7 +43,11 @@ impl WindowBackend for WinitWindowBackend {
     }
 
     fn dpi(&self) -> f64 {
-        self.scale_factor
+        if self.high_dpi {
+            self.scale_factor
+        } else {
+            1.0
+        }
     }
 
     fn set_lazy_loop(&mut self, lazy: bool) {
@@ -87,11 +93,17 @@ impl WindowBackend for WinitWindowBackend {
 
         let is_macos = cfg!(target_os = "macos");
         if is_macos {
-            log::warn!("Capture cursor is not implemented yet on MacOS. Awaiting for Winit 0.27");
+            log::warn!("Capture cursor is not implemented yet on MacOS. Awaiting for Winit to implement it.");
             return;
         }
 
-        if self.window().set_cursor_grab(capture).is_ok() {
+        let mode = if capture {
+            CursorGrabMode::Confined
+        } else {
+            CursorGrabMode::None
+        };
+
+        if self.window().set_cursor_grab(mode).is_ok() {
             self.captured = capture;
         }
     }
@@ -121,11 +133,8 @@ impl WinitWindowBackend {
             .with_resizable(config.resizable)
             .with_transparent(config.transparent)
             .with_visible(config.visible)
-            .with_decorations(config.decorations);
-
-        /* TODO: this should be exposed to notan to be enabled/disabled but
-        seems like is not working on mac I think... */
-        // .with_disallow_hidpi(true);
+            .with_decorations(config.decorations)
+            .with_disallow_hidpi(!config.high_dpi);
 
         if let Some((w, h)) = config.min_size {
             builder = builder.with_min_inner_size(LogicalSize::new(w, h));
@@ -162,6 +171,7 @@ impl WinitWindowBackend {
             cursor: CursorIcon::Default,
             captured: false,
             visible: config.visible,
+            high_dpi: config.high_dpi,
         })
     }
 
