@@ -40,9 +40,10 @@ pub struct WindowConfig {
     /// `Web: WebGL will use this as antialias = false if the value is 0 or true otherwise`
     pub multisampling: u16,
 
-    /// **Only Web:** By default a canvas will have the size set multiplied by the device_pixel_ratio
-    /// This can be disabled by setting this to `false`. This could be useful for mobile browsers.
-    pub canvas_auto_resolution: bool,
+    /// Enable High DPI viewport and drawing if the device pixel ratio is higher than 1
+    /// This is `false` by default, enable it could consume more resources and require
+    /// a custom way of drawing things. The advice is using it if you know what you're doing
+    pub high_dpi: bool,
 
     /// Inner loop will run only after an input event
     pub lazy_loop: bool,
@@ -71,7 +72,7 @@ impl Default for WindowConfig {
             resizable: false,
             vsync: false,
             multisampling: 0,
-            canvas_auto_resolution: true,
+            high_dpi: false,
             lazy_loop: false,
             transparent: false,
             decorations: true,
@@ -147,9 +148,9 @@ impl WindowConfig {
         self
     }
 
-    /// Enable or disable that the size of the canvas will automatically use the device pixel ratio
-    pub fn canvas_auto_resolution(mut self, enabled: bool) -> Self {
-        self.canvas_auto_resolution = enabled;
+    /// Enable High DPI
+    pub fn high_dpi(mut self, enabled: bool) -> Self {
+        self.high_dpi = enabled;
         self
     }
 

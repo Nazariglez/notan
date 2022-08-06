@@ -36,7 +36,8 @@ fn main() -> Result<(), String> {
         .size(WIDTH, HEIGHT)
         .multisampling(8)
         .lazy_loop(true)
-        .vsync(true);
+        .vsync(true)
+        .high_dpi(true);
 
     notan::init_with(State::default)
         .add_config(win_config)

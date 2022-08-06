@@ -18,8 +18,12 @@ impl State {
 
 #[notan_main]
 fn main() -> Result<(), String> {
+    let win = WindowConfig::default()
+        .lazy_loop(true)
+        .vsync(true)
+        .high_dpi(true);
     notan::init_with(State::new)
-        .add_config(WindowConfig::new().lazy_loop(true))
+        .add_config(win)
         .add_config(EguiConfig)
         .draw(draw)
         .build()

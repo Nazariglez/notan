@@ -12,6 +12,7 @@ fn main() -> Result<(), String> {
         .resizable(true)
         .size(1280, 1024)
         .vsync(true)
+        .high_dpi(true)
         // enable lazy mode to only draw after an input
         .lazy_loop(true);
 

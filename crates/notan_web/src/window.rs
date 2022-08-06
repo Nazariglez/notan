@@ -159,10 +159,10 @@ impl WebWindowBackend {
 
     #[inline]
     pub(crate) fn init(mut self) -> Result<Self, String> {
-        if let Err(e) = self.canvas.set_attribute(
-            "notan-auto-res",
-            &self.config.canvas_auto_resolution.to_string(),
-        ) {
+        if let Err(e) = self
+            .canvas
+            .set_attribute("notan-auto-res", &self.config.high_dpi.to_string())
+        {
             log::error!("{:?}", e);
         }
 
@@ -249,7 +249,7 @@ impl WindowBackend for WebWindowBackend {
     }
 
     fn dpi(&self) -> f64 {
-        if self.config.canvas_auto_resolution {
+        if self.config.high_dpi {
             self.dpi
         } else {
             1.0
