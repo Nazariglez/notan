@@ -1,11 +1,10 @@
 use notan::draw::*;
+use notan::math::{vec2, Vec2};
 use notan::prelude::*;
 
 struct Bunny {
-    x: f32,
-    y: f32,
-    speed_x: f32,
-    speed_y: f32,
+    pos: Vec2,
+    speed: Vec2,
 }
 
 #[derive(AppState)]
@@ -39,10 +38,8 @@ impl State {
     fn spawn(&mut self, n: i32) {
         (0..n).for_each(|_| {
             self.bunnies.push(Bunny {
-                x: 0.0,
-                y: 0.0,
-                speed_x: self.rng.gen_range(0.0..10.0),
-                speed_y: self.rng.gen_range(-5.0..5.0),
+                pos: Vec2::ZERO,
+                speed: vec2(self.rng.gen_range(0.0..10.0), self.rng.gen_range(-5.0..5.0)),
             })
         });
     }
@@ -61,27 +58,26 @@ fn update(app: &mut App, state: &mut State) {
 
     let rng = &mut state.rng;
     state.bunnies.iter_mut().for_each(|b| {
-        b.x += b.speed_x;
-        b.y += b.speed_y;
-        b.speed_y += 0.75;
+        b.pos += b.speed;
+        b.speed.y += 0.75;
 
-        if b.x > 800.0 {
-            b.speed_x *= -1.0;
-            b.x = 800.0;
-        } else if b.x < 0.0 {
-            b.speed_x *= -1.0;
-            b.x = 0.0
+        if b.pos.x > 800.0 {
+            b.speed.x *= -1.0;
+            b.pos.x = 800.0;
+        } else if b.pos.x < 0.0 {
+            b.speed.x *= -1.0;
+            b.pos.x = 0.0
         }
 
-        if b.y > 600.0 {
-            b.speed_y *= -0.85;
-            b.y = 600.0;
+        if b.pos.y > 600.0 {
+            b.speed.y *= -0.85;
+            b.pos.y = 600.0;
             if rng.gen::<bool>() {
-                b.speed_y -= rng.gen_range(0.0..6.0);
+                b.speed.y -= rng.gen_range(0.0..6.0);
             }
-        } else if b.y < 0.0 {
-            b.speed_y = 0.0;
-            b.y = 0.0;
+        } else if b.pos.y < 0.0 {
+            b.speed.y = 0.0;
+            b.pos.y = 0.0;
         }
     });
 }
@@ -90,7 +86,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
     draw.clear([0.0, 0.0, 0.0, 1.0].into());
     state.bunnies.iter().for_each(|b| {
-        draw.image(&state.texture).position(b.x, b.y);
+        draw.image(&state.texture).position(b.pos.x, b.pos.y);
     });
 
     draw.text(
@@ -111,7 +107,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
-        .add_config(WindowConfig::new().vsync())
+        .add_config(WindowConfig::new().vsync(true))
         .add_config(DrawConfig)
         .update(update)
         .draw(draw)
