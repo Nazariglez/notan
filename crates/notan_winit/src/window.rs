@@ -1,6 +1,5 @@
 use glutin::dpi::LogicalSize;
 use glutin::event_loop::EventLoop;
-use glutin::platform::macos::WindowBuilderExtMacOS;
 use glutin::window::Fullscreen::Borderless;
 use glutin::window::{CursorGrabMode, CursorIcon as WCursorIcon, Window, WindowBuilder};
 use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
@@ -133,8 +132,12 @@ impl WinitWindowBackend {
             .with_resizable(config.resizable)
             .with_transparent(config.transparent)
             .with_visible(config.visible)
-            .with_decorations(config.decorations)
-            .with_disallow_hidpi(!config.high_dpi);
+            .with_decorations(config.decorations);
+
+        #[cfg(target_os = "macos")]
+        {
+            builder = builder.with_disallow_hidpi(!config.high_dpi);
+        }
 
         if let Some((w, h)) = config.min_size {
             builder = builder.with_min_inner_size(LogicalSize::new(w, h));
