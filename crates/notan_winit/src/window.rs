@@ -42,11 +42,11 @@ impl WindowBackend for WinitWindowBackend {
     }
 
     fn dpi(&self) -> f64 {
-        if self.high_dpi {
-            self.scale_factor
-        } else {
-            1.0
+        if cfg!(target_os = "macos") && !self.high_dpi {
+            return 1.0;
         }
+
+        self.scale_factor
     }
 
     fn set_lazy_loop(&mut self, lazy: bool) {
