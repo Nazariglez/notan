@@ -136,6 +136,7 @@ impl WinitWindowBackend {
 
         #[cfg(target_os = "macos")]
         {
+            use glutin::platform::macos::WindowBuilderExtMacOS;
             builder = builder.with_disallow_hidpi(!config.high_dpi);
         }
 
