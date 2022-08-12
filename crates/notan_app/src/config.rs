@@ -57,6 +57,9 @@ pub struct WindowConfig {
 
     /// Hide the windows
     pub visible: bool,
+
+    /// Use or create the canvas with this id. Only Web.
+    pub canvas_id: String,
 }
 
 impl Default for WindowConfig {
@@ -77,6 +80,7 @@ impl Default for WindowConfig {
             transparent: false,
             decorations: true,
             visible: true,
+            canvas_id: String::from("notan_canvas"),
         }
     }
 }
@@ -169,6 +173,12 @@ impl WindowConfig {
     /// Hide or show the window
     pub fn visible(mut self, visible: bool) -> Self {
         self.visible = visible;
+        self
+    }
+
+    /// Use or create the canvas with this id. Only Web.
+    pub fn canvas_id(mut self, canvas_id: &str) -> Self {
+        self.canvas_id = canvas_id.to_string();
         self
     }
 }

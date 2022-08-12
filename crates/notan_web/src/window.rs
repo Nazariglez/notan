@@ -72,7 +72,7 @@ impl WebWindowBackend {
             .document()
             .ok_or("Can't access document dom object ")?;
 
-        let canvas = get_or_create_canvas(&document, "notan_canvas")?;
+        let canvas = get_or_create_canvas(&document, &config.canvas_id)?;
 
         let visible = config.visible;
         canvas_visible(&canvas, visible);
