@@ -1,4 +1,6 @@
 use crate::draw::Draw;
+use crate::DrawTransform;
+use notan_math::{vec2, vec3, Mat3, Vec2};
 use std::ops::{Deref, DerefMut};
 
 pub trait DrawProcess {
@@ -54,5 +56,36 @@ where
         if let Some(inner) = self.inner.take() {
             inner.draw_process(self.draw);
         }
+    }
+}
+
+impl<'a, T> DrawBuilder<'a, T>
+where
+    T: DrawProcess + DrawTransform,
+{
+    pub fn local_position(&mut self, screen_x: f32, screen_y: f32) -> Vec2 {
+        let (width, height) = self.draw.size();
+
+        // normalized coordinates
+        let mx = (screen_x / width) * 2.0 - 1.0;
+        let my = -(screen_y / height) * 2.0 + 1.0;
+
+        let inverse = self
+            .draw
+            .inverse_projection
+            .get_or_insert(self.draw.projection().inverse());
+
+        let pos = inverse.project_point3(vec3(mx, my, 1.0));
+
+        let stack_matrix = *self.draw.transform().matrix();
+        let local_matrix = self
+            .inner
+            .as_mut()
+            .unwrap()
+            .matrix()
+            .unwrap_or(Mat3::IDENTITY);
+
+        let inverse = (stack_matrix * local_matrix).inverse();
+        inverse.transform_point2(vec2(pos.x, pos.y))
     }
 }
