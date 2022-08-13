@@ -21,6 +21,7 @@ pub fn mat3_local_to_screen(x: f32, y: f32, m: glam::Mat3) -> glam::Vec2 {
 #[inline]
 #[deprecated]
 #[doc(hidden)]
+#[allow(deprecated)]
 pub fn mat3_local_to_local(x: f32, y: f32, from: glam::Mat3, to: glam::Mat3) -> glam::Vec2 {
     let from_point = mat3_local_to_screen(x, y, from);
     mat3_screen_to_local(from_point.x, from_point.y, to)

@@ -1,7 +1,6 @@
 use notan::draw::*;
 use notan::math::Vec2;
 use notan::prelude::*;
-use notan_math::{vec2, Mat3, Mat4};
 
 #[derive(Default, AppState)]
 struct State {
