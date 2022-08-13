@@ -63,7 +63,7 @@ impl<'a, T> DrawBuilder<'a, T>
 where
     T: DrawProcess + DrawTransform,
 {
-    pub fn local_position(&mut self, screen_x: f32, screen_y: f32) -> Vec2 {
+    pub fn screen_to_local_position(&mut self, screen_x: f32, screen_y: f32) -> Vec2 {
         let (width, height) = self.draw.size();
 
         // normalized coordinates
@@ -87,5 +87,9 @@ where
 
         let inverse = (stack_matrix * local_matrix).inverse();
         inverse.transform_point2(vec2(pos.x, pos.y))
+    }
+
+    pub fn local_to_screen_position(&mut self, local_x: f32, local_y: f32) -> Vec2 {
+        todo!()
     }
 }
