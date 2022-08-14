@@ -185,8 +185,8 @@ pub(crate) fn local_to_screen_position(
 
 #[cfg(test)]
 mod test {
+    use super::local_to_screen_position;
     use super::screen_to_local_position;
-    use crate::local_to_screen_position;
     use notan_math::{vec2, Mat3, Mat4};
 
     #[test]

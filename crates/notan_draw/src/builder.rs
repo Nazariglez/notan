@@ -1,6 +1,6 @@
 use crate::draw::Draw;
-use crate::DrawTransform;
-use notan_math::{vec2, vec3, vec4, Mat3, Vec2};
+use crate::{local_to_screen_position, screen_to_local_position, DrawTransform};
+use notan_math::{vec2, Mat3, Vec2};
 use std::ops::{Deref, DerefMut};
 
 pub trait DrawProcess {
@@ -64,19 +64,11 @@ where
     T: DrawProcess + DrawTransform,
 {
     pub fn screen_to_local_position(&mut self, screen_x: f32, screen_y: f32) -> Vec2 {
-        let (width, height) = self.draw.size();
-
-        // normalized coordinates
-        let mx = (screen_x / width) * 2.0 - 1.0;
-        let my = -(screen_y / height) * 2.0 + 1.0;
-
-        let inverse = self
+        let inverse = *self
             .draw
             .inverse_projection
             .get_or_insert(self.draw.projection().inverse());
 
-        let pos = inverse.project_point3(vec3(mx, my, 1.0));
-
         let world_matrix = *self.draw.transform().matrix();
         let local_matrix = self
             .inner
@@ -85,15 +77,17 @@ where
             .matrix()
             .unwrap_or(Mat3::IDENTITY);
 
-        let inverse = (world_matrix * local_matrix).inverse();
-        inverse.transform_point2(vec2(pos.x, pos.y))
+        let view = world_matrix * local_matrix;
+
+        screen_to_local_position(
+            vec2(screen_x, screen_y),
+            self.draw.size().into(),
+            inverse,
+            view,
+        )
     }
 
     pub fn local_to_screen_position(&mut self, local_x: f32, local_y: f32) -> Vec2 {
-        let (width, height) = self.draw.size();
-        let half_width = width * 0.5;
-        let half_height = height * 0.5;
-
         let world_matrix = *self.draw.transform().matrix();
         let local_matrix = self
             .inner
@@ -102,11 +96,13 @@ where
             .matrix()
             .unwrap_or(Mat3::IDENTITY);
 
-        let pos = (world_matrix * local_matrix) * vec3(local_x, local_y, 1.0);
-        let pos = self.draw.projection() * vec4(pos.x, pos.y, pos.z, 1.0);
-        vec2(
-            half_width + (half_width * pos.x),
-            half_height + (half_height * -pos.y),
+        let view = world_matrix * local_matrix;
+
+        local_to_screen_position(
+            vec2(local_x, local_y),
+            self.draw.size().into(),
+            self.draw.projection(),
+            view,
         )
     }
 }
