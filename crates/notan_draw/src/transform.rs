@@ -354,7 +354,7 @@ mod test {
             assert_eq!(
                 screen.round(),
                 pos,
-                "Using regular projection and rotated nd scaled view"
+                "Using a scaled projection and rotated nd scaled view"
             );
         });
     }
