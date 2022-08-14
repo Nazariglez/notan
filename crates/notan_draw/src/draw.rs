@@ -1,10 +1,11 @@
 use crate::batch::*;
 pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::transform::Transform;
+use crate::{local_to_screen_position, screen_to_local_position};
 use notan_glyph::Section;
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
-use notan_math::{Mat3, Mat4};
+use notan_math::{vec2, Mat3, Mat4, Vec2};
 use notan_text::Font;
 
 #[derive(Debug, Clone)]
@@ -266,6 +267,21 @@ impl Draw {
         let batch_len = self.batches.len();
         let indices = self.text_batch_indices.get_or_insert(vec![]);
         indices.push(batch_len);
+    }
+
+    pub fn screen_to_world_position(&mut self, screen_x: f32, screen_y: f32) -> Vec2 {
+        let inverse = *self
+            .inverse_projection
+            .get_or_insert(self.projection().inverse());
+
+        let view = *self.transform().matrix();
+        screen_to_local_position(vec2(screen_x, screen_y), self.size.into(), inverse, view)
+    }
+
+    pub fn world_to_screen_position(&mut self, world_x: f32, world_y: f32) -> Vec2 {
+        let projection = self.projection();
+        let view = *self.transform().matrix();
+        local_to_screen_position(vec2(world_x, world_y), self.size.into(), projection, view)
     }
 }
 
