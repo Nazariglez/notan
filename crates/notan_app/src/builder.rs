@@ -280,6 +280,7 @@ where
 
         let mut current_touch_id: Option<u64> = None;
 
+        let mut first_loop = true;
         if let Err(e) = initialize(app, state, move |app, mut state| {
             let win_size = app.window().size();
             if graphics.size() != win_size {
@@ -372,7 +373,14 @@ where
             app.audio.clean();
 
             if app.closed {
-                log::info!("App Closed");
+                log::debug!("App Closed");
+            }
+
+            // Using lazy loop we need to draw 2 frames at the beginning to avoid
+            // a blank window when the buffer is swapped
+            if !app.closed && app.window().lazy_loop() && first_loop {
+                first_loop = false;
+                app.window().request_frame();
             }
 
             Ok(FrameState::End)
