@@ -1,4 +1,5 @@
 use notan::draw::*;
+use notan::math::rand::prelude::*;
 use notan::prelude::*;
 
 const COLS: usize = 4;
@@ -152,8 +153,38 @@ struct Board {
 impl Board {
     /// Create a new board using random numbers
     fn new() -> Self {
-        let mut bag = get_bag_of_numbers();
-        let grid = [0; NUMBERS].map(|_| *bag.item().unwrap());
+        // generate an initial board, and move randomly from it.
+
+        let mut grid = [0; NUMBERS];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..NUMBERS - 1 {
+            grid[i] = (i + 1) as u8;
+        }
+
+        // move blank cell randomly.
+
+        let mut x = (COLS - 1) as i32;
+        let mut y = (COLS - 1) as i32;
+
+        for _ in 0..1000 {
+            const DIRS: [(i32, i32); 4] = [(0, -1), (-1, 0), (1, 0), (0, 1)];
+            let (dx, dy) = DIRS.choose(&mut thread_rng()).unwrap();
+            let x_nxt = x + dx;
+            let y_nxt = y + dy;
+
+            const RANGE: std::ops::Range<i32> = 0..COLS as i32;
+            if !RANGE.contains(&x_nxt) || !RANGE.contains(&y_nxt) {
+                continue;
+            }
+
+            let index = index_from_point(x as usize, y as usize);
+            let index_nxt = index_from_point(x_nxt as usize, y_nxt as usize);
+            grid.swap(index, index_nxt);
+
+            x = x_nxt;
+            y = y_nxt;
+        }
+
         Self { grid }
     }
 
@@ -200,14 +231,6 @@ impl Board {
 
         None
     }
-}
-
-fn get_bag_of_numbers() -> ShuffleBag<u8> {
-    let mut bag = ShuffleBag::new(NUMBERS);
-    (0..(NUMBERS - 1)).for_each(|n| {
-        bag.add(n as u8, 1);
-    });
-    bag
 }
 
 #[inline]
