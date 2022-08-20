@@ -119,7 +119,7 @@ fn setup(gfx: &mut Graphics) -> State {
         22, 21, 20,  23, 22, 20
     ];
 
-    let projection = notan::math::Mat4::perspective_rh_gl(45.0, 4.0 / 3.0, 0.1, 100.0);
+    let projection = Mat4::perspective_rh_gl(45.0, 4.0 / 3.0, 0.1, 100.0);
     let view = Mat4::look_at_rh(
         Vec3::new(4.0, 3.0, 3.0),
         Vec3::new(0.0, 0.0, 0.0),

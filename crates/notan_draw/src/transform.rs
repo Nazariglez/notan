@@ -194,7 +194,7 @@ mod test {
         let screen_size = vec2(800.0, 600.0);
 
         // Using regular projection and view
-        let proj = Mat4::orthographic_lh(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
         let view = Mat3::IDENTITY;
 
         let pos_expected = [
@@ -209,7 +209,7 @@ mod test {
         });
 
         // Using regular projection and scaled view
-        let proj = Mat4::orthographic_lh(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
         let view = Mat3::from_scale(vec2(2.0, 2.0));
 
         let pos_expected = [
@@ -224,7 +224,7 @@ mod test {
         });
 
         // Using scaled projection and identity view
-        let proj = Mat4::orthographic_lh(
+        let proj = Mat4::orthographic_rh_gl(
             0.0,
             screen_size.x * 0.5,
             screen_size.y * 0.5,
@@ -251,7 +251,7 @@ mod test {
         let screen_size = vec2(800.0, 600.0);
 
         // Using regular projection and view
-        let proj = Mat4::orthographic_lh(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
         let view = Mat3::IDENTITY;
 
         let pos_expected = [
@@ -266,7 +266,7 @@ mod test {
         });
 
         // Using regular projection and scaled view
-        let proj = Mat4::orthographic_lh(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
         let view = Mat3::from_scale(vec2(2.0, 2.0));
 
         let pos_expected = [
@@ -281,7 +281,7 @@ mod test {
         });
 
         // Using scaled projection and identity view
-        let proj = Mat4::orthographic_lh(
+        let proj = Mat4::orthographic_rh_gl(
             0.0,
             screen_size.x * 0.5,
             screen_size.y * 0.5,
@@ -308,7 +308,7 @@ mod test {
         let screen_size = vec2(800.0, 600.0);
 
         // Using regular projection and view
-        let proj = Mat4::orthographic_lh(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
         let view = Mat3::IDENTITY;
 
         let pos_expected = [vec2(0.0, 0.0), vec2(400.0, 300.0), vec2(800.0, 600.0)];
@@ -320,7 +320,7 @@ mod test {
         });
 
         // Using regular projection and rotated view
-        let proj = Mat4::orthographic_lh(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
         let view = Mat3::from_angle(45.0f32.to_radians());
 
         let pos_expected = [vec2(0.0, 0.0), vec2(400.0, 300.0), vec2(800.0, 600.0)];
@@ -336,7 +336,7 @@ mod test {
         });
 
         // Using a scaled projection and rotated nd scaled view
-        let proj = Mat4::orthographic_lh(
+        let proj = Mat4::orthographic_rh_gl(
             0.0,
             screen_size.x * 0.5,
             screen_size.y * 0.5,

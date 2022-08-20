@@ -49,7 +49,7 @@ fn draw(gfx: &mut Graphics) {
 fn calc_projection(win_size: Vec2, work_size: Vec2) -> (Mat4, f32) {
     let ratio = (win_size.x / work_size.x).min(win_size.y / work_size.y);
 
-    let projection = Mat4::orthographic_lh(0.0, win_size.x, win_size.y, 0.0, -1.0, 1.0);
+    let projection = Mat4::orthographic_rh_gl(0.0, win_size.x, win_size.y, 0.0, -1.0, 1.0);
     let scale = Mat4::from_scale(vec3(ratio, ratio, 1.0));
     let position = vec3(
         (win_size.x - work_size.x * ratio) * 0.5,
