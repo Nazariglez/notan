@@ -45,3 +45,7 @@ pub use notan_egui as egui;
 #[doc(inline)]
 #[cfg(feature = "text")]
 pub use notan_text as text;
+
+#[doc(inline)]
+#[cfg(feature = "extra")]
+pub use notan_extra as extra;
