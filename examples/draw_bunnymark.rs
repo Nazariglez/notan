@@ -107,8 +107,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(init)
-        .add_plugin(notan::extra::FpsLimit::new(60))
-        .add_config(WindowConfig::new())
+        .add_config(WindowConfig::new().vsync(true))
         .add_config(DrawConfig)
         .update(update)
         .draw(draw)
