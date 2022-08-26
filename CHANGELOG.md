@@ -18,5 +18,8 @@ All notable changes to this project will be documented in this file.
 - Remove the deprecated `notan::math::DEG_TO_RAD` and `notan::math::RAD_TO_DEG`.
 - Fix using `lazy_mode` an empty buffer after the first swap buffers.
 - Add `draw_projection.rs` example.
+- Add `extra` feature and `notan_extra` crate to add utils/struct that doesn't fit in other crates.
+- Add `extra::FpsLimit` to limit the maximum framerate and save CPU cycles putting it to sleep.
+- Removed `app::FpsPlugin` in favour of `extra::FpsLimit`.
 
 
