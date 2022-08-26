@@ -70,7 +70,7 @@ pub trait BackendSystem: Backend {
 
 /// Represent mouse cursor icon
 /// They are same as egui::CursorIcon because this is mostly to give support to egui
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Eq)]
 pub enum CursorIcon {
     Default,
     None,

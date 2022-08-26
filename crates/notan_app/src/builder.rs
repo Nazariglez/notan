@@ -382,7 +382,6 @@ where
                 app.window().request_frame();
             }
 
-            // std::thread::sleep(std::time::Duration::from_secs_f32(0.016));
             Ok(FrameState::End)
         }) {
             log::error!("{}", e);
