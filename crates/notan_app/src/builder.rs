@@ -231,7 +231,6 @@ where
             ..
         } = builder;
 
-        // let load_file = backend.get_file_loader();
         let initialize = backend.initialize(window)?;
 
         let mut graphics = Graphics::new(backend.get_graphics_backend())?;
@@ -282,6 +281,9 @@ where
 
         let mut first_loop = true;
         if let Err(e) = initialize(app, state, move |app, mut state| {
+            // update system delta time and fps here
+            app.system_timer.update();
+
             let win_size = app.window().size();
             if graphics.size() != win_size {
                 let (width, height) = win_size;
@@ -292,9 +294,6 @@ where
             if (graphics.dpi() - win_dpi).abs() > f64::EPSILON {
                 graphics.set_dpi(win_dpi);
             }
-
-            // update system delta time and fps here
-            app.system_timer.update();
 
             // Manage pre frame events
             if let AppFlow::SkipFrame = plugins.pre_frame(app, &mut assets, &mut graphics)? {
