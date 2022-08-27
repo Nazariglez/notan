@@ -156,10 +156,13 @@ impl Board {
         // generate an initial board, and move randomly from it.
 
         let mut grid = [0; NUMBERS];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..NUMBERS - 1 {
-            grid[i] = (i + 1) as u8;
-        }
+        grid.iter_mut().enumerate().for_each(|(i, n)| {
+            if i == NUMBERS - 1 {
+                return;
+            }
+
+            *n = i as u8 + 1;
+        });
 
         // move blank cell randomly.
 
