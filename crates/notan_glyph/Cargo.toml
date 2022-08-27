@@ -12,8 +12,8 @@ description = "Provides glyph's support for Notan"
 
 [dependencies]
 log = "0.4.17"
-glyph_brush = "0.7.4"
-bytemuck = "1.10.0"
+glyph_brush = "0.7.5"
+bytemuck = "1.12.1"
 notan_app = { path = "../notan_app", version = "0.6.0" }
 notan_graphics = { path = "../notan_graphics", version = "0.6.0" }
 notan_math = { path = "../notan_math", version = "0.6.0" }

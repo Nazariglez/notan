@@ -20,5 +20,5 @@ notan_math = { path = "../notan_math", version = "0.6.0" }
 notan_glyph = { path = "../notan_glyph", version = "0.6.0" }
 notan_text = { path = "../notan_text", version = "0.6.0" }
 lyon = "0.17.10"
-serde = { version = "1.0.138", features = ["derive"] }
-serde_json = "1.0.82"
+serde = { version = "1.0.144", features = ["derive"] }
+serde_json = "1.0.85"
