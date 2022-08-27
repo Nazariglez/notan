@@ -1,6 +1,6 @@
 [package]
 name = "notan_log"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -14,7 +14,7 @@ description = "Provides a multipatform log support for Notan"
 [dependencies]
 log = "0.4.17"
 fern = { version = "0.6.1", features = ["colored"] }
-notan_app = { path = "../notan_app", version = "0.6.0" }
+notan_app = { path = "../notan_app", version = "0.7.0" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 time = { version = "0.3.14", features = ["formatting", "local-offset"] }
