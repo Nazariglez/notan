@@ -3,11 +3,27 @@
  <strong>
      Portable Multimedia Layer
  </strong>
+<br />
+<br />
+
+<a href="https://gfycat.com/horriblefearlessinvisiblerail">
+  <img src="https://thumbs.gfycat.com/HorribleFearlessInvisiblerail-small.gif" height="150px">
+</a>
+<a href="https://gfycat.com/gregariousgreedycrocodile">
+  <img src="https://thumbs.gfycat.com/GregariousGreedyCrocodile-small.gif" height="150px">
+</a>
+<a href="https://gfycat.com/wealthyseparatefoxhound">
+  <img src="https://thumbs.gfycat.com/WealthySeparateFoxhound-small.gif" height="150px">
+</a>
+<a href="https://gfycat.com/illfatedmisguidedlice">
+  <img src="https://thumbs.gfycat.com/IllfatedMisguidedLice-small.gif" height="150px">
+</a>
+
 </div>
 
 <br />
 
-This project aims to be a simple and portable layer, designed to make your own multimedia apps on top of it
+__Notan__ is a simple and portable layer, designed to make your own multimedia apps on top of it
 without worrying too much about platform-specific code.
 
 The main goal is to provide a set of APIs and tools that can be used to create your project in an ergonomic manner without
@@ -151,7 +167,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 }
 ```
 
-#### Do you want more examples?
+#### Looking for more examples?
 
 Sure! Check the [examples folder](examples). You will find there a few of them for any matter, like rendering, windowing, input, etc...
 
@@ -237,7 +253,7 @@ However, it's widely used to test the performance in 2D Draw APIs.
 ## Integration 
 
 Notan is designed to be as modular as possible. It's flexible enough to allow change how the event life cycle works with 
-a plugin (i.e: [FpsPlugin](crates/notan_app/src/fps_plugin.rs)), or to allow us to draw custom things easily on top of the 
+a plugin (i.e: [FpsLimit](crates/notan_extra/src/fps_limit.rs)), or to allow us to draw custom things easily on top of the 
 graphics API using *Graphic Extensions* (i.e: [egui](crates/notan_egui) or [draw](crates/notan_draw)).
 
 Even any backend can be easily *plugged-in* from the code just using `init_with_backend`.
