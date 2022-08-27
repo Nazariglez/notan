@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## v0.6.0 - 27/08/2022
 
 - Fix the syntax in some example's shader.
 - Glam type can be used as uniforms directly
