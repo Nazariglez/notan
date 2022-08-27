@@ -20,6 +20,7 @@ crates=(
   notan_web
   notan_winit
   notan_backend
+  notan_extra
 )
 
 cd crates
