@@ -11,7 +11,7 @@ const ACCELERATION_BY_LINE: f32 = 0.02;
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win_config = WindowConfig::new().size(500, TILE_SIZE * ROWS).vsync();
+    let win_config = WindowConfig::new().size(500, TILE_SIZE * ROWS).vsync(true);
 
     notan::init_with(State::new)
         .add_config(win_config)

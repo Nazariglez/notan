@@ -10,7 +10,7 @@ struct State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup)
-        .add_config(WindowConfig::default().vsync())
+        .add_config(WindowConfig::default().vsync(true))
         .draw(draw)
         .build()
 }
@@ -60,7 +60,7 @@ const PIXEL_INVERT_FRAGMENT: ShaderSource = notan::fragment_shader! {
     layout(location = 0) out vec4 outColor;
     layout(location = 0) in vec2 v_texcoord;
 
-    layout(location = 0) uniform sampler2D u_texture;
+    layout(binding = 0) uniform sampler2D u_texture;
     layout(set = 0, binding = 0) uniform Locals {
         vec2 u_tex_size;
         float u_value;
@@ -309,7 +309,7 @@ impl Cube {
 
         let uniform_buffer = gfx
             .create_uniform_buffer(0, "Locals")
-            .with_data(&mvp.to_cols_array())
+            .with_data(&mvp)
             .build()
             .unwrap();
 
@@ -347,8 +347,8 @@ impl Cube {
         renderer
     }
 }
-fn rotated_matrix(base: Mat4, angle: f32) -> [f32; 16] {
+fn rotated_matrix(base: Mat4, angle: f32) -> Mat4 {
     let rot_x = Mat4::from_rotation_x(angle);
     let rot_y = Mat4::from_rotation_y(angle);
-    (base * rot_x * rot_y).to_cols_array()
+    base * rot_x * rot_y
 }

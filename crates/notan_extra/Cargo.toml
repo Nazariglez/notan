@@ -1,5 +1,5 @@
 [package]
-name = "notan_macro"
+name = "notan_extra"
 version = "0.6.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
@@ -7,18 +7,13 @@ readme = "README.md"
 homepage = "https://github.com/Nazariglez/notan"
 repository = "https://github.com/Nazariglez/notan"
 license = "MIT OR Apache-2.0"
-description = "Provides a set of utils as macros for Notan"
+description = "Provides extra features or plugins for Notan"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-syn = { version = "1.0.98", features = ["full", "extra-traits"] }
-quote = "1.0.20"
-paste = "1.0.7"
-num = "0.4.0"
-glsl-to-spirv = "0.1.7"
-proc-macro2 = "1.0.40"
-spirv_cross = { version = "0.23.1", features = ["glsl"] }
+notan_app = { path = "../notan_app", version = "0.6.0" }
 
-[lib]
-proc-macro = true
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+spin_sleep = "1.1.1"
+

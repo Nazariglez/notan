@@ -90,14 +90,16 @@ where
 
     #[allow(unreachable_code)]
     fn default_loaders(self) -> Self {
-        let s = self.add_loader(create_texture_parser());
-
         #[cfg(feature = "audio")]
         {
-            return s.add_loader(create_audio_parser());
+            self.add_loader(create_texture_parser())
+                .add_loader(create_audio_parser())
         }
 
-        s
+        #[cfg(not(feature = "audio"))]
+        {
+            self.add_loader(create_texture_parser())
+        }
     }
 
     /// Converts touch events as mouse events
@@ -229,7 +231,6 @@ where
             ..
         } = builder;
 
-        // let load_file = backend.get_file_loader();
         let initialize = backend.initialize(window)?;
 
         let mut graphics = Graphics::new(backend.get_graphics_backend())?;
@@ -278,7 +279,11 @@ where
 
         let mut current_touch_id: Option<u64> = None;
 
+        let mut first_loop = true;
         if let Err(e) = initialize(app, state, move |app, mut state| {
+            // update system delta time and fps here
+            app.system_timer.update();
+
             let win_size = app.window().size();
             if graphics.size() != win_size {
                 let (width, height) = win_size;
@@ -289,9 +294,6 @@ where
             if (graphics.dpi() - win_dpi).abs() > f64::EPSILON {
                 graphics.set_dpi(win_dpi);
             }
-
-            // update system delta time and fps here
-            app.system_timer.update();
 
             // Manage pre frame events
             if let AppFlow::SkipFrame = plugins.pre_frame(app, &mut assets, &mut graphics)? {
@@ -370,7 +372,14 @@ where
             app.audio.clean();
 
             if app.closed {
-                log::info!("App Closed");
+                log::debug!("App Closed");
+            }
+
+            // Using lazy loop we need to draw 2 frames at the beginning to avoid
+            // a blank window when the buffer is swapped
+            if !app.closed && app.window().lazy_loop() && first_loop {
+                first_loop = false;
+                app.window().request_frame();
             }
 
             Ok(FrameState::End)

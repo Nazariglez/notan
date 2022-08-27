@@ -1,4 +1,4 @@
-use notan_math::{Mat3, Vec2, Vec3};
+use notan_math::{vec2, vec3, vec4, Mat3, Mat4, Vec2, Vec3};
 use std::ops::Deref;
 
 /// Helper methods to do matrix transformations
@@ -149,5 +149,213 @@ impl Deref for Transform {
     type Target = Mat3;
     fn deref(&self) -> &Self::Target {
         self.matrix()
+    }
+}
+
+pub(crate) fn screen_to_local_position(
+    screen_pos: Vec2,
+    screen_size: Vec2,
+    inverse_projection: Mat4,
+    view: Mat3,
+) -> Vec2 {
+    // normalized coordinates
+    let norm = screen_pos / screen_size;
+    let mx = norm.x * 2.0 - 1.0;
+    let my = -norm.y * 2.0 + 1.0;
+
+    // projected position
+    let pos = inverse_projection.project_point3(vec3(mx, my, 1.0));
+    let inverse = view.inverse();
+
+    // local position
+    inverse.transform_point2(vec2(pos.x, pos.y))
+}
+
+pub(crate) fn local_to_screen_position(
+    local_pos: Vec2,
+    screen_size: Vec2,
+    projection: Mat4,
+    view: Mat3,
+) -> Vec2 {
+    let half = screen_size * 0.5;
+    let pos = view * vec3(local_pos.x, local_pos.y, 1.0);
+    let pos = projection * vec4(pos.x, pos.y, pos.z, 1.0);
+    vec2(half.x + (half.x * pos.x), half.y + (half.y * -pos.y))
+}
+
+#[cfg(test)]
+mod test {
+    use super::local_to_screen_position;
+    use super::screen_to_local_position;
+    use notan_math::{vec2, Mat3, Mat4};
+
+    #[test]
+    fn screen_to_local() {
+        let screen_size = vec2(800.0, 600.0);
+
+        // Using regular projection and view
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let view = Mat3::IDENTITY;
+
+        let pos_expected = [
+            (vec2(0.0, 0.0), vec2(0.0, 0.0)),
+            (vec2(400.0, 300.0), vec2(400.0, 300.0)),
+            (vec2(800.0, 600.0), vec2(800.0, 600.0)),
+        ];
+
+        pos_expected.into_iter().for_each(|(pos, expect)| {
+            let local = screen_to_local_position(pos, screen_size, proj.inverse(), view);
+            assert_eq!(local, expect, "Using regular projection and view");
+        });
+
+        // Using regular projection and scaled view
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let view = Mat3::from_scale(vec2(2.0, 2.0));
+
+        let pos_expected = [
+            (vec2(0.0, 0.0), vec2(0.0, 0.0)),
+            (vec2(400.0, 300.0), vec2(200.0, 150.0)),
+            (vec2(800.0, 600.0), vec2(400.0, 300.0)),
+        ];
+
+        pos_expected.into_iter().for_each(|(pos, expect)| {
+            let local = screen_to_local_position(pos, screen_size, proj.inverse(), view);
+            assert_eq!(local, expect, "Using regular projection and scaled view");
+        });
+
+        // Using scaled projection and identity view
+        let proj = Mat4::orthographic_rh_gl(
+            0.0,
+            screen_size.x * 0.5,
+            screen_size.y * 0.5,
+            0.0,
+            -1.0,
+            1.0,
+        );
+        let view = Mat3::IDENTITY;
+
+        let pos_expected = [
+            (vec2(0.0, 0.0), vec2(0.0, 0.0)),
+            (vec2(400.0, 300.0), vec2(200.0, 150.0)),
+            (vec2(800.0, 600.0), vec2(400.0, 300.0)),
+        ];
+
+        pos_expected.into_iter().for_each(|(pos, expect)| {
+            let local = screen_to_local_position(pos, screen_size, proj.inverse(), view);
+            assert_eq!(local, expect, "Using scaled projection and identity view");
+        });
+    }
+
+    #[test]
+    fn local_to_screen() {
+        let screen_size = vec2(800.0, 600.0);
+
+        // Using regular projection and view
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let view = Mat3::IDENTITY;
+
+        let pos_expected = [
+            (vec2(0.0, 0.0), vec2(0.0, 0.0)),
+            (vec2(400.0, 300.0), vec2(400.0, 300.0)),
+            (vec2(800.0, 600.0), vec2(800.0, 600.0)),
+        ];
+
+        pos_expected.into_iter().for_each(|(pos, expect)| {
+            let local = local_to_screen_position(pos, screen_size, proj, view);
+            assert_eq!(local, expect, "Using regular projection and view");
+        });
+
+        // Using regular projection and scaled view
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let view = Mat3::from_scale(vec2(2.0, 2.0));
+
+        let pos_expected = [
+            (vec2(0.0, 0.0), vec2(0.0, 0.0)),
+            (vec2(400.0, 300.0), vec2(800.0, 600.0)),
+            (vec2(800.0, 600.0), vec2(1600.0, 1200.0)),
+        ];
+
+        pos_expected.into_iter().for_each(|(pos, expect)| {
+            let local = local_to_screen_position(pos, screen_size, proj, view);
+            assert_eq!(local, expect, "Using regular projection and scaled view");
+        });
+
+        // Using scaled projection and identity view
+        let proj = Mat4::orthographic_rh_gl(
+            0.0,
+            screen_size.x * 0.5,
+            screen_size.y * 0.5,
+            0.0,
+            -1.0,
+            1.0,
+        );
+        let view = Mat3::IDENTITY;
+
+        let pos_expected = [
+            (vec2(0.0, 0.0), vec2(0.0, 0.0)),
+            (vec2(400.0, 300.0), vec2(800.0, 600.0)),
+            (vec2(800.0, 600.0), vec2(1600.0, 1200.0)),
+        ];
+
+        pos_expected.into_iter().for_each(|(pos, expect)| {
+            let local = local_to_screen_position(pos, screen_size, proj, view);
+            assert_eq!(local, expect, "Using scaled projection and identity view");
+        });
+    }
+
+    #[test]
+    fn screen_to_local_to_screen() {
+        let screen_size = vec2(800.0, 600.0);
+
+        // Using regular projection and view
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let view = Mat3::IDENTITY;
+
+        let pos_expected = [vec2(0.0, 0.0), vec2(400.0, 300.0), vec2(800.0, 600.0)];
+
+        pos_expected.into_iter().for_each(|pos| {
+            let local = screen_to_local_position(pos, screen_size, proj.inverse(), view);
+            let screen = local_to_screen_position(local, screen_size, proj, view);
+            assert_eq!(screen, pos, "Using regular projection and view");
+        });
+
+        // Using regular projection and rotated view
+        let proj = Mat4::orthographic_rh_gl(0.0, screen_size.x, screen_size.y, 0.0, -1.0, 1.0);
+        let view = Mat3::from_angle(45.0f32.to_radians());
+
+        let pos_expected = [vec2(0.0, 0.0), vec2(400.0, 300.0), vec2(800.0, 600.0)];
+
+        pos_expected.into_iter().for_each(|pos| {
+            let local = screen_to_local_position(pos, screen_size, proj.inverse(), view);
+            let screen = local_to_screen_position(local, screen_size, proj, view);
+            assert_eq!(
+                screen.round(),
+                pos,
+                "Using regular projection and rotated view"
+            );
+        });
+
+        // Using a scaled projection and rotated nd scaled view
+        let proj = Mat4::orthographic_rh_gl(
+            0.0,
+            screen_size.x * 0.5,
+            screen_size.y * 0.5,
+            0.0,
+            -1.0,
+            1.0,
+        );
+        let view = Mat3::from_scale(vec2(1.5, 2.5)) * Mat3::from_angle(45.0f32.to_radians());
+
+        let pos_expected = [vec2(0.0, 0.0), vec2(400.0, 300.0), vec2(800.0, 600.0)];
+
+        pos_expected.into_iter().for_each(|pos| {
+            let local = screen_to_local_position(pos, screen_size, proj.inverse(), view);
+            let screen = local_to_screen_position(local, screen_size, proj, view);
+            assert_eq!(
+                screen.round(),
+                pos,
+                "Using a scaled projection and rotated nd scaled view"
+            );
+        });
     }
 }

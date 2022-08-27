@@ -1,5 +1,6 @@
 use crate::buffer::*;
 use crate::commands::*;
+use crate::glsl_layout::{Std140, Uniform as UniformLayout};
 use crate::limits::Limits;
 use crate::pipeline::*;
 use crate::render_texture::*;
@@ -296,7 +297,7 @@ impl Device {
         &mut self,
         slot: u32,
         name: &str,
-        data: Option<&[f32]>,
+        data: Option<Vec<u8>>,
     ) -> Result<Buffer, String> {
         //debug_assert!(current_pipeline.is_some()) //pipeline should be already binded
         let id = self.backend.create_uniform_buffer(slot, name)?;
@@ -308,7 +309,7 @@ impl Device {
         );
 
         if let Some(d) = data {
-            self.set_buffer_data(&buffer, d);
+            self.set_buffer_data(&buffer, &d);
         }
 
         Ok(buffer)
@@ -386,12 +387,110 @@ impl Device {
     }
 
     #[inline]
-    pub fn set_buffer_data<T: BufferDataType>(&mut self, buffer: &Buffer, data: &[T]) {
-        self.backend
-            .set_buffer_data(buffer.id(), bytemuck::cast_slice(data));
+    pub fn set_buffer_data<T: BufferData>(&mut self, buffer: &Buffer, data: T) {
+        data.upload(self, buffer.id());
     }
 }
 
-pub trait BufferDataType: bytemuck::Pod {}
-impl BufferDataType for u32 {}
-impl BufferDataType for f32 {}
+pub trait Uniform: UniformLayout {}
+pub trait BufferData {
+    fn upload(&self, device: &mut Device, id: u64);
+    fn save_as_bytes(&self, _data: &mut Vec<u8>) {}
+}
+
+impl<T> BufferData for &[T]
+where
+    T: bytemuck::Pod,
+{
+    #[inline]
+    fn upload(&self, device: &mut Device, id: u64) {
+        device
+            .backend
+            .set_buffer_data(id, bytemuck::cast_slice(self));
+    }
+
+    fn save_as_bytes(&self, data: &mut Vec<u8>) {
+        data.extend_from_slice(bytemuck::cast_slice(self));
+    }
+}
+
+impl<const N: usize, T> BufferData for &[T; N]
+where
+    T: bytemuck::Pod,
+{
+    #[inline]
+    fn upload(&self, device: &mut Device, id: u64) {
+        device
+            .backend
+            .set_buffer_data(id, bytemuck::cast_slice(self.as_slice()));
+    }
+
+    fn save_as_bytes(&self, data: &mut Vec<u8>) {
+        data.extend_from_slice(bytemuck::cast_slice(self.as_slice()));
+    }
+}
+
+impl<T> BufferData for &Vec<T>
+where
+    T: bytemuck::Pod,
+{
+    #[inline]
+    fn upload(&self, device: &mut Device, id: u64) {
+        device
+            .backend
+            .set_buffer_data(id, bytemuck::cast_slice(self.as_slice()));
+    }
+
+    fn save_as_bytes(&self, data: &mut Vec<u8>) {
+        data.extend_from_slice(bytemuck::cast_slice(self.as_slice()));
+    }
+}
+
+impl<T> BufferData for &T
+where
+    T: Uniform,
+{
+    #[inline]
+    fn upload(&self, device: &mut Device, id: u64) {
+        // TODO check opengl version or driver if it uses std140 to layout or not
+        device.backend.set_buffer_data(id, self.std140().as_raw());
+    }
+
+    fn save_as_bytes(&self, data: &mut Vec<u8>) {
+        data.extend_from_slice(self.std140().as_raw());
+    }
+}
+
+macro_rules! uniform_impl {
+    ( $( $typ:ty, )* ) => {
+        $(
+            impl Uniform for $typ {}
+        )*
+    }
+}
+
+uniform_impl! {
+    notan_math::Vec2,
+    notan_math::Vec3,
+    notan_math::Vec4,
+
+    notan_math::IVec2,
+    notan_math::IVec3,
+    notan_math::IVec4,
+
+    notan_math::UVec2,
+    notan_math::UVec3,
+    notan_math::UVec4,
+
+    notan_math::DVec2,
+    notan_math::DVec3,
+    notan_math::DVec4,
+
+    notan_math::Mat2,
+    notan_math::Mat3,
+    notan_math::Mat4,
+
+    notan_math::DMat2,
+    notan_math::DMat3,
+    notan_math::DMat4,
+}

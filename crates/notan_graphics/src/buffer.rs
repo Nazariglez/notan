@@ -1,6 +1,6 @@
 use crate::device::{DropManager, ResourceId};
 use crate::pipeline::*;
-use crate::Device;
+use crate::{BufferData, Device};
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -44,6 +44,21 @@ impl Buffer {
     #[inline(always)]
     pub fn id(&self) -> u64 {
         self.id
+    }
+
+    /// Returns true if it's a uniform's buffer
+    pub fn is_uniform(&self) -> bool {
+        matches!(self.usage, BufferUsage::Uniform(_))
+    }
+
+    /// Returns true if it's a vertex's buffer
+    pub fn is_vertex(&self) -> bool {
+        matches!(self.usage, BufferUsage::Vertex)
+    }
+
+    /// Returns true if it's a element's buffer
+    pub fn is_index(&self) -> bool {
+        matches!(self.usage, BufferUsage::Index)
     }
 }
 
@@ -122,7 +137,7 @@ impl<'a> IndexBufferBuilder<'a> {
 
 pub struct UniformBufferBuilder<'a> {
     device: &'a mut Device,
-    data: Option<&'a [f32]>,
+    data: Option<Vec<u8>>,
     name: String,
     loc: u32,
 }
@@ -137,8 +152,10 @@ impl<'a> UniformBufferBuilder<'a> {
         }
     }
 
-    pub fn with_data(mut self, data: &'a [f32]) -> Self {
-        self.data = Some(data);
+    pub fn with_data<T: BufferData>(mut self, data: T) -> Self {
+        let mut buffer = vec![];
+        data.save_as_bytes(&mut buffer);
+        self.data = Some(buffer);
         self
     }
 

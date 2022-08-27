@@ -133,7 +133,7 @@ impl Graphics {
 
     /// Upload the buffer data to the GPU
     #[inline]
-    pub fn set_buffer_data<T: BufferDataType>(&mut self, buffer: &Buffer, data: &[T]) {
+    pub fn set_buffer_data<T: BufferData>(&mut self, buffer: &Buffer, data: T) {
         self.device.set_buffer_data(buffer, data);
     }
 

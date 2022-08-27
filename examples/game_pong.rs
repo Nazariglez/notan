@@ -15,7 +15,7 @@ const PI: f32 = std::f32::consts::PI;
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win_config = WindowConfig::new().size(WIDTH, HEIGHT).vsync();
+    let win_config = WindowConfig::new().size(WIDTH, HEIGHT).vsync(true);
 
     notan::init_with(State::new)
         .add_config(win_config)

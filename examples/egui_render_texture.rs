@@ -35,7 +35,7 @@ impl State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(State::new)
-        .add_config(WindowConfig::new().vsync())
+        .add_config(WindowConfig::new().vsync(true).high_dpi(true))
         .add_config(EguiConfig)
         .draw(draw)
         .build()
@@ -185,7 +185,7 @@ impl Cube {
 
         let uniform_buffer = gfx
             .create_uniform_buffer(0, "Locals")
-            .with_data(&mvp.to_cols_array())
+            .with_data(&mvp)
             .build()
             .unwrap();
 
@@ -223,8 +223,8 @@ impl Cube {
         renderer
     }
 }
-fn rotated_matrix(base: Mat4, angle: f32) -> [f32; 16] {
+fn rotated_matrix(base: Mat4, angle: f32) -> Mat4 {
     let rot_x = Mat4::from_rotation_x(angle);
     let rot_y = Mat4::from_rotation_y(angle);
-    (base * rot_x * rot_y).to_cols_array()
+    base * rot_x * rot_y
 }

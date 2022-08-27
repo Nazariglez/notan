@@ -57,7 +57,7 @@ pub trait BackendSystem: Backend {
 
     /// Returns a function that load files
     fn get_file_loader(&self) -> LoadFileFn {
-        Box::new(|path| Box::new(platter::load_file(path).map_err(|e| e.to_string())))
+        Box::new(|path| Box::new(platter2::load_file(path).map_err(|e| e.to_string())))
     }
 
     /// Returns the graphics backend implementation
@@ -70,7 +70,7 @@ pub trait BackendSystem: Backend {
 
 /// Represent mouse cursor icon
 /// They are same as egui::CursorIcon because this is mostly to give support to egui
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Eq)]
 pub enum CursorIcon {
     Default,
     None,

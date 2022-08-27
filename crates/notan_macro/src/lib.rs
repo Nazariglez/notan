@@ -1,7 +1,7 @@
 extern crate proc_macro;
 use proc_macro::*;
 use quote::quote;
-use syn::{parse_macro_input, LitStr};
+use syn::{parse_macro_input, DeriveInput, LitStr};
 use syn::{ItemFn, ReturnType};
 
 mod handlers;
@@ -84,4 +84,18 @@ pub fn include_fragment_shader(input: TokenStream) -> TokenStream {
     let spirv = shaders::spirv_from_file(&relative_path, shaders::ShaderType::Fragment).unwrap();
 
     shaders::source_from_spirv(spirv).unwrap()
+}
+
+#[proc_macro_attribute]
+pub fn uniform(_metadata: TokenStream, input: TokenStream) -> TokenStream {
+    let derive: DeriveInput = syn::parse(input.clone()).unwrap();
+    let ident = derive.ident;
+    let input: proc_macro2::TokenStream = input.into();
+    let output = quote! {
+        #[derive(glsl_layout::Uniform)]
+        #input
+
+        impl ::notan::graphics::Uniform for #ident {}
+    };
+    output.into()
 }

@@ -1,10 +1,11 @@
 use crate::batch::*;
 pub(crate) use crate::custom_pipeline::CustomPipeline;
 use crate::transform::Transform;
+use crate::{local_to_screen_position, screen_to_local_position};
 use notan_glyph::Section;
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
-use notan_math::{Mat3, Mat4};
+use notan_math::{vec2, Mat3, Mat4, Vec2};
 use notan_text::Font;
 
 #[derive(Debug, Clone)]
@@ -14,6 +15,7 @@ pub struct Draw {
     transform: Transform,
     base_projection: Mat4,
     projection: Option<Mat4>,
+    pub(crate) inverse_projection: Option<Mat4>,
     size: (f32, f32),
     blend_mode: BlendMode,
     pub(crate) batches: Vec<Batch>,
@@ -28,21 +30,18 @@ pub struct Draw {
 
 impl Draw {
     pub fn new(width: i32, height: i32) -> Self {
+        let base_projection =
+            Mat4::orthographic_rh_gl(0.0, width as _, height as _, 0.0, -1.0, 1.0);
+
         Draw {
             alpha: 1.0,
             clear_color: None,
             batches: vec![],
             current_batch: None,
             transform: Transform::new(),
-            base_projection: notan_math::Mat4::orthographic_rh_gl(
-                0.0,
-                width as _,
-                height as _,
-                0.0,
-                -1.0,
-                1.0,
-            ),
+            base_projection,
             projection: None,
+            inverse_projection: None,
             size: (width as _, height as _),
             blend_mode: BlendMode::NORMAL,
             shape_pipeline: Default::default(),
@@ -103,8 +102,7 @@ impl Draw {
 
     pub fn set_size(&mut self, width: f32, height: f32) {
         self.size = (width, height);
-        self.base_projection =
-            notan_math::Mat4::orthographic_rh_gl(0.0, width, height, 0.0, -1.0, 1.0);
+        self.base_projection = Mat4::orthographic_rh_gl(0.0, width, height, 0.0, -1.0, 1.0);
     }
 
     pub fn size(&self) -> (f32, f32) {
@@ -121,6 +119,7 @@ impl Draw {
 
     pub fn set_projection(&mut self, matrix: Option<Mat4>) {
         self.projection = matrix;
+        self.inverse_projection = None;
     }
 
     pub fn projection(&self) -> Mat4 {
@@ -268,6 +267,21 @@ impl Draw {
         let batch_len = self.batches.len();
         let indices = self.text_batch_indices.get_or_insert(vec![]);
         indices.push(batch_len);
+    }
+
+    pub fn screen_to_world_position(&mut self, screen_x: f32, screen_y: f32) -> Vec2 {
+        let inverse = *self
+            .inverse_projection
+            .get_or_insert(self.projection().inverse());
+
+        let view = *self.transform().matrix();
+        screen_to_local_position(vec2(screen_x, screen_y), self.size.into(), inverse, view)
+    }
+
+    pub fn world_to_screen_position(&mut self, world_x: f32, world_y: f32) -> Vec2 {
+        let projection = self.projection();
+        let view = *self.transform().matrix();
+        local_to_screen_position(vec2(world_x, world_y), self.size.into(), projection, view)
     }
 }
 

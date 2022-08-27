@@ -2,7 +2,7 @@ use hashbrown::{HashMap, HashSet};
 use notan_core::events::Event;
 
 pub use notan_core::mouse::MouseButton;
-use notan_math::Vec2;
+use notan_math::{Mat3, Vec2};
 
 #[derive(Default)]
 /// Represent the mouse data
@@ -33,8 +33,11 @@ impl Mouse {
     }
 
     #[inline]
+    #[doc(hidden)]
+    #[deprecated]
+    #[allow(deprecated)]
     /// Returns a local position
-    pub fn local_position(&self, m: notan_math::Mat3) -> (f32, f32) {
+    pub fn local_position(&self, m: Mat3) -> (f32, f32) {
         let pos = notan_math::mat3_screen_to_local(self.x, self.y, m);
         (pos.x, pos.y)
     }

@@ -40,9 +40,10 @@ pub struct WindowConfig {
     /// `Web: WebGL will use this as antialias = false if the value is 0 or true otherwise`
     pub multisampling: u16,
 
-    /// **Only Web:** By default a canvas will have the size set multiplied by the device_pixel_ratio
-    /// This can be disabled by setting this to `false`. This could be useful for mobile browsers.
-    pub canvas_auto_resolution: bool,
+    /// Enable High DPI viewport and drawing if the device pixel ratio is higher than 1
+    /// This is `false` by default, enable it could consume more resources and require
+    /// a custom way of drawing things. The advice is using it if you know what you're doing
+    pub high_dpi: bool,
 
     /// Inner loop will run only after an input event
     pub lazy_loop: bool,
@@ -56,6 +57,9 @@ pub struct WindowConfig {
 
     /// Hide the windows
     pub visible: bool,
+
+    /// Use or create the canvas with this id. Only Web.
+    pub canvas_id: String,
 }
 
 impl Default for WindowConfig {
@@ -71,11 +75,12 @@ impl Default for WindowConfig {
             resizable: false,
             vsync: false,
             multisampling: 0,
-            canvas_auto_resolution: true,
+            high_dpi: false,
             lazy_loop: false,
             transparent: false,
             decorations: true,
             visible: true,
+            canvas_id: String::from("notan_canvas"),
         }
     }
 }
@@ -93,8 +98,8 @@ impl WindowConfig {
     }
 
     /// Inner loop will run only after an input event
-    pub fn lazy_loop(mut self) -> Self {
-        self.lazy_loop = true;
+    pub fn lazy_loop(mut self, lazy: bool) -> Self {
+        self.lazy_loop = lazy;
         self
     }
 
@@ -106,8 +111,8 @@ impl WindowConfig {
     }
 
     /// Enable fullscreen mode
-    pub fn fullscreen(mut self) -> Self {
-        self.fullscreen = true;
+    pub fn fullscreen(mut self, fullscreen: bool) -> Self {
+        self.fullscreen = fullscreen;
         self
     }
 
@@ -124,20 +129,20 @@ impl WindowConfig {
     }
 
     /// Starts the window maximized
-    pub fn maximized(mut self) -> Self {
-        self.maximized = true;
+    pub fn maximized(mut self, maximized: bool) -> Self {
+        self.maximized = maximized;
         self
     }
 
     /// Allow the window to be resizable
-    pub fn resizable(mut self) -> Self {
-        self.resizable = true;
+    pub fn resizable(mut self, resizable: bool) -> Self {
+        self.resizable = resizable;
         self
     }
 
     /// Enable vsync
-    pub fn vsync(mut self) -> Self {
-        self.vsync = true;
+    pub fn vsync(mut self, vsync: bool) -> Self {
+        self.vsync = vsync;
         self
     }
 
@@ -147,15 +152,15 @@ impl WindowConfig {
         self
     }
 
-    /// Enable or disable that the size of the canvas will automatically use the device pixel ratio
-    pub fn canvas_auto_resolution(mut self, enabled: bool) -> Self {
-        self.canvas_auto_resolution = enabled;
+    /// Enable High DPI
+    pub fn high_dpi(mut self, enabled: bool) -> Self {
+        self.high_dpi = enabled;
         self
     }
 
     /// Set the background as transparent
-    pub fn transparent(mut self) -> Self {
-        self.transparent = true;
+    pub fn transparent(mut self, transparent: bool) -> Self {
+        self.transparent = transparent;
         self
     }
 
@@ -168,6 +173,12 @@ impl WindowConfig {
     /// Hide or show the window
     pub fn visible(mut self, visible: bool) -> Self {
         self.visible = visible;
+        self
+    }
+
+    /// Use or create the canvas with this id. Only Web.
+    pub fn canvas_id(mut self, canvas_id: &str) -> Self {
+        self.canvas_id = canvas_id.to_string();
         self
     }
 }
