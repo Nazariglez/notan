@@ -3,8 +3,6 @@ use lyon::path::builder::BorderRadii;
 use lyon::path::Path;
 use lyon::path::Winding;
 
-// https://docs.rs/lyon_path/0.17.2/lyon_path/builder/trait.PathBuilder.html
-
 pub(super) fn rectangle(x: f32, y: f32, width: f32, height: f32) -> Path {
     let mut builder = Path::builder();
     builder.add_rectangle(
