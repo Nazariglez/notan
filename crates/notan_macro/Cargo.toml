@@ -1,6 +1,6 @@
 [package]
 name = "notan_macro"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -12,12 +12,12 @@ description = "Provides a set of utils as macros for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-syn = { version = "1.0.98", features = ["full", "extra-traits"] }
-quote = "1.0.20"
-paste = "1.0.7"
+syn = { version = "1.0.99", features = ["full", "extra-traits"] }
+quote = "1.0.21"
+paste = "1.0.8"
 num = "0.4.0"
 glsl-to-spirv = "0.1.7"
-proc-macro2 = "1.0.40"
+proc-macro2 = "1.0.43"
 spirv_cross = { version = "0.23.1", features = ["glsl"] }
 
 [lib]
