@@ -2057,9 +2057,9 @@ dependencies = [
 
 [[package]]
 name = "oddio"
-version = "0.5.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33f6d5a128f26322b02ba2741cbdc9f14f1431e757db3b15fd893d5c416f3e20"
+checksum = "942d96af6eba94907d8a320d303a0730bca1742a56bf21b6c63a28bc2b028ff2"
 dependencies = [
  "mint",
 ]

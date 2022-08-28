@@ -3,7 +3,9 @@ use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::BufferSize;
 use hashbrown::HashMap;
 use notan_audio::AudioBackend;
-use oddio::{Cycle, Frames, FramesSignal, Gain, GainControl, Handle, Mixer, Stop, StopControl};
+use oddio::{
+    Cycle, Filter, Frames, FramesSignal, Gain, GainControl, Handle, Mixer, Stop, StopControl,
+};
 use std::sync::Arc;
 
 #[cfg(target_arch = "wasm32")]
@@ -228,7 +230,9 @@ impl InnerBackend {
             config
         );
 
-        let (mixer_handle, mixer) = oddio::split(oddio::Gain::new(oddio::Mixer::new(), 1.0));
+        let mut gain = Gain::new(Mixer::new());
+        gain.control::<Gain<_>, _>().set_gain(volume_as_gain(1.0));
+        let (mixer_handle, mixer) = oddio::split(gain);
 
         let stream = device
             .build_output_stream(
@@ -238,7 +242,7 @@ impl InnerBackend {
                     oddio::run(&mixer, sample_rate.0, frames);
                 },
                 |err| {
-                    log::error!("{}", err);
+                    log::error!("{:?}", err);
                 },
             )
             .map_err(|e| format!("{:?}", e))?;
@@ -257,10 +261,9 @@ impl InnerBackend {
     }
 
     fn set_global_volume(&mut self, volume: f32) {
-        let v = 1.0 - volume;
-
+        let volume = volume.clamp(0.0, 1.0);
         let mut gain = self.mixer_handle.control::<Gain<_>, _>();
-        gain.set_gain(v * 60.0 * -1.0);
+        gain.set_gain(volume_as_gain(volume));
         self.volume = volume;
     }
 
@@ -287,23 +290,23 @@ impl InnerBackend {
             .ok_or_else(|| "Invalid audio source id.".to_string())?;
 
         let handle = if repeat {
-            let signal = Gain::new(Cycle::new(frames.clone()), volume);
+            let mut signal = Gain::new(Cycle::new(frames.clone()));
+            signal
+                .control::<Gain<_>, _>()
+                .set_gain(volume_as_gain(volume));
             let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
             AudioHandle::Cycle(handle)
         } else {
-            let signal = Gain::new(FramesSignal::from(frames.clone()), volume);
+            let mut signal = Gain::new(FramesSignal::from(frames.clone()));
+            signal
+                .control::<Gain<_>, _>()
+                .set_gain(volume_as_gain(volume));
             let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
             AudioHandle::Frame(handle)
         };
 
         let id = self.sound_id_count;
-        self.sounds.insert(
-            id,
-            AudioInfo {
-                handle,
-                volume: 1.0,
-            },
-        );
+        self.sounds.insert(id, AudioInfo { handle, volume });
         self.sound_id_count += 1;
         Ok(id)
     }
@@ -346,13 +349,11 @@ impl InnerBackend {
     }
 
     fn set_volume(&mut self, sound: u64, volume: f32) {
-        let v = 1.0 - volume;
-
         match self.sounds.get_mut(&sound) {
             None => log::warn!("Cannot set volume for sound: {}", sound),
             Some(s) => {
                 s.volume = volume;
-                s.handle.as_gain().set_gain(v * 60.0 * -1.0);
+                s.handle.as_gain().set_gain(volume_as_gain(volume));
             }
         }
     }
@@ -378,5 +379,23 @@ impl InnerBackend {
             sources,
             sounds,
         );
+    }
+}
+
+// convert [0.0 - 1.0] to [-60.0 - 0.0]
+fn volume_as_gain(volume: f32) -> f32 {
+    let v = 1.0 - volume;
+    v * 60.0 * -1.0
+}
+
+#[cfg(test)]
+mod test {
+    use super::volume_as_gain;
+
+    #[test]
+    fn test_volume_as_gain() {
+        assert_eq!(volume_as_gain(0.0), -60.0);
+        assert_eq!(volume_as_gain(0.5), -30.0);
+        assert_eq!(volume_as_gain(1.0), 0.0);
     }
 }
