@@ -3,9 +3,7 @@ use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::BufferSize;
 use hashbrown::HashMap;
 use notan_audio::AudioBackend;
-use oddio::{
-    Cycle, Filter, Frames, FramesSignal, Gain, GainControl, Handle, Mixer, Stop, StopControl,
-};
+use oddio::{Cycle, Frames, FramesSignal, Gain, GainControl, Handle, Mixer, Stop, StopControl};
 use std::sync::Arc;
 
 #[cfg(target_arch = "wasm32")]
@@ -230,8 +228,7 @@ impl InnerBackend {
             config
         );
 
-        let mut gain = Gain::new(Mixer::new());
-        gain.control::<Gain<_>, _>().set_gain(volume_as_gain(1.0));
+        let gain = Gain::new(Mixer::new());
         let (mixer_handle, mixer) = oddio::split(gain);
 
         let stream = device
@@ -291,16 +288,12 @@ impl InnerBackend {
 
         let handle = if repeat {
             let mut signal = Gain::new(Cycle::new(frames.clone()));
-            signal
-                .control::<Gain<_>, _>()
-                .set_gain(volume_as_gain(volume));
+            signal.set_gain(volume_as_gain(volume));
             let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
             AudioHandle::Cycle(handle)
         } else {
             let mut signal = Gain::new(FramesSignal::from(frames.clone()));
-            signal
-                .control::<Gain<_>, _>()
-                .set_gain(volume_as_gain(volume));
+            signal.set_gain(volume_as_gain(volume));
             let handle = self.mixer_handle.control::<Mixer<_>, _>().play(signal);
             AudioHandle::Frame(handle)
         };
@@ -382,10 +375,11 @@ impl InnerBackend {
     }
 }
 
-// convert [0.0 - 1.0] to [-60.0 - 0.0]
+// convert [0.0 - 1.0] to [-100.0 - 0.0]
+// with headphones I can hear -90, so I opted to to -100
 fn volume_as_gain(volume: f32) -> f32 {
     let v = 1.0 - volume;
-    v * 60.0 * -1.0
+    v * 100.0 * -1.0
 }
 
 #[cfg(test)]
@@ -394,8 +388,8 @@ mod test {
 
     #[test]
     fn test_volume_as_gain() {
-        assert_eq!(volume_as_gain(0.0), -60.0);
-        assert_eq!(volume_as_gain(0.5), -30.0);
+        assert_eq!(volume_as_gain(0.0), -100.0);
+        assert_eq!(volume_as_gain(0.5), -50.0);
         assert_eq!(volume_as_gain(1.0), 0.0);
     }
 }
