@@ -317,7 +317,7 @@ impl WindowBackend for WebWindowBackend {
     }
 
     // No operation, as unsupported in browser
-    fn set_always_on_top(&mut self, enabled: bool) {}
+    fn set_always_on_top(&mut self, _enabled: bool) {}
 
     // Unsupported in browser, always false
     fn is_always_on_top(&self) -> bool {

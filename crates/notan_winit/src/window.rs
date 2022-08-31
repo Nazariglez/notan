@@ -14,7 +14,7 @@ pub struct WinitWindowBackend {
     captured: bool,
     visible: bool,
     high_dpi: bool,
-    is_always_on_top: bool
+    is_always_on_top: bool,
 }
 
 impl WindowBackend for WinitWindowBackend {
