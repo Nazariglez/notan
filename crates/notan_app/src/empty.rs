@@ -19,7 +19,7 @@ pub struct EmptyWindowBackend {
     is_fullscreen: bool,
     is_always_on_top: bool,
     lazy: bool,
-    caputed: bool,
+    captured: bool,
     visible: bool,
 }
 
@@ -71,11 +71,11 @@ impl WindowBackend for EmptyWindowBackend {
     }
 
     fn set_capture_cursor(&mut self, capture: bool) {
-        self.caputed = capture;
+        self.captured = capture;
     }
 
     fn capture_cursor(&self) -> bool {
-        self.caputed
+        self.captured
     }
 
     fn set_visible(&mut self, visible: bool) {
