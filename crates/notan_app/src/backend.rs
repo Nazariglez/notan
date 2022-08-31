@@ -123,6 +123,12 @@ pub trait WindowBackend {
     /// Returns true if the window is in fullscreen mode
     fn is_fullscreen(&self) -> bool;
 
+    /// Set window to be drawn above others or not
+    fn set_always_on_top(&mut self, enabled: bool);
+
+    /// Returns true if window is drawn above others
+    fn is_always_on_top(&self) -> bool;
+
     /// Window's width
     fn width(&self) -> i32 {
         self.size().0

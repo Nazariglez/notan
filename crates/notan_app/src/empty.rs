@@ -17,6 +17,7 @@ use notan_audio::AudioBackend;
 pub struct EmptyWindowBackend {
     size: (i32, i32),
     is_fullscreen: bool,
+    is_always_on_top: bool,
     lazy: bool,
     caputed: bool,
     visible: bool,
@@ -37,6 +38,14 @@ impl WindowBackend for EmptyWindowBackend {
 
     fn is_fullscreen(&self) -> bool {
         self.is_fullscreen
+    }
+
+    fn set_always_on_top(&mut self, enabled: bool) {
+        self.is_always_on_top = enabled;
+    }
+
+    fn is_always_on_top(&self) -> bool {
+        self.is_always_on_top
     }
 
     fn dpi(&self) -> f64 {
