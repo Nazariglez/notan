@@ -1653,6 +1653,7 @@ dependencies = [
  "notan_log",
  "notan_macro",
  "notan_math",
+ "notan_random",
  "notan_text",
  "notan_utils",
 ]
@@ -1820,10 +1821,7 @@ dependencies = [
 name = "notan_math"
 version = "0.7.0"
 dependencies = [
- "getrandom",
  "glam",
- "rand",
- "rand_pcg",
 ]
 
 [[package]]
@@ -1836,6 +1834,15 @@ dependencies = [
  "notan_audio",
  "oddio",
  "symphonia",
+]
+
+[[package]]
+name = "notan_random"
+version = "0.7.0"
+dependencies = [
+ "getrandom",
+ "rand",
+ "rand_pcg",
 ]
 
 [[package]]

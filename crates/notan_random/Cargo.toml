@@ -1,5 +1,5 @@
 [package]
-name = "notan_math"
+name = "notan_random"
 version = "0.7.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
@@ -7,9 +7,13 @@ readme = "README.md"
 homepage = "https://github.com/Nazariglez/notan"
 repository = "https://github.com/Nazariglez/notan"
 license = "MIT OR Apache-2.0"
-description = "Provides simple set of math's utils for Notan"
+description = "Provides a simple set of RNG utils for Notan"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-glam = { version = "0.21.3", features = ["scalar-math", "bytemuck"] }
+rand = "0.8.5"
+rand_pcg = "0.3.1"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2.7", features = ["js"] }

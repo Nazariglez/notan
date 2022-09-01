@@ -1,5 +1,5 @@
 use notan::draw::*;
-use notan::math::rand::prelude::*;
+use notan::random::rand::prelude::*;
 use notan::prelude::*;
 
 const COLS: usize = 4;
