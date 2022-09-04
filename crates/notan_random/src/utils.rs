@@ -1,5 +1,4 @@
 use rand::seq::SliceRandom;
-pub use rand::Rng;
 use rand::SeedableRng;
 use rand_pcg::Pcg32;
 use std::ops::{Deref, DerefMut};
