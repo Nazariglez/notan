@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Updated and upgraded all dependencies
 - Fix audio bug that starts a sound with maximum volume and then fade
 - Added `WindowConfig::always_on_top` and `WindowBackend::set_always_on_top/is_always_on_top` to force the window to the foreground. Has no effect on the web.
+- Added `notan_random` and feature `random` to allow users to disable the default random features and use their own.
 
 ## v0.6.0 - 27/08/2022
 
