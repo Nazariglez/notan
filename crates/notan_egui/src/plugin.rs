@@ -117,15 +117,23 @@ impl Plugin for EguiPlugin {
     ) -> Result<AppFlow, String> {
         let command_modifier = if cfg!(target_arch = "macos") {
             app.keyboard.logo()
+        } else if cfg!(target_arch = "wasm32") {
+            app.keyboard.ctrl() || app.keyboard.logo()
         } else {
             app.keyboard.ctrl()
+        };
+
+        let mac_cmd = if cfg!(target_os = "macos") || cfg!(target_arch = "wasm32") {
+            app.keyboard.logo()
+        } else {
+            false
         };
 
         let modifiers = egui::Modifiers {
             alt: app.keyboard.alt(),
             ctrl: app.keyboard.ctrl(),
             shift: app.keyboard.shift(),
-            mac_cmd: cfg!(target_os = "macos") && app.keyboard.logo(),
+            mac_cmd,
             command: command_modifier,
         };
 
