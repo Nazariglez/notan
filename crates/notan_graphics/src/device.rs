@@ -325,7 +325,13 @@ impl Device {
     }
 
     #[inline]
-    pub(crate) fn inner_create_texture(
+    pub(crate) fn inner_create_texture(&mut self, info: TextureInfo) -> Result<Texture, String> {
+        let id = self.backend.create_texture(&info)?;
+        Ok(Texture::new(id, info, self.drop_manager.clone()))
+    }
+
+    #[inline]
+    pub(crate) fn inner_create_texture2(
         &mut self,
         source: &dyn TextureSource,
         info: TextureInfo,

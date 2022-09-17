@@ -55,7 +55,7 @@ fn gl_slot(slot: u32) -> Result<u32, String> {
         Ok(glow::TEXTURE0 + slot)
     } else {
         Err(format!(
-            "Unsupported texture slot '{}', You can use up to 6.",
+            "Unsupported texture slot '{}', You can use up to 16.",
             slot
         ))
     }
@@ -164,7 +164,7 @@ pub(crate) fn texture_internal_format(tf: &TextureFormat) -> u32 {
 pub struct TextureSourceImage(pub Vec<u8>);
 
 impl TextureSource for TextureSourceImage {
-    fn upload(&self, device: &mut dyn DeviceBackend, mut info: TextureInfo) -> Result<(), String> {
+    fn upload(&self, device: &mut dyn DeviceBackend, mut info: TextureInfo) -> Result<u64, String> {
         let backend: &mut GlowBackend = device
             .as_any_mut()
             .downcast_mut()
@@ -185,9 +185,17 @@ impl TextureSource for TextureSourceImage {
         info.width = data.width() as _;
         info.height = data.height() as _;
 
-        let tex = unsafe { create_texture(&backend.gl, &info)? };
+        log::info!(
+            "pixels len {:?} {} {}",
+            info.bytes.as_ref().unwrap().len(),
+            info.width,
+            info.height
+        );
 
-        backend.add_inner_texture(tex, &info)
+        /*let tex = unsafe { create_texture(&backend.gl, &info)? };
+
+        backend.add_inner_texture(tex, &info)*/
+        backend.create_texture(&info)
     }
 }
 

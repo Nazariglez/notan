@@ -8,7 +8,7 @@ use std::cell::RefCell;
 use std::sync::Arc;
 
 pub trait TextureSource {
-    fn upload(&self, device: &mut dyn DeviceBackend, info: TextureInfo) -> Result<(), String>;
+    fn upload(&self, device: &mut dyn DeviceBackend, info: TextureInfo) -> Result<u64, String>;
 }
 
 #[derive(Debug)]
@@ -265,6 +265,7 @@ pub struct TextureBuilder<'a, 'b> {
 
 impl<'a, 'b> TextureBuilder<'a, 'b> {
     pub fn new(device: &'a mut Device) -> Self {
+        log::info!("texture builder");
         Self {
             device,
             info: Default::default(),
@@ -275,8 +276,9 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
 
     // Creates a texture from a raw type
     pub fn from_raw_source<S: TextureSource + 'static>(mut self, source: S) -> Self {
+        log::info!("pre setting raw source {}", self.source.is_some());
         self.source = Some(Box::new(source));
-        log::info!("setting raw source {}", self.source.is_some());
+        log::info!("post setting raw source {}", self.source.is_some());
         self
     }
 
@@ -371,6 +373,13 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
                 info.format = TextureFormat::Rgba32;
                 info.width = data.width() as _;
                 info.height = data.height() as _;
+
+                log::info!(
+                    "pixels len {:?} {} {}",
+                    info.bytes.as_ref().unwrap().len(),
+                    info.width,
+                    info.height
+                );
             }
             Some(TextureKind::Bytes(bytes)) => {
                 #[cfg(debug_assertions)]
@@ -394,16 +403,10 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             _ => {}
         }
 
-        let source = source.unwrap_or_else(|| Box::new(TextureSourceEmpty));
-
-        device.inner_create_texture(source.as_ref(), info)
-    }
-}
-
-struct TextureSourceEmpty;
-impl TextureSource for TextureSourceEmpty {
-    fn upload(&self, device: &mut dyn DeviceBackend, info: TextureInfo) -> Result<(), String> {
-        todo!("empty texture source")
+        match source {
+            None => device.inner_create_texture(info),
+            Some(s) => device.inner_create_texture2(s.as_ref(), info),
+        }
     }
 }
 

@@ -357,24 +357,12 @@ impl GlowBackend {
         }
     }
 
-    fn add_inner_texture(&mut self, tex: TextureKey, info: &TextureInfo) -> Result<(), String> {
+    fn add_inner_texture(&mut self, tex: TextureKey, info: &TextureInfo) -> Result<u64, String> {
         let inner_texture = InnerTexture::new2(&self.gl, tex, info)?;
         self.texture_count += 1;
         self.textures.insert(self.texture_count, inner_texture);
-        Ok(())
-    }
-
-    /*fn create_texture_from_html(&mut self, image: &web_sys::HtmlImageElement) -> Result<u64, String> {
-        let info = TextureInfo {
-            width: image.width() as _,
-            height: image.height() as _,
-            ..Default::Default()
-        };
-        let inner_texture = InnerTexture::new(&self.gl, &info)?;
-        self.texture_count += 1;
-        self.textures.insert(self.texture_count, inner_texture);
         Ok(self.texture_count)
-    }*/
+    }
 }
 
 impl DeviceBackend for GlowBackend {
@@ -516,6 +504,7 @@ impl DeviceBackend for GlowBackend {
         let inner_texture = InnerTexture::new(&self.gl, info)?;
         self.texture_count += 1;
         self.textures.insert(self.texture_count, inner_texture);
+        log::info!("texture1 texture_id: {}", self.texture_count);
         Ok(self.texture_count)
     }
 
@@ -524,8 +513,9 @@ impl DeviceBackend for GlowBackend {
         source: &dyn TextureSource,
         info: &TextureInfo,
     ) -> Result<u64, String> {
-        source.upload(self, info.clone())?;
-        Ok(self.texture_count)
+        let id = source.upload(self, info.clone())?;
+        log::info!("texture2 texture_id: {}", id);
+        Ok(id)
     }
 
     fn create_render_texture(
