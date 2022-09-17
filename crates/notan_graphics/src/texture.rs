@@ -2,9 +2,14 @@
 
 use crate::color::Color;
 use crate::device::{DropManager, ResourceId};
-use crate::Device;
+use crate::{Device, DeviceBackend};
 use notan_math::Rect;
+use std::cell::RefCell;
 use std::sync::Arc;
+
+pub trait TextureSource {
+    fn upload(&self, device: &mut dyn DeviceBackend, info: TextureInfo) -> Result<(), String>;
+}
 
 #[derive(Debug)]
 pub struct TextureRead {
@@ -35,6 +40,7 @@ pub struct TextureInfo {
     pub wrap_x: TextureWrap,
     pub wrap_y: TextureWrap,
     pub bytes: Option<Vec<u8>>,
+    // pub source: Option<RefCell<Box<dyn TextureSource>>>,
     pub premultiplied_alpha: bool,
 
     /// Used for render textures
@@ -52,6 +58,7 @@ impl Default for TextureInfo {
             width: 1,
             height: 1,
             bytes: None,
+            // source: None,
             depth: false,
             premultiplied_alpha: false,
         }
@@ -253,6 +260,7 @@ pub struct TextureBuilder<'a, 'b> {
     device: &'a mut Device,
     kind: Option<TextureKind<'b>>,
     info: TextureInfo,
+    source: Option<Box<dyn TextureSource>>,
 }
 
 impl<'a, 'b> TextureBuilder<'a, 'b> {
@@ -261,13 +269,22 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             device,
             info: Default::default(),
             kind: None,
+            source: None,
         }
+    }
+
+    // Creates a texture from a raw type
+    pub fn from_raw_source<S: TextureSource + 'static>(mut self, source: S) -> Self {
+        self.source = Some(Box::new(source));
+        log::info!("setting raw source {}", self.source.is_some());
+        self
     }
 
     /// Creates a Texture from an image
     pub fn from_image(mut self, bytes: &'b [u8]) -> Self {
-        self.kind = Some(TextureKind::Texture(bytes));
+        self.kind = Some(TextureKind::Texture(bytes)); // TODO remove
         self
+        // self.from_raw_source(TextureSourceImage(bytes.to_vec()))
     }
 
     /// Creates a Texture from a buffer of pixels
@@ -333,7 +350,10 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             mut info,
             device,
             kind,
+            source,
         } = self;
+
+        log::info!("is some? {}", source.is_some());
 
         match kind {
             Some(TextureKind::Texture(bytes)) => {
@@ -374,7 +394,16 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             _ => {}
         }
 
-        device.inner_create_texture(info)
+        let source = source.unwrap_or_else(|| Box::new(TextureSourceEmpty));
+
+        device.inner_create_texture(source.as_ref(), info)
+    }
+}
+
+struct TextureSourceEmpty;
+impl TextureSource for TextureSourceEmpty {
+    fn upload(&self, device: &mut dyn DeviceBackend, info: TextureInfo) -> Result<(), String> {
+        todo!("empty texture source")
     }
 }
 

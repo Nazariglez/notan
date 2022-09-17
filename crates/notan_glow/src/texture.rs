@@ -1,4 +1,5 @@
 use crate::to_glow::*;
+use crate::GlowBackend;
 use glow::*;
 use notan_graphics::prelude::*;
 
@@ -13,6 +14,16 @@ pub(crate) struct InnerTexture {
 impl InnerTexture {
     pub fn new(gl: &Context, info: &TextureInfo) -> Result<Self, String> {
         let texture = unsafe { create_texture(gl, info)? };
+        let size = (info.width, info.height);
+        let is_srgba = info.format == TextureFormat::SRgba8;
+        Ok(Self {
+            texture,
+            size,
+            is_srgba,
+        })
+    }
+
+    pub fn new2(gl: &Context, texture: TextureKey, info: &TextureInfo) -> Result<Self, String> {
         let size = (info.width, info.height);
         let is_srgba = info.format == TextureFormat::SRgba8;
         Ok(Self {
@@ -147,4 +158,46 @@ pub(crate) fn texture_internal_format(tf: &TextureFormat) -> u32 {
         TextureFormat::SRgba8 => glow::SRGB8_ALPHA8,
         _ => texture_format(tf),
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct TextureSourceImage(pub Vec<u8>);
+
+impl TextureSource for TextureSourceImage {
+    fn upload(&self, device: &mut dyn DeviceBackend, mut info: TextureInfo) -> Result<(), String> {
+        let backend: &mut GlowBackend = device
+            .as_any_mut()
+            .downcast_mut()
+            .ok_or("Invalid backend type".to_string())?;
+
+        let data = image::load_from_memory(&self.0)
+            .map_err(|e| e.to_string())?
+            .to_rgba8();
+
+        let pixels = if info.premultiplied_alpha {
+            premultiplied_alpha(data.to_vec())
+        } else {
+            data.to_vec()
+        };
+
+        info.bytes = Some(pixels);
+        info.format = TextureFormat::Rgba32;
+        info.width = data.width() as _;
+        info.height = data.height() as _;
+
+        let tex = unsafe { create_texture(&backend.gl, &info)? };
+
+        backend.add_inner_texture(tex, &info)
+    }
+}
+
+fn premultiplied_alpha(pixels: Vec<u8>) -> Vec<u8> {
+    pixels
+        .chunks(4)
+        .flat_map(|c| {
+            Color::from_bytes(c[0], c[1], c[2], c[3])
+                .to_premultiplied_alpha()
+                .rgba_u8()
+        })
+        .collect()
 }

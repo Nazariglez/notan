@@ -2,6 +2,7 @@ use glow::*;
 use hashbrown::HashMap;
 use notan_graphics::prelude::*;
 use notan_graphics::DeviceBackend;
+use std::any::Any;
 
 mod buffer;
 mod pipeline;
@@ -12,12 +13,22 @@ mod utils;
 
 use crate::buffer::Kind;
 use crate::pipeline::get_inner_attrs;
-use crate::texture::texture_format;
+use crate::texture::{texture_format, TextureKey};
 use crate::to_glow::ToGlow;
 use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
 use render_target::InnerRenderTexture;
 use texture::InnerTexture;
+
+pub use texture::TextureSourceImage;
+
+pub fn create_texture_from_html(
+    device: &mut Device, /*, image: &web_sys::HtmlImageElement*/
+) -> Result<u64, String> {
+    let backend = device.downcast_backend::<GlowBackend>()?;
+    // backend.create_texture()
+    Ok(1)
+}
 
 pub struct GlowBackend {
     gl: Context,
@@ -345,6 +356,25 @@ impl GlowBackend {
             }
         }
     }
+
+    fn add_inner_texture(&mut self, tex: TextureKey, info: &TextureInfo) -> Result<(), String> {
+        let inner_texture = InnerTexture::new2(&self.gl, tex, info)?;
+        self.texture_count += 1;
+        self.textures.insert(self.texture_count, inner_texture);
+        Ok(())
+    }
+
+    /*fn create_texture_from_html(&mut self, image: &web_sys::HtmlImageElement) -> Result<u64, String> {
+        let info = TextureInfo {
+            width: image.width() as _,
+            height: image.height() as _,
+            ..Default::Default()
+        };
+        let inner_texture = InnerTexture::new(&self.gl, &info)?;
+        self.texture_count += 1;
+        self.textures.insert(self.texture_count, inner_texture);
+        Ok(self.texture_count)
+    }*/
 }
 
 impl DeviceBackend for GlowBackend {
@@ -489,6 +519,15 @@ impl DeviceBackend for GlowBackend {
         Ok(self.texture_count)
     }
 
+    fn create_texture2(
+        &mut self,
+        source: &dyn TextureSource,
+        info: &TextureInfo,
+    ) -> Result<u64, String> {
+        source.upload(self, info.clone())?;
+        Ok(self.texture_count)
+    }
+
     fn create_render_texture(
         &mut self,
         texture_id: u64,
@@ -576,6 +615,10 @@ impl DeviceBackend for GlowBackend {
             },
             None => Err("Invalid texture id".to_string()),
         }
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
 

@@ -1640,6 +1640,7 @@ name = "notan"
 version = "0.7.0"
 dependencies = [
  "egui_demo_lib",
+ "lazy_static",
  "notan_app",
  "notan_audio",
  "notan_backend",
@@ -1656,6 +1657,8 @@ dependencies = [
  "notan_random",
  "notan_text",
  "notan_utils",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -1748,6 +1751,7 @@ dependencies = [
  "bytemuck",
  "glow",
  "hashbrown",
+ "image",
  "js-sys",
  "log",
  "notan_graphics",
