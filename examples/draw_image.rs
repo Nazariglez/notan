@@ -43,7 +43,7 @@ fn init(gfx: &mut Graphics) -> State {
     let texture = gfx
         .create_texture()
         .from_raw_source(source)
-        .from_image(include_bytes!("assets/ferris.png"))
+        // .from_image(include_bytes!("assets/ferris.png"))
         .build()
         .unwrap();
 

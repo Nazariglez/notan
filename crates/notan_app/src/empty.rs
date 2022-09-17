@@ -209,10 +209,10 @@ impl DeviceBackend for EmptyDeviceBackend {
     fn create_texture2(
         &mut self,
         _source: &dyn TextureSource,
-        _info: &TextureInfo,
-    ) -> Result<u64, String> {
+        info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String> {
         self.id_count += 1;
-        Ok(self.id_count)
+        Ok((self.id_count, info))
     }
 
     fn create_render_texture(

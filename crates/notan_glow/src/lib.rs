@@ -511,11 +511,11 @@ impl DeviceBackend for GlowBackend {
     fn create_texture2(
         &mut self,
         source: &dyn TextureSource,
-        info: &TextureInfo,
-    ) -> Result<u64, String> {
-        let id = source.upload(self, info.clone())?;
+        info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String> {
+        let (id, info) = source.upload(self, info)?;
         log::info!("texture2 texture_id: {}", id);
-        Ok(id)
+        Ok((id, info))
     }
 
     fn create_render_texture(

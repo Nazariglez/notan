@@ -74,8 +74,8 @@ pub trait DeviceBackend {
     fn create_texture2(
         &mut self,
         source: &dyn TextureSource,
-        info: &TextureInfo,
-    ) -> Result<u64, String>;
+        info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String>;
 
     /// Create a new render target and returns the id
     fn create_render_texture(&mut self, texture_id: u64, info: &TextureInfo)
@@ -336,7 +336,7 @@ impl Device {
         source: &dyn TextureSource,
         info: TextureInfo,
     ) -> Result<Texture, String> {
-        let id = self.backend.create_texture2(source, &info)?;
+        let (id, info) = self.backend.create_texture2(source, info)?;
         Ok(Texture::new(id, info, self.drop_manager.clone()))
     }
 

@@ -13,6 +13,7 @@ pub(crate) struct InnerTexture {
 
 impl InnerTexture {
     pub fn new(gl: &Context, info: &TextureInfo) -> Result<Self, String> {
+        log::info!("NEW 1 {:?}", info);
         let texture = unsafe { create_texture(gl, info)? };
         let size = (info.width, info.height);
         let is_srgba = info.format == TextureFormat::SRgba8;
@@ -24,6 +25,7 @@ impl InnerTexture {
     }
 
     pub fn new2(gl: &Context, texture: TextureKey, info: &TextureInfo) -> Result<Self, String> {
+        log::info!("NEW 2 {:?}", info);
         let size = (info.width, info.height);
         let is_srgba = info.format == TextureFormat::SRgba8;
         Ok(Self {
@@ -65,6 +67,7 @@ pub(crate) unsafe fn create_texture(
     gl: &Context,
     info: &TextureInfo,
 ) -> Result<TextureKey, String> {
+    log::info!("{:?}", info);
     let texture = gl.create_texture()?;
 
     let bytes_per_pixel = info.bytes_per_pixel();
@@ -164,7 +167,11 @@ pub(crate) fn texture_internal_format(tf: &TextureFormat) -> u32 {
 pub struct TextureSourceImage(pub Vec<u8>);
 
 impl TextureSource for TextureSourceImage {
-    fn upload(&self, device: &mut dyn DeviceBackend, mut info: TextureInfo) -> Result<u64, String> {
+    fn upload(
+        &self,
+        device: &mut dyn DeviceBackend,
+        mut info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String> {
         let backend: &mut GlowBackend = device
             .as_any_mut()
             .downcast_mut()
@@ -186,16 +193,16 @@ impl TextureSource for TextureSourceImage {
         info.height = data.height() as _;
 
         log::info!(
-            "pixels len {:?} {} {}",
+            "pixels len {:?} {} {} {:?}",
             info.bytes.as_ref().unwrap().len(),
             info.width,
-            info.height
+            info.height,
+            &info.bytes.as_ref().unwrap()[153300..153330]
         );
 
-        /*let tex = unsafe { create_texture(&backend.gl, &info)? };
-
-        backend.add_inner_texture(tex, &info)*/
-        backend.create_texture(&info)
+        let tex = unsafe { create_texture(&backend.gl, &info)? };
+        let id = backend.add_inner_texture(tex, &info)?;
+        Ok((id, info))
     }
 }
 

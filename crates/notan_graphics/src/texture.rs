@@ -5,10 +5,15 @@ use crate::device::{DropManager, ResourceId};
 use crate::{Device, DeviceBackend};
 use notan_math::Rect;
 use std::cell::RefCell;
+use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
 
 pub trait TextureSource {
-    fn upload(&self, device: &mut dyn DeviceBackend, info: TextureInfo) -> Result<u64, String>;
+    fn upload(
+        &self,
+        device: &mut dyn DeviceBackend,
+        info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String>;
 }
 
 #[derive(Debug)]
@@ -30,7 +35,7 @@ pub struct TextureUpdate<'a> {
     pub bytes: &'a [u8],
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct TextureInfo {
     pub width: i32,
     pub height: i32,
@@ -45,6 +50,23 @@ pub struct TextureInfo {
 
     /// Used for render textures
     pub depth: bool,
+}
+
+impl Debug for TextureInfo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f,
+               "width:{}, height: {}, format: {:?}, min_filter: {:?}, mag_filter: {:?}, wrap_x: {:?}, wrap_y: {:?}, premultiplied_alpha: {:?}, depth: {:?}",
+            self.width,
+            self.height,
+            self.format,
+            self.min_filter,
+            self.mag_filter,
+            self.wrap_x,
+            self.wrap_y,
+            self.premultiplied_alpha,
+            self.depth
+        )
+    }
 }
 
 impl Default for TextureInfo {
@@ -110,6 +132,8 @@ pub struct Texture {
 impl Texture {
     pub(crate) fn new(id: u64, info: TextureInfo, drop_manager: Arc<DropManager>) -> Self {
         let id_ref = Arc::new(TextureIdRef { id, drop_manager });
+
+        log::info!("new TEXTURE {} {:?}", id, info);
 
         let TextureInfo {
             width,
@@ -359,47 +383,48 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
 
         match kind {
             Some(TextureKind::Texture(bytes)) => {
-                let data = image::load_from_memory(bytes)
-                    .map_err(|e| e.to_string())?
-                    .to_rgba8();
-
-                let pixels = if info.premultiplied_alpha {
-                    premultiplied_alpha(data.to_vec())
-                } else {
-                    data.to_vec()
-                };
-
-                info.bytes = Some(pixels);
-                info.format = TextureFormat::Rgba32;
-                info.width = data.width() as _;
-                info.height = data.height() as _;
+                // let data = image::load_from_memory(bytes)
+                //     .map_err(|e| e.to_string())?
+                //     .to_rgba8();
+                //
+                // let pixels = if info.premultiplied_alpha {
+                //     premultiplied_alpha(data.to_vec())
+                // } else {
+                //     data.to_vec()
+                // };
+                //
+                info.bytes = Some(vec![0; 306600]); //Some(pixels);
+                                                    // info.format = TextureFormat::Rgba32;
+                                                    // info.width = 350; //data.width() as _;
+                                                    // info.height = 219; //data.height() as _;
 
                 log::info!(
-                    "pixels len {:?} {} {}",
+                    "pixels len {:?} {} {} {:?}",
                     info.bytes.as_ref().unwrap().len(),
                     info.width,
-                    info.height
+                    info.height,
+                    &info.bytes.as_ref().unwrap()[153300..153330]
                 );
             }
-            Some(TextureKind::Bytes(bytes)) => {
-                #[cfg(debug_assertions)]
-                {
-                    let size = info.width * info.height * 4;
-                    debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, 4);
-                }
-
-                let pixels = if info.premultiplied_alpha {
-                    premultiplied_alpha(bytes.to_vec())
-                } else {
-                    bytes.to_vec()
-                };
-
-                info.bytes = Some(pixels);
-            }
-            Some(TextureKind::EmptyBuffer) => {
-                let size = info.width * info.height * (info.bytes_per_pixel() as i32);
-                info.bytes = Some(vec![0; size as _]);
-            }
+            // Some(TextureKind::Bytes(bytes)) => {
+            //     #[cfg(debug_assertions)]
+            //     {
+            //         let size = info.width * info.height * 4;
+            //         debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, 4);
+            //     }
+            //
+            //     let pixels = if info.premultiplied_alpha {
+            //         premultiplied_alpha(bytes.to_vec())
+            //     } else {
+            //         bytes.to_vec()
+            //     };
+            //
+            //     info.bytes = Some(pixels);
+            // }
+            // Some(TextureKind::EmptyBuffer) => {
+            //     let size = info.width * info.height * (info.bytes_per_pixel() as i32);
+            //     info.bytes = Some(vec![0; size as _]);
+            // }
             _ => {}
         }
 
