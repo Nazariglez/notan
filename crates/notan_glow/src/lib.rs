@@ -20,7 +20,7 @@ use pipeline::{InnerPipeline, VertexAttributes};
 use render_target::InnerRenderTexture;
 use texture::InnerTexture;
 
-pub use texture::TextureSourceImage;
+pub use texture::{TextureSourceHtmlImage, TextureSourceImage};
 
 pub fn create_texture_from_html(
     device: &mut Device, /*, image: &web_sys::HtmlImageElement*/

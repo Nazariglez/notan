@@ -13,4 +13,4 @@ mod audio;
 
 pub use backend::*;
 
-pub use notan_glow::{create_texture_from_html, TextureSourceImage};
+pub use notan_glow::{create_texture_from_html, TextureSourceHtmlImage, TextureSourceImage};

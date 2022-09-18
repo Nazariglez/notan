@@ -1,60 +1,56 @@
 use notan::draw::*;
 use notan::prelude::*;
+use wasm_bindgen::JsCast;
 
-// fn create_image() -> web_sys::HtmlImageElement {
-//     let win = web_sys::window().unwrap();
-//     let doc = win.document().unwrap();
-//     let mut img = doc
-//         .create_element("img")
-//         .unwrap()
-//         .dyn_into::<web_sys::HtmlImageElement>()
-//         .unwrap();
-//     img.set_src("https://i.pinimg.com/474x/bd/9c/c1/bd9cc1830b4263376c050f77327356db.jpg");
-//     img.set_width(50);
-//     img.set_height(50);
-//     let body = doc.body().unwrap();
-//     body.append_child(&img).unwrap();
-//     img
-// }
+fn create_image() -> web_sys::HtmlImageElement {
+    let win = web_sys::window().unwrap();
+    let doc = win.document().unwrap();
+    let mut img = doc
+        .create_element("img")
+        .unwrap()
+        .dyn_into::<web_sys::HtmlImageElement>()
+        .unwrap();
+    img.set_src("assets/ferris.png");
+    // img.set_width(50);
+    // img.set_height(50);
+    let body = doc.body().unwrap();
+    body.append_child(&img).unwrap();
+    img
+}
 
 #[derive(AppState)]
 struct State {
-    img: Texture,
+    img: Option<Texture>,
+    html: web_sys::HtmlImageElement,
 }
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    // let img = create_image();
-    // notan::log::info!("here 1 img {}", img.src());
-    notan::init_with(init)
-        .add_config(DrawConfig)
-        .draw(draw)
-        .build()
+    notan::init_with(|| State {
+        img: None,
+        html: create_image(),
+    })
+    .add_config(DrawConfig)
+    .draw(draw)
+    .build()
 }
 
-fn init(gfx: &mut Graphics) -> State {
-    // let tex = notan::backend::create_texture_from_html(&mut gfx.device).unwrap();
-    // notan::log::info!("texture {:?}", tex);
+fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
+    if state.img.is_none() && app.keyboard.was_pressed(KeyCode::Space) {
+        let source = notan::backend::TextureSourceHtmlImage(state.html.clone());
+        let texture = gfx
+            .create_texture()
+            .from_raw_source(source)
+            .build()
+            .unwrap();
 
-    let source = notan::backend::TextureSourceImage(include_bytes!("assets/ferris.png").to_vec());
+        state.img = Some(texture);
+    }
 
-    notan::log::info!("HERTE?");
-
-    let texture = gfx
-        .create_texture()
-        .from_raw_source(source)
-        // .from_image(include_bytes!("assets/ferris.png"))
-        .build()
-        .unwrap();
-
-    notan::log::info!("TEXTURE ID {}", texture.id());
-
-    State { img: texture }
-}
-
-fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
     draw.clear(Color::BLACK);
-    draw.image(&state.img).position(250.0, 200.0);
+    if let Some(img) = &state.img {
+        draw.image(img).position(250.0, 200.0);
+    }
     gfx.render(&draw);
 }

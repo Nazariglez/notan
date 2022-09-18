@@ -1,5 +1,5 @@
 use crate::to_glow::*;
-use crate::GlowBackend;
+use crate::{create_texture_from_html, GlowBackend};
 use glow::*;
 use notan_graphics::prelude::*;
 
@@ -146,6 +146,85 @@ pub(crate) unsafe fn create_texture(
     Ok(texture)
 }
 
+pub(crate) unsafe fn create_texture_from_html_image(
+    gl: &Context,
+    image: &web_sys::HtmlImageElement,
+    info: &TextureInfo,
+) -> Result<TextureKey, String> {
+    log::info!("{:?}", info);
+    let texture = gl.create_texture()?;
+
+    let bytes_per_pixel = info.bytes_per_pixel();
+    if bytes_per_pixel != 4 {
+        gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, bytes_per_pixel as _);
+    }
+
+    gl.bind_texture(glow::TEXTURE_2D, Some(texture));
+
+    gl.tex_parameter_i32(
+        glow::TEXTURE_2D,
+        glow::TEXTURE_WRAP_S,
+        info.wrap_x.to_glow() as _,
+    );
+
+    gl.tex_parameter_i32(
+        glow::TEXTURE_2D,
+        glow::TEXTURE_WRAP_T,
+        info.wrap_y.to_glow() as _,
+    );
+
+    gl.tex_parameter_i32(
+        glow::TEXTURE_2D,
+        glow::TEXTURE_MAG_FILTER,
+        info.mag_filter.to_glow() as _,
+    );
+    gl.tex_parameter_i32(
+        glow::TEXTURE_2D,
+        glow::TEXTURE_MIN_FILTER,
+        info.min_filter.to_glow() as _,
+    );
+
+    let depth = TextureFormat::Depth16 == info.format;
+    let mut typ = glow::UNSIGNED_BYTE;
+    let mut format = texture_format(&info.format);
+    if depth {
+        format = glow::DEPTH_COMPONENT;
+        typ = glow::UNSIGNED_SHORT;
+
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_MAG_FILTER,
+            glow::NEAREST as _,
+        );
+        gl.tex_parameter_i32(
+            glow::TEXTURE_2D,
+            glow::TEXTURE_MIN_FILTER,
+            glow::NEAREST as _,
+        );
+
+        gl.framebuffer_texture_2d(
+            glow::FRAMEBUFFER,
+            glow::DEPTH_ATTACHMENT,
+            glow::TEXTURE_2D,
+            Some(texture),
+            0,
+        );
+    }
+
+    gl.tex_image_2d_with_html_image(
+        glow::TEXTURE_2D,
+        0,
+        texture_internal_format(&info.format) as _,
+        format,
+        typ,
+        image,
+    );
+
+    //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
+    gl.bind_texture(glow::TEXTURE_2D, None);
+    Ok(texture)
+}
+
 pub(crate) fn texture_format(tf: &TextureFormat) -> u32 {
     match tf {
         TextureFormat::Rgba32 => glow::RGBA,
@@ -163,6 +242,7 @@ pub(crate) fn texture_internal_format(tf: &TextureFormat) -> u32 {
     }
 }
 
+/// An image file to be uploaded to the gpu
 #[derive(Clone, Debug)]
 pub struct TextureSourceImage(pub Vec<u8>);
 
@@ -192,15 +272,31 @@ impl TextureSource for TextureSourceImage {
         info.width = data.width() as _;
         info.height = data.height() as _;
 
-        log::info!(
-            "pixels len {:?} {} {} {:?}",
-            info.bytes.as_ref().unwrap().len(),
-            info.width,
-            info.height,
-            &info.bytes.as_ref().unwrap()[153300..153330]
-        );
-
         let tex = unsafe { create_texture(&backend.gl, &info)? };
+        let id = backend.add_inner_texture(tex, &info)?;
+        Ok((id, info))
+    }
+}
+
+/// An image file to be uploaded to the gpu
+#[derive(Clone, Debug)]
+pub struct TextureSourceHtmlImage(pub web_sys::HtmlImageElement);
+
+impl TextureSource for TextureSourceHtmlImage {
+    fn upload(
+        &self,
+        device: &mut dyn DeviceBackend,
+        mut info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String> {
+        let backend: &mut GlowBackend = device
+            .as_any_mut()
+            .downcast_mut()
+            .ok_or("Invalid backend type".to_string())?;
+
+        info.width = self.0.width() as _;
+        info.height = self.0.height() as _;
+
+        let tex = unsafe { create_texture_from_html_image(&backend.gl, &self.0, &info)? };
         let id = backend.add_inner_texture(tex, &info)?;
         Ok((id, info))
     }
