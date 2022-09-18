@@ -133,8 +133,6 @@ impl Texture {
     pub(crate) fn new(id: u64, info: TextureInfo, drop_manager: Arc<DropManager>) -> Self {
         let id_ref = Arc::new(TextureIdRef { id, drop_manager });
 
-        log::info!("new TEXTURE {} {:?}", id, info);
-
         let TextureInfo {
             width,
             height,
@@ -289,7 +287,6 @@ pub struct TextureBuilder<'a, 'b> {
 
 impl<'a, 'b> TextureBuilder<'a, 'b> {
     pub fn new(device: &'a mut Device) -> Self {
-        log::info!("texture builder");
         Self {
             device,
             info: Default::default(),
@@ -300,9 +297,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
 
     // Creates a texture from a raw type
     pub fn from_raw_source<S: TextureSource + 'static>(mut self, source: S) -> Self {
-        log::info!("pre setting raw source {}", self.source.is_some());
         self.source = Some(Box::new(source));
-        log::info!("post setting raw source {}", self.source.is_some());
         self
     }
 
@@ -310,7 +305,6 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
     pub fn from_image(mut self, bytes: &'b [u8]) -> Self {
         self.kind = Some(TextureKind::Texture(bytes)); // TODO remove
         self
-        // self.from_raw_source(TextureSourceImage(bytes.to_vec()))
     }
 
     /// Creates a Texture from a buffer of pixels
@@ -379,8 +373,6 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             source,
         } = self;
 
-        log::info!("is some? {}", source.is_some());
-
         match kind {
             Some(TextureKind::Texture(bytes)) => {
                 // let data = image::load_from_memory(bytes)
@@ -397,14 +389,6 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
                                                     // info.format = TextureFormat::Rgba32;
                                                     // info.width = 350; //data.width() as _;
                                                     // info.height = 219; //data.height() as _;
-
-                log::info!(
-                    "pixels len {:?} {} {} {:?}",
-                    info.bytes.as_ref().unwrap().len(),
-                    info.width,
-                    info.height,
-                    &info.bytes.as_ref().unwrap()[153300..153330]
-                );
             }
             // Some(TextureKind::Bytes(bytes)) => {
             //     #[cfg(debug_assertions)]

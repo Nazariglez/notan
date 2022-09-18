@@ -504,7 +504,6 @@ impl DeviceBackend for GlowBackend {
         let inner_texture = InnerTexture::new(&self.gl, info)?;
         self.texture_count += 1;
         self.textures.insert(self.texture_count, inner_texture);
-        log::info!("texture1 texture_id: {}", self.texture_count);
         Ok(self.texture_count)
     }
 
@@ -514,7 +513,6 @@ impl DeviceBackend for GlowBackend {
         info: TextureInfo,
     ) -> Result<(u64, TextureInfo), String> {
         let (id, info) = source.upload(self, info)?;
-        log::info!("texture2 texture_id: {}", id);
         Ok((id, info))
     }
 

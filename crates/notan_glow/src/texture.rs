@@ -13,7 +13,6 @@ pub(crate) struct InnerTexture {
 
 impl InnerTexture {
     pub fn new(gl: &Context, info: &TextureInfo) -> Result<Self, String> {
-        log::info!("NEW 1 {:?}", info);
         let texture = unsafe { create_texture(gl, info)? };
         let size = (info.width, info.height);
         let is_srgba = info.format == TextureFormat::SRgba8;
@@ -25,7 +24,6 @@ impl InnerTexture {
     }
 
     pub fn new2(gl: &Context, texture: TextureKey, info: &TextureInfo) -> Result<Self, String> {
-        log::info!("NEW 2 {:?}", info);
         let size = (info.width, info.height);
         let is_srgba = info.format == TextureFormat::SRgba8;
         Ok(Self {
@@ -67,7 +65,6 @@ pub(crate) unsafe fn create_texture(
     gl: &Context,
     info: &TextureInfo,
 ) -> Result<TextureKey, String> {
-    log::info!("{:?}", info);
     let texture = gl.create_texture()?;
 
     let bytes_per_pixel = info.bytes_per_pixel();
@@ -151,7 +148,6 @@ pub(crate) unsafe fn create_texture_from_html_image(
     image: &web_sys::HtmlImageElement,
     info: &TextureInfo,
 ) -> Result<TextureKey, String> {
-    log::info!("{:?}", info);
     let texture = gl.create_texture()?;
 
     let bytes_per_pixel = info.bytes_per_pixel();
