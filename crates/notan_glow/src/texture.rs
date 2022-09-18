@@ -262,7 +262,7 @@ impl TextureSource for TextureSourceImage {
             .to_rgba8();
 
         let pixels = if info.premultiplied_alpha {
-            premultiplied_alpha(data.to_vec())
+            premultiplied_alpha(&data)
         } else {
             data.to_vec()
         };
@@ -271,6 +271,50 @@ impl TextureSource for TextureSourceImage {
         info.format = TextureFormat::Rgba32;
         info.width = data.width() as _;
         info.height = data.height() as _;
+
+        let tex = unsafe { create_texture(&backend.gl, &info)? };
+        let id = backend.add_inner_texture(tex, &info)?;
+        Ok((id, info))
+    }
+}
+
+/// An image file to be uploaded to the gpu
+#[derive(Clone, Debug)]
+pub struct TextureSourceBytes(pub Vec<u8>);
+
+impl TextureSource for TextureSourceBytes {
+    fn upload(
+        &self,
+        device: &mut dyn DeviceBackend,
+        mut info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String> {
+        #[cfg(debug_assertions)]
+        {
+            let size = info.width * info.height * 4;
+            debug_assert_eq!(
+                self.0.len(),
+                size as usize,
+                "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})",
+                self.0.len(),
+                size,
+                info.width,
+                info.height,
+                4
+            );
+        }
+
+        let backend: &mut GlowBackend = device
+            .as_any_mut()
+            .downcast_mut()
+            .ok_or("Invalid backend type".to_string())?;
+
+        let pixels = if info.premultiplied_alpha {
+            premultiplied_alpha(&self.0)
+        } else {
+            self.0.clone()
+        };
+
+        info.bytes = Some(pixels);
 
         let tex = unsafe { create_texture(&backend.gl, &info)? };
         let id = backend.add_inner_texture(tex, &info)?;
@@ -302,7 +346,7 @@ impl TextureSource for TextureSourceHtmlImage {
     }
 }
 
-fn premultiplied_alpha(pixels: Vec<u8>) -> Vec<u8> {
+fn premultiplied_alpha(pixels: &[u8]) -> Vec<u8> {
     pixels
         .chunks(4)
         .flat_map(|c| {
