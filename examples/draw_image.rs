@@ -38,11 +38,7 @@ fn main() -> Result<(), String> {
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     if state.img.is_none() && app.keyboard.was_pressed(KeyCode::Space) {
         let source = notan::backend::TextureSourceHtmlImage(state.html.clone());
-        let texture = gfx
-            .create_texture()
-            .from_raw_source(source)
-            .build()
-            .unwrap();
+        let texture = gfx.create_texture().from_source(source).build().unwrap();
 
         state.img = Some(texture);
     }

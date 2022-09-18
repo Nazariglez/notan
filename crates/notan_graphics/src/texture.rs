@@ -295,8 +295,9 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
         }
     }
 
-    // Creates a texture from a raw type
-    pub fn from_raw_source<S: TextureSource + 'static>(mut self, source: S) -> Self {
+    /// Creates a texture from source's raw type
+    /// Check [TextureSource]
+    pub fn from_source<S: TextureSource + 'static>(mut self, source: S) -> Self {
         self.source = Some(Box::new(source));
         self
     }

@@ -11,6 +11,9 @@ mod texture;
 mod to_glow;
 mod utils;
 
+pub mod prelude;
+pub mod texture_source;
+
 use crate::buffer::Kind;
 use crate::pipeline::get_inner_attrs;
 use crate::texture::{texture_format, TextureKey};
@@ -19,8 +22,6 @@ use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
 use render_target::InnerRenderTexture;
 use texture::InnerTexture;
-
-pub use texture::{TextureSourceHtmlImage, TextureSourceImage};
 
 pub fn create_texture_from_html(
     device: &mut Device, /*, image: &web_sys::HtmlImageElement*/
