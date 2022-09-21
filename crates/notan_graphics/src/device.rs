@@ -73,7 +73,7 @@ pub trait DeviceBackend {
     /// Create a new texture and returns the id
     fn create_texture2(
         &mut self,
-        source: &dyn TextureSource,
+        source: TextureSourceKind,
         info: TextureInfo,
     ) -> Result<(u64, TextureInfo), String>;
 
@@ -333,7 +333,7 @@ impl Device {
     #[inline]
     pub(crate) fn inner_create_texture2(
         &mut self,
-        source: &dyn TextureSource,
+        source: TextureSourceKind,
         info: TextureInfo,
     ) -> Result<Texture, String> {
         let (id, info) = self.backend.create_texture2(source, info)?;

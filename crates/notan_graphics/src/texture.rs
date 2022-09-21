@@ -273,16 +273,23 @@ pub enum TextureWrap {
 }
 
 enum TextureKind<'a> {
-    Texture(&'a [u8]),
+    Image(&'a [u8]),
     Bytes(&'a [u8]),
     EmptyBuffer,
 }
 
+pub enum TextureSourceKind {
+    Empty,
+    Image(Vec<u8>),
+    Bytes(Vec<u8>),
+    Raw(Box<dyn TextureSource>),
+}
+
 pub struct TextureBuilder<'a, 'b> {
     device: &'a mut Device,
-    kind: Option<TextureKind<'b>>,
     info: TextureInfo,
-    source: Option<Box<dyn TextureSource>>,
+    kind: Option<TextureKind<'b>>,
+    source: Option<TextureSourceKind>,
 }
 
 impl<'a, 'b> TextureBuilder<'a, 'b> {
@@ -298,18 +305,21 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
     /// Creates a texture from source's raw type
     /// Check [TextureSource]
     pub fn from_source<S: TextureSource + 'static>(mut self, source: S) -> Self {
-        self.source = Some(Box::new(source));
+        self.kind = None;
+        self.source = Some(TextureSourceKind::Raw(Box::new(source)));
         self
     }
 
     /// Creates a Texture from an image
     pub fn from_image(mut self, bytes: &'b [u8]) -> Self {
-        self.kind = Some(TextureKind::Texture(bytes)); // TODO remove
+        self.source = None;
+        self.kind = Some(TextureKind::Image(bytes)); // TODO remove
         self
     }
 
     /// Creates a Texture from a buffer of pixels
     pub fn from_bytes(mut self, bytes: &'b [u8], width: i32, height: i32) -> Self {
+        self.source = None;
         self.kind = Some(TextureKind::Bytes(bytes));
         self.info.width = width;
         self.info.height = height;
@@ -318,6 +328,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
 
     /// Creates a buffer for the size passed in and creates a Texture with it
     pub fn from_empty_buffer(mut self, width: i32, height: i32) -> Self {
+        self.source = None;
         self.kind = Some(TextureKind::EmptyBuffer);
         self.with_size(width, height)
     }
@@ -371,64 +382,32 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             mut info,
             device,
             kind,
-            source,
+            mut source,
         } = self;
 
         match kind {
-            Some(TextureKind::Texture(bytes)) => {
-                // let data = image::load_from_memory(bytes)
-                //     .map_err(|e| e.to_string())?
-                //     .to_rgba8();
-                //
-                // let pixels = if info.premultiplied_alpha {
-                //     premultiplied_alpha(data.to_vec())
-                // } else {
-                //     data.to_vec()
-                // };
-                //
-                info.bytes = Some(vec![0; 306600]); //Some(pixels);
-                                                    // info.format = TextureFormat::Rgba32;
-                                                    // info.width = 350; //data.width() as _;
-                                                    // info.height = 219; //data.height() as _;
+            Some(TextureKind::Image(bytes)) => {
+                source = Some(TextureSourceKind::Image(bytes.to_vec()));
             }
-            // Some(TextureKind::Bytes(bytes)) => {
-            //     #[cfg(debug_assertions)]
-            //     {
-            //         let size = info.width * info.height * 4;
-            //         debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, 4);
-            //     }
-            //
-            //     let pixels = if info.premultiplied_alpha {
-            //         premultiplied_alpha(bytes.to_vec())
-            //     } else {
-            //         bytes.to_vec()
-            //     };
-            //
-            //     info.bytes = Some(pixels);
-            // }
-            // Some(TextureKind::EmptyBuffer) => {
-            //     let size = info.width * info.height * (info.bytes_per_pixel() as i32);
-            //     info.bytes = Some(vec![0; size as _]);
-            // }
-            _ => {}
+            Some(TextureKind::Bytes(bytes)) => {
+                #[cfg(debug_assertions)]
+                {
+                    let size = info.width * info.height * 4;
+                    debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, 4);
+                }
+
+                source = Some(TextureSourceKind::Bytes(bytes.to_vec()));
+            }
+            Some(TextureKind::EmptyBuffer) => {
+                let size = info.width * info.height * (info.bytes_per_pixel() as i32);
+                source = Some(TextureSourceKind::Bytes(vec![0; size as _]));
+            }
+            None => {}
         }
 
-        match source {
-            None => device.inner_create_texture(info),
-            Some(s) => device.inner_create_texture2(s.as_ref(), info),
-        }
+        let s = source.unwrap_or(TextureSourceKind::Empty);
+        device.inner_create_texture2(s, info)
     }
-}
-
-fn premultiplied_alpha(pixels: Vec<u8>) -> Vec<u8> {
-    pixels
-        .chunks(4)
-        .flat_map(|c| {
-            Color::from_bytes(c[0], c[1], c[2], c[3])
-                .to_premultiplied_alpha()
-                .rgba_u8()
-        })
-        .collect()
 }
 
 pub struct TextureReader<'a> {

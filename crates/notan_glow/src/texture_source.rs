@@ -7,10 +7,28 @@ use notan_graphics::{DeviceBackend, TextureBuilder, TextureFormat, TextureInfo, 
 use crate::texture::create_texture_from_html_image;
 
 // - Types of sources
+/// An empty texture to be uploaded to the gpu
+pub(crate) struct TextureSourceEmpty;
+
+impl TextureSource for TextureSourceEmpty {
+    fn upload(
+        &self,
+        device: &mut dyn DeviceBackend,
+        mut info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String> {
+        let backend: &mut GlowBackend = device
+            .as_any_mut()
+            .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
+            .ok_or_else(|| "Invalid backend type".to_string())?;
+
+        let tex = unsafe { create_texture(&backend.gl, &info)? };
+        let id = backend.add_inner_texture(tex, &info)?;
+        Ok((id, info))
+    }
+}
 
 /// An image file to be uploaded to the gpu
-#[derive(Clone, Debug)]
-pub struct TextureSourceImage(pub Vec<u8>);
+pub(crate) struct TextureSourceImage(pub Vec<u8>);
 
 impl TextureSource for TextureSourceImage {
     fn upload(
@@ -20,8 +38,8 @@ impl TextureSource for TextureSourceImage {
     ) -> Result<(u64, TextureInfo), String> {
         let backend: &mut GlowBackend = device
             .as_any_mut()
-            .downcast_mut()
-            .ok_or("Invalid backend type".to_string())?;
+            .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
+            .ok_or_else(|| "Invalid backend type".to_string())?;
 
         let data = image::load_from_memory(&self.0)
             .map_err(|e| e.to_string())?
@@ -45,8 +63,7 @@ impl TextureSource for TextureSourceImage {
 }
 
 /// An image bytes to be uploaded to the gpu
-#[derive(Clone, Debug)]
-pub struct TextureSourceBytes(pub Vec<u8>);
+pub(crate) struct TextureSourceBytes(pub Vec<u8>);
 
 impl TextureSource for TextureSourceBytes {
     fn upload(
@@ -71,8 +88,8 @@ impl TextureSource for TextureSourceBytes {
 
         let backend: &mut GlowBackend = device
             .as_any_mut()
-            .downcast_mut()
-            .ok_or("Invalid backend type".to_string())?;
+            .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
+            .ok_or_else(|| "Invalid backend type".to_string())?;
 
         let pixels = if info.premultiplied_alpha {
             premultiplied_alpha(&self.0)
@@ -90,8 +107,7 @@ impl TextureSource for TextureSourceBytes {
 
 #[cfg(target_arch = "wasm32")]
 /// A html image element to be uploaded to the gpu
-#[derive(Clone, Debug)]
-pub struct TextureSourceHtmlImage(pub web_sys::HtmlImageElement);
+pub(crate) struct TextureSourceHtmlImage(pub web_sys::HtmlImageElement);
 
 #[cfg(target_arch = "wasm32")]
 impl TextureSource for TextureSourceHtmlImage {
@@ -102,8 +118,8 @@ impl TextureSource for TextureSourceHtmlImage {
     ) -> Result<(u64, TextureInfo), String> {
         let backend: &mut GlowBackend = device
             .as_any_mut()
-            .downcast_mut()
-            .ok_or("Invalid backend type".to_string())?;
+            .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
+            .ok_or_else(|| "Invalid backend type".to_string())?;
 
         info.width = self.0.width() as _;
         info.height = self.0.height() as _;
@@ -111,6 +127,21 @@ impl TextureSource for TextureSourceHtmlImage {
         let tex = unsafe { create_texture_from_html_image(&backend.gl, &self.0, &info)? };
         let id = backend.add_inner_texture(tex, &info)?;
         Ok((id, info))
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+pub trait HtmlTextureBuilder {
+    /// Creates a Texture from an image
+    fn from_html_image(self, element: &web_sys::HtmlImageElement) -> Self;
+
+    // TODO, from_html_canvas?
+}
+
+#[cfg(target_arch = "wasm32")]
+impl HtmlTextureBuilder for TextureBuilder<'_, '_> {
+    fn from_html_image(self, element: &web_sys::HtmlImageElement) -> Self {
+        self.from_source(TextureSourceHtmlImage(element.clone()))
     }
 }
 
@@ -124,34 +155,3 @@ fn premultiplied_alpha(pixels: &[u8]) -> Vec<u8> {
         })
         .collect()
 }
-
-// - Trait helpers
-//
-// pub trait TextureSourceBuilder {
-//     /// Creates a Texture from an image
-//     fn from_image(self, bytes: &[u8]) -> Self;
-//
-//     /// Creates a Texture from a buffer of pixels
-//     fn from_bytes(self, bytes: &[u8], width: i32, height: i32) -> Self;
-//
-//     /// Creates a buffer for the size passed in and creates a Texture with it
-//     fn from_empty_buffer(self, width: i32, height: i32) -> Self;
-// }
-//
-// impl TextureSourceBuilder for TextureBuilder<'_, '_> {
-//     /// Creates a Texture from an image
-//     fn from_image(mut self, bytes: &[u8]) -> Self {
-//         self.from_source(TextureSourceImage(bytes.to_vec()))
-//     }
-//
-//     /// Creates a Texture from a buffer of pixels
-//     fn from_bytes(mut self, bytes: &[u8], width: i32, height: i32) -> Self {
-//         self.from_source(TextureSourceBytes(bytes.to_vec()))
-//             .with_size(width, height)
-//     }
-//
-//     /// Creates a buffer for the size passed in and creates a Texture with it
-//     fn from_empty_buffer(mut self, width: i32, height: i32) -> Self {
-//         self.with_size(width, height)
-//     }
-// }

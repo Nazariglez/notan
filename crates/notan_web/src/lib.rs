@@ -11,5 +11,7 @@ mod files;
 #[cfg(feature = "audio")]
 mod audio;
 
+pub mod prelude;
+
 pub use backend::*;
-pub use notan_glow::prelude::*;
+pub use notan_glow::texture_source::*;

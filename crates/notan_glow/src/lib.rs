@@ -17,6 +17,7 @@ pub mod texture_source;
 use crate::buffer::Kind;
 use crate::pipeline::get_inner_attrs;
 use crate::texture::{texture_format, TextureKey};
+use crate::texture_source::{TextureSourceBytes, TextureSourceEmpty, TextureSourceImage};
 use crate::to_glow::ToGlow;
 use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
@@ -510,10 +511,15 @@ impl DeviceBackend for GlowBackend {
 
     fn create_texture2(
         &mut self,
-        source: &dyn TextureSource,
+        source: TextureSourceKind,
         info: TextureInfo,
     ) -> Result<(u64, TextureInfo), String> {
-        let (id, info) = source.upload(self, info)?;
+        let (id, info) = match source {
+            TextureSourceKind::Empty => TextureSourceEmpty.upload(self, info)?,
+            TextureSourceKind::Image(image) => TextureSourceImage(image).upload(self, info)?,
+            TextureSourceKind::Bytes(bytes) => TextureSourceBytes(bytes).upload(self, info)?,
+            TextureSourceKind::Raw(raw) => raw.upload(self, info)?,
+        };
         Ok((id, info))
     }
 

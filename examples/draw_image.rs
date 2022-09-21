@@ -11,8 +11,6 @@ fn create_image() -> web_sys::HtmlImageElement {
         .dyn_into::<web_sys::HtmlImageElement>()
         .unwrap();
     img.set_src("assets/ferris.png");
-    // img.set_width(50);
-    // img.set_height(50);
     let body = doc.body().unwrap();
     body.append_child(&img).unwrap();
     img
@@ -37,9 +35,11 @@ fn main() -> Result<(), String> {
 
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     if state.img.is_none() && app.keyboard.was_pressed(KeyCode::Space) {
-        let source = notan::backend::TextureSourceHtmlImage(state.html.clone());
-        let texture = gfx.create_texture().from_source(source).build().unwrap();
-
+        let texture = gfx
+            .create_texture()
+            .from_html_image(&state.html)
+            .build()
+            .unwrap();
         state.img = Some(texture);
     }
 
