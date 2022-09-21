@@ -1,5 +1,5 @@
 use crate::to_glow::*;
-use crate::{create_texture_from_html, GlowBackend};
+use crate::GlowBackend;
 use glow::*;
 use notan_graphics::prelude::*;
 

@@ -24,14 +24,6 @@ use pipeline::{InnerPipeline, VertexAttributes};
 use render_target::InnerRenderTexture;
 use texture::InnerTexture;
 
-pub fn create_texture_from_html(
-    device: &mut Device, /*, image: &web_sys::HtmlImageElement*/
-) -> Result<u64, String> {
-    let backend = device.downcast_backend::<GlowBackend>()?;
-    // backend.create_texture()
-    Ok(1)
-}
-
 pub struct GlowBackend {
     gl: Context,
     buffer_count: u64,
@@ -515,9 +507,13 @@ impl DeviceBackend for GlowBackend {
         info: TextureInfo,
     ) -> Result<(u64, TextureInfo), String> {
         let (id, info) = match source {
-            TextureSourceKind::Empty => TextureSourceEmpty.upload(self, info)?,
-            TextureSourceKind::Image(image) => TextureSourceImage(image).upload(self, info)?,
-            TextureSourceKind::Bytes(bytes) => TextureSourceBytes(bytes).upload(self, info)?,
+            TextureSourceKind::Empty => TextureSourceEmpty.inner_upload(self, info)?,
+            TextureSourceKind::Image(image) => {
+                TextureSourceImage(image).inner_upload(self, info)?
+            }
+            TextureSourceKind::Bytes(bytes) => {
+                TextureSourceBytes(bytes).inner_upload(self, info)?
+            }
             TextureSourceKind::Raw(raw) => raw.upload(self, info)?,
         };
         Ok((id, info))

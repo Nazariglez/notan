@@ -21,6 +21,19 @@ impl TextureSource for TextureSourceEmpty {
             .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
             .ok_or_else(|| "Invalid backend type".to_string())?;
 
+        self.inner_upload(backend, info)
+    }
+}
+
+impl TextureSourceEmpty {
+    // As this is a private type used by this backend
+    // it's better to use an inner impl and call it from the same crate
+    // to avoid downcast the type when we know for sure it's GlowBackend
+    pub(crate) fn inner_upload(
+        &self,
+        backend: &mut GlowBackend,
+        info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String> {
         let tex = unsafe { create_texture(&backend.gl, &info)? };
         let id = backend.add_inner_texture(tex, &info)?;
         Ok((id, info))
@@ -34,13 +47,26 @@ impl TextureSource for TextureSourceImage {
     fn upload(
         &self,
         device: &mut dyn DeviceBackend,
-        mut info: TextureInfo,
+        info: TextureInfo,
     ) -> Result<(u64, TextureInfo), String> {
         let backend: &mut GlowBackend = device
             .as_any_mut()
             .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
             .ok_or_else(|| "Invalid backend type".to_string())?;
 
+        self.inner_upload(backend, info)
+    }
+}
+
+impl TextureSourceImage {
+    // As this is a private type used by this backend
+    // it's better to use an inner impl and call it from the same crate
+    // to avoid downcast the type when we know for sure it's GlowBackend
+    pub(crate) fn inner_upload(
+        &self,
+        backend: &mut GlowBackend,
+        mut info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String> {
         let data = image::load_from_memory(&self.0)
             .map_err(|e| e.to_string())?
             .to_rgba8();
@@ -69,6 +95,24 @@ impl TextureSource for TextureSourceBytes {
     fn upload(
         &self,
         device: &mut dyn DeviceBackend,
+        info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String> {
+        let backend: &mut GlowBackend = device
+            .as_any_mut()
+            .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
+            .ok_or_else(|| "Invalid backend type".to_string())?;
+
+        self.inner_upload(backend, info)
+    }
+}
+
+impl TextureSourceBytes {
+    // As this is a private type used by this backend
+    // it's better to use an inner impl and call it from the same crate
+    // to avoid downcast the type when we know for sure it's GlowBackend
+    pub(crate) fn inner_upload(
+        &self,
+        backend: &mut GlowBackend,
         mut info: TextureInfo,
     ) -> Result<(u64, TextureInfo), String> {
         #[cfg(debug_assertions)]
@@ -85,11 +129,6 @@ impl TextureSource for TextureSourceBytes {
                 4
             );
         }
-
-        let backend: &mut GlowBackend = device
-            .as_any_mut()
-            .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
-            .ok_or_else(|| "Invalid backend type".to_string())?;
 
         let pixels = if info.premultiplied_alpha {
             premultiplied_alpha(&self.0)
@@ -114,13 +153,27 @@ impl TextureSource for TextureSourceHtmlImage {
     fn upload(
         &self,
         device: &mut dyn DeviceBackend,
-        mut info: TextureInfo,
+        info: TextureInfo,
     ) -> Result<(u64, TextureInfo), String> {
         let backend: &mut GlowBackend = device
             .as_any_mut()
             .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
             .ok_or_else(|| "Invalid backend type".to_string())?;
 
+        self.inner_upload(backend, info)
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl TextureSourceHtmlImage {
+    // As this is a private type used by this backend
+    // it's better to use an inner impl and call it from the same crate
+    // to avoid downcast the type when we know for sure it's GlowBackend
+    fn inner_upload(
+        &self,
+        backend: &mut GlowBackend,
+        mut info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String> {
         info.width = self.0.width() as _;
         info.height = self.0.height() as _;
 
