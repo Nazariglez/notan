@@ -44,29 +44,10 @@ pub struct TextureInfo {
     pub mag_filter: TextureFilter,
     pub wrap_x: TextureWrap,
     pub wrap_y: TextureWrap,
-    pub bytes: Option<Vec<u8>>,
-    // pub source: Option<RefCell<Box<dyn TextureSource>>>,
     pub premultiplied_alpha: bool,
 
     /// Used for render textures
     pub depth: bool,
-}
-
-impl Debug for TextureInfo {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f,
-               "width:{}, height: {}, format: {:?}, min_filter: {:?}, mag_filter: {:?}, wrap_x: {:?}, wrap_y: {:?}, premultiplied_alpha: {:?}, depth: {:?}",
-            self.width,
-            self.height,
-            self.format,
-            self.min_filter,
-            self.mag_filter,
-            self.wrap_x,
-            self.wrap_y,
-            self.premultiplied_alpha,
-            self.depth
-        )
-    }
 }
 
 impl Default for TextureInfo {
@@ -79,8 +60,6 @@ impl Default for TextureInfo {
             wrap_y: TextureWrap::Clamp,
             width: 1,
             height: 1,
-            bytes: None,
-            // source: None,
             depth: false,
             premultiplied_alpha: false,
         }
