@@ -353,7 +353,9 @@ impl Device {
         &mut self,
         info: TextureInfo,
     ) -> Result<RenderTexture, String> {
-        let tex_id = self.backend.create_texture(&info)?;
+        let (tex_id, info) = self
+            .backend
+            .create_texture2(TextureSourceKind::Empty, info)?;
 
         let id = self.backend.create_render_texture(tex_id, &info)?;
         let texture = Texture::new(tex_id, info, self.drop_manager.clone());
