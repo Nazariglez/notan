@@ -84,6 +84,6 @@ impl Plugin for FpsLimit {
         }
 
         self.elapsed -= self.seconds;
-        return Ok(AppFlow::Next);
+        Ok(AppFlow::Next)
     }
 }

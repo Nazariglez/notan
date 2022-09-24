@@ -1,10 +1,8 @@
 #![allow(clippy::wrong_self_convention)]
 
-use crate::color::Color;
 use crate::device::{DropManager, ResourceId};
 use crate::{Device, DeviceBackend};
 use notan_math::Rect;
-use std::cell::RefCell;
 use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
 
@@ -379,7 +377,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
 
     pub fn build(self) -> Result<Texture, String> {
         let TextureBuilder {
-            mut info,
+            info,
             device,
             kind,
             mut source,

@@ -413,7 +413,7 @@ impl Device {
         self.backend
             .as_any_mut()
             .downcast_mut()
-            .ok_or("Invalid backend type".to_string())
+            .ok_or_else(|| "Invalid backend type".to_string())
     }
 }
 

@@ -20,7 +20,7 @@ mod html_image;
 use crate::buffer::Kind;
 use crate::pipeline::get_inner_attrs;
 use crate::texture::{texture_format, TextureKey};
-use crate::texture_source::{TextureSourceBytes, TextureSourceEmpty, TextureSourceImage};
+use crate::texture_source::{add_empty_texture, add_texture_from_bytes, add_texture_from_image};
 use crate::to_glow::ToGlow;
 use buffer::InnerBuffer;
 use pipeline::{InnerPipeline, VertexAttributes};
@@ -355,7 +355,7 @@ impl GlowBackend {
     }
 
     fn add_inner_texture(&mut self, tex: TextureKey, info: &TextureInfo) -> Result<u64, String> {
-        let inner_texture = InnerTexture::new(&self.gl, tex, info)?;
+        let inner_texture = InnerTexture::new(tex, info)?;
         self.texture_count += 1;
         self.textures.insert(self.texture_count, inner_texture);
         Ok(self.texture_count)
@@ -503,13 +503,9 @@ impl DeviceBackend for GlowBackend {
         info: TextureInfo,
     ) -> Result<(u64, TextureInfo), String> {
         let (id, info) = match source {
-            TextureSourceKind::Empty => TextureSourceEmpty.inner_upload(self, info)?,
-            TextureSourceKind::Image(image) => {
-                TextureSourceImage(image).inner_upload(self, info)?
-            }
-            TextureSourceKind::Bytes(bytes) => {
-                TextureSourceBytes(bytes).inner_upload(self, info)?
-            }
+            TextureSourceKind::Empty => add_empty_texture(self, info)?,
+            TextureSourceKind::Image(buffer) => add_texture_from_image(self, buffer, info)?,
+            TextureSourceKind::Bytes(bytes) => add_texture_from_bytes(self, bytes, info)?,
             TextureSourceKind::Raw(raw) => raw.create(self, info)?,
         };
         Ok((id, info))

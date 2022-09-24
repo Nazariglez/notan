@@ -1,5 +1,4 @@
 use crate::to_glow::*;
-use crate::GlowBackend;
 use glow::*;
 use notan_graphics::prelude::*;
 
@@ -12,7 +11,7 @@ pub(crate) struct InnerTexture {
 }
 
 impl InnerTexture {
-    pub fn new(gl: &Context, texture: TextureKey, info: &TextureInfo) -> Result<Self, String> {
+    pub fn new(texture: TextureKey, info: &TextureInfo) -> Result<Self, String> {
         let size = (info.width, info.height);
         let is_srgba = info.format == TextureFormat::SRgba8;
         Ok(Self {

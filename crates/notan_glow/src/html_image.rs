@@ -43,6 +43,7 @@ impl TextureSource for TextureSourceHtmlImage {
 /// Extend the texture builder with new methods to load easily HtmlImageElement
 pub trait HtmlTextureBuilder {
     /// Creates a Texture from an image
+    #[allow(clippy::wrong_self_convention)]
     fn from_html_image(self, element: &web_sys::HtmlImageElement) -> Self;
 
     // TODO, from_html_canvas?
