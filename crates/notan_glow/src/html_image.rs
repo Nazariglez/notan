@@ -1,12 +1,15 @@
 #![cfg(target_arch = "wasm32")]
 
+use crate::texture::{
+    post_create_texture, pre_create_texture, texture_format, texture_internal_format, TexInfo,
+    TextureKey,
+};
 use crate::GlowBackend;
+use glow::Context;
 use notan_graphics::device::DeviceBackend;
 use notan_graphics::texture::{
     TextureBuilder, TextureInfo, TextureSource, TextureUpdate, TextureUpdater,
 };
-
-use crate::texture::{create_texture_from_html_image, update_texture_from_html_image};
 
 /// A html image element to be uploaded to the gpu
 struct TextureSourceHtmlImage(web_sys::HtmlImageElement);
@@ -65,4 +68,48 @@ impl HtmlTextureUpdater for TextureUpdater<'_> {
     fn with_html_image(self, element: &web_sys::HtmlImageElement) -> Self {
         self.with_source(TextureSourceHtmlImage(element.clone()))
     }
+}
+
+pub(crate) unsafe fn update_texture_from_html_image(
+    gl: &Context,
+    image: &web_sys::HtmlImageElement,
+    opts: &TextureUpdate,
+) -> Result<(), String> {
+    gl.tex_sub_image_2d_with_html_image(
+        glow::TEXTURE_2D,
+        0,
+        opts.x_offset,
+        opts.y_offset,
+        texture_format(&opts.format), // 3d texture needs another value?
+        glow::UNSIGNED_BYTE,          // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
+        image,
+    );
+
+    Ok(())
+}
+
+pub(crate) unsafe fn create_texture_from_html_image(
+    gl: &Context,
+    image: &web_sys::HtmlImageElement,
+    info: &TextureInfo,
+) -> Result<TextureKey, String> {
+    let TexInfo {
+        texture,
+        typ,
+        format,
+        ..
+    } = pre_create_texture(gl, None, info)?;
+
+    gl.tex_image_2d_with_html_image(
+        glow::TEXTURE_2D,
+        0,
+        texture_internal_format(&info.format) as _,
+        format,
+        typ,
+        image,
+    );
+
+    post_create_texture(gl);
+
+    Ok(texture)
 }

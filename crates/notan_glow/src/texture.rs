@@ -49,11 +49,18 @@ fn gl_slot(slot: u32) -> Result<u32, String> {
     }
 }
 
-pub(crate) unsafe fn create_texture(
+pub(crate) struct TexInfo<'a> {
+    pub texture: TextureKey,
+    pub typ: u32,
+    pub format: u32,
+    pub data: Option<&'a [u8]>,
+}
+
+pub(crate) unsafe fn pre_create_texture<'a>(
     gl: &Context,
-    bytes: Option<&[u8]>,
+    bytes: Option<&'a [u8]>,
     info: &TextureInfo,
-) -> Result<TextureKey, String> {
+) -> Result<TexInfo<'a>, String> {
     let texture = gl.create_texture()?;
 
     let bytes_per_pixel = info.bytes_per_pixel();
@@ -115,6 +122,31 @@ pub(crate) unsafe fn create_texture(
         );
     }
 
+    Ok(TexInfo {
+        texture,
+        typ,
+        format,
+        data,
+    })
+}
+
+pub(crate) unsafe fn post_create_texture(gl: &Context) {
+    //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
+    gl.bind_texture(glow::TEXTURE_2D, None);
+}
+
+pub(crate) unsafe fn create_texture(
+    gl: &Context,
+    bytes: Option<&[u8]>,
+    info: &TextureInfo,
+) -> Result<TextureKey, String> {
+    let TexInfo {
+        texture,
+        typ,
+        format,
+        data,
+    } = pre_create_texture(gl, bytes, info)?;
+
     gl.tex_image_2d(
         glow::TEXTURE_2D,
         0,
@@ -127,106 +159,8 @@ pub(crate) unsafe fn create_texture(
         data,
     );
 
-    //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
-    gl.bind_texture(glow::TEXTURE_2D, None);
-    Ok(texture)
-}
+    post_create_texture(gl);
 
-#[cfg(target_arch = "wasm32")]
-pub(crate) unsafe fn update_texture_from_html_image(
-    gl: &Context,
-    image: &web_sys::HtmlImageElement,
-    opts: &TextureUpdate,
-) -> Result<(), String> {
-    gl.tex_sub_image_2d_with_html_image(
-        glow::TEXTURE_2D,
-        0,
-        opts.x_offset,
-        opts.y_offset,
-        texture_format(&opts.format), // 3d texture needs another value?
-        glow::UNSIGNED_BYTE,          // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
-        image,
-    );
-
-    Ok(())
-}
-
-#[cfg(target_arch = "wasm32")]
-pub(crate) unsafe fn create_texture_from_html_image(
-    gl: &Context,
-    image: &web_sys::HtmlImageElement,
-    info: &TextureInfo,
-) -> Result<TextureKey, String> {
-    let texture = gl.create_texture()?;
-
-    let bytes_per_pixel = info.bytes_per_pixel();
-    if bytes_per_pixel != 4 {
-        gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, bytes_per_pixel as _);
-    }
-
-    gl.bind_texture(glow::TEXTURE_2D, Some(texture));
-
-    gl.tex_parameter_i32(
-        glow::TEXTURE_2D,
-        glow::TEXTURE_WRAP_S,
-        info.wrap_x.to_glow() as _,
-    );
-
-    gl.tex_parameter_i32(
-        glow::TEXTURE_2D,
-        glow::TEXTURE_WRAP_T,
-        info.wrap_y.to_glow() as _,
-    );
-
-    gl.tex_parameter_i32(
-        glow::TEXTURE_2D,
-        glow::TEXTURE_MAG_FILTER,
-        info.mag_filter.to_glow() as _,
-    );
-    gl.tex_parameter_i32(
-        glow::TEXTURE_2D,
-        glow::TEXTURE_MIN_FILTER,
-        info.min_filter.to_glow() as _,
-    );
-
-    let depth = TextureFormat::Depth16 == info.format;
-    let mut typ = glow::UNSIGNED_BYTE;
-    let mut format = texture_format(&info.format);
-    if depth {
-        format = glow::DEPTH_COMPONENT;
-        typ = glow::UNSIGNED_SHORT;
-
-        gl.tex_parameter_i32(
-            glow::TEXTURE_2D,
-            glow::TEXTURE_MAG_FILTER,
-            glow::NEAREST as _,
-        );
-        gl.tex_parameter_i32(
-            glow::TEXTURE_2D,
-            glow::TEXTURE_MIN_FILTER,
-            glow::NEAREST as _,
-        );
-
-        gl.framebuffer_texture_2d(
-            glow::FRAMEBUFFER,
-            glow::DEPTH_ATTACHMENT,
-            glow::TEXTURE_2D,
-            Some(texture),
-            0,
-        );
-    }
-
-    gl.tex_image_2d_with_html_image(
-        glow::TEXTURE_2D,
-        0,
-        texture_internal_format(&info.format) as _,
-        format,
-        typ,
-        image,
-    );
-
-    //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
-    gl.bind_texture(glow::TEXTURE_2D, None);
     Ok(texture)
 }
 
