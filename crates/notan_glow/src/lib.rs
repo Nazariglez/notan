@@ -514,7 +514,7 @@ impl DeviceBackend for GlowBackend {
             TextureSourceKind::Bytes(bytes) => {
                 TextureSourceBytes(bytes).inner_upload(self, info)?
             }
-            TextureSourceKind::Raw(raw) => raw.upload(self, info)?,
+            TextureSourceKind::Raw(raw) => raw.create(self, info)?,
         };
         Ok((id, info))
     }
@@ -551,10 +551,47 @@ impl DeviceBackend for GlowBackend {
                         opts.height,
                         texture_format(&opts.format), // 3d texture needs another value?
                         glow::UNSIGNED_BYTE,          // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
-                        PixelUnpackData::Slice(opts.bytes),
+                        // PixelUnpackData::Slice(opts.bytes),
+                        PixelUnpackData::Slice(&[]), // TODO
                     );
                     // todo unbind texture?
                     Ok(())
+                }
+            }
+            _ => Err("Invalid texture id".to_string()),
+        }
+    }
+
+    fn update_texture2(
+        &mut self,
+        texture: u64,
+        source: TextureUpdaterSourceKind,
+        opts: TextureUpdate,
+    ) -> Result<(), String> {
+        match self.textures.get(&texture) {
+            Some(texture) => {
+                unsafe {
+                    self.gl
+                        .bind_texture(glow::TEXTURE_2D, Some(texture.texture));
+
+                    match source {
+                        TextureUpdaterSourceKind::Bytes(bytes) => {
+                            self.gl.tex_sub_image_2d(
+                                glow::TEXTURE_2D,
+                                0,
+                                opts.x_offset,
+                                opts.y_offset,
+                                opts.width,
+                                opts.height,
+                                texture_format(&opts.format), // 3d texture needs another value?
+                                glow::UNSIGNED_BYTE, // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
+                                PixelUnpackData::Slice(bytes),
+                            );
+
+                            Ok(())
+                        }
+                        TextureUpdaterSourceKind::Raw(source) => source.update(self, opts),
+                    }
                 }
             }
             _ => Err("Invalid texture id".to_string()),

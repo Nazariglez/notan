@@ -9,11 +9,13 @@ use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
 
 pub trait TextureSource {
-    fn upload(
+    fn create(
         &self,
         device: &mut dyn DeviceBackend,
         info: TextureInfo,
     ) -> Result<(u64, TextureInfo), String>;
+
+    fn update(&self, device: &mut dyn DeviceBackend, opts: TextureUpdate) -> Result<(), String>;
 }
 
 #[derive(Debug)]
@@ -26,13 +28,14 @@ pub struct TextureRead {
 }
 
 #[derive(Debug, Clone)]
-pub struct TextureUpdate<'a> {
+pub struct TextureUpdate {
     pub x_offset: i32,
     pub y_offset: i32,
     pub width: i32,
     pub height: i32,
     pub format: TextureFormat,
-    pub bytes: &'a [u8],
+    // pub bytes: &'a [u8],
+    // pub source: TextureUpdaterSourceKind<'a>,
 }
 
 #[derive(Clone)]
@@ -264,6 +267,24 @@ pub enum TextureSourceKind {
     Raw(Box<dyn TextureSource>),
 }
 
+pub enum TextureUpdaterSourceKind<'a> {
+    Bytes(&'a [u8]),
+    Raw(Box<dyn TextureSource>),
+}
+
+impl Debug for TextureUpdaterSourceKind<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                TextureUpdaterSourceKind::Bytes(bytes) => format!("Bytes({:?})", bytes),
+                TextureUpdaterSourceKind::Raw(_) => "Raw(dyn TextureSource)".to_string(), // todo assign an id to TextureSource?
+            }
+        )
+    }
+}
+
 pub struct TextureBuilder<'a, 'b> {
     device: &'a mut Device,
     info: TextureInfo,
@@ -473,7 +494,8 @@ pub struct TextureUpdater<'a> {
     width: i32,
     height: i32,
     format: TextureFormat,
-    bytes: Option<&'a [u8]>,
+    // bytes: Option<&'a [u8]>,
+    source: Option<TextureUpdaterSourceKind<'a>>,
 }
 
 impl<'a> TextureUpdater<'a> {
@@ -492,7 +514,8 @@ impl<'a> TextureUpdater<'a> {
             width,
             height,
             format,
-            bytes: None,
+            // bytes: None,
+            source: None,
         }
     }
 
@@ -520,8 +543,14 @@ impl<'a> TextureUpdater<'a> {
         self
     }
 
+    pub fn with_source<S: TextureSource + 'static>(mut self, source: S) -> Self {
+        self.source = Some(TextureUpdaterSourceKind::Raw(Box::new(source)));
+        self
+    }
+
     pub fn with_data(mut self, bytes: &'a [u8]) -> Self {
-        self.bytes = Some(bytes);
+        // self.bytes = Some(bytes);
+        self.source = Some(TextureUpdaterSourceKind::Bytes(bytes));
         self
     }
 
@@ -534,11 +563,15 @@ impl<'a> TextureUpdater<'a> {
             width,
             height,
             format,
-            bytes,
+            // bytes,
+            source,
         } = self;
 
-        let bytes =
-            bytes.ok_or_else(|| "You need to provide bytes to update a texture".to_string())?;
+        // let bytes =
+        //     bytes.ok_or_else(|| "You need to provide bytes to update a texture".to_string())?;
+
+        let source =
+            source.ok_or_else(|| "You need to provide bytes to update a texture".to_string())?;
 
         let info = TextureUpdate {
             x_offset,
@@ -546,9 +579,10 @@ impl<'a> TextureUpdater<'a> {
             width,
             height,
             format,
-            bytes,
+            // bytes,
+            // source
         };
 
-        device.inner_update_texture(texture, &info)
+        device.inner_update_texture2(texture, source, info)
     }
 }

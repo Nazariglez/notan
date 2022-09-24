@@ -228,6 +228,15 @@ impl DeviceBackend for EmptyDeviceBackend {
         Ok(())
     }
 
+    fn update_texture2(
+        &mut self,
+        _texture: u64,
+        _source: TextureUpdaterSourceKind,
+        _opts: TextureUpdate,
+    ) -> Result<(), String> {
+        Ok(())
+    }
+
     fn read_pixels(
         &mut self,
         _texture: u64,

@@ -1,17 +1,20 @@
 use crate::texture::{create_texture, create_texture2};
 use crate::GlowBackend;
 use notan_graphics::color::Color;
-use notan_graphics::{DeviceBackend, TextureBuilder, TextureFormat, TextureInfo, TextureSource};
+use notan_graphics::{
+    DeviceBackend, TextureBuilder, TextureFormat, TextureInfo, TextureSource, TextureUpdate,
+    TextureUpdater,
+};
 
 #[cfg(target_arch = "wasm32")]
-use crate::texture::create_texture_from_html_image;
+use crate::texture::{create_texture_from_html_image, update_texture_from_html_image};
 
 // - Types of sources
 /// An empty texture to be uploaded to the gpu
 pub(crate) struct TextureSourceEmpty;
 
 impl TextureSource for TextureSourceEmpty {
-    fn upload(
+    fn create(
         &self,
         device: &mut dyn DeviceBackend,
         mut info: TextureInfo,
@@ -22,6 +25,10 @@ impl TextureSource for TextureSourceEmpty {
             .ok_or_else(|| "Invalid backend type".to_string())?;
 
         self.inner_upload(backend, info)
+    }
+
+    fn update(&self, device: &mut dyn DeviceBackend, opts: TextureUpdate) -> Result<(), String> {
+        todo!()
     }
 }
 
@@ -44,7 +51,7 @@ impl TextureSourceEmpty {
 pub(crate) struct TextureSourceImage(pub Vec<u8>);
 
 impl TextureSource for TextureSourceImage {
-    fn upload(
+    fn create(
         &self,
         device: &mut dyn DeviceBackend,
         info: TextureInfo,
@@ -55,6 +62,10 @@ impl TextureSource for TextureSourceImage {
             .ok_or_else(|| "Invalid backend type".to_string())?;
 
         self.inner_upload(backend, info)
+    }
+
+    fn update(&self, device: &mut dyn DeviceBackend, opts: TextureUpdate) -> Result<(), String> {
+        todo!()
     }
 }
 
@@ -91,7 +102,7 @@ impl TextureSourceImage {
 pub(crate) struct TextureSourceBytes(pub Vec<u8>);
 
 impl TextureSource for TextureSourceBytes {
-    fn upload(
+    fn create(
         &self,
         device: &mut dyn DeviceBackend,
         info: TextureInfo,
@@ -102,6 +113,10 @@ impl TextureSource for TextureSourceBytes {
             .ok_or_else(|| "Invalid backend type".to_string())?;
 
         self.inner_upload(backend, info)
+    }
+
+    fn update(&self, device: &mut dyn DeviceBackend, opts: TextureUpdate) -> Result<(), String> {
+        todo!()
     }
 }
 
@@ -147,7 +162,7 @@ pub(crate) struct TextureSourceHtmlImage(pub web_sys::HtmlImageElement);
 
 #[cfg(target_arch = "wasm32")]
 impl TextureSource for TextureSourceHtmlImage {
-    fn upload(
+    fn create(
         &self,
         device: &mut dyn DeviceBackend,
         info: TextureInfo,
@@ -158,6 +173,15 @@ impl TextureSource for TextureSourceHtmlImage {
             .ok_or_else(|| "Invalid backend type".to_string())?;
 
         self.inner_upload(backend, info)
+    }
+
+    fn update(&self, device: &mut dyn DeviceBackend, opts: TextureUpdate) -> Result<(), String> {
+        let backend: &mut GlowBackend = device
+            .as_any_mut()
+            .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
+            .ok_or_else(|| "Invalid backend type".to_string())?;
+
+        unsafe { update_texture_from_html_image(&backend.gl, &self.0, &opts) }
     }
 }
 
@@ -192,6 +216,19 @@ pub trait HtmlTextureBuilder {
 impl HtmlTextureBuilder for TextureBuilder<'_, '_> {
     fn from_html_image(self, element: &web_sys::HtmlImageElement) -> Self {
         self.from_source(TextureSourceHtmlImage(element.clone()))
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+pub trait HtmlTextureUpdater {
+    /// Creates a Texture from an image
+    fn with_html_image(self, element: &web_sys::HtmlImageElement) -> Self;
+}
+
+#[cfg(target_arch = "wasm32")]
+impl HtmlTextureUpdater for TextureUpdater<'_> {
+    fn with_html_image(self, element: &web_sys::HtmlImageElement) -> Self {
+        self.with_source(TextureSourceHtmlImage(element.clone()))
     }
 }
 

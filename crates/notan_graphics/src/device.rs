@@ -84,6 +84,14 @@ pub trait DeviceBackend {
     /// Update texture data
     fn update_texture(&mut self, texture: u64, opts: &TextureUpdate) -> Result<(), String>;
 
+    /// Update texture data
+    fn update_texture2(
+        &mut self,
+        texture: u64,
+        source: TextureUpdaterSourceKind,
+        opts: TextureUpdate,
+    ) -> Result<(), String>;
+
     /// Read texture pixels
     fn read_pixels(
         &mut self,
@@ -369,6 +377,16 @@ impl Device {
         opts: &TextureUpdate,
     ) -> Result<(), String> {
         self.backend.update_texture(texture.id(), opts)
+    }
+
+    #[inline]
+    pub(crate) fn inner_update_texture2(
+        &mut self,
+        texture: &mut Texture,
+        source: TextureUpdaterSourceKind,
+        opts: TextureUpdate,
+    ) -> Result<(), String> {
+        self.backend.update_texture2(texture.id(), source, opts)
     }
 
     #[inline]
