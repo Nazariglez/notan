@@ -6,9 +6,6 @@ use notan_graphics::{
     TextureUpdater,
 };
 
-#[cfg(target_arch = "wasm32")]
-use crate::texture::{create_texture_from_html_image, update_texture_from_html_image};
-
 // - Types of sources
 /// An empty texture to be uploaded to the gpu
 pub(crate) struct TextureSourceEmpty;
@@ -153,82 +150,6 @@ impl TextureSourceBytes {
         let tex = unsafe { create_texture(&backend.gl, Some(&pixels), &info)? };
         let id = backend.add_inner_texture(tex, &info)?;
         Ok((id, info))
-    }
-}
-
-#[cfg(target_arch = "wasm32")]
-/// A html image element to be uploaded to the gpu
-pub(crate) struct TextureSourceHtmlImage(pub web_sys::HtmlImageElement);
-
-#[cfg(target_arch = "wasm32")]
-impl TextureSource for TextureSourceHtmlImage {
-    fn create(
-        &self,
-        device: &mut dyn DeviceBackend,
-        info: TextureInfo,
-    ) -> Result<(u64, TextureInfo), String> {
-        let backend: &mut GlowBackend = device
-            .as_any_mut()
-            .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
-            .ok_or_else(|| "Invalid backend type".to_string())?;
-
-        self.inner_upload(backend, info)
-    }
-
-    fn update(&self, device: &mut dyn DeviceBackend, opts: TextureUpdate) -> Result<(), String> {
-        let backend: &mut GlowBackend = device
-            .as_any_mut()
-            .downcast_mut() // TODO use downcast_unchecked once stabilized https://github.com/rust-lang/rust/issues/90850
-            .ok_or_else(|| "Invalid backend type".to_string())?;
-
-        unsafe { update_texture_from_html_image(&backend.gl, &self.0, &opts) }
-    }
-}
-
-#[cfg(target_arch = "wasm32")]
-impl TextureSourceHtmlImage {
-    // As this is a private type used by this backend
-    // it's better to use an inner impl and call it from the same crate
-    // to avoid downcast the type when we know for sure it's GlowBackend
-    fn inner_upload(
-        &self,
-        backend: &mut GlowBackend,
-        mut info: TextureInfo,
-    ) -> Result<(u64, TextureInfo), String> {
-        info.width = self.0.width() as _;
-        info.height = self.0.height() as _;
-
-        let tex = unsafe { create_texture_from_html_image(&backend.gl, &self.0, &info)? };
-        let id = backend.add_inner_texture(tex, &info)?;
-        Ok((id, info))
-    }
-}
-
-#[cfg(target_arch = "wasm32")]
-pub trait HtmlTextureBuilder {
-    /// Creates a Texture from an image
-    fn from_html_image(self, element: &web_sys::HtmlImageElement) -> Self;
-
-    // TODO, from_html_canvas?
-}
-
-#[cfg(target_arch = "wasm32")]
-impl HtmlTextureBuilder for TextureBuilder<'_, '_> {
-    fn from_html_image(self, element: &web_sys::HtmlImageElement) -> Self {
-        self.from_source(TextureSourceHtmlImage(element.clone()))
-    }
-}
-
-#[cfg(target_arch = "wasm32")]
-pub trait HtmlTextureUpdater {
-    /// Creates a Texture from an image
-    fn with_html_image(self, element: &web_sys::HtmlImageElement) -> Self;
-}
-
-#[cfg(target_arch = "wasm32")]
-impl HtmlTextureUpdater for TextureUpdater<'_> {
-    fn with_html_image(self, element: &web_sys::HtmlImageElement) -> Self {
-        self.with_source(TextureSourceHtmlImage(element.clone()))
     }
 }
 

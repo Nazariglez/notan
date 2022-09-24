@@ -14,6 +14,9 @@ mod utils;
 pub mod prelude;
 pub mod texture_source;
 
+#[cfg(target_arch = "wasm32")]
+mod html_image;
+
 use crate::buffer::Kind;
 use crate::pipeline::get_inner_attrs;
 use crate::texture::{texture_format, TextureKey};
