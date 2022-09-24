@@ -32,8 +32,6 @@ pub struct TextureUpdate {
     pub width: i32,
     pub height: i32,
     pub format: TextureFormat,
-    // pub bytes: &'a [u8],
-    // pub source: TextureUpdaterSourceKind<'a>,
 }
 
 #[derive(Clone)]
@@ -492,7 +490,6 @@ pub struct TextureUpdater<'a> {
     width: i32,
     height: i32,
     format: TextureFormat,
-    // bytes: Option<&'a [u8]>,
     source: Option<TextureUpdaterSourceKind<'a>>,
 }
 
@@ -512,7 +509,6 @@ impl<'a> TextureUpdater<'a> {
             width,
             height,
             format,
-            // bytes: None,
             source: None,
         }
     }
@@ -547,7 +543,6 @@ impl<'a> TextureUpdater<'a> {
     }
 
     pub fn with_data(mut self, bytes: &'a [u8]) -> Self {
-        // self.bytes = Some(bytes);
         self.source = Some(TextureUpdaterSourceKind::Bytes(bytes));
         self
     }
@@ -561,12 +556,8 @@ impl<'a> TextureUpdater<'a> {
             width,
             height,
             format,
-            // bytes,
             source,
         } = self;
-
-        // let bytes =
-        //     bytes.ok_or_else(|| "You need to provide bytes to update a texture".to_string())?;
 
         let source =
             source.ok_or_else(|| "You need to provide bytes to update a texture".to_string())?;
@@ -577,8 +568,6 @@ impl<'a> TextureUpdater<'a> {
             width,
             height,
             format,
-            // bytes,
-            // source
         };
 
         device.inner_update_texture(texture, source, info)
