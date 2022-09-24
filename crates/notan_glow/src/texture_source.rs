@@ -1,4 +1,4 @@
-use crate::texture::{create_texture, create_texture2};
+use crate::texture::create_texture;
 use crate::GlowBackend;
 use notan_graphics::color::Color;
 use notan_graphics::{
@@ -41,7 +41,7 @@ impl TextureSourceEmpty {
         backend: &mut GlowBackend,
         info: TextureInfo,
     ) -> Result<(u64, TextureInfo), String> {
-        let tex = unsafe { create_texture2(&backend.gl, None, &info)? };
+        let tex = unsafe { create_texture(&backend.gl, None, &info)? };
         let id = backend.add_inner_texture(tex, &info)?;
         Ok((id, info))
     }
@@ -92,7 +92,7 @@ impl TextureSourceImage {
         info.width = data.width() as _;
         info.height = data.height() as _;
 
-        let tex = unsafe { create_texture2(&backend.gl, Some(&pixels), &info)? };
+        let tex = unsafe { create_texture(&backend.gl, Some(&pixels), &info)? };
         let id = backend.add_inner_texture(tex, &info)?;
         Ok((id, info))
     }
@@ -150,7 +150,7 @@ impl TextureSourceBytes {
             self.0.clone()
         };
 
-        let tex = unsafe { create_texture2(&backend.gl, Some(&pixels), &info)? };
+        let tex = unsafe { create_texture(&backend.gl, Some(&pixels), &info)? };
         let id = backend.add_inner_texture(tex, &info)?;
         Ok((id, info))
     }

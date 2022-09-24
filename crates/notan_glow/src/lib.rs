@@ -352,7 +352,7 @@ impl GlowBackend {
     }
 
     fn add_inner_texture(&mut self, tex: TextureKey, info: &TextureInfo) -> Result<u64, String> {
-        let inner_texture = InnerTexture::new2(&self.gl, tex, info)?;
+        let inner_texture = InnerTexture::new(&self.gl, tex, info)?;
         self.texture_count += 1;
         self.textures.insert(self.texture_count, inner_texture);
         Ok(self.texture_count)
@@ -494,14 +494,7 @@ impl DeviceBackend for GlowBackend {
         self.dpi = scale_factor as _;
     }
 
-    fn create_texture(&mut self, info: &TextureInfo) -> Result<u64, String> {
-        let inner_texture = InnerTexture::new(&self.gl, info)?;
-        self.texture_count += 1;
-        self.textures.insert(self.texture_count, inner_texture);
-        Ok(self.texture_count)
-    }
-
-    fn create_texture2(
+    fn create_texture(
         &mut self,
         source: TextureSourceKind,
         info: TextureInfo,
@@ -536,33 +529,7 @@ impl DeviceBackend for GlowBackend {
         Ok(self.render_target_count)
     }
 
-    fn update_texture(&mut self, texture: u64, opts: &TextureUpdate) -> Result<(), String> {
-        match self.textures.get(&texture) {
-            Some(texture) => {
-                unsafe {
-                    self.gl
-                        .bind_texture(glow::TEXTURE_2D, Some(texture.texture));
-                    self.gl.tex_sub_image_2d(
-                        glow::TEXTURE_2D,
-                        0,
-                        opts.x_offset,
-                        opts.y_offset,
-                        opts.width,
-                        opts.height,
-                        texture_format(&opts.format), // 3d texture needs another value?
-                        glow::UNSIGNED_BYTE,          // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
-                        // PixelUnpackData::Slice(opts.bytes),
-                        PixelUnpackData::Slice(&[]), // TODO
-                    );
-                    // todo unbind texture?
-                    Ok(())
-                }
-            }
-            _ => Err("Invalid texture id".to_string()),
-        }
-    }
-
-    fn update_texture2(
+    fn update_texture(
         &mut self,
         texture: u64,
         source: TextureUpdaterSourceKind,

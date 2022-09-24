@@ -406,7 +406,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
         }
 
         let s = source.unwrap_or(TextureSourceKind::Empty);
-        device.inner_create_texture2(s, info)
+        device.inner_create_texture(s, info)
     }
 }
 
@@ -583,6 +583,6 @@ impl<'a> TextureUpdater<'a> {
             // source
         };
 
-        device.inner_update_texture2(texture, source, info)
+        device.inner_update_texture(texture, source, info)
     }
 }

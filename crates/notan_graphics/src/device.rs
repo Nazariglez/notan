@@ -68,10 +68,7 @@ pub trait DeviceBackend {
     fn set_dpi(&mut self, scale_factor: f64);
 
     /// Create a new texture and returns the id
-    fn create_texture(&mut self, info: &TextureInfo) -> Result<u64, String>;
-
-    /// Create a new texture and returns the id
-    fn create_texture2(
+    fn create_texture(
         &mut self,
         source: TextureSourceKind,
         info: TextureInfo,
@@ -82,10 +79,7 @@ pub trait DeviceBackend {
         -> Result<u64, String>;
 
     /// Update texture data
-    fn update_texture(&mut self, texture: u64, opts: &TextureUpdate) -> Result<(), String>;
-
-    /// Update texture data
-    fn update_texture2(
+    fn update_texture(
         &mut self,
         texture: u64,
         source: TextureUpdaterSourceKind,
@@ -333,18 +327,12 @@ impl Device {
     }
 
     #[inline]
-    pub(crate) fn inner_create_texture(&mut self, info: TextureInfo) -> Result<Texture, String> {
-        let id = self.backend.create_texture(&info)?;
-        Ok(Texture::new(id, info, self.drop_manager.clone()))
-    }
-
-    #[inline]
-    pub(crate) fn inner_create_texture2(
+    pub(crate) fn inner_create_texture(
         &mut self,
         source: TextureSourceKind,
         info: TextureInfo,
     ) -> Result<Texture, String> {
-        let (id, info) = self.backend.create_texture2(source, info)?;
+        let (id, info) = self.backend.create_texture(source, info)?;
         Ok(Texture::new(id, info, self.drop_manager.clone()))
     }
 
@@ -355,7 +343,7 @@ impl Device {
     ) -> Result<RenderTexture, String> {
         let (tex_id, info) = self
             .backend
-            .create_texture2(TextureSourceKind::Empty, info)?;
+            .create_texture(TextureSourceKind::Empty, info)?;
 
         let id = self.backend.create_render_texture(tex_id, &info)?;
         let texture = Texture::new(tex_id, info, self.drop_manager.clone());
@@ -376,19 +364,10 @@ impl Device {
     pub(crate) fn inner_update_texture(
         &mut self,
         texture: &mut Texture,
-        opts: &TextureUpdate,
-    ) -> Result<(), String> {
-        self.backend.update_texture(texture.id(), opts)
-    }
-
-    #[inline]
-    pub(crate) fn inner_update_texture2(
-        &mut self,
-        texture: &mut Texture,
         source: TextureUpdaterSourceKind,
         opts: TextureUpdate,
     ) -> Result<(), String> {
-        self.backend.update_texture2(texture.id(), source, opts)
+        self.backend.update_texture(texture.id(), source, opts)
     }
 
     #[inline]

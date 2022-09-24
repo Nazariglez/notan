@@ -201,12 +201,7 @@ impl DeviceBackend for EmptyDeviceBackend {
 
     fn set_dpi(&mut self, _scale_factor: f64) {}
 
-    fn create_texture(&mut self, _info: &TextureInfo) -> Result<u64, String> {
-        self.id_count += 1;
-        Ok(self.id_count)
-    }
-
-    fn create_texture2(
+    fn create_texture(
         &mut self,
         _source: TextureSourceKind,
         info: TextureInfo,
@@ -224,11 +219,7 @@ impl DeviceBackend for EmptyDeviceBackend {
         Ok(self.id_count)
     }
 
-    fn update_texture(&mut self, _texture: u64, _opts: &TextureUpdate) -> Result<(), String> {
-        Ok(())
-    }
-
-    fn update_texture2(
+    fn update_texture(
         &mut self,
         _texture: u64,
         _source: TextureUpdaterSourceKind,
