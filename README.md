@@ -29,6 +29,10 @@ without worrying too much about platform-specific code.
 The main goal is to provide a set of APIs and tools that can be used to create your project in an ergonomic manner without
 enforcing any structure or pattern, always trying to stay out of your way.
 
+## Community 
+
+- [Discord](https://discord.gg/rH3nP7neeu): Join us!
+
 ## Examples
 
 * [Online demos](https://nazariglez.github.io/notan-web/).
