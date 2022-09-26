@@ -2,7 +2,7 @@ use crate::to_glow::*;
 use glow::*;
 use notan_graphics::prelude::*;
 
-pub type TextureKey = <glow::Context as glow::HasContext>::Texture;
+pub(crate) type TextureKey = <glow::Context as glow::HasContext>::Texture;
 
 pub(crate) struct InnerTexture {
     pub texture: TextureKey,
@@ -11,8 +11,7 @@ pub(crate) struct InnerTexture {
 }
 
 impl InnerTexture {
-    pub fn new(gl: &Context, info: &TextureInfo) -> Result<Self, String> {
-        let texture = unsafe { create_texture(gl, info)? };
+    pub fn new(texture: TextureKey, info: &TextureInfo) -> Result<Self, String> {
         let size = (info.width, info.height);
         let is_srgba = info.format == TextureFormat::SRgba8;
         Ok(Self {
@@ -44,16 +43,24 @@ fn gl_slot(slot: u32) -> Result<u32, String> {
         Ok(glow::TEXTURE0 + slot)
     } else {
         Err(format!(
-            "Unsupported texture slot '{}', You can use up to 6.",
+            "Unsupported texture slot '{}', You can use up to 16.",
             slot
         ))
     }
 }
 
-pub(crate) unsafe fn create_texture(
+pub(crate) struct TexInfo<'a> {
+    pub texture: TextureKey,
+    pub typ: u32,
+    pub format: u32,
+    pub data: Option<&'a [u8]>,
+}
+
+pub(crate) unsafe fn pre_create_texture<'a>(
     gl: &Context,
+    bytes: Option<&'a [u8]>,
     info: &TextureInfo,
-) -> Result<TextureKey, String> {
+) -> Result<TexInfo<'a>, String> {
     let texture = gl.create_texture()?;
 
     let bytes_per_pixel = info.bytes_per_pixel();
@@ -87,7 +94,7 @@ pub(crate) unsafe fn create_texture(
     );
 
     let depth = TextureFormat::Depth16 == info.format;
-    let mut data = info.bytes.as_deref();
+    let mut data = bytes;
     let mut typ = glow::UNSIGNED_BYTE;
     let mut format = texture_format(&info.format);
     if depth {
@@ -115,6 +122,31 @@ pub(crate) unsafe fn create_texture(
         );
     }
 
+    Ok(TexInfo {
+        texture,
+        typ,
+        format,
+        data,
+    })
+}
+
+pub(crate) unsafe fn post_create_texture(gl: &Context) {
+    //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
+    gl.bind_texture(glow::TEXTURE_2D, None);
+}
+
+pub(crate) unsafe fn create_texture(
+    gl: &Context,
+    bytes: Option<&[u8]>,
+    info: &TextureInfo,
+) -> Result<TextureKey, String> {
+    let TexInfo {
+        texture,
+        typ,
+        format,
+        data,
+    } = pre_create_texture(gl, bytes, info)?;
+
     gl.tex_image_2d(
         glow::TEXTURE_2D,
         0,
@@ -127,8 +159,8 @@ pub(crate) unsafe fn create_texture(
         data,
     );
 
-    //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
-    gl.bind_texture(glow::TEXTURE_2D, None);
+    post_create_texture(gl);
+
     Ok(texture)
 }
 

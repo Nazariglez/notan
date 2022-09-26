@@ -12,7 +12,6 @@ description = "Provides simple graphics API for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4.17"
 bytemuck = "1.12.1"
 parking_lot = "0.12.1"
 image = { version = "0.24.3", default-features = false, features = ["jpeg", "png"] }

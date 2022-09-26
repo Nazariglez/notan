@@ -19,7 +19,6 @@ notan_glow = { path = "../notan_glow", version = "0.7.0" }
 notan_audio = { path = "../notan_audio", version = "0.7.0", optional = true }
 notan_oddio = { path = "../notan_oddio", version = "0.7.0", optional = true }
 glutin = "0.29.1"
-crossbeam-channel = "0.5.6"
 webbrowser = { version = "0.7.1", optional = true }
 mime_guess = { version = "2.0.4", optional = true }
 

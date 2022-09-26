@@ -1748,6 +1748,7 @@ dependencies = [
  "bytemuck",
  "glow",
  "hashbrown",
+ "image",
  "js-sys",
  "log",
  "notan_graphics",
@@ -1774,7 +1775,6 @@ dependencies = [
  "bytemuck",
  "glsl-layout",
  "image",
- "log",
  "notan_macro",
  "notan_math",
  "notan_utils",
@@ -1810,7 +1810,6 @@ version = "0.7.0"
 dependencies = [
  "glsl-to-spirv",
  "num",
- "paste",
  "proc-macro2",
  "quote",
  "spirv_cross",
@@ -1891,7 +1890,6 @@ dependencies = [
 name = "notan_winit"
 version = "0.7.0"
 dependencies = [
- "crossbeam-channel",
  "glutin",
  "log",
  "mime_guess",
@@ -2126,12 +2124,6 @@ dependencies = [
  "smallvec",
  "windows-sys",
 ]
-
-[[package]]
-name = "paste"
-version = "1.0.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9423e2b32f7a043629287a536f21951e8c6a82482d0acb1eeebfc90bc2225b22"
 
 [[package]]
 name = "peeking_take_while"

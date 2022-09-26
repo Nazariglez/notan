@@ -1,10 +1,20 @@
 #![allow(clippy::wrong_self_convention)]
 
-use crate::color::Color;
 use crate::device::{DropManager, ResourceId};
-use crate::Device;
+use crate::{Device, DeviceBackend};
 use notan_math::Rect;
+use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
+
+pub trait TextureSource {
+    fn create(
+        &self,
+        device: &mut dyn DeviceBackend,
+        info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String>;
+
+    fn update(&self, device: &mut dyn DeviceBackend, opts: TextureUpdate) -> Result<(), String>;
+}
 
 #[derive(Debug)]
 pub struct TextureRead {
@@ -16,16 +26,15 @@ pub struct TextureRead {
 }
 
 #[derive(Debug, Clone)]
-pub struct TextureUpdate<'a> {
+pub struct TextureUpdate {
     pub x_offset: i32,
     pub y_offset: i32,
     pub width: i32,
     pub height: i32,
     pub format: TextureFormat,
-    pub bytes: &'a [u8],
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct TextureInfo {
     pub width: i32,
     pub height: i32,
@@ -34,7 +43,6 @@ pub struct TextureInfo {
     pub mag_filter: TextureFilter,
     pub wrap_x: TextureWrap,
     pub wrap_y: TextureWrap,
-    pub bytes: Option<Vec<u8>>,
     pub premultiplied_alpha: bool,
 
     /// Used for render textures
@@ -51,7 +59,6 @@ impl Default for TextureInfo {
             wrap_y: TextureWrap::Clamp,
             width: 1,
             height: 1,
-            bytes: None,
             depth: false,
             premultiplied_alpha: false,
         }
@@ -244,15 +251,41 @@ pub enum TextureWrap {
 }
 
 enum TextureKind<'a> {
-    Texture(&'a [u8]),
+    Image(&'a [u8]),
     Bytes(&'a [u8]),
     EmptyBuffer,
 }
 
+pub enum TextureSourceKind {
+    Empty,
+    Image(Vec<u8>),
+    Bytes(Vec<u8>),
+    Raw(Box<dyn TextureSource>),
+}
+
+pub enum TextureUpdaterSourceKind<'a> {
+    Bytes(&'a [u8]),
+    Raw(Box<dyn TextureSource>),
+}
+
+impl Debug for TextureUpdaterSourceKind<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                TextureUpdaterSourceKind::Bytes(bytes) => format!("Bytes({:?})", bytes),
+                TextureUpdaterSourceKind::Raw(_) => "Raw(dyn TextureSource)".to_string(), // todo assign an id to TextureSource?
+            }
+        )
+    }
+}
+
 pub struct TextureBuilder<'a, 'b> {
     device: &'a mut Device,
-    kind: Option<TextureKind<'b>>,
     info: TextureInfo,
+    kind: Option<TextureKind<'b>>,
+    source: Option<TextureSourceKind>,
 }
 
 impl<'a, 'b> TextureBuilder<'a, 'b> {
@@ -261,17 +294,28 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             device,
             info: Default::default(),
             kind: None,
+            source: None,
         }
+    }
+
+    /// Creates a texture from source's raw type
+    /// Check [TextureSource]
+    pub fn from_source<S: TextureSource + 'static>(mut self, source: S) -> Self {
+        self.kind = None;
+        self.source = Some(TextureSourceKind::Raw(Box::new(source)));
+        self
     }
 
     /// Creates a Texture from an image
     pub fn from_image(mut self, bytes: &'b [u8]) -> Self {
-        self.kind = Some(TextureKind::Texture(bytes));
+        self.source = None;
+        self.kind = Some(TextureKind::Image(bytes)); // TODO remove
         self
     }
 
     /// Creates a Texture from a buffer of pixels
     pub fn from_bytes(mut self, bytes: &'b [u8], width: i32, height: i32) -> Self {
+        self.source = None;
         self.kind = Some(TextureKind::Bytes(bytes));
         self.info.width = width;
         self.info.height = height;
@@ -280,6 +324,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
 
     /// Creates a buffer for the size passed in and creates a Texture with it
     pub fn from_empty_buffer(mut self, width: i32, height: i32) -> Self {
+        self.source = None;
         self.kind = Some(TextureKind::EmptyBuffer);
         self.with_size(width, height)
     }
@@ -330,27 +375,15 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
 
     pub fn build(self) -> Result<Texture, String> {
         let TextureBuilder {
-            mut info,
+            info,
             device,
             kind,
+            mut source,
         } = self;
 
         match kind {
-            Some(TextureKind::Texture(bytes)) => {
-                let data = image::load_from_memory(bytes)
-                    .map_err(|e| e.to_string())?
-                    .to_rgba8();
-
-                let pixels = if info.premultiplied_alpha {
-                    premultiplied_alpha(data.to_vec())
-                } else {
-                    data.to_vec()
-                };
-
-                info.bytes = Some(pixels);
-                info.format = TextureFormat::Rgba32;
-                info.width = data.width() as _;
-                info.height = data.height() as _;
+            Some(TextureKind::Image(bytes)) => {
+                source = Some(TextureSourceKind::Image(bytes.to_vec()));
             }
             Some(TextureKind::Bytes(bytes)) => {
                 #[cfg(debug_assertions)]
@@ -359,34 +392,18 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
                     debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, 4);
                 }
 
-                let pixels = if info.premultiplied_alpha {
-                    premultiplied_alpha(bytes.to_vec())
-                } else {
-                    bytes.to_vec()
-                };
-
-                info.bytes = Some(pixels);
+                source = Some(TextureSourceKind::Bytes(bytes.to_vec()));
             }
             Some(TextureKind::EmptyBuffer) => {
                 let size = info.width * info.height * (info.bytes_per_pixel() as i32);
-                info.bytes = Some(vec![0; size as _]);
+                source = Some(TextureSourceKind::Bytes(vec![0; size as _]));
             }
-            _ => {}
+            None => {}
         }
 
-        device.inner_create_texture(info)
+        let s = source.unwrap_or(TextureSourceKind::Empty);
+        device.inner_create_texture(s, info)
     }
-}
-
-fn premultiplied_alpha(pixels: Vec<u8>) -> Vec<u8> {
-    pixels
-        .chunks(4)
-        .flat_map(|c| {
-            Color::from_bytes(c[0], c[1], c[2], c[3])
-                .to_premultiplied_alpha()
-                .rgba_u8()
-        })
-        .collect()
 }
 
 pub struct TextureReader<'a> {
@@ -473,7 +490,7 @@ pub struct TextureUpdater<'a> {
     width: i32,
     height: i32,
     format: TextureFormat,
-    bytes: Option<&'a [u8]>,
+    source: Option<TextureUpdaterSourceKind<'a>>,
 }
 
 impl<'a> TextureUpdater<'a> {
@@ -492,7 +509,7 @@ impl<'a> TextureUpdater<'a> {
             width,
             height,
             format,
-            bytes: None,
+            source: None,
         }
     }
 
@@ -520,8 +537,13 @@ impl<'a> TextureUpdater<'a> {
         self
     }
 
+    pub fn with_source<S: TextureSource + 'static>(mut self, source: S) -> Self {
+        self.source = Some(TextureUpdaterSourceKind::Raw(Box::new(source)));
+        self
+    }
+
     pub fn with_data(mut self, bytes: &'a [u8]) -> Self {
-        self.bytes = Some(bytes);
+        self.source = Some(TextureUpdaterSourceKind::Bytes(bytes));
         self
     }
 
@@ -534,11 +556,11 @@ impl<'a> TextureUpdater<'a> {
             width,
             height,
             format,
-            bytes,
+            source,
         } = self;
 
-        let bytes =
-            bytes.ok_or_else(|| "You need to provide bytes to update a texture".to_string())?;
+        let source =
+            source.ok_or_else(|| "You need to provide bytes to update a texture".to_string())?;
 
         let info = TextureUpdate {
             x_offset,
@@ -546,9 +568,8 @@ impl<'a> TextureUpdater<'a> {
             width,
             height,
             format,
-            bytes,
         };
 
-        device.inner_update_texture(texture, &info)
+        device.inner_update_texture(texture, source, info)
     }
 }

@@ -3,6 +3,7 @@ use crate::{
     App, Backend, BackendSystem, CursorIcon, EventIterator, FrameState, InitializeFn, WindowBackend,
 };
 use notan_graphics::prelude::*;
+use std::any::Any;
 
 #[cfg(feature = "audio")]
 use std::cell::RefCell;
@@ -200,9 +201,13 @@ impl DeviceBackend for EmptyDeviceBackend {
 
     fn set_dpi(&mut self, _scale_factor: f64) {}
 
-    fn create_texture(&mut self, _info: &TextureInfo) -> Result<u64, String> {
+    fn create_texture(
+        &mut self,
+        _source: TextureSourceKind,
+        info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String> {
         self.id_count += 1;
-        Ok(self.id_count)
+        Ok((self.id_count, info))
     }
 
     fn create_render_texture(
@@ -214,7 +219,12 @@ impl DeviceBackend for EmptyDeviceBackend {
         Ok(self.id_count)
     }
 
-    fn update_texture(&mut self, _texture: u64, _opts: &TextureUpdate) -> Result<(), String> {
+    fn update_texture(
+        &mut self,
+        _texture: u64,
+        _source: TextureUpdaterSourceKind,
+        _opts: TextureUpdate,
+    ) -> Result<(), String> {
         Ok(())
     }
 
@@ -225,6 +235,10 @@ impl DeviceBackend for EmptyDeviceBackend {
         _opts: &TextureRead,
     ) -> Result<(), String> {
         Ok(())
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
 

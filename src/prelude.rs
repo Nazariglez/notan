@@ -9,3 +9,6 @@ pub use crate::audio::prelude::*;
 
 #[cfg(feature = "random")]
 pub use crate::random::prelude::*;
+
+#[cfg(feature = "backend")]
+pub use notan_backend::prelude::*;

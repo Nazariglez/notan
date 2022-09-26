@@ -68,14 +68,23 @@ pub trait DeviceBackend {
     fn set_dpi(&mut self, scale_factor: f64);
 
     /// Create a new texture and returns the id
-    fn create_texture(&mut self, info: &TextureInfo) -> Result<u64, String>;
+    fn create_texture(
+        &mut self,
+        source: TextureSourceKind,
+        info: TextureInfo,
+    ) -> Result<(u64, TextureInfo), String>;
 
     /// Create a new render target and returns the id
     fn create_render_texture(&mut self, texture_id: u64, info: &TextureInfo)
         -> Result<u64, String>;
 
     /// Update texture data
-    fn update_texture(&mut self, texture: u64, opts: &TextureUpdate) -> Result<(), String>;
+    fn update_texture(
+        &mut self,
+        texture: u64,
+        source: TextureUpdaterSourceKind,
+        opts: TextureUpdate,
+    ) -> Result<(), String>;
 
     /// Read texture pixels
     fn read_pixels(
@@ -84,6 +93,8 @@ pub trait DeviceBackend {
         bytes: &mut [u8],
         opts: &TextureRead,
     ) -> Result<(), String>;
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
 }
 
 /// Helper to drop resources on the backend
@@ -316,8 +327,12 @@ impl Device {
     }
 
     #[inline]
-    pub(crate) fn inner_create_texture(&mut self, info: TextureInfo) -> Result<Texture, String> {
-        let id = self.backend.create_texture(&info)?;
+    pub(crate) fn inner_create_texture(
+        &mut self,
+        source: TextureSourceKind,
+        info: TextureInfo,
+    ) -> Result<Texture, String> {
+        let (id, info) = self.backend.create_texture(source, info)?;
         Ok(Texture::new(id, info, self.drop_manager.clone()))
     }
 
@@ -326,7 +341,9 @@ impl Device {
         &mut self,
         info: TextureInfo,
     ) -> Result<RenderTexture, String> {
-        let tex_id = self.backend.create_texture(&info)?;
+        let (tex_id, info) = self
+            .backend
+            .create_texture(TextureSourceKind::Empty, info)?;
 
         let id = self.backend.create_render_texture(tex_id, &info)?;
         let texture = Texture::new(tex_id, info, self.drop_manager.clone());
@@ -347,9 +364,10 @@ impl Device {
     pub(crate) fn inner_update_texture(
         &mut self,
         texture: &mut Texture,
-        opts: &TextureUpdate,
+        source: TextureUpdaterSourceKind,
+        opts: TextureUpdate,
     ) -> Result<(), String> {
-        self.backend.update_texture(texture.id(), opts)
+        self.backend.update_texture(texture.id(), source, opts)
     }
 
     #[inline]
@@ -389,6 +407,13 @@ impl Device {
     #[inline]
     pub fn set_buffer_data<T: BufferData>(&mut self, buffer: &Buffer, data: T) {
         data.upload(self, buffer.id());
+    }
+
+    pub fn downcast_backend<B: DeviceBackend + 'static>(&mut self) -> Result<&mut B, String> {
+        self.backend
+            .as_any_mut()
+            .downcast_mut()
+            .ok_or_else(|| "Invalid backend type".to_string())
     }
 }
 
