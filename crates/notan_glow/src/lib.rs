@@ -28,7 +28,7 @@ use render_target::InnerRenderTexture;
 use texture::InnerTexture;
 
 pub struct GlowBackend {
-    gl: Context,
+    pub gl: Context,
     buffer_count: u64,
     texture_count: u64,
     pipeline_count: u64,
