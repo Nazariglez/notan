@@ -32,7 +32,7 @@ impl Keyboard {
         self.down.contains_key(&key)
     }
 
-    /// returns the total ime that this key is down
+    /// returns the total time that this key is down
     pub fn down_delta(&self, key: KeyCode) -> f32 {
         *self.down.get(&key).unwrap_or(&0.0)
     }
