@@ -71,7 +71,7 @@ impl EguiPlugin {
         let new_input = self.raw_input.take();
 
         let egui::FullOutput {
-            mut platform_output,
+            platform_output,
             needs_repaint,
             textures_delta,
             shapes,
@@ -83,6 +83,10 @@ impl EguiPlugin {
             self.needs_repaint = needs_repaint;
         }
 
+        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(feature = "clipboard")]
+        // To avoid unused_mut if not using clipboard
+        let mut platform_output = platform_output;
         #[cfg(not(target_arch = "wasm32"))]
         #[cfg(feature = "clipboard")]
         self.set_clipboard(&mut platform_output.copied_text);

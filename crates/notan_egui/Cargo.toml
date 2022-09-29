@@ -24,7 +24,6 @@ version = "0.8.1"
 default-features = false
 
 [features]
-default = ["clipboard"]
 links = []
 clipboard = ["notan_app/clipboard" , "copypasta/x11"]
 clipboard-wayland = ["copypasta/wayland", "clipboard"]
