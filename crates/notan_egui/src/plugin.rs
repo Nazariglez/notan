@@ -241,11 +241,11 @@ impl Plugin for EguiPlugin {
                 #[cfg(not(target_arch = "wasm32"))]
                 #[cfg(feature = "clipboard")]
                 {
-                    if *key == KeyCode::C && modifiers.ctrl {
+                    if *key == KeyCode::C && (modifiers.ctrl || modifiers.command) {
                         self.add_event(egui::Event::Copy);
-                    } else if *key == KeyCode::X && modifiers.ctrl {
+                    } else if *key == KeyCode::X && (modifiers.ctrl || modifiers.command) {
                         self.add_event(egui::Event::Cut);
-                    } else if *key == KeyCode::V && modifiers.ctrl {
+                    } else if *key == KeyCode::V && (modifiers.ctrl || modifiers.command) {
                         // Use let binding, otherwise rustc complains.
                         let binding = || {
                             let clipboard = &*self.clipboard;
