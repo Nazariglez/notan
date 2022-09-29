@@ -1,16 +1,14 @@
-use lyon::math::*;
-use lyon::path::builder::{BorderRadii, PathBuilder};
+use lyon::math::{point, vector, Angle, Box2D};
+use lyon::path::builder::BorderRadii;
 use lyon::path::Path;
 use lyon::path::Winding;
-
-// https://docs.rs/lyon_path/0.17.2/lyon_path/builder/trait.PathBuilder.html
 
 pub(super) fn rectangle(x: f32, y: f32, width: f32, height: f32) -> Path {
     let mut builder = Path::builder();
     builder.add_rectangle(
-        &Rect {
-            origin: point(x, y),
-            size: size(width, height),
+        &Box2D {
+            min: point(x, y),
+            max: point(x + width, y + height),
         },
         Winding::Positive,
     );
@@ -34,9 +32,9 @@ pub(super) fn rounded_rect(
 
     let mut builder = Path::builder();
     builder.add_rounded_rectangle(
-        &Rect {
-            origin: point(x, y),
-            size: size(width, height),
+        &Box2D {
+            min: point(x, y),
+            max: point(x + width, y + height),
         },
         &BorderRadii {
             top_left: tl,

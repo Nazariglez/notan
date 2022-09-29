@@ -1,6 +1,6 @@
 use notan::draw::*;
-use notan::math::rand::prelude::*;
 use notan::prelude::*;
+use notan::random::rand::prelude::*;
 
 const COLS: usize = 4;
 const NUMBERS: usize = COLS * COLS;

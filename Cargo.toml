@@ -1,6 +1,6 @@
 [package]
 name = "notan"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 categories = ["graphics", "rendering", "wasm", "gui", "multimedia"]
@@ -19,27 +19,28 @@ all-features = true
 lto = true
 
 [dependencies]
-notan_core = { path = "crates/notan_core", version = "0.6.0" }
-notan_input = { path = "crates/notan_input", version = "0.6.0" }
-notan_app = { path = "crates/notan_app", version = "0.6.0" }
-notan_macro = { path = "crates/notan_macro", version = "0.6.0" }
-notan_math = { path = "crates/notan_math", version = "0.6.0" }
-notan_graphics = { path = "crates/notan_graphics", version = "0.6.0" }
-notan_utils = { path = "crates/notan_utils", version = "0.6.0" }
-notan_log = { path = "crates/notan_log", version = "0.6.0", optional = true }
-notan_glyph = { path = "crates/notan_glyph", version = "0.6.0", optional = true }
-notan_draw = { path = "crates/notan_draw", version = "0.6.0", optional = true }
-notan_backend = { path = "crates/notan_backend", version = "0.6.0", optional = true }
-notan_egui = { path = "crates/notan_egui", version = "0.6.0", optional = true }
-notan_text = { path = "crates/notan_text", version = "0.6.0", optional = true }
-notan_audio = { path = "crates/notan_audio", version = "0.6.0", optional = true }
-notan_extra = { path = "crates/notan_extra", version = "0.6.0", optional = true }
+notan_core = { path = "crates/notan_core", version = "0.7.0" }
+notan_input = { path = "crates/notan_input", version = "0.7.0" }
+notan_app = { path = "crates/notan_app", version = "0.7.0" }
+notan_macro = { path = "crates/notan_macro", version = "0.7.0" }
+notan_math = { path = "crates/notan_math", version = "0.7.0" }
+notan_graphics = { path = "crates/notan_graphics", version = "0.7.0" }
+notan_utils = { path = "crates/notan_utils", version = "0.7.0" }
+notan_log = { path = "crates/notan_log", version = "0.7.0", optional = true }
+notan_glyph = { path = "crates/notan_glyph", version = "0.7.0", optional = true }
+notan_draw = { path = "crates/notan_draw", version = "0.7.0", optional = true }
+notan_backend = { path = "crates/notan_backend", version = "0.7.0", optional = true }
+notan_egui = { path = "crates/notan_egui", version = "0.7.0", optional = true }
+notan_text = { path = "crates/notan_text", version = "0.7.0", optional = true }
+notan_audio = { path = "crates/notan_audio", version = "0.7.0", optional = true }
+notan_extra = { path = "crates/notan_extra", version = "0.7.0", optional = true }
+notan_random = { path = "crates/notan_random", version = "0.7.0", optional = true }
 
 [workspace]
 members = ["crates/*"]
 
 [features]
-default = ["backend", "log", "draw"]
+default = ["backend", "log", "draw", "random"]
 backend = ["notan_backend"]
 log = ["notan_log"]
 glyph = ["notan_glyph"]
@@ -53,6 +54,7 @@ drop_files = ["notan_app/drop_files", "notan_backend?/drop_files", "notan_egui?/
 clipboard = ["notan_app/clipboard", "notan_backend?/clipboard", "notan_egui?/clipboard"]
 save_file = ["notan_utils/save_file"]
 texture_to_file = ["notan_graphics/texture_to_file"]
+random = ["notan_random"]
 
 [dev-dependencies]
 egui_demo_lib = "0.18.0"
@@ -107,7 +109,7 @@ required-features = ["draw"]
 
 [[example]]
 name = "draw_bunnymark"
-required-features = ["draw"]
+required-features = ["draw", "random"]
 
 [[example]]
 name = "draw_image"
@@ -199,23 +201,23 @@ required-features = ["egui"]
 
 [[example]]
 name = "game_15_puzzle"
-required-features = ["draw"]
+required-features = ["draw", "random"]
 
 [[example]]
 name = "game_of_life"
-required-features = ["draw"]
+required-features = ["draw", "random"]
 
 [[example]]
 name = "game_pong"
-required-features = ["draw"]
+required-features = ["draw", "random"]
 
 [[example]]
 name = "game_snake"
-required-features = ["draw"]
+required-features = ["draw", "random"]
 
 [[example]]
 name = "game_tetris"
-required-features = ["draw"]
+required-features = ["draw", "random"]
 
 [[example]]
 name = "glyph_hello_raw"
@@ -252,6 +254,10 @@ required-features = ["draw"]
 [[example]]
 name = "log_basic"
 required-features = ["log"]
+
+[[example]]
+name = "renderer_instancing_cubes"
+required-features = ["random"]
 
 [[example]]
 name = "text_hello"

@@ -64,6 +64,7 @@ unsafe fn create_fbo(
     let depth_texture = match depth_info {
         Some(info) => Some(create_texture(
             gl,
+            None,
             &TextureInfo {
                 width: info.width,
                 height: info.height,

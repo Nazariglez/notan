@@ -14,6 +14,7 @@ pub struct WinitWindowBackend {
     captured: bool,
     visible: bool,
     high_dpi: bool,
+    is_always_on_top: bool,
 }
 
 impl WindowBackend for WinitWindowBackend {
@@ -26,6 +27,15 @@ impl WindowBackend for WinitWindowBackend {
         let inner = self.window().inner_size();
         let logical = inner.to_logical::<f64>(self.scale_factor);
         (logical.width as _, logical.height as _)
+    }
+
+    fn set_always_on_top(&mut self, enabled: bool) {
+        self.window().set_always_on_top(enabled);
+        self.is_always_on_top = enabled;
+    }
+
+    fn is_always_on_top(&self) -> bool {
+        self.is_always_on_top
     }
 
     fn set_fullscreen(&mut self, enabled: bool) {
@@ -131,6 +141,7 @@ impl WinitWindowBackend {
             .with_maximized(config.maximized)
             .with_resizable(config.resizable)
             .with_transparent(config.transparent)
+            .with_always_on_top(config.always_on_top)
             .with_visible(config.visible)
             .with_decorations(config.decorations);
 
@@ -176,6 +187,7 @@ impl WinitWindowBackend {
             captured: false,
             visible: config.visible,
             high_dpi: config.high_dpi,
+            is_always_on_top: false,
         })
     }
 

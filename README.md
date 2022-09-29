@@ -29,6 +29,10 @@ without worrying too much about platform-specific code.
 The main goal is to provide a set of APIs and tools that can be used to create your project in an ergonomic manner without
 enforcing any structure or pattern, always trying to stay out of your way.
 
+## Community 
+
+- [Discord](https://discord.gg/rH3nP7neeu): Join us!
+
 ## Examples
 
 * [Online demos](https://nazariglez.github.io/notan-web/).
@@ -240,8 +244,8 @@ Let's see a simple example, the 2D Draw API is built on top of the Graphics API,
 but I got some decent numbers on my machine running the example [draw_bunnymark](examples/draw_bunnymark.rs).
 
 On a Macbook (2.3Hz i9 - 16GB RAM):
-- Native: 66000 Bunnies at 60FPS
-- Chrome: 42000 Bunnies at 60FPS
+- Native: 85000 Bunnies at 60FPS
+- Chrome: 78000 Bunnies at 60FPS
 
 On a high-end Desktop with Archlinux:
 - Native: 144000 Bunnies at 60FPS

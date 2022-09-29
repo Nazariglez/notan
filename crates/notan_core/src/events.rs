@@ -90,7 +90,7 @@ pub enum Event {
 }
 
 #[cfg(feature = "drop_files")]
-#[derive(Default, Debug, PartialEq, Clone)]
+#[derive(Default, Debug, PartialEq, Eq, Clone)]
 pub struct DroppedFile {
     pub path: Option<PathBuf>,
     pub name: String,

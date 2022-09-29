@@ -315,6 +315,14 @@ impl WindowBackend for WebWindowBackend {
     fn visible(&self) -> bool {
         self.visible
     }
+
+    // No operation, as unsupported in browser
+    fn set_always_on_top(&mut self, _enabled: bool) {}
+
+    // Unsupported in browser, always false
+    fn is_always_on_top(&self) -> bool {
+        false
+    }
 }
 
 unsafe impl Send for WebWindowBackend {}

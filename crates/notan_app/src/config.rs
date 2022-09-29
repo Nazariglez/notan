@@ -51,6 +51,9 @@ pub struct WindowConfig {
     /// Background as transparent
     pub transparent: bool,
 
+    /// Window will be drawn above others
+    pub always_on_top: bool,
+
     /// Enable decorations
     /// `Web: Does nothing`
     pub decorations: bool,
@@ -78,6 +81,7 @@ impl Default for WindowConfig {
             high_dpi: false,
             lazy_loop: false,
             transparent: false,
+            always_on_top: false,
             decorations: true,
             visible: true,
             canvas_id: String::from("notan_canvas"),
@@ -161,6 +165,12 @@ impl WindowConfig {
     /// Set the background as transparent
     pub fn transparent(mut self, transparent: bool) -> Self {
         self.transparent = transparent;
+        self
+    }
+
+    /// Set the background as transparent
+    pub fn always_on_top(mut self, always_on_top: bool) -> Self {
+        self.always_on_top = always_on_top;
         self
     }
 
