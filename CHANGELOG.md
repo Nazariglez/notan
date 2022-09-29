@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+- 
+
+## v0.7.0 - 29/09/2022
 
 - Updated and upgraded all dependencies
 - Fix audio bug that starts a sound with maximum volume and then fade.
