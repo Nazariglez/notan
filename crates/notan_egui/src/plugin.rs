@@ -249,13 +249,11 @@ impl Plugin for EguiPlugin {
                         // Use let binding, otherwise rustc complains.
                         let binding = || {
                             let clipboard = &*self.clipboard;
-                            if let Some(text) = clipboard.lock().unwrap().get() {
-                                text
-                            } else {
-                                "".into()
-                            }
+                            clipboard.lock().unwrap().get()
                         };
-                        self.add_event(egui::Event::Paste(binding()));
+                        if let Some(text) = binding() {
+                            self.add_event(egui::Event::Paste(text));
+                        }
                     } else {
                         if let Some(key) = to_egui_key(key) {
                             self.add_event(egui::Event::Key {
