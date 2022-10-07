@@ -61,6 +61,9 @@ pub struct WindowConfig {
     /// Hide the windows
     pub visible: bool,
 
+    // Whether mouse events will pass through the window, useful for overlays
+    pub mouse_passthrough: bool,
+
     /// Use or create the canvas with this id. Only Web.
     pub canvas_id: String,
 }
@@ -84,6 +87,7 @@ impl Default for WindowConfig {
             always_on_top: false,
             decorations: true,
             visible: true,
+            mouse_passthrough: false,
             canvas_id: String::from("notan_canvas"),
         }
     }
@@ -183,6 +187,12 @@ impl WindowConfig {
     /// Hide or show the window
     pub fn visible(mut self, visible: bool) -> Self {
         self.visible = visible;
+        self
+    }
+
+    /// Mouse events pass through window
+    pub fn mouse_passthrough(mut self, mouse_passthrough: bool) -> Self {
+        self.mouse_passthrough = mouse_passthrough;
         self
     }
 

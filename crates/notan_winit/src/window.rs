@@ -173,6 +173,10 @@ impl WinitWindowBackend {
 
         let gl_ctx = unsafe { windowed_context.make_current().unwrap() };
 
+        if config.mouse_passthrough {
+            gl_ctx.window().set_cursor_hittest(false).unwrap();
+        }
+
         let monitor = gl_ctx.window().current_monitor();
         let scale_factor = monitor.as_ref().map_or(1.0, |m| m.scale_factor());
         if config.fullscreen {
