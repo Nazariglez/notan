@@ -14,7 +14,7 @@ description = "Provides simple graphics API for Notan"
 [dependencies]
 bytemuck = "1.12.1"
 parking_lot = "0.12.1"
-image = { version = "0.24.3", default-features = false, features = ["jpeg", "png"] }
+image = { version = "0.24.4", default-features = false, features = ["jpeg", "png"] }
 notan_math = { path = "../notan_math", version = "0.7.1" }
 notan_macro = { path = "../notan_macro", version = "0.7.1" }
 notan_utils = { path = "../notan_utils", version = "0.7.1" }

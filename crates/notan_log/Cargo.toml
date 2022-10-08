@@ -17,9 +17,9 @@ fern = { version = "0.6.1", features = ["colored"] }
 notan_app = { path = "../notan_app", version = "0.7.1" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-time = { version = "0.3.14", features = ["formatting", "local-offset"] }
+time = { version = "0.3.15", features = ["formatting", "local-offset"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_log = "0.2.0"
-wasm-bindgen = "0.2.82"
-js-sys = "0.3.59"
+wasm-bindgen = "0.2.83"
+js-sys = "0.3.60"
