@@ -40,13 +40,14 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
                 // Pass as callback the triangle to be draw
                 let triangle = state.triangle.clone();
                 let angle = state.angle;
+
+                let cb = EguiCallbackFn::new(move |info, device| {
+                    triangle.draw(device, info, angle);
+                });
+
                 let callback = egui::PaintCallback {
                     rect,
-                    callback: std::sync::Arc::new(move |info, ctx| {
-                        if let Some(device) = ctx.downcast_mut::<Device>() {
-                            triangle.draw(device, info, angle); // draw the triangle
-                        }
-                    }),
+                    callback: std::sync::Arc::new(cb),
                 };
 
                 ui.painter().add(callback);
@@ -141,7 +142,7 @@ impl Triangle {
         Self { pipeline, vbo, ubo }
     }
 
-    fn draw(&self, device: &mut Device, info: &egui::PaintCallbackInfo, angle: f32) {
+    fn draw(&self, device: &mut Device, info: egui::PaintCallbackInfo, angle: f32) {
         // update angle
         device.set_buffer_data(&self.ubo, &[angle]);
 

@@ -73,10 +73,12 @@ impl EguiPlugin {
 
         let egui::FullOutput {
             platform_output,
-            needs_repaint,
+            repaint_after,
             textures_delta,
             shapes,
         } = self.ctx.run(new_input, run_ui);
+
+        let needs_repaint = repaint_after.is_zero();
 
         // On post frame needs repaint is set to false
         // set it again if true after a egui output.
