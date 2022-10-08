@@ -164,7 +164,7 @@ impl Plugin for EguiPlugin {
         _assets: &mut Assets,
         event: &Event,
     ) -> Result<AppFlow, String> {
-        let command_modifier = if cfg!(target_arch = "macos") {
+        let command_modifier = if cfg!(target_os = "macos") {
             app.keyboard.logo()
         } else if cfg!(target_arch = "wasm32") {
             app.keyboard.ctrl() || app.keyboard.logo()
