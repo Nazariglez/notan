@@ -2,8 +2,8 @@ use crate::keyboard::{enable_keyboard, KeyboardCallbacks};
 use crate::mouse::{enable_mouse, MouseCallbacks};
 use crate::touch::{enable_touch, PointerCallbacks};
 use crate::utils::{
-    canvas_add_event_listener, canvas_visible, get_notan_size, get_or_create_canvas,
-    request_animation_frame, set_size_dpi, window_add_event_listener,
+    canvas_add_event_listener, canvas_mouse_passthrough, canvas_visible, get_notan_size,
+    get_or_create_canvas, request_animation_frame, set_size_dpi, window_add_event_listener,
 };
 use notan_app::{CursorIcon, WindowConfig};
 use notan_app::{Event, EventIterator, WindowBackend};
@@ -76,6 +76,7 @@ impl WebWindowBackend {
 
         let visible = config.visible;
         canvas_visible(&canvas, visible);
+        canvas_mouse_passthrough(&canvas, config.mouse_passthrough);
 
         let canvas_parent = canvas
             .parent_element()

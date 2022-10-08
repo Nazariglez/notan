@@ -188,6 +188,15 @@ pub fn canvas_visible(canvas: &HtmlCanvasElement, visible: bool) {
     }
 }
 
+pub fn canvas_mouse_passthrough(canvas: &HtmlCanvasElement, passthrough: bool) {
+    if let Err(e) = canvas
+        .style()
+        .set_property("pointer-events", if passthrough { "none" } else { "auto" })
+    {
+        log::error!("{:?}", e);
+    }
+}
+
 pub fn get_notan_size(canvas: &HtmlCanvasElement) -> (i32, i32) {
     let width = canvas
         .get_attribute("notan-width")
