@@ -1,6 +1,6 @@
 [package]
 name = "notan_random"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"

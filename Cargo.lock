@@ -1624,7 +1624,7 @@ dependencies = [
 
 [[package]]
 name = "notan"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "egui_demo_lib",
  "notan_app",
@@ -1647,7 +1647,7 @@ dependencies = [
 
 [[package]]
 name = "notan_app"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "bytemuck",
  "downcast-rs",
@@ -1672,14 +1672,14 @@ dependencies = [
 
 [[package]]
 name = "notan_audio"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "parking_lot",
 ]
 
 [[package]]
 name = "notan_backend"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "notan_web",
  "notan_winit",
@@ -1687,14 +1687,14 @@ dependencies = [
 
 [[package]]
 name = "notan_core"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "web-sys",
 ]
 
 [[package]]
 name = "notan_draw"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "log",
  "lyon",
@@ -1710,7 +1710,7 @@ dependencies = [
 
 [[package]]
 name = "notan_egui"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "bytemuck",
  "copypasta",
@@ -1723,7 +1723,7 @@ dependencies = [
 
 [[package]]
 name = "notan_extra"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "notan_app",
  "spin_sleep",
@@ -1731,7 +1731,7 @@ dependencies = [
 
 [[package]]
 name = "notan_glow"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "bytemuck",
  "glow",
@@ -1746,7 +1746,7 @@ dependencies = [
 
 [[package]]
 name = "notan_glyph"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "bytemuck",
  "glyph_brush",
@@ -1758,7 +1758,7 @@ dependencies = [
 
 [[package]]
 name = "notan_graphics"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "bytemuck",
  "glsl-layout",
@@ -1771,7 +1771,7 @@ dependencies = [
 
 [[package]]
 name = "notan_input"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "hashbrown",
  "log",
@@ -1781,7 +1781,7 @@ dependencies = [
 
 [[package]]
 name = "notan_log"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "console_log",
  "fern",
@@ -1794,7 +1794,7 @@ dependencies = [
 
 [[package]]
 name = "notan_macro"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "glsl-to-spirv",
  "num",
@@ -1806,14 +1806,14 @@ dependencies = [
 
 [[package]]
 name = "notan_math"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "glam",
 ]
 
 [[package]]
 name = "notan_oddio"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "cpal",
  "hashbrown",
@@ -1825,7 +1825,7 @@ dependencies = [
 
 [[package]]
 name = "notan_random"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "getrandom",
  "rand",
@@ -1834,7 +1834,7 @@ dependencies = [
 
 [[package]]
 name = "notan_text"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "log",
  "notan_app",
@@ -1845,7 +1845,7 @@ dependencies = [
 
 [[package]]
 name = "notan_utils"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "instant",
  "js-sys",
@@ -1857,7 +1857,7 @@ dependencies = [
 
 [[package]]
 name = "notan_web"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "console_error_panic_hook",
  "futures-util",
@@ -1876,7 +1876,7 @@ dependencies = [
 
 [[package]]
 name = "notan_winit"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "glutin",
  "log",

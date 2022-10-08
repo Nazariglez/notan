@@ -1,6 +1,6 @@
 [package]
 name = "notan_glyph"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/Nazariglez/notan"
@@ -14,6 +14,6 @@ description = "Provides glyph's support for Notan"
 log = "0.4.17"
 glyph_brush = "0.7.5"
 bytemuck = "1.12.1"
-notan_app = { path = "../notan_app", version = "0.7.0" }
-notan_graphics = { path = "../notan_graphics", version = "0.7.0" }
-notan_math = { path = "../notan_math", version = "0.7.0" }
+notan_app = { path = "../notan_app", version = "0.7.1" }
+notan_graphics = { path = "../notan_graphics", version = "0.7.1" }
+notan_math = { path = "../notan_math", version = "0.7.1" }

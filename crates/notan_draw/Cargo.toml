@@ -1,6 +1,6 @@
 [package]
 name = "notan_draw"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -13,12 +13,12 @@ description = "Provides a simple 2D API for Notan"
 
 [dependencies]
 log = "0.4.17"
-notan_app = { path = "../notan_app", version = "0.7.0" }
-notan_graphics = { path = "../notan_graphics", version = "0.7.0" }
-notan_macro = { path = "../notan_macro", version = "0.7.0" }
-notan_math = { path = "../notan_math", version = "0.7.0" }
-notan_glyph = { path = "../notan_glyph", version = "0.7.0" }
-notan_text = { path = "../notan_text", version = "0.7.0" }
+notan_app = { path = "../notan_app", version = "0.7.1" }
+notan_graphics = { path = "../notan_graphics", version = "0.7.1" }
+notan_macro = { path = "../notan_macro", version = "0.7.1" }
+notan_math = { path = "../notan_math", version = "0.7.1" }
+notan_glyph = { path = "../notan_glyph", version = "0.7.1" }
+notan_text = { path = "../notan_text", version = "0.7.1" }
 lyon = "1.0.0"
 serde = { version = "1.0.144", features = ["derive"] }
 serde_json = "1.0.85"

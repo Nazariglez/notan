@@ -1,7 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## UNRELEASED
+
+-
+
+## v0.7.1 - 08/10/2022
 
 - Added support for clipboard events using `egui` behind the feature `clipboard`.
 - Exposed `GlowBackend::add_inner_texture` to allow more flexibility extending the backend.
