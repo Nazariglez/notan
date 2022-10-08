@@ -30,6 +30,7 @@ pub struct EguiPlugin {
     needs_repaint: bool,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for EguiPlugin {
     fn default() -> Self {
         Self {
@@ -164,19 +165,13 @@ impl Plugin for EguiPlugin {
         _assets: &mut Assets,
         event: &Event,
     ) -> Result<AppFlow, String> {
-        let command_modifier = if cfg!(target_os = "macos") {
-            app.keyboard.logo()
-        } else if cfg!(target_arch = "wasm32") {
-            app.keyboard.ctrl() || app.keyboard.logo()
-        } else {
-            app.keyboard.ctrl()
-        };
-
         let mac_cmd = if cfg!(target_os = "macos") || cfg!(target_arch = "wasm32") {
             app.keyboard.logo()
         } else {
             false
         };
+
+        let command_modifier = mac_cmd || app.keyboard.ctrl();
 
         let modifiers = egui::Modifiers {
             alt: app.keyboard.alt(),
@@ -238,14 +233,14 @@ impl Plugin for EguiPlugin {
             Event::MouseEnter { .. } => {}
             Event::MouseLeft { .. } => self.add_event(egui::Event::PointerGone),
             Event::KeyDown { key } => {
-                #[cfg(not(target_arch = "wasm32"))]
-                #[cfg(feature = "clipboard")]
+                // TODO clipboard should works also on wasm target
+                #[cfg(all(feature = "clipboard", not(target_arch = "wasm32")))]
                 {
-                    if *key == KeyCode::C && (modifiers.ctrl || modifiers.command) {
+                    if *key == KeyCode::C && modifiers.command {
                         self.add_event(egui::Event::Copy);
-                    } else if *key == KeyCode::X && (modifiers.ctrl || modifiers.command) {
+                    } else if *key == KeyCode::X && modifiers.command {
                         self.add_event(egui::Event::Cut);
-                    } else if *key == KeyCode::V && (modifiers.ctrl || modifiers.command) {
+                    } else if *key == KeyCode::V && modifiers.command {
                         // Use let binding, otherwise rustc complains.
                         let binding = || {
                             let clipboard = &*self.clipboard;
@@ -254,18 +249,16 @@ impl Plugin for EguiPlugin {
                         if let Some(text) = binding() {
                             self.add_event(egui::Event::Paste(text));
                         }
-                    } else {
-                        if let Some(key) = to_egui_key(key) {
-                            self.add_event(egui::Event::Key {
-                                key,
-                                pressed: true,
-                                modifiers,
-                            })
-                        }
+                    } else if let Some(key) = to_egui_key(key) {
+                        self.add_event(egui::Event::Key {
+                            key,
+                            pressed: true,
+                            modifiers,
+                        });
                     }
                 }
 
-                #[cfg(not(feature = "clipboard"))]
+                #[cfg(any(not(feature = "clipboard"), target_arch = "wasm32"))]
                 if let Some(key) = to_egui_key(key) {
                     self.add_event(egui::Event::Key {
                         key,
