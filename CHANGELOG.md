@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Exposed `GlowBackend::add_inner_texture` to allow more flexibility extending the backend.
 - Example `input_keyboard` uses not `delta time`.
 - Added `WindowConfig::mouse_passtrhough` to allow mouse events to pass through the window.
+- Fix a minor bug in the `egui` plugin recognizing the `CMD` key on `osx`.
 
 ## v0.7.0 - 29/09/2022
 

@@ -1,7 +1,7 @@
 use notan::draw::*;
 use notan::prelude::*;
 
-const MOVE_SPEED:f32 = 100.0;
+const MOVE_SPEED: f32 = 100.0;
 
 #[derive(AppState)]
 struct State {

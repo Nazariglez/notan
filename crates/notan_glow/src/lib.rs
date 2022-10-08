@@ -354,7 +354,11 @@ impl GlowBackend {
         }
     }
 
-    pub fn add_inner_texture(&mut self, tex: TextureKey, info: &TextureInfo) -> Result<u64, String> {
+    pub fn add_inner_texture(
+        &mut self,
+        tex: TextureKey,
+        info: &TextureInfo,
+    ) -> Result<u64, String> {
         let inner_texture = InnerTexture::new(tex, info)?;
         self.texture_count += 1;
         self.textures.insert(self.texture_count, inner_texture);
