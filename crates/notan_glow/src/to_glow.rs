@@ -107,7 +107,8 @@ impl ToGlow for VertexFormat {
         use VertexFormat::*;
         match &self {
             UInt8 | UInt8x2 | UInt8x3 | UInt8x4 => glow::UNSIGNED_BYTE,
-            _ => glow::FLOAT,
+            UInt8Norm | UInt8x2Norm | UInt8x3Norm | UInt8x4Norm => glow::UNSIGNED_BYTE,
+            Float32 | Float32x2 | Float32x3 | Float32x4 => glow::FLOAT,
         }
     }
 }

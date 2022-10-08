@@ -248,8 +248,8 @@ On a Macbook (2.3Hz i9 - 16GB RAM):
 - Chrome: 78000 Bunnies at 60FPS
 
 On a high-end Desktop with Archlinux:
-- Native: 144000 Bunnies at 60FPS
-- Chrome: 122000 Bunnies at 60FPS
+- Native: 205000 Bunnies at 60FPS
+- Chrome: 131000 Bunnies at 60FPS
 
 Let's keep in mind that the conditions for `bunnymark` are very unlikely to see in a real project.
 However, it's widely used to test the performance in 2D Draw APIs.

@@ -5,6 +5,7 @@ crates=(
   notan_core
   notan_input
   notan_audio
+  notan_random
   notan_utils
   notan_math
   notan_macro

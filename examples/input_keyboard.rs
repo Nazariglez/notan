@@ -1,6 +1,8 @@
 use notan::draw::*;
 use notan::prelude::*;
 
+const MOVE_SPEED: f32 = 100.0;
+
 #[derive(AppState)]
 struct State {
     font: Font,
@@ -34,21 +36,20 @@ fn setup(gfx: &mut Graphics) -> State {
 fn update(app: &mut App, state: &mut State) {
     state.last_key = app.keyboard.last_key_released();
 
-    // TODO use delta
     if app.keyboard.is_down(KeyCode::W) {
-        state.y -= 2.0;
+        state.y -= MOVE_SPEED * app.timer.delta_f32();
     }
 
     if app.keyboard.is_down(KeyCode::A) {
-        state.x -= 2.0;
+        state.x -= MOVE_SPEED * app.timer.delta_f32();
     }
 
     if app.keyboard.is_down(KeyCode::S) {
-        state.y += 2.0;
+        state.y += MOVE_SPEED * app.timer.delta_f32();
     }
 
     if app.keyboard.is_down(KeyCode::D) {
-        state.x += 2.0;
+        state.x += MOVE_SPEED * app.timer.delta_f32();
     }
 }
 

@@ -1,6 +1,6 @@
 [package]
 name = "notan_oddio"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/Nazariglez/notan"
@@ -11,7 +11,7 @@ description = "Provides support for Audio features using Oddio"
 [dependencies]
 log = "0.4.17"
 hashbrown = "0.12.3"
-notan_audio = { path = "../notan_audio", version = "0.7.0" }
+notan_audio = { path = "../notan_audio", version = "0.7.1" }
 cpal = { version = "0.14.0", features = ["wasm-bindgen"] }
 oddio = "0.6.2"
 symphonia = { version = "0.5.1", features = ["mp3"] }

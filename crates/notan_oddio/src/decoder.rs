@@ -60,9 +60,7 @@ fn get_samples(
                     continue;
                 }
 
-                if let Err(e) = decode_packet(&mut samples, decoder, packet) {
-                    return Err(e);
-                }
+                decode_packet(&mut samples, decoder, packet)?;
             }
             Err(err) => {
                 if let IoError(err) = err {

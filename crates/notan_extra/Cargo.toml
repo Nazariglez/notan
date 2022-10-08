@@ -1,6 +1,6 @@
 [package]
 name = "notan_extra"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -12,7 +12,7 @@ description = "Provides extra features or plugins for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-notan_app = { path = "../notan_app", version = "0.7.0" }
+notan_app = { path = "../notan_app", version = "0.7.1" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 spin_sleep = "1.1.1"
