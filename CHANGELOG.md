@@ -2,7 +2,11 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
-- 
+
+- Added support for clipboard events using `egui` behind the feature `clipboard`.
+- Exposed `GlowBackend::add_inner_texture` to allow more flexibility extending the backend.
+- Example `input_keyboard` uses not `delta time`.
+- Added `WindowConfig::mouse_passtrhough` to allow mouse events to pass through the window.
 
 ## v0.7.0 - 29/09/2022
 
