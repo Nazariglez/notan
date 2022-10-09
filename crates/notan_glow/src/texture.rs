@@ -8,16 +8,19 @@ pub(crate) struct InnerTexture {
     pub texture: TextureKey,
     pub size: (i32, i32),
     pub is_srgba: bool,
+    pub use_mipmaps: bool,
 }
 
 impl InnerTexture {
     pub fn new(texture: TextureKey, info: &TextureInfo) -> Result<Self, String> {
         let size = (info.width, info.height);
         let is_srgba = info.format == TextureFormat::SRgba8;
+        let use_mipmaps = info.mipmaps;
         Ok(Self {
             texture,
             size,
             is_srgba,
+            use_mipmaps,
         })
     }
 
@@ -130,8 +133,11 @@ pub(crate) unsafe fn pre_create_texture<'a>(
     })
 }
 
-pub(crate) unsafe fn post_create_texture(gl: &Context) {
-    //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
+pub(crate) unsafe fn post_create_texture(gl: &Context, info: &TextureInfo) {
+    if info.mipmaps {
+        gl.generate_mipmap(glow::TEXTURE_2D);
+    }
+
     gl.bind_texture(glow::TEXTURE_2D, None);
 }
 
@@ -159,7 +165,7 @@ pub(crate) unsafe fn create_texture(
         data,
     );
 
-    post_create_texture(gl);
+    post_create_texture(gl, info);
 
     Ok(texture)
 }
