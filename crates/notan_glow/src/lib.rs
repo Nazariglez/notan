@@ -540,6 +540,8 @@ impl DeviceBackend for GlowBackend {
     ) -> Result<(), String> {
         match self.textures.get(&texture) {
             Some(texture) => {
+                let use_mipmaps = texture.use_mipmaps;
+
                 unsafe {
                     self.gl
                         .bind_texture(glow::TEXTURE_2D, Some(texture.texture));
@@ -557,11 +559,16 @@ impl DeviceBackend for GlowBackend {
                                 glow::UNSIGNED_BYTE, // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
                                 PixelUnpackData::Slice(bytes),
                             );
-
-                            Ok(())
                         }
-                        TextureUpdaterSourceKind::Raw(source) => source.update(self, opts),
+                        TextureUpdaterSourceKind::Raw(source) => source.update(self, opts)?,
                     }
+
+                    // if texture has mipmaps enabled re-generate them after the update
+                    if use_mipmaps {
+                        self.gl.generate_mipmap(glow::TEXTURE_2D);
+                    }
+
+                    Ok(())
                 }
             }
             _ => Err("Invalid texture id".to_string()),
