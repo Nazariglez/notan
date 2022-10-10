@@ -3,7 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## UNRELEASED
 
--
+- Updated `notan_egui` to the latest version of `egui` 0.19.
+- Added mipmapping support with `TextureBuilder::generate_mipmaps`.
 
 ## v0.7.1 - 08/10/2022
 

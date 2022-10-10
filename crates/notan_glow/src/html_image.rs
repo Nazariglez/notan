@@ -109,7 +109,7 @@ pub(crate) unsafe fn create_texture_from_html_image(
         image,
     );
 
-    post_create_texture(gl);
+    post_create_texture(gl, info);
 
     Ok(texture)
 }

@@ -44,6 +44,7 @@ pub struct TextureInfo {
     pub wrap_x: TextureWrap,
     pub wrap_y: TextureWrap,
     pub premultiplied_alpha: bool,
+    pub mipmap_filter: Option<TextureFilter>,
 
     /// Used for render textures
     pub depth: bool,
@@ -61,6 +62,7 @@ impl Default for TextureInfo {
             height: 1,
             depth: false,
             premultiplied_alpha: false,
+            mipmap_filter: None,
         }
     }
 }
@@ -369,8 +371,18 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
     }
 
     /// Generate the mipmaps
-    pub fn generate_mipmap(self) -> Self {
-        todo!("generate mipmaps");
+    pub fn with_mipmaps(mut self, enable: bool) -> Self {
+        if enable {
+            self.info.mipmap_filter = Some(TextureFilter::Linear);
+        } else {
+            self.info.mipmap_filter = None;
+        }
+        self
+    }
+
+    pub fn with_mipmap_filter(mut self, filter: TextureFilter) -> Self {
+        self.info.mipmap_filter = Some(filter);
+        self
     }
 
     pub fn build(self) -> Result<Texture, String> {

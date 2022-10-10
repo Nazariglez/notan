@@ -46,6 +46,7 @@ pub struct GlowBackend {
     current_uniforms: Vec<UniformLocation>,
     drawing_srgba: bool,
     drawing_to_render_texture: bool,
+    render_texture_mipmaps: bool,
 }
 
 impl GlowBackend {
@@ -112,6 +113,7 @@ impl GlowBackend {
             current_uniforms: vec![],
             drawing_srgba: false,
             drawing_to_render_texture: false,
+            render_texture_mipmaps: false,
         })
     }
 }
@@ -162,6 +164,7 @@ impl GlowBackend {
             Some(rt) => {
                 rt.bind(&self.gl);
                 self.drawing_to_render_texture = true;
+                self.render_texture_mipmaps = rt.use_mipmaps;
                 (rt.size.0, rt.size.1, 1.0)
             }
             None => {
@@ -169,6 +172,7 @@ impl GlowBackend {
                     self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
                 }
                 self.drawing_to_render_texture = false;
+                self.render_texture_mipmaps = false;
                 (self.size.0, self.size.1, self.dpi)
             }
         };
@@ -208,6 +212,10 @@ impl GlowBackend {
 
     fn end(&mut self) {
         unsafe {
+            // generate mipmap for the framebuffer texture if needed
+            if self.drawing_to_render_texture && self.render_texture_mipmaps {
+                self.gl.generate_mipmap(glow::TEXTURE_2D);
+            }
             self.disable_srgba();
             self.gl.disable(glow::SCISSOR_TEST);
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
@@ -219,6 +227,7 @@ impl GlowBackend {
 
         self.using_indices = false;
         self.drawing_to_render_texture = false;
+        self.render_texture_mipmaps = false;
     }
 
     fn clean_pipeline(&mut self, id: u64) {
@@ -540,6 +549,8 @@ impl DeviceBackend for GlowBackend {
     ) -> Result<(), String> {
         match self.textures.get(&texture) {
             Some(texture) => {
+                let use_mipmaps = texture.use_mipmaps;
+
                 unsafe {
                     self.gl
                         .bind_texture(glow::TEXTURE_2D, Some(texture.texture));
@@ -557,11 +568,16 @@ impl DeviceBackend for GlowBackend {
                                 glow::UNSIGNED_BYTE, // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
                                 PixelUnpackData::Slice(bytes),
                             );
-
-                            Ok(())
                         }
-                        TextureUpdaterSourceKind::Raw(source) => source.update(self, opts),
+                        TextureUpdaterSourceKind::Raw(source) => source.update(self, opts)?,
                     }
+
+                    // if texture has mipmaps enabled re-generate them after the update
+                    if use_mipmaps {
+                        self.gl.generate_mipmap(glow::TEXTURE_2D);
+                    }
+
+                    Ok(())
                 }
             }
             _ => Err("Invalid texture id".to_string()),

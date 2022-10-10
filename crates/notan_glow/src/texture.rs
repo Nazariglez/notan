@@ -8,16 +8,19 @@ pub(crate) struct InnerTexture {
     pub texture: TextureKey,
     pub size: (i32, i32),
     pub is_srgba: bool,
+    pub use_mipmaps: bool,
 }
 
 impl InnerTexture {
     pub fn new(texture: TextureKey, info: &TextureInfo) -> Result<Self, String> {
         let size = (info.width, info.height);
         let is_srgba = info.format == TextureFormat::SRgba8;
+        let use_mipmaps = info.mipmap_filter.is_some();
         Ok(Self {
             texture,
             size,
             is_srgba,
+            use_mipmaps,
         })
     }
 
@@ -87,11 +90,10 @@ pub(crate) unsafe fn pre_create_texture<'a>(
         glow::TEXTURE_MAG_FILTER,
         info.mag_filter.to_glow() as _,
     );
-    gl.tex_parameter_i32(
-        glow::TEXTURE_2D,
-        glow::TEXTURE_MIN_FILTER,
-        info.min_filter.to_glow() as _,
-    );
+
+    let min_filter = get_min_filter(info);
+
+    gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, min_filter as _);
 
     let depth = TextureFormat::Depth16 == info.format;
     let mut data = bytes;
@@ -130,8 +132,23 @@ pub(crate) unsafe fn pre_create_texture<'a>(
     })
 }
 
-pub(crate) unsafe fn post_create_texture(gl: &Context) {
-    //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
+fn get_min_filter(info: &TextureInfo) -> u32 {
+    match info.mipmap_filter {
+        None => info.min_filter.to_glow(),
+        Some(mipmap_filter) => match (info.min_filter, mipmap_filter) {
+            (TextureFilter::Linear, TextureFilter::Linear) => glow::LINEAR_MIPMAP_LINEAR,
+            (TextureFilter::Linear, TextureFilter::Nearest) => glow::LINEAR_MIPMAP_NEAREST,
+            (TextureFilter::Nearest, TextureFilter::Linear) => glow::NEAREST_MIPMAP_LINEAR,
+            (TextureFilter::Nearest, TextureFilter::Nearest) => glow::NEAREST_MIPMAP_NEAREST,
+        },
+    }
+}
+
+pub(crate) unsafe fn post_create_texture(gl: &Context, info: &TextureInfo) {
+    if info.mipmap_filter.is_some() {
+        gl.generate_mipmap(glow::TEXTURE_2D);
+    }
+
     gl.bind_texture(glow::TEXTURE_2D, None);
 }
 
@@ -159,7 +176,7 @@ pub(crate) unsafe fn create_texture(
         data,
     );
 
-    post_create_texture(gl);
+    post_create_texture(gl, info);
 
     Ok(texture)
 }

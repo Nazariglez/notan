@@ -7,10 +7,12 @@ pub(crate) struct InnerRenderTexture {
     fbo: Framebuffer,
     depth_texture: Option<TextureKey>,
     pub size: (i32, i32),
+    pub use_mipmaps: bool,
 }
 
 impl InnerRenderTexture {
     pub fn new(gl: &Context, texture: &InnerTexture, info: &TextureInfo) -> Result<Self, String> {
+        let use_mipmaps = texture.use_mipmaps;
         let width = info.width;
         let height = info.height;
         let depth_info = if info.depth {
@@ -25,6 +27,7 @@ impl InnerRenderTexture {
             fbo,
             depth_texture,
             size,
+            use_mipmaps,
         })
     }
 
