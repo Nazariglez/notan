@@ -1,4 +1,4 @@
-use glutin::dpi::LogicalSize;
+use glutin::dpi::{LogicalSize, PhysicalPosition};
 use glutin::event_loop::EventLoop;
 use glutin::window::Fullscreen::Borderless;
 use glutin::window::{CursorGrabMode, CursorIcon as WCursorIcon, Window, WindowBuilder};
@@ -27,6 +27,17 @@ impl WindowBackend for WinitWindowBackend {
         let inner = self.window().inner_size();
         let logical = inner.to_logical::<f64>(self.scale_factor);
         (logical.width as _, logical.height as _)
+    }
+
+    fn set_position_pixels(&mut self, x: i32, y: i32) {
+        self.window()
+            .set_outer_position(PhysicalPosition::new(x, y));
+    }
+
+    fn position_pixels(&self) -> (i32, i32) {
+        let position = self.window()
+            .outer_position().unwrap_or_default();
+        (position.x, position.y)
     }
 
     fn set_always_on_top(&mut self, enabled: bool) {

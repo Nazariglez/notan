@@ -117,6 +117,12 @@ pub trait WindowBackend {
     /// Returns the window's size
     fn size(&self) -> (i32, i32);
 
+    /// Sets the window's position
+    fn set_position_pixels(&mut self, x: i32, y: i32);
+
+    /// Returns the window's position
+    fn position_pixels(&self) -> (i32, i32);
+
     /// Enable or disable the fullscreen mode
     fn set_fullscreen(&mut self, enabled: bool);
 
