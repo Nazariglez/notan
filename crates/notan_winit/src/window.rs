@@ -29,12 +29,12 @@ impl WindowBackend for WinitWindowBackend {
         (logical.width as _, logical.height as _)
     }
 
-    fn set_position_pixels(&mut self, x: i32, y: i32) {
+    fn set_position(&mut self, x: i32, y: i32) {
         self.window()
             .set_outer_position(PhysicalPosition::new(x, y));
     }
 
-    fn position_pixels(&self) -> (i32, i32) {
+    fn position(&self) -> (i32, i32) {
         let position = self.window()
             .outer_position().unwrap_or_default();
         (position.x, position.y)
