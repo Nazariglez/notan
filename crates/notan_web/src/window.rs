@@ -246,7 +246,7 @@ impl WindowBackend for WebWindowBackend {
 
     // No operation, as unsupported in browser
     fn position(&self) -> (i32, i32) {
-        (0,0)
+        (0, 0)
     }
 
     fn set_fullscreen(&mut self, enabled: bool) {

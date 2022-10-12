@@ -35,8 +35,7 @@ impl WindowBackend for WinitWindowBackend {
     }
 
     fn position(&self) -> (i32, i32) {
-        let position = self.window()
-            .outer_position().unwrap_or_default();
+        let position = self.window().outer_position().unwrap_or_default();
         (position.x, position.y)
     }
 
