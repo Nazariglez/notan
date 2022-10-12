@@ -241,6 +241,14 @@ impl WindowBackend for WebWindowBackend {
         get_notan_size(&self.canvas)
     }
 
+    // No operation, as unsupported in browser
+    fn set_position(&mut self, x: i32, y: i32) {}
+
+    // No operation, as unsupported in browser
+    fn position(&self) -> (i32, i32) {
+        (0,0)
+    }
+
     fn set_fullscreen(&mut self, enabled: bool) {
         *self.fullscreen_requested.borrow_mut() = Some(enabled);
     }
