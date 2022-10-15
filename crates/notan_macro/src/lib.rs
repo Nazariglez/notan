@@ -26,6 +26,7 @@ fn handle_main_func(input: ItemFn) -> TokenStream {
 
         #[no_mangle]
         pub extern fn notan_main() -> #ret {
+            #[allow(clippy::main_recursion)]
             #ident()
         }
     };
