@@ -25,11 +25,11 @@ pub struct WindowConfig {
     pub max_size: Option<(i32, i32)>,
 
     /// Start the window maximized
-    /// `Web: no-op`
+    /// `Web: The canvas will fill the size of the parent of the HtmlCanvasElement`
     pub maximized: bool,
 
     /// Allow to resize the window
-    /// `Web: no-op`
+    /// `Web: The canvas will resize along with the parent of the HtmlCanvasElement`
     pub resizable: bool,
 
     /// Enable V-Sync
