@@ -6,7 +6,7 @@ use crate::batch::*;
 use crate::draw::*;
 use notan_glyph::GlyphBrush;
 use notan_graphics::prelude::*;
-use notan_math::{vec3, Mat4};
+use notan_math::Mat4;
 
 pub struct DrawManager {
     shape_painter: ShapePainter,
