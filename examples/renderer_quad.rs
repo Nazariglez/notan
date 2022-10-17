@@ -55,7 +55,7 @@ fn setup(gfx: &mut Graphics) -> State {
         1.0, 1.0,   1.0, 1.0, 0.1,
     ];
 
-    let indices = [0, 1, 2, 0, 2, 3];
+    let indices = [0u16, 1, 2, 0, 2, 3];
 
     let vertex_info = VertexInfo::new()
         .attr(0, VertexFormat::Float32x2)

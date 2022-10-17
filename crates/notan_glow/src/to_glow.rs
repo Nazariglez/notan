@@ -143,3 +143,12 @@ impl ToGlow for DrawPrimitive {
         }
     }
 }
+
+impl ToGlow for IndexBufferFormat {
+    fn to_glow(&self) -> u32 {
+        match self {
+            IndexBufferFormat::Uint16 => glow::UNSIGNED_SHORT,
+            IndexBufferFormat::Uint32 => glow::UNSIGNED_INT,
+        }
+    }
+}

@@ -113,9 +113,57 @@ impl<'a> VertexBufferBuilder<'a> {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
+pub enum IndexBufferFormat {
+    Uint16,
+    Uint32,
+}
+
+pub enum IndexBufferWrapper<'a> {
+    Uint16(&'a [u16]),
+    Uint32(&'a [u32]),
+}
+
+impl IndexBufferWrapper<'_> {
+    pub fn format(&self) -> IndexBufferFormat {
+        match self {
+            IndexBufferWrapper::Uint16(_) => IndexBufferFormat::Uint16,
+            IndexBufferWrapper::Uint32(_) => IndexBufferFormat::Uint32,
+        }
+    }
+}
+
+pub trait IndexBufferType {
+    fn wrapper(&self) -> IndexBufferWrapper;
+}
+
+impl<const N: usize> IndexBufferType for [u16; N] {
+    fn wrapper(&self) -> IndexBufferWrapper {
+        IndexBufferWrapper::Uint16(self)
+    }
+}
+
+impl IndexBufferType for [u16] {
+    fn wrapper(&self) -> IndexBufferWrapper {
+        IndexBufferWrapper::Uint16(self)
+    }
+}
+
+impl<const N: usize> IndexBufferType for [u32; N] {
+    fn wrapper(&self) -> IndexBufferWrapper {
+        IndexBufferWrapper::Uint32(self)
+    }
+}
+
+impl IndexBufferType for [u32] {
+    fn wrapper(&self) -> IndexBufferWrapper {
+        IndexBufferWrapper::Uint32(self)
+    }
+}
+
 pub struct IndexBufferBuilder<'a> {
     device: &'a mut Device,
-    data: Option<&'a [u32]>,
+    data: Option<IndexBufferWrapper<'a>>,
 }
 
 impl<'a> IndexBufferBuilder<'a> {
@@ -123,8 +171,8 @@ impl<'a> IndexBufferBuilder<'a> {
         Self { device, data: None }
     }
 
-    pub fn with_data(mut self, data: &'a [u32]) -> Self {
-        self.data = Some(data);
+    pub fn with_data(mut self, data: &'a dyn IndexBufferType) -> Self {
+        self.data = Some(data.wrapper());
         self
     }
 
