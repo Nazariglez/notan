@@ -47,7 +47,7 @@ pub trait DeviceBackend {
     ) -> Result<u64, String>;
 
     /// Create a new index buffer object and returns the id
-    fn create_index_buffer(&mut self) -> Result<u64, String>;
+    fn create_index_buffer(&mut self, format: IndexFormat) -> Result<u64, String>;
 
     /// Create a new uniform buffer and returns the id
     fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<u64, String>;
@@ -291,14 +291,16 @@ impl Device {
     #[inline]
     pub(crate) fn inner_create_index_buffer(
         &mut self,
-        data: Option<&[u32]>,
+        data: Option<IndexBufferWrapper>,
+        format: IndexFormat,
     ) -> Result<Buffer, String> {
-        let id = self.backend.create_index_buffer()?;
-
+        let id = self.backend.create_index_buffer(format)?;
         let buffer = Buffer::new(id, BufferUsage::Index, None, self.drop_manager.clone());
-
         if let Some(d) = data {
-            self.set_buffer_data(&buffer, d);
+            match d {
+                IndexBufferWrapper::Uint16(s) => self.set_buffer_data(&buffer, s),
+                IndexBufferWrapper::Uint32(s) => self.set_buffer_data(&buffer, s),
+            }
         }
         Ok(buffer)
     }
