@@ -39,9 +39,10 @@ impl DrawManager {
         draw: &Draw,
         device: &mut Device,
         glyphs: &mut GlyphBrush,
+        flip_projection: bool,
     ) -> &[Commands] {
         self.renderer.clear();
-        process_draw(self, draw, device, glyphs);
+        process_draw(self, draw, device, glyphs, flip_projection);
         self.renderer.commands()
     }
 
@@ -157,6 +158,7 @@ fn process_draw(
     draw: &Draw,
     device: &mut Device,
     glyphs: &mut GlyphBrush,
+    flip_projection: bool,
 ) {
     process_glyphs(manager, draw, device, glyphs);
 
@@ -170,7 +172,15 @@ fn process_draw(
         ..Default::default()
     }));
 
-    let projection = draw.projection();
+    let mut projection = draw.projection();
+
+    // used to flip axis-y for opengl framebuffers
+    // check https://github.com/Nazariglez/notan/issues/151
+    if flip_projection {
+        projection.y_axis.y *= -1.0;
+        projection.w_axis.y *= -1.0;
+    }
+
     draw.batches
         .iter()
         .for_each(|b| paint_batch(device, manager, glyphs, b, &projection));
