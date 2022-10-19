@@ -186,7 +186,7 @@ impl DeviceBackend for EmptyDeviceBackend {
         Ok(self.id_count)
     }
 
-    fn create_index_buffer(&mut self, _format: IndexBufferFormat) -> Result<u64, String> {
+    fn create_index_buffer(&mut self, _format: IndexFormat) -> Result<u64, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }

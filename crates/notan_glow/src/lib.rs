@@ -39,7 +39,7 @@ pub struct GlowBackend {
     buffers: HashMap<u64, InnerBuffer>,
     textures: HashMap<u64, InnerTexture>,
     render_targets: HashMap<u64, InnerRenderTexture>,
-    using_indices: Option<IndexBufferFormat>,
+    using_indices: Option<IndexFormat>,
     api_name: String,
     current_pipeline: u64,
     limits: Limits,
@@ -426,7 +426,7 @@ impl DeviceBackend for GlowBackend {
         Ok(self.buffer_count)
     }
 
-    fn create_index_buffer(&mut self, format: IndexBufferFormat) -> Result<u64, String> {
+    fn create_index_buffer(&mut self, format: IndexFormat) -> Result<u64, String> {
         let mut inner_buffer = InnerBuffer::new(&self.gl, Kind::Index(format), true)?;
         inner_buffer.bind(&self.gl, Some(self.current_pipeline), false);
         self.buffer_count += 1;

@@ -41,6 +41,7 @@ impl Buffer {
         }
     }
 
+    /// Returns the inner id of the buffer
     #[inline(always)]
     pub fn id(&self) -> u64 {
         self.id
@@ -114,72 +115,55 @@ impl<'a> VertexBufferBuilder<'a> {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub enum IndexBufferFormat {
+pub enum IndexFormat {
     Uint16,
     Uint32,
 }
 
-pub enum IndexBufferWrapper<'a> {
+pub(crate) enum IndexBufferWrapper<'a> {
     Uint16(&'a [u16]),
     Uint32(&'a [u32]),
-}
-
-impl IndexBufferWrapper<'_> {
-    pub fn format(&self) -> IndexBufferFormat {
-        match self {
-            IndexBufferWrapper::Uint16(_) => IndexBufferFormat::Uint16,
-            IndexBufferWrapper::Uint32(_) => IndexBufferFormat::Uint32,
-        }
-    }
-}
-
-pub trait IndexBufferType {
-    fn wrapper(&self) -> IndexBufferWrapper;
-}
-
-impl<const N: usize> IndexBufferType for [u16; N] {
-    fn wrapper(&self) -> IndexBufferWrapper {
-        IndexBufferWrapper::Uint16(self)
-    }
-}
-
-impl IndexBufferType for [u16] {
-    fn wrapper(&self) -> IndexBufferWrapper {
-        IndexBufferWrapper::Uint16(self)
-    }
-}
-
-impl<const N: usize> IndexBufferType for [u32; N] {
-    fn wrapper(&self) -> IndexBufferWrapper {
-        IndexBufferWrapper::Uint32(self)
-    }
-}
-
-impl IndexBufferType for [u32] {
-    fn wrapper(&self) -> IndexBufferWrapper {
-        IndexBufferWrapper::Uint32(self)
-    }
 }
 
 pub struct IndexBufferBuilder<'a> {
     device: &'a mut Device,
     data: Option<IndexBufferWrapper<'a>>,
+    format: IndexFormat,
 }
 
 impl<'a> IndexBufferBuilder<'a> {
     pub fn new(device: &'a mut Device) -> Self {
-        Self { device, data: None }
+        Self {
+            device,
+            data: None,
+            format: IndexFormat::Uint32,
+        }
     }
 
-    pub fn with_data(mut self, data: &'a dyn IndexBufferType) -> Self {
-        self.data = Some(data.wrapper());
+    pub fn with_data_u16(mut self, data: &'a [u16]) -> Self {
+        self.data = Some(IndexBufferWrapper::Uint16(data));
+        self.format = IndexFormat::Uint16;
+        self
+    }
+
+    pub fn with_data(mut self, data: &'a [u32]) -> Self {
+        self.data = Some(IndexBufferWrapper::Uint32(data));
+        self.format = IndexFormat::Uint32;
+        self
+    }
+
+    pub fn with_format(mut self, format: IndexFormat) -> Self {
+        self.format = format;
         self
     }
 
     pub fn build(self) -> Result<Buffer, String> {
-        let Self { device, data } = self;
-
-        device.inner_create_index_buffer(data)
+        let Self {
+            device,
+            data,
+            format,
+        } = self;
+        device.inner_create_index_buffer(data, format)
     }
 }
 

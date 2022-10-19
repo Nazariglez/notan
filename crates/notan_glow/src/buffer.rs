@@ -1,7 +1,7 @@
 use crate::pipeline::VertexAttributes;
 use crate::pipeline::*;
 use glow::*;
-use notan_graphics::buffer::IndexBufferFormat;
+use notan_graphics::buffer::IndexFormat;
 use std::fmt::Formatter;
 
 //https://sotrh.github.io/learn-wgpu/beginner/tutorial6-uniforms/#a-perspective-camera
@@ -9,7 +9,7 @@ use std::fmt::Formatter;
 
 pub(crate) enum Kind {
     Vertex(VertexAttributes),
-    Index(IndexBufferFormat),
+    Index(IndexFormat),
     Uniform(u32, String),
 }
 
