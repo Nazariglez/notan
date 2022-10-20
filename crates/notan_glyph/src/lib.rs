@@ -9,9 +9,9 @@ pub use instance::GlyphInstance;
 pub use builder::GlyphBrushBuilder;
 pub use glyph_brush::ab_glyph;
 pub use glyph_brush::{
-    BuiltInLineBreaker, Extra, FontId, GlyphCruncher, GlyphPositioner, HorizontalAlign, Layout,
-    LineBreak, LineBreaker, OwnedSection, OwnedText, Section, SectionGeometry, SectionGlyph,
-    SectionGlyphIter, SectionText, Text, VerticalAlign,
+    BuiltInLineBreaker, Extra, FontId, GlyphCalculator, GlyphCalculatorBuilder, GlyphCruncher,
+    GlyphPositioner, HorizontalAlign, Layout, LineBreak, LineBreaker, OwnedSection, OwnedText,
+    Section, SectionGeometry, SectionGlyph, SectionGlyphIter, SectionText, Text, VerticalAlign,
 };
 pub use pipeline::{DefaultGlyphPipeline, GlyphPipeline};
 

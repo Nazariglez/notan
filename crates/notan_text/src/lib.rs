@@ -3,8 +3,9 @@ mod config;
 use notan_app::{ExtContainer, GfxExtension, GfxRenderer, Graphics};
 use notan_glyph::ab_glyph::FontArc;
 use notan_glyph::{
-    DefaultGlyphPipeline, FontId, GlyphBrush, GlyphBrushBuilder, GlyphPipeline, HorizontalAlign,
-    Layout, Section, Text as GText, VerticalAlign,
+    DefaultGlyphPipeline, FontId, GlyphBrush, GlyphBrushBuilder, GlyphCalculator,
+    GlyphCalculatorBuilder, GlyphPipeline, HorizontalAlign, Layout, Section, Text as GText,
+    VerticalAlign,
 };
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::ClearOptions;
@@ -12,15 +13,18 @@ use notan_graphics::{Device, RenderTexture, Renderer, Texture};
 use std::any::TypeId;
 use std::collections::HashMap;
 use std::ops::DerefMut;
+use std::sync::Arc;
 
 pub use config::TextConfig;
 use notan_math::Mat4;
 use notan_math::Rect;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct Font {
     id: u64,
     inner: FontId,
+    f_ref: FontArc,
+    glyphs: Arc<GlyphCalculator>,
 }
 
 impl Font {
@@ -61,11 +65,14 @@ impl TextExtension {
 
     pub fn create_font(&mut self, data: &[u8]) -> Result<Font, String> {
         let font = FontArc::try_from_vec(data.to_vec()).map_err(|err| err.to_string())?;
-        let id = self.glyph_brush.add_font(font);
+        let calc = GlyphCalculatorBuilder::using_font(font.clone()).build();
+        let id = self.glyph_brush.add_font(font.clone());
 
         Ok(Font {
             id: id.0 as _,
             inner: id,
+            f_ref: font,
+            glyphs: Arc::new(calc),
         })
     }
 
