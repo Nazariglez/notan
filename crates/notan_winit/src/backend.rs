@@ -4,7 +4,7 @@ use glutin::event_loop::ControlFlow;
 use notan_app::{FrameState, WindowConfig};
 
 #[cfg(feature = "clipboard")]
-use crate::clipboard::{self, NativeClipboard};
+use crate::clipboard;
 
 #[cfg(feature = "drop_files")]
 use notan_app::DroppedFile;
@@ -29,9 +29,6 @@ pub struct WinitBackend {
     window: Option<WinitWindowBackend>,
     events: EventIterator,
     exit_requested: bool,
-
-    #[cfg(feature = "clipboard")]
-    clipboard: NativeClipboard,
 }
 
 impl WinitBackend {
@@ -40,9 +37,6 @@ impl WinitBackend {
             events: EventIterator::new(),
             window: None,
             exit_requested: false,
-
-            #[cfg(feature = "clipboard")]
-            clipboard: NativeClipboard::new(),
         })
     }
 }
@@ -53,8 +47,8 @@ impl Backend for WinitBackend {
     }
 
     #[cfg(feature = "clipboard")]
-    fn clipboard(&mut self) -> &mut dyn notan_app::Clipboard {
-        &mut self.clipboard
+    fn set_clipboard_text(&mut self, text: &str) {
+        clipboard::set_clipboard_text(text)
     }
 
     fn events_iter(&mut self) -> EventIterator {
@@ -138,9 +132,7 @@ impl BackendSystem for WinitBackend {
                         }
 
                         #[cfg(feature = "clipboard")]
-                        if let Some(evt) =
-                            clipboard::process_events(event, &app.keyboard, &mut b.clipboard)
-                        {
+                        if let Some(evt) = clipboard::process_events(event, &app.keyboard) {
                             add_event(b, &mut request_redraw, evt);
                         }
 

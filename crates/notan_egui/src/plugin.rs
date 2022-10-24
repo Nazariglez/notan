@@ -343,7 +343,7 @@ impl Plugin for EguiPlugin {
 
             #[cfg(feature = "clipboard")]
             if !copied_text.is_empty() {
-                app.backend.clipboard().set(copied_text);
+                app.backend.set_clipboard_text(&copied_text);
             }
         }
 

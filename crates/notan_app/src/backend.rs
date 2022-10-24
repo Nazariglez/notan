@@ -27,7 +27,7 @@ pub trait Backend: Downcast {
 
     #[cfg(feature = "clipboard")]
     /// Returns the clipboard implementation
-    fn clipboard(&mut self) -> &mut dyn Clipboard;
+    fn set_clipboard_text(&mut self, text: &str);
 
     /// Returns an iterator that contains the backend events
     fn events_iter(&mut self) -> EventIterator;
@@ -178,10 +178,4 @@ pub trait WindowBackend {
 
     /// Returns if the window is visible
     fn visible(&self) -> bool;
-}
-
-#[cfg(feature = "clipboard")]
-pub trait Clipboard {
-    fn get(&mut self) -> Option<String>;
-    fn set(&mut self, text: String);
 }

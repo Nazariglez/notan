@@ -100,9 +100,6 @@ impl WindowBackend for EmptyWindowBackend {
 #[derive(Default)]
 pub struct EmptyBackend {
     window: EmptyWindowBackend,
-
-    #[cfg(feature = "clipboard")]
-    clipboard: EmptyClipboard,
 }
 
 impl EmptyBackend {
@@ -117,9 +114,7 @@ impl Backend for EmptyBackend {
     }
 
     #[cfg(feature = "clipboard")]
-    fn clipboard(&mut self) -> &mut dyn crate::Clipboard {
-        &mut self.clipboard
-    }
+    fn set_clipboard_text(&mut self, _text: &str) {}
 
     fn events_iter(&mut self) -> EventIterator {
         Default::default()
@@ -309,20 +304,4 @@ impl AudioBackend for EmptyAudioBackend {
     }
 
     fn clean(&mut self, _sources: &[u64], _sounds: &[u64]) {}
-}
-
-#[cfg(feature = "clipboard")]
-#[derive(Default)]
-struct EmptyClipboard {}
-
-#[cfg(feature = "clipboard")]
-use crate::Clipboard;
-
-#[cfg(feature = "clipboard")]
-impl Clipboard for EmptyClipboard {
-    fn get(&mut self) -> Option<String> {
-        None
-    }
-
-    fn set(&mut self, text: String) {}
 }

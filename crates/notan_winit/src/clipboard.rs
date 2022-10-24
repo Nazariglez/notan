@@ -2,15 +2,10 @@
 
 use glutin::event::VirtualKeyCode;
 use glutin::event::{ElementState, WindowEvent};
-use notan_app::Clipboard;
 use notan_core::events::Event;
 use notan_input::keyboard::Keyboard;
 
-pub fn process_events(
-    event: &WindowEvent,
-    keyboard: &Keyboard,
-    clipboard: &mut dyn Clipboard,
-) -> Option<Event> {
+pub fn process_events(event: &WindowEvent, keyboard: &Keyboard) -> Option<Event> {
     match event {
         WindowEvent::KeyboardInput { input, .. } => {
             if let Some(key) = input.virtual_keycode.as_ref() {
@@ -20,7 +15,7 @@ pub fn process_events(
                     } else if is_copy(keyboard, key) {
                         return Some(Event::Copy);
                     } else if is_paste(keyboard, key) {
-                        if let Some(contents) = clipboard.get() {
+                        if let Some(contents) = get_clipboard_text() {
                             let contents = contents.replace("\r\n", "\n");
                             if !contents.is_empty() {
                                 return Some(Event::Paste(contents));
@@ -36,40 +31,26 @@ pub fn process_events(
     }
 }
 
-pub struct NativeClipboard {
-    clipboard: String,
-}
-
-impl NativeClipboard {
-    pub fn new() -> Self {
-        Self {
-            clipboard: Default::default(),
+pub fn set_clipboard_text(text: &str) {
+    if let Some(mut clipboard) = init_arboard() {
+        if let Err(err) = clipboard.set_text(text) {
+            log::error!("failed to set_text on clipboard: {}", err);
         }
     }
 }
 
-impl Clipboard for NativeClipboard {
-    fn get(&mut self) -> Option<String> {
-        if let Some(mut clipboard) = init_arboard() {
-            return match clipboard.get_text() {
-                Ok(text) => Some(text),
-                Err(err) => {
-                    log::error!("failed to get_text from clipboard: {}", err);
-                    None
-                }
-            };
-        }
-
-        None
-    }
-
-    fn set(&mut self, text: String) {
-        if let Some(mut clipboard) = init_arboard() {
-            if let Err(err) = clipboard.set_text(text) {
-                log::error!("failed to set_text on clipboard: {}", err);
+fn get_clipboard_text() -> Option<String> {
+    if let Some(mut clipboard) = init_arboard() {
+        return match clipboard.get_text() {
+            Ok(text) => Some(text),
+            Err(err) => {
+                log::error!("failed to get_text from clipboard: {}", err);
+                None
             }
-        }
+        };
     }
+
+    None
 }
 
 fn is_cut(keyboard: &Keyboard, keycode: &VirtualKeyCode) -> bool {
