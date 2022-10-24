@@ -1,5 +1,10 @@
 #!/bin/bash
 mkdir -p ./docs/examples/$1
+
+# web_sys_unstable_apis is required to enable the web_sys clipboard API
+# https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Clipboard.html
+export RUSTFLAGS=--cfg=web_sys_unstable_apis
+
 if [[ $2 == '--release' ]];
 then
   cargo build --target wasm32-unknown-unknown --release --example $1 --all-features

@@ -26,7 +26,6 @@ pub trait Backend: Downcast {
     fn window(&mut self) -> &mut dyn WindowBackend;
 
     #[cfg(feature = "clipboard")]
-    /// Returns the clipboard implementation
     fn set_clipboard_text(&mut self, text: &str);
 
     /// Returns an iterator that contains the backend events

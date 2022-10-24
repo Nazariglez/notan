@@ -12,6 +12,9 @@ use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, Event as WebEvent, HtmlCanvasElement, Window};
 
+#[cfg(feature = "clipboard")]
+use crate::clipboard::{enable_clipboard, ClipboardCallbacks};
+
 #[cfg(feature = "drop_files")]
 use crate::files::{enable_files, FileCallbacks};
 
@@ -45,6 +48,9 @@ pub struct WebWindowBackend {
     pub(crate) mouse_callbacks: MouseCallbacks,
     pub(crate) keyboard_callbacks: KeyboardCallbacks,
     pub(crate) touch_callbacks: PointerCallbacks,
+
+    #[cfg(feature = "clipboard")]
+    pub(crate) clipboard_callbacks: ClipboardCallbacks,
 
     #[cfg(feature = "drop_files")]
     pub(crate) file_callbacks: FileCallbacks,
@@ -100,6 +106,9 @@ impl WebWindowBackend {
         let keyboard_callbacks = Default::default();
         let touch_callbacks = Default::default();
 
+        #[cfg(feature = "clipboard")]
+        let clipboard_callbacks = Default::default();
+
         #[cfg(feature = "drop_files")]
         let file_callbacks = Default::default();
 
@@ -118,6 +127,9 @@ impl WebWindowBackend {
             mouse_callbacks,
             keyboard_callbacks,
             touch_callbacks,
+
+            #[cfg(feature = "clipboard")]
+            clipboard_callbacks,
 
             #[cfg(feature = "drop_files")]
             file_callbacks,
@@ -183,6 +195,9 @@ impl WebWindowBackend {
         enable_mouse(&mut self, fullscreen_dispatcher.clone())?;
         enable_keyboard(&mut self, fullscreen_dispatcher.clone())?;
         enable_touch(&mut self, fullscreen_dispatcher.clone())?;
+
+        #[cfg(feature = "clipboard")]
+        enable_clipboard(&mut self)?;
 
         #[cfg(feature = "drop_files")]
         enable_files(&mut self)?;
