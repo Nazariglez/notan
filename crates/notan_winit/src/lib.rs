@@ -1,4 +1,5 @@
 mod backend;
+mod clipboard;
 mod keyboard;
 mod mouse;
 mod touch;
