@@ -1,20 +1,22 @@
+mod calculator;
 mod config;
 
 use notan_app::{ExtContainer, GfxExtension, GfxRenderer, Graphics};
 use notan_glyph::ab_glyph::FontArc;
 use notan_glyph::{
     DefaultGlyphPipeline, FontId, GlyphBrush, GlyphBrushBuilder, GlyphCalculator,
-    GlyphCalculatorBuilder, GlyphPipeline, HorizontalAlign, Layout, Section, Text as GText,
-    VerticalAlign,
+    GlyphCalculatorBuilder, GlyphCruncher, GlyphPipeline, HorizontalAlign, Layout, Section,
+    Text as GText, VerticalAlign,
 };
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::ClearOptions;
 use notan_graphics::{Device, RenderTexture, Renderer, Texture};
 use std::any::TypeId;
 use std::collections::HashMap;
-use std::ops::DerefMut;
+use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
+use crate::calculator::Calculator;
 pub use config::TextConfig;
 use notan_math::Mat4;
 use notan_math::Rect;
@@ -23,8 +25,7 @@ use notan_math::Rect;
 pub struct Font {
     id: u64,
     inner: FontId,
-    f_ref: FontArc,
-    glyphs: Arc<GlyphCalculator>,
+    pub(crate) inner_ref: FontArc,
 }
 
 impl Font {
@@ -44,6 +45,14 @@ impl From<&Font> for FontId {
         font.inner
     }
 }
+
+impl PartialEq<Self> for Font {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for Font {}
 
 pub struct TextExtension {
     glyph_brush: GlyphBrush,
@@ -65,14 +74,12 @@ impl TextExtension {
 
     pub fn create_font(&mut self, data: &[u8]) -> Result<Font, String> {
         let font = FontArc::try_from_vec(data.to_vec()).map_err(|err| err.to_string())?;
-        let calc = GlyphCalculatorBuilder::using_font(font.clone()).build();
         let id = self.glyph_brush.add_font(font.clone());
 
         Ok(Font {
             id: id.0 as _,
             inner: id,
-            f_ref: font,
-            glyphs: Arc::new(calc),
+            inner_ref: font,
         })
     }
 
@@ -142,14 +149,14 @@ pub struct AddTextBuilder<'b, 'a: 'b> {
     color: Color,
     z: f32,
     size: f32,
-    font: FontId,
+    font: Option<Font>,
     h_align: HorizontalAlign,
     v_align: VerticalAlign,
 }
 
 impl<'b, 'a: 'b> AddTextBuilder<'b, 'a> {
     pub fn font(mut self, font: &Font) -> Self {
-        self.font = font.inner;
+        self.font = Some(font.clone());
         self
     }
 
@@ -215,6 +222,8 @@ impl<'b, 'a: 'b> AddTextBuilder<'b, 'a> {
 
 impl Drop for AddTextBuilder<'_, '_> {
     fn drop(&mut self) {
+        debug_assert!(self.font.is_some(), "You need to set a Font to draw text.");
+
         if let (Some(text), Some(mut section)) = (self.text_str.take(), self.section.take()) {
             if !text.is_empty() {
                 section.text.push(
@@ -222,7 +231,7 @@ impl Drop for AddTextBuilder<'_, '_> {
                         .with_color(self.color.rgba())
                         .with_scale(self.size)
                         .with_z(self.z)
-                        .with_font_id(self.font),
+                        .with_font_id(self.font.as_ref().unwrap().inner),
                 );
             }
 
@@ -231,22 +240,24 @@ impl Drop for AddTextBuilder<'_, '_> {
                 .v_align(self.v_align);
 
             self.text.sections.push(section);
+            self.text.calculator.add_font(self.font.as_ref().unwrap());
         }
     }
 }
 
 pub struct ChainTextBuilder<'b, 'a: 'b> {
     section: &'b mut Section<'a>,
+    calculator: &'b mut Calculator,
     text: Option<&'a str>,
     color: Color,
     z: f32,
     size: f32,
-    font: FontId,
+    font: Option<Font>,
 }
 
 impl<'b, 'a: 'b> ChainTextBuilder<'b, 'a> {
     pub fn font(mut self, font: &Font) -> Self {
-        self.font = font.inner;
+        self.font = Some(font.clone());
         self
     }
 
@@ -270,18 +281,25 @@ impl Drop for ChainTextBuilder<'_, '_> {
     fn drop(&mut self) {
         if let Some(text) = self.text.take() {
             if !text.is_empty() {
+                let font_id = self.font.as_ref().map_or(Default::default(), |f| f.inner);
+
                 self.section.text.push(
                     GText::new(text)
                         .with_color(self.color.rgba())
                         .with_scale(self.size)
                         .with_z(self.z)
-                        .with_font_id(self.font),
+                        .with_font_id(font_id),
                 );
+
+                if let Some(font) = &self.font {
+                    self.calculator.add_font(font);
+                }
             }
         }
     }
 }
 
+// get minX, minY, maxX, maxY for sections here...
 pub struct Text<'a> {
     pub(crate) width: i32,
     pub(crate) height: i32,
@@ -291,6 +309,7 @@ pub struct Text<'a> {
     pub(crate) clear_options: Option<ClearOptions>,
     pub(crate) transform: Option<Mat4>,
     pub(crate) region: Option<Rect>,
+    pub(crate) calculator: Calculator,
 }
 
 impl<'a> Text<'a> {
@@ -304,6 +323,7 @@ impl<'a> Text<'a> {
             clear_options: None,
             transform: None,
             region: None,
+            calculator: Calculator::new(),
         }
     }
 
@@ -373,7 +393,12 @@ impl<'a> Text<'a> {
             z: 0.0,
             size: 16.0,
             font: Default::default(),
+            calculator: &mut self.calculator,
         }
+    }
+
+    pub fn bounds(&mut self) -> Rect {
+        self.calculator.get_bounds(&self.sections)
     }
 }
 
