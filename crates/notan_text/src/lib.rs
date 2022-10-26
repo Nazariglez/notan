@@ -1,6 +1,7 @@
 mod calculator;
 mod config;
 
+use lazy_static::lazy_static;
 use notan_app::{ExtContainer, GfxExtension, GfxRenderer, Graphics};
 use notan_glyph::ab_glyph::FontArc;
 use notan_glyph::{
@@ -16,16 +17,21 @@ use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
-use crate::calculator::Calculator;
+pub use calculator::Calculator;
 pub use config::TextConfig;
 use notan_math::Mat4;
 use notan_math::Rect;
 
-#[derive(Clone, Debug)]
+use parking_lot::RwLock;
+
+lazy_static! {
+    static ref FONTS: RwLock<Vec<FontArc>> = RwLock::new(vec![]);
+}
+
+#[derive(Copy, Clone, Debug)]
 pub struct Font {
     id: u64,
     inner: FontId,
-    pub(crate) inner_ref: FontArc,
 }
 
 impl Font {
@@ -76,10 +82,11 @@ impl TextExtension {
         let font = FontArc::try_from_vec(data.to_vec()).map_err(|err| err.to_string())?;
         let id = self.glyph_brush.add_font(font.clone());
 
+        FONTS.write().push(font);
+
         Ok(Font {
             id: id.0 as _,
             inner: id,
-            inner_ref: font,
         })
     }
 
@@ -102,7 +109,6 @@ impl TextExtension {
     fn create_renderer(&mut self, device: &mut Device, text: &Text) -> Renderer {
         let glyph_brush = &mut self.glyph_brush;
         text.sections.iter().for_each(|s| glyph_brush.queue(s));
-        glyph_brush.queue(&text.current_section);
 
         let pipeline_type = text
             .pipeline_type
@@ -240,7 +246,6 @@ impl Drop for AddTextBuilder<'_, '_> {
                 .v_align(self.v_align);
 
             self.text.sections.push(section);
-            self.text.calculator.add_font(self.font.as_ref().unwrap());
         }
     }
 }
@@ -290,10 +295,6 @@ impl Drop for ChainTextBuilder<'_, '_> {
                         .with_z(self.z)
                         .with_font_id(font_id),
                 );
-
-                if let Some(font) = &self.font {
-                    self.calculator.add_font(font);
-                }
             }
         }
     }
@@ -304,7 +305,6 @@ pub struct Text<'a> {
     pub(crate) width: i32,
     pub(crate) height: i32,
     pub(crate) sections: Vec<Section<'a>>,
-    pub(crate) current_section: Section<'a>,
     pub(crate) pipeline_type: Option<TypeId>,
     pub(crate) clear_options: Option<ClearOptions>,
     pub(crate) transform: Option<Mat4>,
@@ -316,7 +316,6 @@ impl<'a> Text<'a> {
     pub fn new(width: i32, height: i32) -> Self {
         Self {
             sections: vec![],
-            current_section: Default::default(),
             width,
             height,
             pipeline_type: None,
@@ -397,8 +396,15 @@ impl<'a> Text<'a> {
         }
     }
 
+    pub fn last_bounds(&mut self) -> Rect {
+        match self.sections.last() {
+            None => Rect::default(),
+            Some(section) => self.calculator.bounds(section),
+        }
+    }
+
     pub fn bounds(&mut self) -> Rect {
-        self.calculator.get_bounds(&self.sections)
+        self.calculator.mixed_bounds(&self.sections)
     }
 }
 

@@ -1,78 +1,105 @@
-use crate::{Font, Text};
+use crate::{Font, Text, FONTS};
 use hashbrown::HashMap;
 use notan_glyph::ab_glyph::FontArc;
 use notan_glyph::{GlyphCalculator, GlyphCalculatorBuilder, GlyphCruncher, Section};
-use notan_math::Rect;
+use notan_math::{vec2, Rect, Vec2};
 use parking_lot::Mutex;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct Calculator {
-    fonts: HashMap<u64, Font>,
-    dirty: bool,
+    fonts: usize,
     glyphs: Option<GlyphCalculator>,
 }
 
 impl Calculator {
     pub fn new() -> Self {
         Self {
-            fonts: HashMap::new(),
-            dirty: false,
+            fonts: 0,
             glyphs: None,
         }
     }
 
-    pub fn add_fonts(&mut self, fonts: &[Font]) {
-        fonts.iter().for_each(|f| self.add_font(f));
-    }
-
-    pub fn add_font(&mut self, font: &Font) {
-        let dirty = self.fonts.insert(font.id, font.clone()).is_none();
-        if dirty {
-            self.dirty = true;
+    fn create_calculator(&mut self) {
+        if let Some((length, calculator)) = generate_calculator_if_necessary(self.fonts) {
+            self.fonts = length;
+            self.glyphs = Some(calculator);
         }
     }
 
-    pub fn get_bounds(&mut self, sections: &[Section]) -> Rect {
-        if self.dirty {
-            self.dirty = false;
-            self.glyphs = Some(create_calculator(&self.fonts));
-        }
+    pub fn bounds(&mut self, section: &Section) -> Rect {
+        self.create_calculator();
 
         // Glyphs is always present so it's safe to unwrap
         let glyphs = self.glyphs.as_mut().unwrap();
         let mut cache = glyphs.cache_scope();
-        let initial_rect = Rect {
-            x: f32::MAX,
-            y: f32::MAX,
-            width: f32::MIN_POSITIVE,
-            height: f32::MIN_POSITIVE,
-        };
-        let rect = sections.iter().fold(initial_rect, |rect, section| {
+
+        match cache.glyph_bounds(section) {
+            None => Rect::default(),
+            Some(bounds) => Rect {
+                x: bounds.min.x,
+                y: bounds.min.y,
+                width: bounds.width(),
+                height: bounds.height(),
+            },
+        }
+    }
+
+    pub fn mixed_bounds(&mut self, sections: &[Section]) -> Rect {
+        self.create_calculator();
+
+        // Glyphs is always present so it's safe to unwrap
+        let glyphs = self.glyphs.as_mut().unwrap();
+        let mut cache = glyphs.cache_scope();
+
+        // iterate over sections to get the min position and the max size
+        let rect = sections.iter().fold(MinMax::default(), |mm, section| {
             match cache.glyph_bounds(section) {
-                None => rect,
-                Some(bounds) => {
-                    println!("-->");
-                    dbg!(bounds);
-                    println!("<--");
-                    Rect {
-                        x: rect.x.min(bounds.min.x),
-                        y: rect.y.min(bounds.min.y),
-                        width: rect.width.max(bounds.width()),
-                        height: rect.height.max(bounds.height()),
-                    }
-                }
+                None => mm,
+                Some(bounds) => MinMax {
+                    min: vec2(mm.min.x.min(bounds.min.x), mm.min.y.min(bounds.min.y)),
+                    max: vec2(mm.max.x.max(bounds.max.x), mm.max.y.max(bounds.max.y)),
+                },
             }
         });
 
-        rect
+        rect.into()
     }
 }
 
-fn create_calculator(fonts: &HashMap<u64, Font>) -> GlyphCalculator {
-    let mut fonts = fonts
-        .values()
-        .map(|f| f.inner_ref.clone())
-        .collect::<Vec<_>>();
+struct MinMax {
+    min: Vec2,
+    max: Vec2,
+}
 
-    GlyphCalculatorBuilder::using_fonts(fonts).build()
+impl Default for MinMax {
+    fn default() -> Self {
+        Self {
+            min: Vec2::splat(f32::MAX),
+            max: Vec2::splat(f32::MIN),
+        }
+    }
+}
+
+impl From<MinMax> for Rect {
+    fn from(mm: MinMax) -> Self {
+        Rect {
+            x: mm.min.x,
+            y: mm.min.y,
+            width: mm.max.x - mm.min.x,
+            height: mm.max.y - mm.min.y,
+        }
+    }
+}
+
+fn generate_calculator_if_necessary(length: usize) -> Option<(usize, GlyphCalculator)> {
+    let fonts = FONTS.read();
+    let dirty = length != fonts.len();
+
+    if !dirty {
+        return None;
+    }
+
+    let calculator = GlyphCalculatorBuilder::using_fonts(fonts.to_vec()).build();
+    Some((fonts.len(), calculator))
 }
