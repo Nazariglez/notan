@@ -1818,11 +1818,14 @@ dependencies = [
 name = "notan_text"
 version = "0.7.1"
 dependencies = [
+ "hashbrown",
+ "lazy_static",
  "log",
  "notan_app",
  "notan_glyph",
  "notan_graphics",
  "notan_math",
+ "parking_lot",
 ]
 
 [[package]]

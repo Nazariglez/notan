@@ -5,10 +5,10 @@ use crate::{local_to_screen_position, screen_to_local_position};
 use notan_glyph::Section;
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
-use notan_math::{vec2, Mat3, Mat4, Vec2};
-use notan_text::Font;
+use notan_math::{vec2, Mat3, Mat4, Rect, Vec2};
+use notan_text::{Calculator, Font};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Draw {
     pub(crate) clear_color: Option<Color>,
     alpha: f32,
@@ -26,6 +26,7 @@ pub struct Draw {
     pub(crate) text_pipeline: CustomPipeline,
     pub(crate) text_batch_indices: Option<Vec<usize>>,
     masking: bool,
+    pub(crate) glyphs_calculator: Calculator,
 }
 
 impl Draw {
@@ -50,6 +51,7 @@ impl Draw {
             text_pipeline: Default::default(),
             masking: false,
             text_batch_indices: None,
+            glyphs_calculator: Calculator::new(),
         }
     }
 
@@ -267,6 +269,27 @@ impl Draw {
         let batch_len = self.batches.len();
         let indices = self.text_batch_indices.get_or_insert(vec![]);
         indices.push(batch_len);
+    }
+
+    /// Get the bounds of the last text immediately after draw it
+    /// The bounds doesn't take in account the Transformation matrix
+    pub fn last_text_bounds(&mut self) -> Rect {
+        if let Some(batch) = &self.current_batch {
+            if let BatchType::Text { texts } = &batch.typ {
+                if let Some(text) = texts.last() {
+                    return self.glyphs_calculator.bounds(&text.section.to_borrowed());
+                }
+            }
+        }
+
+        #[cfg(debug_assertions)]
+        {
+            log::debug!(
+                "'draw.last_text_bounds()' must be called immediately after 'draw.text(..)"
+            );
+        }
+
+        Rect::default()
     }
 
     pub fn screen_to_world_position(&mut self, screen_x: f32, screen_y: f32) -> Vec2 {
