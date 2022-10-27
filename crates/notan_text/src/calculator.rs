@@ -1,12 +1,9 @@
-use crate::{Font, Text, FONTS};
-use hashbrown::HashMap;
-use notan_glyph::ab_glyph::FontArc;
+use crate::FONTS;
 use notan_glyph::{GlyphCalculator, GlyphCalculatorBuilder, GlyphCruncher, Section};
 use notan_math::{vec2, Rect, Vec2};
-use parking_lot::Mutex;
-use std::sync::Arc;
 
-#[derive(Debug)]
+/// Calculate the bounds of a glyph section
+#[derive(Default, Debug)]
 pub struct Calculator {
     fonts: usize,
     glyphs: Option<GlyphCalculator>,
@@ -27,6 +24,7 @@ impl Calculator {
         }
     }
 
+    /// Returns the bound of the section passed
     pub fn bounds(&mut self, section: &Section) -> Rect {
         self.create_calculator();
 
@@ -45,6 +43,7 @@ impl Calculator {
         }
     }
 
+    /// Returns the bounds of the all sections mixed
     pub fn mixed_bounds(&mut self, sections: &[Section]) -> Rect {
         self.create_calculator();
 

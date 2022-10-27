@@ -1,4 +1,3 @@
-use notan::draw::*;
 use notan::prelude::*;
 use notan::text::*;
 
@@ -12,7 +11,6 @@ struct State {
 fn main() -> Result<(), String> {
     notan::init_with(setup)
         .add_config(TextConfig)
-        .add_config(DrawConfig)
         .draw(draw)
         .build()
 }
@@ -39,22 +37,13 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
         .h_align_center()
         .color(Color::ORANGE)
         .size(30.0);
-    //
+
     text.chain("Notan! ").size(50.0).color(Color::RED);
-    //
+
     text.chain("(Using TextExtension)")
         .font(&state.font2)
         .size(20.0)
         .color(Color::GRAY.with_alpha(0.5));
 
     gfx.render(&text);
-
-    let bounds = text.bounds();
-    dbg!(bounds);
-    let mut draw = gfx.create_draw();
-    draw.rect((bounds.x, bounds.y), (bounds.width, bounds.height))
-        .color(Color::RED)
-        .stroke(1.0);
-
-    gfx.render(&draw);
 }

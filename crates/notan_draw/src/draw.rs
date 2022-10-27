@@ -271,15 +271,14 @@ impl Draw {
         indices.push(batch_len);
     }
 
+    /// Get the bounds of the last text immediately after draw it
+    /// The bounds doesn't take in account the Transformation matrix
     pub fn last_text_bounds(&mut self) -> Rect {
         if let Some(batch) = &self.current_batch {
-            match &batch.typ {
-                BatchType::Text { texts } => {
-                    if let Some(text) = texts.last() {
-                        return self.glyphs_calculator.bounds(&text.section.to_borrowed());
-                    }
+            if let BatchType::Text { texts } = &batch.typ {
+                if let Some(text) = texts.last() {
+                    return self.glyphs_calculator.bounds(&text.section.to_borrowed());
                 }
-                _ => {}
             }
         }
 

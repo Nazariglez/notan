@@ -5,17 +5,15 @@ use lazy_static::lazy_static;
 use notan_app::{ExtContainer, GfxExtension, GfxRenderer, Graphics};
 use notan_glyph::ab_glyph::FontArc;
 use notan_glyph::{
-    DefaultGlyphPipeline, FontId, GlyphBrush, GlyphBrushBuilder, GlyphCalculator,
-    GlyphCalculatorBuilder, GlyphCruncher, GlyphPipeline, HorizontalAlign, Layout, Section,
-    Text as GText, VerticalAlign,
+    DefaultGlyphPipeline, FontId, GlyphBrush, GlyphBrushBuilder, GlyphPipeline, HorizontalAlign,
+    Layout, Section, Text as GText, VerticalAlign,
 };
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::ClearOptions;
 use notan_graphics::{Device, RenderTexture, Renderer, Texture};
 use std::any::TypeId;
 use std::collections::HashMap;
-use std::ops::{Deref, DerefMut};
-use std::sync::Arc;
+use std::ops::DerefMut;
 
 pub use calculator::Calculator;
 pub use config::TextConfig;
@@ -162,7 +160,7 @@ pub struct AddTextBuilder<'b, 'a: 'b> {
 
 impl<'b, 'a: 'b> AddTextBuilder<'b, 'a> {
     pub fn font(mut self, font: &Font) -> Self {
-        self.font = Some(font.clone());
+        self.font = Some(*font);
         self
     }
 
@@ -252,7 +250,6 @@ impl Drop for AddTextBuilder<'_, '_> {
 
 pub struct ChainTextBuilder<'b, 'a: 'b> {
     section: &'b mut Section<'a>,
-    calculator: &'b mut Calculator,
     text: Option<&'a str>,
     color: Color,
     z: f32,
@@ -262,7 +259,7 @@ pub struct ChainTextBuilder<'b, 'a: 'b> {
 
 impl<'b, 'a: 'b> ChainTextBuilder<'b, 'a> {
     pub fn font(mut self, font: &Font) -> Self {
-        self.font = Some(font.clone());
+        self.font = Some(*font);
         self
     }
 
@@ -392,7 +389,6 @@ impl<'a> Text<'a> {
             z: 0.0,
             size: 16.0,
             font: Default::default(),
-            calculator: &mut self.calculator,
         }
     }
 
