@@ -9,7 +9,9 @@ mod shaders;
 mod state;
 
 #[cfg(all(feature = "glsl-to-spirv", feature = "shaderc"))]
-compile_error!("feature \"glsl-to-spirv\" and feature \"shaderc\" cannot be enabled at the same time");
+compile_error!(
+    "feature \"glsl-to-spirv\" and feature \"shaderc\" cannot be enabled at the same time"
+);
 
 #[proc_macro_attribute]
 pub fn notan_main(_attr: TokenStream, item: TokenStream) -> TokenStream {
