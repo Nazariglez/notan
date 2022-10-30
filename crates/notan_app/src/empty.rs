@@ -23,9 +23,14 @@ pub struct EmptyWindowBackend {
     lazy: bool,
     captured: bool,
     visible: bool,
+    mouse_passthrough: bool,
 }
 
 impl WindowBackend for EmptyWindowBackend {
+    fn id(&self) -> u64 {
+        0
+    }
+
     fn set_size(&mut self, width: i32, height: i32) {
         self.size = (width, height);
     }
@@ -94,6 +99,14 @@ impl WindowBackend for EmptyWindowBackend {
 
     fn visible(&self) -> bool {
         self.visible
+    }
+
+    fn mouse_passthrough(&mut self) -> bool {
+        self.mouse_passthrough
+    }
+
+    fn set_mouse_passthrough(&mut self, pass_through: bool) {
+        self.mouse_passthrough = pass_through;
     }
 }
 
