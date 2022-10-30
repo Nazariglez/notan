@@ -15,9 +15,14 @@ pub struct WinitWindowBackend {
     visible: bool,
     high_dpi: bool,
     is_always_on_top: bool,
+    mouse_passthrough: bool,
 }
 
 impl WindowBackend for WinitWindowBackend {
+    fn id(&self) -> u64 {
+        self.window().id().into()
+    }
+
     fn set_size(&mut self, width: i32, height: i32) {
         self.window()
             .set_inner_size(LogicalSize::new(width, height));
@@ -141,6 +146,14 @@ impl WindowBackend for WinitWindowBackend {
     fn visible(&self) -> bool {
         self.visible
     }
+
+    fn mouse_passthrough(&mut self) -> bool {
+        self.mouse_passthrough
+    }
+
+    fn set_mouse_passthrough(&mut self, pass_through: bool) {
+        self.gl_ctx.window().set_cursor_hittest(!pass_through).unwrap();
+    }
 }
 
 impl WinitWindowBackend {
@@ -202,6 +215,7 @@ impl WinitWindowBackend {
             visible: config.visible,
             high_dpi: config.high_dpi,
             is_always_on_top: false,
+            mouse_passthrough: config.mouse_passthrough
         })
     }
 

@@ -231,6 +231,10 @@ impl WebWindowBackend {
 }
 
 impl WindowBackend for WebWindowBackend {
+    fn id(&self) -> u64 {
+        0
+    }
+
     fn set_size(&mut self, width: i32, height: i32) {
         set_size_dpi(&self.canvas, width as _, height as _);
         self.config.width = width;
@@ -330,6 +334,14 @@ impl WindowBackend for WebWindowBackend {
 
     // Unsupported in browser, always false
     fn is_always_on_top(&self) -> bool {
+        false
+    }
+
+    // No operation, as unsupported in browser
+    fn set_mouse_passthrough(&mut self, clickable: bool) {}
+
+    // No operation, as unsupported in browser
+    fn mouse_passthrough(&mut self) -> bool {
         false
     }
 }
