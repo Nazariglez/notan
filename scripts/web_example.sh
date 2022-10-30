@@ -1,8 +1,11 @@
 #!/bin/bash
 mkdir -p ./docs/examples/$1
+
+features=glyph,egui,text,extra,audio,links,drop_files,clipboard,save_file,texture_to_file
+
 if [[ $2 == '--release' ]];
 then
-  cargo build --target wasm32-unknown-unknown --release --example $1 --all-features
+  cargo build --target wasm32-unknown-unknown --release --example $1 --features=$features
   wasm-bindgen ./target/wasm32-unknown-unknown/release/examples/$1.wasm --out-dir ./docs/examples/$1 --no-modules --browser
   wasm-opt -O -o ./docs/examples/$1/$1_bg.wasm ./docs/examples/$1/$1_bg.wasm
 
@@ -13,7 +16,7 @@ then
   fi
 
 else
-  cargo build --target wasm32-unknown-unknown --example $1 --all-features
+  cargo build --target wasm32-unknown-unknown --example $1 --features=$features
   wasm-bindgen ./target/wasm32-unknown-unknown/debug/examples/$1.wasm --out-dir ./docs/examples/$1 --no-modules --browser --keep-debug --debug
 fi
 
