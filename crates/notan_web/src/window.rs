@@ -246,7 +246,7 @@ impl WindowBackend for WebWindowBackend {
     }
 
     // No operation, as unsupported in browser
-    fn set_position(&mut self, x: i32, y: i32) {}
+    fn set_position(&mut self, _x: i32, _y: i32) {}
 
     // No operation, as unsupported in browser
     fn position(&self) -> (i32, i32) {
@@ -337,8 +337,9 @@ impl WindowBackend for WebWindowBackend {
         false
     }
 
-    // No operation, as unsupported in browser
-    fn set_mouse_passthrough(&mut self, clickable: bool) {}
+    fn set_mouse_passthrough(&mut self, clickable: bool) {
+        canvas_mouse_passthrough(&self.canvas, clickable);
+    }
 
     // No operation, as unsupported in browser
     fn mouse_passthrough(&mut self) -> bool {

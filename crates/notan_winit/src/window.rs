@@ -152,7 +152,10 @@ impl WindowBackend for WinitWindowBackend {
     }
 
     fn set_mouse_passthrough(&mut self, pass_through: bool) {
-        self.gl_ctx.window().set_cursor_hittest(!pass_through).unwrap();
+        self.gl_ctx
+            .window()
+            .set_cursor_hittest(!pass_through)
+            .unwrap();
     }
 }
 
@@ -215,7 +218,7 @@ impl WinitWindowBackend {
             visible: config.visible,
             high_dpi: config.high_dpi,
             is_always_on_top: false,
-            mouse_passthrough: config.mouse_passthrough
+            mouse_passthrough: config.mouse_passthrough,
         })
     }
 
