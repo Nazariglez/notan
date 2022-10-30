@@ -152,6 +152,8 @@ impl WindowBackend for WinitWindowBackend {
     }
 
     fn set_mouse_passthrough(&mut self, pass_through: bool) {
+        self.mouse_passthrough = pass_through;
+
         self.gl_ctx
             .window()
             .set_cursor_hittest(!pass_through)

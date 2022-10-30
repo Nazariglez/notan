@@ -58,6 +58,8 @@ pub struct WebWindowBackend {
 
     capture_requested: Rc<RefCell<Option<bool>>>,
     pub(crate) captured: Rc<RefCell<bool>>,
+
+    mouse_passthrough: bool,
 }
 
 impl WebWindowBackend {
@@ -105,6 +107,7 @@ impl WebWindowBackend {
 
         let antialias = config.multisampling != 0;
         let transparent = config.transparent;
+        let mouse_passthrough = config.mouse_passthrough;
 
         let dpi = window.device_pixel_ratio();
         let lazy = Rc::new(RefCell::new(config.lazy_loop));
@@ -143,6 +146,8 @@ impl WebWindowBackend {
             capture_requested,
             captured: Rc::new(RefCell::new(false)),
             visible,
+
+            mouse_passthrough,
         };
 
         win.init()
@@ -338,7 +343,10 @@ impl WindowBackend for WebWindowBackend {
     }
 
     fn set_mouse_passthrough(&mut self, clickable: bool) {
-        canvas_mouse_passthrough(&self.canvas, clickable);
+        if self.mouse_passthrough != clickable {
+            self.mouse_passthrough = clickable;
+            canvas_mouse_passthrough(&self.canvas, clickable);
+        }
     }
 
     // No operation, as unsupported in browser
