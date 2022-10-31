@@ -125,12 +125,13 @@ fn stroke(triangle: &Triangle, draw: &mut Draw) {
         path.blend_mode(bm);
     }
 
-    let color = stroke_color.unwrap_or(ca).with_alpha(ca.a * alpha);
+    let color = stroke_color.unwrap_or(ca);
     path.move_to(a.0, a.1)
         .line_to(b.0, b.1)
         .line_to(c.0, c.1)
         .stroke(stroke_width)
-        .color(color)
+        .stroke_color(color)
+        .alpha(alpha)
         .close();
 
     if let Some(m) = matrix {
