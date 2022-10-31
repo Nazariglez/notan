@@ -6,7 +6,6 @@ use crate::transform::DrawTransform;
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
 use notan_math::Mat3;
-use std::ops::Rem;
 
 pub struct Triangle {
     colors: [Color; 3],
@@ -91,7 +90,7 @@ impl DrawTransform for Triangle {
 
 impl DrawProcess for Triangle {
     fn draw_process(self, draw: &mut Draw) {
-        let modes = self.modes.clone();
+        let modes = self.modes;
         modes.iter().enumerate().for_each(|(i, mode)| match mode {
             None => {
                 if i == 0 {

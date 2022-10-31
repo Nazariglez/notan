@@ -99,7 +99,7 @@ impl DrawTransform for Circle {
 
 impl DrawProcess for Circle {
     fn draw_process(self, draw: &mut Draw) {
-        let modes = self.modes.clone();
+        let modes = self.modes;
         modes.iter().enumerate().for_each(|(i, mode)| match mode {
             None => {
                 if i == 0 {
