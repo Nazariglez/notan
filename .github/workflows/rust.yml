@@ -9,7 +9,12 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - name: Install stable toolchain
+      - name: Update apt
+        run: sudo apt update
+      - name: Install alsa
+        run: sudo apt-get install libasound2-dev
+
+      - name: Install rust stable toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: default
