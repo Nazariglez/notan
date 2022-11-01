@@ -108,11 +108,10 @@ impl DrawProcess for Polygon {
             path_builder.blend_mode(bm);
         }
 
-        // let m = self.matrix.map_or(rot, |m| rot * m);
-        // let angle = 2.0 * PI / self.sides as f32;
-        // println!("ang: {}", angle);
-        // path_builder.rotate_from((self.pos.0, self.pos.1), angle);
-        //
+        if let Some(m) = self.matrix {
+            path_builder.transform(m);
+        }
+
         let modes = self.modes;
         modes.iter().enumerate().for_each(|(i, mode)| match mode {
             None => {
