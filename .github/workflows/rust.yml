@@ -46,4 +46,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --features=glyph,egui,text,extra,audio,links,drop_files,clipboard,save_file,texture_to_file
+          args: --workspace --exclude "notan_web" --features=glyph,egui,text,extra,audio,links,drop_files,clipboard,save_file,texture_to_file
