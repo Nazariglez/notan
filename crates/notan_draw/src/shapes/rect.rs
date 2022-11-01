@@ -13,13 +13,16 @@ pub struct Rectangle {
     colors: [Color; 4],
     pos: (f32, f32),
     size: (f32, f32),
-    mode: TessMode,
     stroke_width: f32,
     alpha: f32,
     matrix: Option<Mat3>,
     rounded_corners: Option<[f32; 4]>,
     corner_tolerance: f32,
     blend_mode: Option<BlendMode>,
+    modes: [Option<TessMode>; 2],
+    mode_index: usize,
+    fill_color: Option<Color>,
+    stroke_color: Option<Color>,
 }
 
 impl Rectangle {
@@ -28,13 +31,16 @@ impl Rectangle {
             colors: [Color::WHITE; 4],
             pos: position,
             size,
-            mode: TessMode::Fill,
             stroke_width: 1.0,
             alpha: 1.0,
             matrix: None,
             rounded_corners: None,
             corner_tolerance: FillOptions::DEFAULT_TOLERANCE,
             blend_mode: None,
+            modes: [None; 2],
+            mode_index: 0,
+            fill_color: None,
+            stroke_color: None,
         }
     }
 
@@ -72,6 +78,16 @@ impl Rectangle {
         self
     }
 
+    pub fn fill_color(&mut self, color: Color) -> &mut Self {
+        self.fill_color = Some(color);
+        self
+    }
+
+    pub fn stroke_color(&mut self, color: Color) -> &mut Self {
+        self.stroke_color = Some(color);
+        self
+    }
+
     pub fn color(&mut self, color: Color) -> &mut Self {
         self.colors.fill(color);
         self
@@ -91,13 +107,15 @@ impl Rectangle {
     }
 
     pub fn fill(&mut self) -> &mut Self {
-        self.mode = TessMode::Fill;
+        self.modes[self.mode_index] = Some(TessMode::Fill);
+        self.mode_index = (self.mode_index + 1) % 2;
         self
     }
 
     pub fn stroke(&mut self, width: f32) -> &mut Self {
-        self.mode = TessMode::Stroke;
+        self.modes[self.mode_index] = Some(TessMode::Stroke);
         self.stroke_width = width;
+        self.mode_index = (self.mode_index + 1) % 2;
         self
     }
 
@@ -115,14 +133,23 @@ impl DrawTransform for Rectangle {
 
 impl DrawProcess for Rectangle {
     fn draw_process(self, draw: &mut Draw) {
-        match self.mode {
-            TessMode::Fill => fill(self, draw),
-            TessMode::Stroke => stroke(self, draw),
-        }
+        let modes = self.modes;
+        modes.iter().enumerate().for_each(|(i, mode)| match mode {
+            None => {
+                if i == 0 {
+                    // fill by default
+                    fill(&self, draw);
+                }
+            }
+            Some(mode) => match mode {
+                TessMode::Fill => fill(&self, draw),
+                TessMode::Stroke => stroke(&self, draw),
+            },
+        });
     }
 }
 
-fn stroke(quad: Rectangle, draw: &mut Draw) {
+fn stroke(quad: &Rectangle, draw: &mut Draw) {
     let Rectangle {
         colors: [ca, ..],
         pos: (x, y),
@@ -133,13 +160,16 @@ fn stroke(quad: Rectangle, draw: &mut Draw) {
         rounded_corners,
         corner_tolerance,
         blend_mode,
+        stroke_color,
         ..
-    } = quad;
+    } = *quad;
 
     let stroke_options = StrokeOptions::default()
         .with_line_width(stroke_width)
         .with_tolerance(corner_tolerance);
-    let color = ca.with_alpha(ca.a * alpha);
+
+    let color = stroke_color.unwrap_or(ca);
+    let color = color.with_alpha(color.a * alpha);
 
     let path = match rounded_corners {
         Some([tl, tr, bl, br]) => geometry::rounded_rect(x, y, width, height, (tl, tr, bl, br)),
@@ -156,7 +186,7 @@ fn stroke(quad: Rectangle, draw: &mut Draw) {
     });
 }
 
-fn fill(quad: Rectangle, draw: &mut Draw) {
+fn fill(quad: &Rectangle, draw: &mut Draw) {
     let Rectangle {
         colors: [ca, cb, cc, cd],
         pos: (x1, y1),
@@ -166,8 +196,9 @@ fn fill(quad: Rectangle, draw: &mut Draw) {
         rounded_corners,
         corner_tolerance,
         blend_mode,
+        fill_color,
         ..
-    } = quad;
+    } = *quad;
 
     let mut draw_shape = |vertices: &[f32], indices: &[u32]| {
         draw.add_shape(&ShapeInfo {
@@ -177,6 +208,11 @@ fn fill(quad: Rectangle, draw: &mut Draw) {
             blend_mode,
         });
     };
+
+    let ca = fill_color.unwrap_or(ca);
+    let cb = fill_color.unwrap_or(cb);
+    let cc = fill_color.unwrap_or(cc);
+    let cd = fill_color.unwrap_or(cd);
 
     match rounded_corners {
         Some([tl, tr, bl, br]) => {

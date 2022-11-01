@@ -1,54 +1,49 @@
-use super::geometry;
+use super::path::Path;
 use super::tess::TessMode;
-use super::tess::*;
 use crate::builder::DrawProcess;
-use crate::draw::{Draw, ShapeInfo};
+use crate::draw::Draw;
 use crate::transform::DrawTransform;
-use lyon::tessellation::*;
+use crate::{DrawBuilder, DrawShapes};
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
 use notan_math::Mat3;
+use std::f32::consts::PI;
 
-pub struct Circle {
+pub struct Polygon {
     color: Color,
     pos: (f32, f32),
-    radius: f32,
     stroke_width: f32,
     alpha: f32,
     matrix: Option<Mat3>,
-    tolerance: f32,
     blend_mode: Option<BlendMode>,
     modes: [Option<TessMode>; 2],
     mode_index: usize,
     fill_color: Option<Color>,
     stroke_color: Option<Color>,
+    sides: u8,
+    radius: f32,
 }
 
-impl Circle {
-    pub fn new(radius: f32) -> Self {
+impl Polygon {
+    pub fn new(sides: u8, radius: f32) -> Self {
         Self {
             color: Color::WHITE,
-            pos: (0.0, 0.0),
-            radius,
             stroke_width: 1.0,
+            pos: (0.0, 0.0),
             alpha: 1.0,
             matrix: None,
-            tolerance: StrokeOptions::DEFAULT_TOLERANCE,
             blend_mode: None,
             modes: [None; 2],
             mode_index: 0,
             fill_color: None,
             stroke_color: None,
+            sides,
+            radius,
         }
     }
 
     pub fn position(&mut self, x: f32, y: f32) -> &mut Self {
         self.pos = (x, y);
-        self
-    }
-
-    pub fn tolerance(&mut self, value: f32) -> &mut Self {
-        self.tolerance = value;
         self
     }
 
@@ -91,87 +86,86 @@ impl Circle {
     }
 }
 
-impl DrawTransform for Circle {
+impl DrawTransform for Polygon {
     fn matrix(&mut self) -> &mut Option<Mat3> {
         &mut self.matrix
     }
 }
 
-impl DrawProcess for Circle {
+impl DrawProcess for Polygon {
     fn draw_process(self, draw: &mut Draw) {
+        let mut path_builder = draw.path();
+        draw_polygon(
+            &mut path_builder,
+            self.pos.0,
+            self.pos.1,
+            self.sides as _,
+            self.radius,
+        );
+        path_builder.color(self.color).alpha(self.alpha);
+
+        if let Some(bm) = self.blend_mode {
+            path_builder.blend_mode(bm);
+        }
+
+        if let Some(m) = self.matrix {
+            path_builder.transform(m);
+        }
+
         let modes = self.modes;
         modes.iter().enumerate().for_each(|(i, mode)| match mode {
             None => {
                 if i == 0 {
-                    // fill by default
-                    fill(&self, draw);
+                    if let Some(c) = self.fill_color {
+                        path_builder.fill_color(c);
+                    }
+
+                    path_builder.fill();
                 }
             }
             Some(mode) => match mode {
-                TessMode::Fill => fill(&self, draw),
-                TessMode::Stroke => stroke(&self, draw),
+                TessMode::Fill => {
+                    if let Some(c) = self.fill_color {
+                        path_builder.fill_color(c);
+                    }
+                    path_builder.fill();
+                }
+                TessMode::Stroke => {
+                    if let Some(c) = self.stroke_color {
+                        path_builder.stroke_color(c);
+                    }
+
+                    path_builder.stroke(self.stroke_width);
+                }
             },
         });
     }
 }
 
-fn stroke(circle: &Circle, draw: &mut Draw) {
-    let Circle {
-        color,
-        pos: (x, y),
-        radius,
-        stroke_width,
-        alpha,
-        matrix,
-        tolerance,
-        blend_mode,
-        stroke_color,
-        ..
-    } = *circle;
+fn draw_polygon(
+    path_builder: &mut DrawBuilder<Path>,
+    center_x: f32,
+    center_y: f32,
+    sides: usize,
+    radius: f32,
+) {
+    for n in 0..sides {
+        let i = n as f32;
 
-    let stroke_options = StrokeOptions::default()
-        .with_line_width(stroke_width)
-        .with_tolerance(tolerance);
+        let pi_sides = PI / sides as f32;
+        let is_even = sides % 2 == 0;
+        let offset = if is_even { pi_sides } else { pi_sides * 0.5 };
 
-    let color = stroke_color.unwrap_or(color);
-    let color = color.with_alpha(color.a * alpha);
+        let angle = i * 2.0 * pi_sides - offset;
+        let x = center_x + radius * angle.cos();
+        let y = center_y + radius * angle.sin();
 
-    let path = geometry::circle(x, y, radius);
-    let (vertices, indices) = stroke_lyon_path(&path, color, &stroke_options);
+        if n == 0 {
+            path_builder.move_to(x, y);
+        } else {
+            path_builder.line_to(x, y);
+        }
+    }
 
-    draw.add_shape(&ShapeInfo {
-        transform: matrix.as_ref(),
-        vertices: &vertices,
-        indices: &indices,
-        blend_mode,
-    });
-}
-
-fn fill(circle: &Circle, draw: &mut Draw) {
-    let Circle {
-        color,
-        pos: (x, y),
-        radius,
-        alpha,
-        matrix,
-        tolerance,
-        blend_mode,
-        fill_color,
-        ..
-    } = *circle;
-
-    let fill_options = FillOptions::default().with_tolerance(tolerance);
-
-    let color = fill_color.unwrap_or(color);
-    let color = color.with_alpha(color.a * alpha);
-
-    let path = geometry::circle(x, y, radius);
-    let (vertices, indices) = fill_lyon_path(&path, color, &fill_options);
-
-    draw.add_shape(&ShapeInfo {
-        transform: matrix.as_ref(),
-        vertices: &vertices,
-        indices: &indices,
-        blend_mode,
-    });
+    path_builder.close();
 }

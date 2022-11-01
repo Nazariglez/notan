@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 - Added mipmapping support with `TextureBuilder::generate_mipmaps`.
 - Added `WindowBackend::position` and `WindowBackend::set_position`.
 - Fix lint warning `notan_main` macro.
+- Added methods `.fill_color` and `stroke_color` for the Draw2d shapes to allow to stroke and fill with the same builder.
+- Added method `Draw::star(spikes, outser_radius, inner_radius)` to draw stars.
+- Added method `Draw::polygon(sides, radius)` to draw regular polygons.
 
 ## v0.7.1 - 08/10/2022
 
