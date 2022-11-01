@@ -19,6 +19,9 @@ All notable changes to this project will be documented in this file.
 - New examples `text_bounds.rs` and `draw_text_bounds.rs` to show how to measure the text size with real use cases.
 - Added a CI action to check if the code meets a minimal quality conditions.
 - Added `WindowBackend::set_mouse_passthrough` to change the passthrough condition at runtime. 
+- Fix custom pipelines for the Draw2d APIs. They were working only for images, now they work all (shapes, patterns, etc..)
+- Added example `draw_shapes_shader.rs` to show how to set a custom pipeline drawing shapes.
+- Renamed `draw_shader.rs` to `draw_image_shader.rs`
 
 ## v0.7.1 - 08/10/2022
 

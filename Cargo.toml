@@ -150,7 +150,7 @@ name = "draw_rect"
 required-features = ["draw"]
 
 [[example]]
-name = "draw_shader"
+name = "draw_image_shader"
 required-features = ["draw"]
 
 [[example]]
