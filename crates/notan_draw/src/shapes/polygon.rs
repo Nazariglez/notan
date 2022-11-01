@@ -1,12 +1,12 @@
 use super::path::Path;
 use super::tess::TessMode;
 use crate::builder::DrawProcess;
-use crate::draw::{Draw, ShapeInfo};
+use crate::draw::Draw;
 use crate::transform::DrawTransform;
 use crate::{DrawBuilder, DrawShapes};
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
-use notan_math::{vec3, Mat3};
+use notan_math::Mat3;
 use std::f32::consts::PI;
 
 pub struct Polygon {
