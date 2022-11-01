@@ -6,10 +6,10 @@ use crate::transform::DrawTransform;
 use crate::{DrawBuilder, DrawShapes};
 use notan_graphics::color::Color;
 use notan_graphics::pipeline::BlendMode;
-use notan_math::Mat3;
+use notan_math::{vec3, Mat3};
 use std::f32::consts::PI;
 
-pub struct Star {
+pub struct Polygon {
     color: Color,
     pos: (f32, f32),
     stroke_width: f32,
@@ -20,13 +20,12 @@ pub struct Star {
     mode_index: usize,
     fill_color: Option<Color>,
     stroke_color: Option<Color>,
-    spikes: u8,
-    outer_radius: f32,
-    inner_radius: f32,
+    sides: u8,
+    radius: f32,
 }
 
-impl Star {
-    pub fn new(spikes: u8, outer_radius: f32, inner_radius: f32) -> Self {
+impl Polygon {
+    pub fn new(sides: u8, radius: f32) -> Self {
         Self {
             color: Color::WHITE,
             stroke_width: 1.0,
@@ -38,9 +37,8 @@ impl Star {
             mode_index: 0,
             fill_color: None,
             stroke_color: None,
-            spikes,
-            outer_radius,
-            inner_radius,
+            sides,
+            radius,
         }
     }
 
@@ -88,22 +86,21 @@ impl Star {
     }
 }
 
-impl DrawTransform for Star {
+impl DrawTransform for Polygon {
     fn matrix(&mut self) -> &mut Option<Mat3> {
         &mut self.matrix
     }
 }
 
-impl DrawProcess for Star {
+impl DrawProcess for Polygon {
     fn draw_process(self, draw: &mut Draw) {
         let mut path_builder = draw.path();
-        draw_star(
+        draw_polygon(
             &mut path_builder,
             self.pos.0,
             self.pos.1,
-            self.spikes as _,
-            self.outer_radius,
-            self.inner_radius,
+            self.sides as _,
+            self.radius,
         );
         path_builder.color(self.color).alpha(self.alpha);
 
@@ -111,10 +108,11 @@ impl DrawProcess for Star {
             path_builder.blend_mode(bm);
         }
 
-        if let Some(m) = self.matrix {
-            path_builder.transform(m);
-        }
-
+        // let m = self.matrix.map_or(rot, |m| rot * m);
+        // let angle = 2.0 * PI / self.sides as f32;
+        // println!("ang: {}", angle);
+        // path_builder.rotate_from((self.pos.0, self.pos.1), angle);
+        //
         let modes = self.modes;
         modes.iter().enumerate().for_each(|(i, mode)| match mode {
             None => {
@@ -145,34 +143,30 @@ impl DrawProcess for Star {
     }
 }
 
-fn draw_star(
+fn draw_polygon(
     path_builder: &mut DrawBuilder<Path>,
     center_x: f32,
     center_y: f32,
-    spikes: usize,
-    outer_radius: f32,
-    inner_radius: f32,
+    sides: usize,
+    radius: f32,
 ) {
-    let step = PI / spikes as f32;
+    for n in 0..sides {
+        let i = n as f32;
 
-    path_builder.move_to(center_x, center_y - outer_radius);
+        let pi_sides = PI / sides as f32;
+        let is_even = sides % 2 == 0;
+        let offset = if is_even { pi_sides } else { pi_sides * 0.5 };
 
-    let mut rot = PI / 2.0 * 3.0;
-    for _ in 0..spikes {
-        let mut x = center_x + rot.cos() * outer_radius;
-        let mut y = center_y + rot.sin() * outer_radius;
-        rot += step;
+        let angle = i * 2.0 * pi_sides - offset;
+        let x = center_x + radius * angle.cos();
+        let y = center_y + radius * angle.sin();
 
-        path_builder.line_to(x, y);
-
-        x = center_x + rot.cos() * inner_radius;
-        y = center_y + rot.sin() * inner_radius;
-        rot += step;
-
-        path_builder.line_to(x, y);
+        if n == 0 {
+            path_builder.move_to(x, y);
+        } else {
+            path_builder.line_to(x, y);
+        }
     }
 
-    path_builder
-        .line_to(center_x, center_y - outer_radius)
-        .close();
+    path_builder.close();
 }
