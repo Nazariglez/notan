@@ -9,7 +9,12 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - name: Install stable toolchain
+      - name: Update apt
+        run: sudo apt update
+      - name: Install alsa
+        run: sudo apt-get install libasound2-dev
+
+      - name: Install rust stable toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: default
@@ -41,4 +46,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --features=glyph,egui,text,extra,audio,links,drop_files,clipboard,save_file,texture_to_file
+          args: --workspace --exclude "notan_web" --features=glyph,egui,text,extra,audio,links,drop_files,clipboard,save_file,texture_to_file
