@@ -66,7 +66,7 @@ impl Batch {
             BatchType::Image { .. } => 8,
             BatchType::Pattern { .. } => 12,
             BatchType::Shape => 6,
-            BatchType::Text { .. } => 8, //TODO check offset
+            BatchType::Text { .. } => 8,
         }
     }
 }

@@ -86,12 +86,12 @@ name = "assets_try_unwrap"
 required-features = ["draw"]
 
 [[example]]
-name = "draw_animation_grid"
-required-features = ["draw"]
-
-[[example]]
 name = "audio_basic"
 required-features = ["log", "egui", "audio"]
+
+[[example]]
+name = "draw_animation_grid"
+required-features = ["draw"]
 
 [[example]]
 name = "draw_animation_list"
@@ -122,6 +122,10 @@ name = "draw_image_crop"
 required-features = ["draw"]
 
 [[example]]
+name = "draw_image_shader"
+required-features = ["draw"]
+
+[[example]]
 name = "draw_mask"
 required-features = ["draw"]
 
@@ -146,11 +150,11 @@ name = "draw_pattern"
 required-features = ["draw"]
 
 [[example]]
-name = "draw_rect"
+name = "draw_projection"
 required-features = ["draw"]
 
 [[example]]
-name = "draw_shader"
+name = "draw_rect"
 required-features = ["draw"]
 
 [[example]]
@@ -158,7 +162,15 @@ name = "draw_shapes"
 required-features = ["draw"]
 
 [[example]]
+name = "draw_shapes_shader"
+required-features = ["draw"]
+
+[[example]]
 name = "draw_text"
+required-features = ["draw"]
+
+[[example]]
+name = "draw_text_bounds"
 required-features = ["draw"]
 
 [[example]]
@@ -254,12 +266,20 @@ name = "input_mouse_wheel"
 required-features = ["draw"]
 
 [[example]]
+name = "input_touches"
+required-features = ["draw"]
+
+[[example]]
 name = "log_basic"
 required-features = ["log"]
 
 [[example]]
 name = "renderer_instancing_cubes"
 required-features = ["random"]
+
+[[example]]
+name = "text_bounds"
+required-features = ["text"]
 
 [[example]]
 name = "text_hello"
