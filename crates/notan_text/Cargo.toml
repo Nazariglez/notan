@@ -16,3 +16,6 @@ notan_graphics = { path = "../notan_graphics", version = "0.7.1" }
 notan_glyph = { path = "../notan_glyph", version = "0.7.1" }
 notan_math = { path = "../notan_math", version = "0.7.1" }
 log = "0.4.17"
+lazy_static = "1.4.0"
+parking_lot = "0.12.1"
+hashbrown = "0.12.3"

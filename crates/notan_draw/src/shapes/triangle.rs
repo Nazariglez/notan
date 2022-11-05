@@ -10,11 +10,14 @@ use notan_math::Mat3;
 pub struct Triangle {
     colors: [Color; 3],
     points: [(f32, f32); 3],
-    mode: TessMode,
     stroke_width: f32,
     alpha: f32,
     matrix: Option<Mat3>,
     blend_mode: Option<BlendMode>,
+    modes: [Option<TessMode>; 2],
+    mode_index: usize,
+    fill_color: Option<Color>,
+    stroke_color: Option<Color>,
 }
 
 impl Triangle {
@@ -22,12 +25,25 @@ impl Triangle {
         Self {
             colors: [Color::WHITE; 3],
             points: [a, b, c],
-            mode: TessMode::Fill,
             stroke_width: 1.0,
             alpha: 1.0,
             matrix: None,
             blend_mode: None,
+            modes: [None; 2],
+            mode_index: 0,
+            fill_color: None,
+            stroke_color: None,
         }
+    }
+
+    pub fn fill_color(&mut self, color: Color) -> &mut Self {
+        self.fill_color = Some(color);
+        self
+    }
+
+    pub fn stroke_color(&mut self, color: Color) -> &mut Self {
+        self.stroke_color = Some(color);
+        self
     }
 
     pub fn color(&mut self, color: Color) -> &mut Self {
@@ -48,13 +64,15 @@ impl Triangle {
     }
 
     pub fn fill(&mut self) -> &mut Self {
-        self.mode = TessMode::Fill;
+        self.modes[self.mode_index] = Some(TessMode::Fill);
+        self.mode_index = (self.mode_index + 1) % 2;
         self
     }
 
     pub fn stroke(&mut self, width: f32) -> &mut Self {
-        self.mode = TessMode::Stroke;
+        self.modes[self.mode_index] = Some(TessMode::Stroke);
         self.stroke_width = width;
+        self.mode_index = (self.mode_index + 1) % 2;
         self
     }
 
@@ -72,14 +90,23 @@ impl DrawTransform for Triangle {
 
 impl DrawProcess for Triangle {
     fn draw_process(self, draw: &mut Draw) {
-        match self.mode {
-            TessMode::Fill => fill(self, draw),
-            TessMode::Stroke => stroke(self, draw),
-        }
+        let modes = self.modes;
+        modes.iter().enumerate().for_each(|(i, mode)| match mode {
+            None => {
+                if i == 0 {
+                    // fill by default
+                    fill(&self, draw);
+                }
+            }
+            Some(mode) => match mode {
+                TessMode::Fill => fill(&self, draw),
+                TessMode::Stroke => stroke(&self, draw),
+            },
+        });
     }
 }
 
-fn stroke(triangle: Triangle, draw: &mut Draw) {
+fn stroke(triangle: &Triangle, draw: &mut Draw) {
     let Triangle {
         colors: [ca, ..],
         points: [a, b, c],
@@ -87,8 +114,9 @@ fn stroke(triangle: Triangle, draw: &mut Draw) {
         alpha,
         matrix,
         blend_mode,
+        stroke_color,
         ..
-    } = triangle;
+    } = *triangle;
 
     let mut path = Path::new();
 
@@ -96,11 +124,13 @@ fn stroke(triangle: Triangle, draw: &mut Draw) {
         path.blend_mode(bm);
     }
 
+    let color = stroke_color.unwrap_or(ca);
     path.move_to(a.0, a.1)
         .line_to(b.0, b.1)
         .line_to(c.0, c.1)
         .stroke(stroke_width)
-        .color(ca.with_alpha(ca.a * alpha))
+        .stroke_color(color)
+        .alpha(alpha)
         .close();
 
     if let Some(m) = matrix {
@@ -110,15 +140,20 @@ fn stroke(triangle: Triangle, draw: &mut Draw) {
     path.draw_process(draw);
 }
 
-fn fill(triangle: Triangle, draw: &mut Draw) {
+fn fill(triangle: &Triangle, draw: &mut Draw) {
     let Triangle {
         colors: [ca, cb, cc],
         points: [a, b, c],
         alpha,
         matrix,
         blend_mode,
+        fill_color,
         ..
-    } = triangle;
+    } = *triangle;
+
+    let ca = fill_color.unwrap_or(ca);
+    let cb = fill_color.unwrap_or(cb);
+    let cc = fill_color.unwrap_or(cc);
 
     let indices = [0, 1, 2];
     #[rustfmt::skip]

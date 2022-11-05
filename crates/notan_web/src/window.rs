@@ -64,6 +64,8 @@ pub struct WebWindowBackend {
 
     capture_requested: Rc<RefCell<Option<bool>>>,
     pub(crate) captured: Rc<RefCell<bool>>,
+
+    mouse_passthrough: bool,
 }
 
 impl WebWindowBackend {
@@ -114,6 +116,7 @@ impl WebWindowBackend {
 
         let antialias = config.multisampling != 0;
         let transparent = config.transparent;
+        let mouse_passthrough = config.mouse_passthrough;
 
         let dpi = window.device_pixel_ratio();
         let lazy = Rc::new(RefCell::new(config.lazy_loop));
@@ -155,6 +158,8 @@ impl WebWindowBackend {
             capture_requested,
             captured: Rc::new(RefCell::new(false)),
             visible,
+
+            mouse_passthrough,
         };
 
         win.init()
@@ -246,6 +251,10 @@ impl WebWindowBackend {
 }
 
 impl WindowBackend for WebWindowBackend {
+    fn id(&self) -> u64 {
+        0
+    }
+
     fn set_size(&mut self, width: i32, height: i32) {
         set_size_dpi(&self.canvas, width as _, height as _);
         self.config.width = width;
@@ -257,7 +266,7 @@ impl WindowBackend for WebWindowBackend {
     }
 
     // No operation, as unsupported in browser
-    fn set_position(&mut self, x: i32, y: i32) {}
+    fn set_position(&mut self, _x: i32, _y: i32) {}
 
     // No operation, as unsupported in browser
     fn position(&self) -> (i32, i32) {
@@ -345,6 +354,18 @@ impl WindowBackend for WebWindowBackend {
 
     // Unsupported in browser, always false
     fn is_always_on_top(&self) -> bool {
+        false
+    }
+
+    fn set_mouse_passthrough(&mut self, clickable: bool) {
+        if self.mouse_passthrough != clickable {
+            self.mouse_passthrough = clickable;
+            canvas_mouse_passthrough(&self.canvas, clickable);
+        }
+    }
+
+    // No operation, as unsupported in browser
+    fn mouse_passthrough(&mut self) -> bool {
         false
     }
 }

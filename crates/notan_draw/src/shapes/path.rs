@@ -14,11 +14,14 @@ pub struct Path {
     fill_options: FillOptions,
     builder: Builder,
     initialized: bool,
-    mode: TessMode,
     color: Color,
     alpha: f32,
     matrix: Option<Mat3>,
     blend_mode: Option<BlendMode>,
+    modes: [Option<TessMode>; 2],
+    mode_index: usize,
+    fill_color: Option<Color>,
+    stroke_color: Option<Color>,
 }
 
 impl Default for Path {
@@ -34,11 +37,14 @@ impl Path {
             fill_options: FillOptions::default(),
             builder: lyon::path::Path::builder(),
             initialized: false,
-            mode: TessMode::Stroke,
             color: Color::WHITE,
             alpha: 1.0,
             matrix: None,
             blend_mode: None,
+            modes: [None; 2],
+            mode_index: 0,
+            fill_color: None,
+            stroke_color: None,
         }
     }
 
@@ -140,13 +146,25 @@ impl Path {
     }
 
     pub fn fill(&mut self) -> &mut Self {
-        self.mode = TessMode::Fill;
+        self.modes[self.mode_index] = Some(TessMode::Fill);
+        self.mode_index = (self.mode_index + 1) % 2;
         self
     }
 
     pub fn stroke(&mut self, width: f32) -> &mut Self {
         self.stroke_options = self.stroke_options.with_line_width(width);
-        self.mode = TessMode::Stroke;
+        self.modes[self.mode_index] = Some(TessMode::Stroke);
+        self.mode_index = (self.mode_index + 1) % 2;
+        self
+    }
+
+    pub fn fill_color(&mut self, color: Color) -> &mut Self {
+        self.fill_color = Some(color);
+        self
+    }
+
+    pub fn stroke_color(&mut self, color: Color) -> &mut Self {
+        self.stroke_color = Some(color);
         self
     }
 
@@ -167,30 +185,18 @@ impl DrawProcess for Path {
             self.builder.end(false);
         }
 
-        let Self {
-            builder,
-            stroke_options,
-            fill_options,
-            color,
-            alpha,
-            matrix,
-            blend_mode,
-            ..
-        } = self;
-
-        let color = color.with_alpha(color.a * alpha);
-
-        let path = builder.build();
-        let (vertices, indices) = match self.mode {
-            TessMode::Fill => fill_lyon_path(&path, color, &fill_options),
-            TessMode::Stroke => stroke_lyon_path(&path, color, &stroke_options),
-        };
-
-        draw.add_shape(&ShapeInfo {
-            transform: matrix.as_ref(),
-            vertices: &vertices,
-            indices: &indices,
-            blend_mode,
+        let modes = self.modes;
+        modes.iter().enumerate().for_each(|(i, mode)| match mode {
+            None => {
+                if i == 0 {
+                    // fill by default
+                    fill(&self, draw);
+                }
+            }
+            Some(mode) => match mode {
+                TessMode::Fill => fill(&self, draw),
+                TessMode::Stroke => stroke(&self, draw),
+            },
         });
     }
 }
@@ -199,4 +205,54 @@ impl DrawTransform for Path {
     fn matrix(&mut self) -> &mut Option<Mat3> {
         &mut self.matrix
     }
+}
+
+fn fill(path: &Path, draw: &mut Draw) {
+    let Path {
+        fill_options,
+        color,
+        alpha,
+        matrix,
+        blend_mode,
+        fill_color,
+        ..
+    } = *path;
+
+    let color = fill_color.unwrap_or(color);
+    let color = color.with_alpha(color.a * alpha);
+
+    let path = path.builder.clone().build();
+    let (vertices, indices) = fill_lyon_path(&path, color, &fill_options);
+
+    draw.add_shape(&ShapeInfo {
+        transform: matrix.as_ref(),
+        vertices: &vertices,
+        indices: &indices,
+        blend_mode,
+    });
+}
+
+fn stroke(path: &Path, draw: &mut Draw) {
+    let Path {
+        stroke_options,
+        color,
+        alpha,
+        matrix,
+        blend_mode,
+        stroke_color,
+        ..
+    } = *path;
+
+    let color = stroke_color.unwrap_or(color);
+    let color = color.with_alpha(color.a * alpha);
+
+    let path = path.builder.clone().build();
+    let (vertices, indices) = stroke_lyon_path(&path, color, &stroke_options);
+
+    draw.add_shape(&ShapeInfo {
+        transform: matrix.as_ref(),
+        vertices: &vertices,
+        indices: &indices,
+        blend_mode,
+    });
 }

@@ -4,7 +4,9 @@ mod geometry;
 mod line;
 mod painter;
 mod path;
+mod polygon;
 mod rect;
+mod star;
 mod tess;
 mod triangle;
 
@@ -16,7 +18,9 @@ pub use line::Line;
 pub use painter::create_shape_pipeline;
 pub(crate) use painter::*;
 pub use path::Path;
+pub use polygon::Polygon;
 pub use rect::Rectangle;
+pub use star::Star;
 pub use triangle::Triangle;
 
 pub trait DrawShapes {
@@ -26,6 +30,8 @@ pub trait DrawShapes {
     fn rect(&mut self, position: (f32, f32), size: (f32, f32)) -> DrawBuilder<Rectangle>;
     fn circle(&mut self, radius: f32) -> DrawBuilder<Circle>;
     fn ellipse(&mut self, position: (f32, f32), size: (f32, f32)) -> DrawBuilder<Ellipse>;
+    fn star(&mut self, spikes: u8, outer_radius: f32, inner_radius: f32) -> DrawBuilder<Star>;
+    fn polygon(&mut self, sides: u8, radius: f32) -> DrawBuilder<Polygon>;
 }
 
 impl DrawShapes for Draw {
@@ -51,5 +57,13 @@ impl DrawShapes for Draw {
 
     fn ellipse(&mut self, position: (f32, f32), size: (f32, f32)) -> DrawBuilder<Ellipse> {
         DrawBuilder::new(self, Ellipse::new(position, size))
+    }
+
+    fn star(&mut self, spikes: u8, outer_radius: f32, inner_radius: f32) -> DrawBuilder<Star> {
+        DrawBuilder::new(self, Star::new(spikes, outer_radius, inner_radius))
+    }
+
+    fn polygon(&mut self, sides: u8, radius: f32) -> DrawBuilder<Polygon> {
+        DrawBuilder::new(self, Polygon::new(sides, radius))
     }
 }

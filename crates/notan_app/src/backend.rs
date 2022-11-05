@@ -114,6 +114,9 @@ pub enum CursorIcon {
 
 /// Represents a window
 pub trait WindowBackend {
+    // Returns the window id
+    fn id(&self) -> u64;
+
     /// Sets the window's size
     fn set_size(&mut self, width: i32, height: i32);
 
@@ -177,4 +180,10 @@ pub trait WindowBackend {
 
     /// Returns if the window is visible
     fn visible(&self) -> bool;
+
+    // sets whether you can click through the window
+    fn set_mouse_passthrough(&mut self, pass_through: bool);
+
+    // returns whether you can click through the window
+    fn mouse_passthrough(&mut self) -> bool;
 }

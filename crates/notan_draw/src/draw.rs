@@ -5,10 +5,10 @@ use crate::{local_to_screen_position, screen_to_local_position};
 use notan_glyph::Section;
 use notan_graphics::color::Color;
 use notan_graphics::prelude::*;
-use notan_math::{vec2, Mat3, Mat4, Vec2};
-use notan_text::Font;
+use notan_math::{vec2, Mat3, Mat4, Rect, Vec2};
+use notan_text::{Calculator, Font};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Draw {
     pub(crate) clear_color: Option<Color>,
     alpha: f32,
@@ -26,6 +26,7 @@ pub struct Draw {
     pub(crate) text_pipeline: CustomPipeline,
     pub(crate) text_batch_indices: Option<Vec<usize>>,
     masking: bool,
+    pub(crate) glyphs_calculator: Calculator,
 }
 
 impl Draw {
@@ -50,6 +51,7 @@ impl Draw {
             text_pipeline: Default::default(),
             masking: false,
             text_batch_indices: None,
+            glyphs_calculator: Calculator::new(),
         }
     }
 
@@ -150,15 +152,13 @@ impl Draw {
         self.clear_color = Some(color);
     }
 
-    fn add_batch<I, F1, F2>(&mut self, info: &I, check_type: F1, create_type: F2)
+    fn add_batch<I, F1, F2>(&mut self, info: &I, is_diff_type: F1, create_type: F2)
     where
         I: DrawInfo,
         F1: Fn(&Batch, &I) -> bool,
         F2: Fn(&I) -> BatchType,
     {
-        let needs_new_batch =
-            needs_new_batch(info, &self.current_batch, &self.image_pipeline, check_type);
-
+        let needs_new_batch = needs_new_batch(&self, info, is_diff_type);
         if needs_new_batch {
             if let Some(old) = self.current_batch.take() {
                 self.batches.push(old);
@@ -198,7 +198,7 @@ impl Draw {
     }
 
     pub fn add_image<'a>(&mut self, info: &ImageInfo<'a>) {
-        let check_type = |b: &Batch, i: &ImageInfo| {
+        let is_diff_type = |b: &Batch, i: &ImageInfo| {
             match &b.typ {
                 //different texture
                 BatchType::Image { texture } => texture != i.texture,
@@ -212,18 +212,18 @@ impl Draw {
             texture: i.texture.clone(),
         };
 
-        self.add_batch(info, check_type, create_type);
+        self.add_batch(info, is_diff_type, create_type);
     }
 
     pub fn add_shape<'a>(&mut self, info: &ShapeInfo<'a>) {
-        let check_type = |b: &Batch, _: &ShapeInfo| !b.is_shape();
+        let is_diff_type = |b: &Batch, _: &ShapeInfo| !b.is_shape();
         let create_type = |_: &ShapeInfo| BatchType::Shape;
 
-        self.add_batch(info, check_type, create_type);
+        self.add_batch(info, is_diff_type, create_type);
     }
 
     pub fn add_pattern<'a>(&mut self, info: &ImageInfo<'a>) {
-        let check_type = |b: &Batch, i: &ImageInfo| {
+        let is_diff_type = |b: &Batch, i: &ImageInfo| {
             match &b.typ {
                 //different texture
                 BatchType::Pattern { texture } => texture != i.texture,
@@ -237,14 +237,14 @@ impl Draw {
             texture: i.texture.clone(),
         };
 
-        self.add_batch(info, check_type, create_type);
+        self.add_batch(info, is_diff_type, create_type);
     }
 
     pub fn add_text<'a>(&mut self, info: &TextInfo<'a>) {
-        let check_type = |b: &Batch, _: &TextInfo| !b.is_text();
+        let is_diff_type = |b: &Batch, _: &TextInfo| !b.is_text();
         let create_type = |_: &TextInfo| BatchType::Text { texts: vec![] };
 
-        self.add_batch(info, check_type, create_type);
+        self.add_batch(info, is_diff_type, create_type);
 
         if let Some(b) = &mut self.current_batch {
             // vertices and indices are calculated before the flush to the gpu, so we need to store the text until that time
@@ -267,6 +267,27 @@ impl Draw {
         let batch_len = self.batches.len();
         let indices = self.text_batch_indices.get_or_insert(vec![]);
         indices.push(batch_len);
+    }
+
+    /// Get the bounds of the last text immediately after draw it
+    /// The bounds doesn't take in account the Transformation matrix
+    pub fn last_text_bounds(&mut self) -> Rect {
+        if let Some(batch) = &self.current_batch {
+            if let BatchType::Text { texts } = &batch.typ {
+                if let Some(text) = texts.last() {
+                    return self.glyphs_calculator.bounds(&text.section.to_borrowed());
+                }
+            }
+        }
+
+        #[cfg(debug_assertions)]
+        {
+            log::debug!(
+                "'draw.last_text_bounds()' must be called immediately after 'draw.text(..)"
+            );
+        }
+
+        Rect::default()
     }
 
     pub fn screen_to_world_position(&mut self, screen_x: f32, screen_y: f32) -> Vec2 {
@@ -372,32 +393,45 @@ impl DrawInfo for TextInfo<'_> {
 }
 
 fn needs_new_batch<I: DrawInfo, F: Fn(&Batch, &I) -> bool>(
+    draw: &Draw,
     info: &I,
-    current: &Option<Batch>,
-    custom: &CustomPipeline,
-    check_type: F,
+    is_diff_type: F,
 ) -> bool {
-    match current {
+    match &draw.current_batch {
+        None => true, // no previous batch, so we need a new one
         Some(b) => {
-            if b.pipeline.as_ref() != custom.pipeline.as_ref() {
-                return true; // different pipeline
+            // if the current and the new batch type are different
+            if is_diff_type(b, info) {
+                return true;
             }
 
+            // we need to check the custom pipeline to see if it's different
+            let custom = match b.typ {
+                BatchType::Image { .. } => &draw.image_pipeline,
+                BatchType::Pattern { .. } => &draw.pattern_pipeline,
+                BatchType::Shape => &draw.shape_pipeline,
+                BatchType::Text { .. } => &draw.text_pipeline,
+            };
+
+            if b.pipeline.as_ref() != custom.pipeline.as_ref() {
+                return true;
+            }
+
+            // new batch if the blend_mode is different
             if let Some(bm) = info.blend_mode() {
                 if bm != b.blend_mode {
-                    return true; // different blend mode
+                    return true;
                 }
             }
 
-            // TODO check this... windows drop fps dramatically without this limit
             // if cfg!(not(target_os = "osx")) {
             //     if b.indices.len() + info.indices().len() >= u16::MAX as usize {
             //         return true;
             //     }
             // }
 
-            check_type(b, info)
+            // by default we batch calls
+            false
         }
-        _ => true, // no previous batch
     }
 }

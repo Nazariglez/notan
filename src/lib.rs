@@ -1,7 +1,7 @@
 mod notan;
 pub mod prelude;
 
-pub use notan::*;
+pub use crate::notan::*;
 #[doc(inline)]
 pub use notan_app as app;
 #[doc(inline)]
