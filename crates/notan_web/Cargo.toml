@@ -21,7 +21,7 @@ wasm-bindgen-futures = "0.4.33"
 console_error_panic_hook = "0.1.7"
 notan_glow = { path = "../notan_glow", version = "0.7.1" }
 notan_graphics = { path = "../notan_graphics", version = "0.7.1" }
-futures-util = "0.3.24"
+futures-util = "0.3.25"
 notan_audio = { path = "../notan_audio", version = "0.7.1", optional = true }
 notan_oddio = { path = "../notan_oddio", version = "0.7.1", optional = true }
 
