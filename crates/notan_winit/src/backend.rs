@@ -46,9 +46,17 @@ impl Backend for WinitBackend {
         self.window.as_mut().unwrap()
     }
 
-    #[cfg(feature = "clipboard")]
     fn set_clipboard_text(&mut self, text: &str) {
-        clipboard::set_clipboard_text(text)
+        #[cfg(feature = "clipboard")]
+        clipboard::set_clipboard_text(text);
+
+        #[cfg(not(feature = "clipboard"))]
+        {
+            log::warn!(
+                "Cannot set {} to clipboard without the feature 'clipboard' enabled.",
+                text
+            );
+        }
     }
 
     fn events_iter(&mut self) -> EventIterator {

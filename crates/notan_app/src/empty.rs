@@ -126,7 +126,6 @@ impl Backend for EmptyBackend {
         &mut self.window
     }
 
-    #[cfg(feature = "clipboard")]
     fn set_clipboard_text(&mut self, _text: &str) {}
 
     fn events_iter(&mut self) -> EventIterator {

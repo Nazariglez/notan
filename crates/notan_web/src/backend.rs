@@ -40,9 +40,17 @@ impl Backend for WebBackend {
         self.events.borrow_mut().take_events()
     }
 
-    #[cfg(feature = "clipboard")]
     fn set_clipboard_text(&mut self, text: &str) {
-        clipboard::set_clipboard_text(text)
+        #[cfg(feature = "clipboard")]
+        clipboard::set_clipboard_text(text);
+
+        #[cfg(not(feature = "clipboard"))]
+        {
+            log::warn!(
+                "Cannot set {} to clipboard without the feature 'clipboard' enabled.",
+                text
+            );
+        }
     }
 
     fn window(&mut self) -> &mut dyn WindowBackend {

@@ -222,11 +222,8 @@ impl Plugin for EguiPlugin {
                 }
             }
 
-            #[cfg(feature = "clipboard")]
             Event::Copy => self.add_event(egui::Event::Copy),
-            #[cfg(feature = "clipboard")]
             Event::Cut => self.add_event(egui::Event::Cut),
-            #[cfg(feature = "clipboard")]
             Event::Paste(text) => self.add_event(egui::Event::Paste(text.into())),
 
             #[cfg(feature = "drop_files")]
@@ -316,7 +313,6 @@ impl Plugin for EguiPlugin {
                 cursor_icon,
                 open_url,
 
-                #[cfg(feature = "clipboard")]
                 copied_text,
                 ..
             } = platform_output;
@@ -341,7 +337,6 @@ impl Plugin for EguiPlugin {
                 }
             }
 
-            #[cfg(feature = "clipboard")]
             if !copied_text.is_empty() {
                 app.backend.set_clipboard_text(&copied_text);
             }
