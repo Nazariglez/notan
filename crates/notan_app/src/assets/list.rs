@@ -86,7 +86,7 @@ impl AssetList {
 
         if !self.claimed.contains(id) {
             let asset = self.tracker.claim_asset::<A>(id, loaded.clone())?;
-            let list = self.assets.entry(type_id).or_insert(HashMap::new());
+            let list = self.assets.entry(type_id).or_default();
             list.insert(id.to_string(), asset);
         }
 

@@ -6,24 +6,14 @@ use notan_app::{
     App, AppFlow, ClearOptions, Color, CursorIcon as NCursorIcon, Device, Event, ExtContainer,
     GfxExtension, GfxRenderer, Graphics, Plugin, Plugins, RenderTexture,
 };
-#[cfg(not(target_arch = "wasm32"))]
-#[cfg(feature = "clipboard")]
-use notan_core::keyboard::KeyCode;
 
 use std::cell::RefCell;
-
-#[cfg(not(target_arch = "wasm32"))]
-#[cfg(feature = "clipboard")]
-use std::sync::{Arc, Mutex};
 
 #[cfg(feature = "links")]
 use egui::output::OpenUrl;
 
 pub struct EguiPlugin {
     ctx: egui::Context,
-    #[cfg(not(target_arch = "wasm32"))]
-    #[cfg(feature = "clipboard")]
-    clipboard: Arc<Mutex<Clipboard>>,
     raw_input: egui::RawInput,
     platform_output: Option<egui::PlatformOutput>,
     latest_evt_was_touch: bool,
@@ -34,9 +24,6 @@ pub struct EguiPlugin {
 impl Default for EguiPlugin {
     fn default() -> Self {
         Self {
-            #[cfg(not(target_arch = "wasm32"))]
-            #[cfg(feature = "clipboard")]
-            clipboard: Arc::new(Mutex::new(Clipboard::default())),
             ctx: Default::default(),
             raw_input: Default::default(),
             platform_output: Default::default(),
@@ -47,22 +34,6 @@ impl Default for EguiPlugin {
 }
 
 impl EguiPlugin {
-    #[cfg(not(target_arch = "wasm32"))]
-    #[cfg(feature = "clipboard")]
-    fn set_clipboard(&mut self, new_text: &mut String) {
-        if !new_text.is_empty() {
-            // Compare
-            let mut clipboard = self.clipboard.lock().unwrap();
-            if let Some(text) = clipboard.get() {
-                if text != *new_text {
-                    clipboard.set(new_text.clone());
-                    // Clear here to avoid memory leaks since not needed any longer.
-                    new_text.clear();
-                }
-            }
-        }
-    }
-
     #[inline]
     pub(crate) fn add_event(&mut self, evt: egui::Event) {
         self.raw_input.events.push(evt);
@@ -85,14 +56,6 @@ impl EguiPlugin {
         if !self.needs_repaint {
             self.needs_repaint = needs_repaint;
         }
-
-        #[cfg(not(target_arch = "wasm32"))]
-        #[cfg(feature = "clipboard")]
-        // To avoid unused_mut if not using clipboard
-        let mut platform_output = platform_output;
-        #[cfg(not(target_arch = "wasm32"))]
-        #[cfg(feature = "clipboard")]
-        self.set_clipboard(&mut platform_output.copied_text);
 
         self.platform_output = Some(platform_output);
 
@@ -235,32 +198,6 @@ impl Plugin for EguiPlugin {
             Event::MouseEnter { .. } => {}
             Event::MouseLeft { .. } => self.add_event(egui::Event::PointerGone),
             Event::KeyDown { key } => {
-                // TODO clipboard should works also on wasm target
-                #[cfg(all(feature = "clipboard", not(target_arch = "wasm32")))]
-                {
-                    if *key == KeyCode::C && modifiers.command {
-                        self.add_event(egui::Event::Copy);
-                    } else if *key == KeyCode::X && modifiers.command {
-                        self.add_event(egui::Event::Cut);
-                    } else if *key == KeyCode::V && modifiers.command {
-                        // Use let binding, otherwise rustc complains.
-                        let binding = || {
-                            let clipboard = &*self.clipboard;
-                            clipboard.lock().unwrap().get()
-                        };
-                        if let Some(text) = binding() {
-                            self.add_event(egui::Event::Paste(text));
-                        }
-                    } else if let Some(key) = to_egui_key(key) {
-                        self.add_event(egui::Event::Key {
-                            key,
-                            pressed: true,
-                            modifiers,
-                        });
-                    }
-                }
-
-                #[cfg(any(not(feature = "clipboard"), target_arch = "wasm32"))]
                 if let Some(key) = to_egui_key(key) {
                     self.add_event(egui::Event::Key {
                         key,
@@ -285,18 +222,9 @@ impl Plugin for EguiPlugin {
                 }
             }
 
-            #[cfg(feature = "clipboard")]
-            Event::Copy => {
-                // self.add_event(egui::Event::Copy),
-            }
-            #[cfg(feature = "clipboard")]
-            Event::Cut => {
-                // self.add_event(egui::Event::Cut),
-            }
-            #[cfg(feature = "clipboard")]
-            Event::Paste(_text) => {
-                // self.add_event(egui::Event::Paste(_text.into()))
-            }
+            Event::Copy => self.add_event(egui::Event::Copy),
+            Event::Cut => self.add_event(egui::Event::Cut),
+            Event::Paste(text) => self.add_event(egui::Event::Paste(text.into())),
 
             #[cfg(feature = "drop_files")]
             Event::DragEnter { path, mime, .. } => {
@@ -384,6 +312,8 @@ impl Plugin for EguiPlugin {
             let egui::PlatformOutput {
                 cursor_icon,
                 open_url,
+
+                copied_text,
                 ..
             } = platform_output;
 
@@ -405,6 +335,10 @@ impl Plugin for EguiPlugin {
                 } else {
                     app.open_link(&url);
                 }
+            }
+
+            if !copied_text.is_empty() {
+                app.backend.set_clipboard_text(&copied_text);
             }
         }
 
@@ -475,61 +409,5 @@ impl EguiPluginSugar for Plugins {
     fn egui(&mut self, run_ui: impl FnOnce(&Context)) -> Output {
         let mut ext = self.get_mut::<EguiPlugin>().unwrap();
         ext.run(run_ui)
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-#[cfg(feature = "clipboard")]
-pub struct Clipboard {
-    clipboard: Option<copypasta::ClipboardContext>,
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-#[cfg(feature = "clipboard")]
-impl Default for Clipboard {
-    fn default() -> Self {
-        Self {
-            clipboard: init_copypasta(),
-        }
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-#[cfg(feature = "clipboard")]
-impl Clipboard {
-    pub fn get(&mut self) -> Option<String> {
-        if let Some(clipboard) = &mut self.clipboard {
-            use copypasta::ClipboardProvider as _;
-            match clipboard.get_contents() {
-                Ok(contents) => Some(contents),
-                Err(err) => {
-                    eprintln!("Paste error: {}", err);
-                    None
-                }
-            }
-        } else {
-            None
-        }
-    }
-
-    pub fn set(&mut self, text: String) {
-        if let Some(clipboard) = &mut self.clipboard {
-            use copypasta::ClipboardProvider as _;
-            if let Err(err) = clipboard.set_contents(text) {
-                eprintln!("Copy/Cut error: {}", err);
-            }
-        }
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-#[cfg(feature = "clipboard")]
-fn init_copypasta() -> Option<copypasta::ClipboardContext> {
-    match copypasta::ClipboardContext::new() {
-        Ok(clipboard) => Some(clipboard),
-        Err(err) => {
-            eprintln!("Failed to initialize clipboard: {}", err);
-            None
-        }
     }
 }

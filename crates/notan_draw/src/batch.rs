@@ -55,7 +55,7 @@ impl Batch {
                 let start = i + 2;
                 let end = i + offset - 1;
                 let xyz = matrix * Vec3::new(vertices[i], vertices[i + 1], 1.0);
-                self.vertices.extend(&[xyz.x, xyz.y]); //pos
+                self.vertices.extend([xyz.x, xyz.y]); //pos
                 self.vertices.extend(&vertices[start..end]); //pipeline attrs and rgb
                 self.vertices.push(vertices[i + offset - 1] * alpha); //alpha
             });

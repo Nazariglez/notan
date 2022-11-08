@@ -19,12 +19,6 @@ notan_core = { path = "../notan_core", version = "0.7.1" }
 notan_app = { path = "../notan_app", version = "0.7.1" }
 notan_macro = { path = "../notan_macro", version = "0.7.1" }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies.copypasta]
-version = "0.8.1"
-default-features = false
-
 [features]
 links = []
-clipboard = ["notan_app/clipboard" , "copypasta/x11"]
-clipboard-wayland = ["copypasta/wayland", "clipboard"]
 drop_files = []

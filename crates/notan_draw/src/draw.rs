@@ -158,7 +158,7 @@ impl Draw {
         F1: Fn(&Batch, &I) -> bool,
         F2: Fn(&I) -> BatchType,
     {
-        let needs_new_batch = needs_new_batch(&self, info, is_diff_type);
+        let needs_new_batch = needs_new_batch(self, info, is_diff_type);
         if needs_new_batch {
             if let Some(old) = self.current_batch.take() {
                 self.batches.push(old);

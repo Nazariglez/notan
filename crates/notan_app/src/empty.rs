@@ -126,6 +126,8 @@ impl Backend for EmptyBackend {
         &mut self.window
     }
 
+    fn set_clipboard_text(&mut self, _text: &str) {}
+
     fn events_iter(&mut self) -> EventIterator {
         Default::default()
     }

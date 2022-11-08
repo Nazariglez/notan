@@ -13,6 +13,9 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::closure::Closure;
 
+#[cfg(feature = "clipboard")]
+use crate::clipboard;
+
 pub struct WebBackend {
     window: Option<WebWindowBackend>,
     events: Rc<RefCell<EventIterator>>,
@@ -35,6 +38,19 @@ impl WebBackend {
 impl Backend for WebBackend {
     fn events_iter(&mut self) -> EventIterator {
         self.events.borrow_mut().take_events()
+    }
+
+    fn set_clipboard_text(&mut self, text: &str) {
+        #[cfg(feature = "clipboard")]
+        clipboard::set_clipboard_text(text);
+
+        #[cfg(not(feature = "clipboard"))]
+        {
+            log::warn!(
+                "Cannot set {} to clipboard without the feature 'clipboard' enabled.",
+                text
+            );
+        }
     }
 
     fn window(&mut self) -> &mut dyn WindowBackend {

@@ -1,6 +1,9 @@
 #!/bin/bash
 mkdir -p ./docs/examples/$1
 
+# web_sys_unstable_apis is required to enable the web_sys clipboard API
+# https://rustwasm.github.io/wasm-bindgen/api/web_sys/struct.Clipboard.html
+export RUSTFLAGS=--cfg=web_sys_unstable_apis
 features=glyph,egui,text,extra,audio,links,drop_files,clipboard,save_file,texture_to_file
 
 if [[ $2 == '--release' ]];
