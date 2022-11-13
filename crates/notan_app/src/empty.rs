@@ -180,6 +180,14 @@ impl DeviceBackend for EmptyDeviceBackend {
         ""
     }
 
+    fn stats(&self) -> GpuStats {
+        GpuStats::default()
+    }
+
+    fn reset_stats(&mut self) {
+        // no-op
+    }
+
     fn create_pipeline(
         &mut self,
         _vertex_source: &[u8],

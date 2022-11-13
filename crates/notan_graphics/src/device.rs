@@ -19,6 +19,31 @@ pub enum ResourceId {
     RenderTexture(u64),
 }
 
+/// Represents what the GPU did in the last frame
+#[derive(Clone, Copy, Default, Debug)]
+pub struct GpuStats {
+    /// Number of draw calls
+    pub draw_calls: usize,
+    /// Number of read_pixels callas
+    pub read_pixels: usize,
+    /// Number of textures updated
+    pub texture_updates: usize,
+    /// Number of textures created
+    pub texture_creation: usize,
+    /// Number of buffers updated
+    pub buffer_updates: usize,
+    /// Number of buffers created
+    pub buffer_creation: usize,
+    /// Any other interaction with the GPU
+    pub misc: usize,
+}
+
+impl GpuStats {
+    pub fn total(&self) -> usize {
+        self.draw_calls + self.read_pixels + self.misc
+    }
+}
+
 /// Represents a the implementation graphics backend like glow, wgpu or another
 pub trait DeviceBackend {
     /// Returns the name of the api used (like webgl, wgpu, etc...)
@@ -28,6 +53,12 @@ pub trait DeviceBackend {
     fn limits(&self) -> Limits {
         Default::default()
     }
+
+    /// Return the GPU stats
+    fn stats(&self) -> GpuStats;
+
+    /// Reset the GPU stats
+    fn reset_stats(&mut self);
 
     /// Create a new pipeline and returns the id
     fn create_pipeline(
@@ -134,6 +165,11 @@ impl Device {
     #[inline]
     pub fn limits(&self) -> Limits {
         self.backend.limits()
+    }
+
+    #[inline]
+    pub fn stats(&self) -> GpuStats {
+        self.backend.stats()
     }
 
     #[inline]
@@ -398,6 +434,8 @@ impl Device {
 
     #[inline]
     pub fn clean(&mut self) {
+        self.backend.reset_stats();
+
         if self.drop_manager.dropped.read().is_empty() {
             return;
         }

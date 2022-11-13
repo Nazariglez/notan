@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Fix custom pipelines for the Draw2d APIs. They were working only for images, now they work all (shapes, patterns, etc..)
 - Added example `draw_shapes_shader.rs` to show how to set a custom pipeline drawing shapes.
 - Renamed `draw_shader.rs` to `draw_image_shader.rs`
+- Added `Graphics::stats() -> GpuStats` to get more info about what the GPU did the last frame. 
 
 ## v0.7.1 - 08/10/2022
 

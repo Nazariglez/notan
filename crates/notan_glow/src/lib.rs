@@ -43,6 +43,7 @@ pub struct GlowBackend {
     api_name: String,
     current_pipeline: u64,
     limits: Limits,
+    stats: GpuStats,
     current_uniforms: Vec<UniformLocation>,
     drawing_srgba: bool,
     drawing_to_render_texture: bool,
@@ -94,6 +95,8 @@ impl GlowBackend {
             }
         };
 
+        let stats = GpuStats::default();
+
         Ok(Self {
             pipeline_count: 0,
             buffer_count: 0,
@@ -110,6 +113,7 @@ impl GlowBackend {
             api_name: api.to_string(),
             current_pipeline: 0,
             limits,
+            stats,
             current_uniforms: vec![],
             drawing_srgba: false,
             drawing_to_render_texture: false,
@@ -120,8 +124,9 @@ impl GlowBackend {
 
 impl GlowBackend {
     #[inline(always)]
-    fn clear(&self, color: &Option<Color>, depth: &Option<f32>, stencil: &Option<i32>) {
+    fn clear(&mut self, color: &Option<Color>, depth: &Option<f32>, stencil: &Option<i32>) {
         clear(&self.gl, color, depth, stencil);
+        self.stats.misc += 1;
     }
 
     #[inline]
@@ -183,7 +188,7 @@ impl GlowBackend {
     }
 
     #[inline]
-    fn viewport(&self, mut x: f32, mut y: f32, width: f32, height: f32, dpi: f32) {
+    fn viewport(&mut self, mut x: f32, mut y: f32, width: f32, height: f32, dpi: f32) {
         if !self.drawing_to_render_texture {
             y = (self.size.1 as f32 - (height + y)) * dpi;
             x *= dpi;
@@ -194,10 +199,12 @@ impl GlowBackend {
         unsafe {
             self.gl.viewport(x as _, y as _, ww as _, hh as _);
         }
+
+        self.stats.misc += 1;
     }
 
     #[inline]
-    fn scissors(&self, x: f32, y: f32, width: f32, height: f32, dpi: f32) {
+    fn scissors(&mut self, x: f32, y: f32, width: f32, height: f32, dpi: f32) {
         let canvas_height = ((self.size.1 - (height + y) as i32) as f32 * dpi) as i32;
         let x = x * dpi;
         let width = width * dpi;
@@ -208,6 +215,8 @@ impl GlowBackend {
             self.gl
                 .scissor(x as _, canvas_height, width as _, height as _);
         }
+
+        self.stats.misc += 1;
     }
 
     fn end(&mut self) {
@@ -338,6 +347,7 @@ impl GlowBackend {
 
     fn draw(&mut self, primitive: &DrawPrimitive, offset: i32, count: i32) {
         unsafe {
+            self.stats.draw_calls += 1;
             match self.using_indices {
                 None => self.gl.draw_arrays(primitive.to_glow(), offset, count),
                 Some(format) => {
@@ -349,6 +359,7 @@ impl GlowBackend {
     }
     fn draw_instanced(&mut self, primitive: &DrawPrimitive, offset: i32, count: i32, length: i32) {
         unsafe {
+            self.stats.draw_calls += 1;
             match self.using_indices {
                 None => self
                     .gl
@@ -385,6 +396,14 @@ impl DeviceBackend for GlowBackend {
         self.limits
     }
 
+    fn stats(&self) -> GpuStats {
+        self.stats
+    }
+
+    fn reset_stats(&mut self) {
+        self.stats = GpuStats::default();
+    }
+
     fn create_pipeline(
         &mut self,
         vertex_source: &[u8],
@@ -409,6 +428,7 @@ impl DeviceBackend for GlowBackend {
         self.pipelines.insert(self.pipeline_count, inner_pipeline);
 
         self.set_pipeline(self.pipeline_count, &options);
+        self.stats.misc += 1;
         Ok(self.pipeline_count)
     }
 
@@ -423,6 +443,7 @@ impl DeviceBackend for GlowBackend {
         inner_buffer.bind(&self.gl, Some(self.current_pipeline), false);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
+        self.stats.buffer_creation += 1;
         Ok(self.buffer_count)
     }
 
@@ -431,6 +452,7 @@ impl DeviceBackend for GlowBackend {
         inner_buffer.bind(&self.gl, Some(self.current_pipeline), false);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
+        self.stats.buffer_creation += 1;
         Ok(self.buffer_count)
     }
 
@@ -440,6 +462,7 @@ impl DeviceBackend for GlowBackend {
         inner_buffer.bind(&self.gl, Some(self.current_pipeline), false);
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
+        self.stats.buffer_creation += 1;
         Ok(self.buffer_count)
     }
 
@@ -447,6 +470,7 @@ impl DeviceBackend for GlowBackend {
         if let Some(buffer) = self.buffers.get_mut(&id) {
             buffer.bind(&self.gl, None, false);
             buffer.update(&self.gl, data);
+            self.stats.buffer_updates += 1;
         }
     }
 
@@ -500,7 +524,7 @@ impl DeviceBackend for GlowBackend {
             ResourceId::Buffer(id) => self.clean_buffer(*id),
             ResourceId::Texture(id) => self.clean_texture(*id),
             ResourceId::RenderTexture(id) => self.clean_render_target(*id),
-        })
+        });
     }
 
     fn set_size(&mut self, width: i32, height: i32) {
@@ -522,6 +546,7 @@ impl DeviceBackend for GlowBackend {
             TextureSourceKind::Bytes(bytes) => add_texture_from_bytes(self, bytes, info)?,
             TextureSourceKind::Raw(raw) => raw.create(self, info)?,
         };
+        self.stats.texture_creation += 1;
         Ok((id, info))
     }
 
@@ -539,6 +564,9 @@ impl DeviceBackend for GlowBackend {
         self.render_target_count += 1;
         self.render_targets
             .insert(self.render_target_count, inner_rt);
+
+        self.stats.texture_creation += 1;
+
         Ok(self.render_target_count)
     }
 
@@ -577,6 +605,8 @@ impl DeviceBackend for GlowBackend {
                     if use_mipmaps {
                         self.gl.generate_mipmap(glow::TEXTURE_2D);
                     }
+
+                    self.stats.texture_updates += 1;
 
                     Ok(())
                 }
@@ -622,6 +652,7 @@ impl DeviceBackend for GlowBackend {
                         glow::PixelPackData::Slice(bytes),
                     );
                     clean();
+                    self.stats.read_pixels += 1;
                     Ok(())
                 } else {
                     clean();
