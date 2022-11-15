@@ -320,7 +320,7 @@ impl GlowBackend {
         if cfg!(debug_assertions) {
             self.current_uniforms.get(*location as usize)
                 .as_ref()
-                .ok_or_else(|| format!("Invalid uniform location {}, this could means that you're trying to access a unifor not used in the shader code.", location))
+                .ok_or_else(|| format!("Invalid uniform location {}, this could means that you're trying to access a uniform not used in the shader code.", location))
                 .unwrap()
         } else {
             &self.current_uniforms[*location as usize]

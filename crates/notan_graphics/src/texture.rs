@@ -400,8 +400,8 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             Some(TextureKind::Bytes(bytes)) => {
                 #[cfg(debug_assertions)]
                 {
-                    let size = info.width * info.height * 4;
-                    debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, 4);
+                    let size = info.width * info.height * (info.bytes_per_pixel() as i32);
+                    debug_assert_eq!(bytes.len(), size as usize, "Texture type {:?} with {} bytes, when it should be {} (width: {} * height: {} * bytes: {})", info.format, bytes.len(), size, info.width, info.height, info.bytes_per_pixel());
                 }
 
                 source = Some(TextureSourceKind::Bytes(bytes.to_vec()));
