@@ -9,6 +9,7 @@ pub struct Renderer {
     commands: Vec<Commands>,
     size: (i32, i32),
     primitive: DrawPrimitive,
+    slot_count: u32,
 }
 
 impl Renderer {
@@ -17,6 +18,7 @@ impl Renderer {
             size: (width, height),
             commands: vec![Commands::Size { width, height }],
             primitive: DrawPrimitive::Triangles,
+            slot_count: 0,
         }
     }
 
@@ -39,6 +41,7 @@ impl Renderer {
 
     pub fn end(&mut self) {
         self.commands.push(Commands::End);
+        self.slot_count = 0;
     }
 
     pub fn set_size(&mut self, width: i32, height: i32) {
@@ -110,7 +113,8 @@ impl Renderer {
     }
 
     pub fn bind_texture(&mut self, location: u32, texture: &Texture) {
-        self.bind_texture_slot(0, location, texture);
+        self.bind_texture_slot(self.slot_count, location, texture);
+        self.slot_count += 1;
     }
 
     pub fn bind_texture_slot(&mut self, slot: u32, location: u32, texture: &Texture) {
@@ -123,6 +127,7 @@ impl Renderer {
 
     pub fn clear(&mut self) {
         self.commands.clear();
+        self.slot_count = 0;
     }
 
     pub fn commands(&self) -> &[Commands] {
