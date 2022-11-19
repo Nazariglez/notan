@@ -58,13 +58,11 @@ pub(crate) struct TexInfo<'a> {
     pub data: Option<&'a [u8]>,
 }
 
-pub(crate) unsafe fn pre_create_texture<'a>(
-    gl: &Context,
-    bytes: Option<&'a [u8]>,
-    info: &TextureInfo,
-) -> Result<TexInfo<'a>, String> {
-    // Some texture types cannot use linear filtering
-    if matches!(info.format, TextureFormat::R32Float)
+const CANNOT_USE_LINEAR_FILTER: [TextureFormat; 1] = [TextureFormat::R32Float];
+
+fn assert_can_use_linear_filter(info: &TextureInfo) -> Result<(), String> {
+    let needs_check_filter = CANNOT_USE_LINEAR_FILTER.contains(&info.format);
+    if needs_check_filter
         && (matches!(info.min_filter, TextureFilter::Linear)
             || matches!(info.mag_filter, TextureFilter::Linear))
     {
@@ -74,12 +72,21 @@ pub(crate) unsafe fn pre_create_texture<'a>(
         ));
     }
 
+    Ok(())
+}
+
+pub(crate) unsafe fn pre_create_texture<'a>(
+    gl: &Context,
+    bytes: Option<&'a [u8]>,
+    info: &TextureInfo,
+) -> Result<TexInfo<'a>, String> {
+    // Some texture types cannot use linear filtering
+    assert_can_use_linear_filter(info)?;
+
     let texture = gl.create_texture()?;
 
-    let bytes_per_pixel = info.bytes_per_pixel();
-    if bytes_per_pixel != 4 {
-        gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, bytes_per_pixel as _);
-    }
+    let bytes_per_pixel = info.bytes_per_pixel() as _;
+    gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, bytes_per_pixel);
 
     gl.bind_texture(glow::TEXTURE_2D, Some(texture));
 

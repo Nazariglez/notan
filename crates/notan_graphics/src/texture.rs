@@ -34,7 +34,7 @@ pub struct TextureUpdate {
     pub format: TextureFormat,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TextureInfo {
     pub width: i32,
     pub height: i32,

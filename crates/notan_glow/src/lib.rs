@@ -583,6 +583,10 @@ impl DeviceBackend for GlowBackend {
                 unsafe {
                     self.gl
                         .bind_texture(glow::TEXTURE_2D, Some(texture.texture));
+                    self.gl.pixel_store_i32(
+                        glow::UNPACK_ALIGNMENT,
+                        opts.format.bytes_per_pixel() as _,
+                    );
 
                     match source {
                         TextureUpdaterSourceKind::Bytes(bytes) => {
@@ -593,7 +597,7 @@ impl DeviceBackend for GlowBackend {
                                 opts.y_offset,
                                 opts.width,
                                 opts.height,
-                                texture_format(&opts.format), // 3d texture needs another value?
+                                texture_format(&opts.format),
                                 texture_type(&opts.format),
                                 PixelUnpackData::Slice(bytes),
                             );
