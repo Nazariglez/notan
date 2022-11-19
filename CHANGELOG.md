@@ -24,8 +24,10 @@ All notable changes to this project will be documented in this file.
 - Renamed `draw_shader.rs` to `draw_image_shader.rs`
 - Added `Graphics::stats() -> GpuStats` to get more info about what the GPU did the last frame. 
 - Added new texture formats. `TextureFormat::R16Uint`, `R32Uint`, `R32Float`. 
-- New example `renderer_texture_r32` to show how to use new texture types.
+- New example `renderer_texture_r32.rs` to show how to use new texture types.
 - The method `Renderer::bind_texture` will set the slot automatically to the next one if using in a row.
+- Replaced `copypasta` dependency by `arboard` and moved clipboard features to app level.
+- Added clipboard support for web browsers using `wasm`.
 
 ## v0.7.1 - 08/10/2022
 
