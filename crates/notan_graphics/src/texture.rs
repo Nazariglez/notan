@@ -107,6 +107,7 @@ pub struct Texture {
     min_filter: TextureFilter,
     mag_filter: TextureFilter,
     frame: Rect,
+    pub(crate) is_render_texture: bool,
 }
 
 //https://sotrh.github.io/learn-wgpu/beginner/tutorial5-textures/#getting-data-into-a-texture
@@ -140,6 +141,7 @@ impl Texture {
             min_filter,
             mag_filter,
             frame,
+            is_render_texture: false,
         }
     }
 
@@ -217,6 +219,10 @@ impl Texture {
         path: P,
     ) -> Result<(), String> {
         crate::to_file::save_to_png_file(gfx, self, false, path)
+    }
+
+    pub fn is_render_texture(&self) -> bool {
+        self.is_render_texture
     }
 }
 
