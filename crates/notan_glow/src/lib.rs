@@ -19,7 +19,7 @@ mod html_image;
 
 use crate::buffer::Kind;
 use crate::pipeline::get_inner_attrs;
-use crate::texture::{texture_format, TextureKey};
+use crate::texture::{texture_format, texture_type, TextureKey};
 use crate::texture_source::{add_empty_texture, add_texture_from_bytes, add_texture_from_image};
 use crate::to_glow::ToGlow;
 use buffer::InnerBuffer;
@@ -594,7 +594,7 @@ impl DeviceBackend for GlowBackend {
                                 opts.width,
                                 opts.height,
                                 texture_format(&opts.format), // 3d texture needs another value?
-                                glow::UNSIGNED_BYTE, // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
+                                texture_type(&opts.format),
                                 PixelUnpackData::Slice(bytes),
                             );
                         }
@@ -648,9 +648,10 @@ impl DeviceBackend for GlowBackend {
                         opts.width,
                         opts.height,
                         texture_format(&opts.format),
-                        glow::UNSIGNED_BYTE,
+                        texture_type(&opts.format),
                         glow::PixelPackData::Slice(bytes),
                     );
+
                     clean();
                     self.stats.read_pixels += 1;
                     Ok(())
