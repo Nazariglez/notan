@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Added `Graphics::stats() -> GpuStats` to get more info about what the GPU did the last frame. 
 - Added new texture formats. `TextureFormat::R16Uint`, `R32Uint`, `R32Float`. 
 - New example `renderer_texture_r32` to show how to use new texture types.
+- The method `Renderer::bind_texture` will set the slot automatically to the next one if using in a row.
 
 ## v0.7.1 - 08/10/2022
 
