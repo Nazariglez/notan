@@ -19,7 +19,7 @@ mod html_image;
 
 use crate::buffer::Kind;
 use crate::pipeline::get_inner_attrs;
-use crate::texture::{texture_format, TextureKey};
+use crate::texture::{texture_format, texture_type, TextureKey};
 use crate::texture_source::{add_empty_texture, add_texture_from_bytes, add_texture_from_image};
 use crate::to_glow::ToGlow;
 use buffer::InnerBuffer;
@@ -320,7 +320,7 @@ impl GlowBackend {
         if cfg!(debug_assertions) {
             self.current_uniforms.get(*location as usize)
                 .as_ref()
-                .ok_or_else(|| format!("Invalid uniform location {}, this could means that you're trying to access a unifor not used in the shader code.", location))
+                .ok_or_else(|| format!("Invalid uniform location {}, this could means that you're trying to access a uniform not used in the shader code.", location))
                 .unwrap()
         } else {
             &self.current_uniforms[*location as usize]
@@ -594,7 +594,7 @@ impl DeviceBackend for GlowBackend {
                                 opts.width,
                                 opts.height,
                                 texture_format(&opts.format), // 3d texture needs another value?
-                                glow::UNSIGNED_BYTE, // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
+                                texture_type(&opts.format),
                                 PixelUnpackData::Slice(bytes),
                             );
                         }
@@ -648,9 +648,10 @@ impl DeviceBackend for GlowBackend {
                         opts.width,
                         opts.height,
                         texture_format(&opts.format),
-                        glow::UNSIGNED_BYTE,
+                        texture_type(&opts.format),
                         glow::PixelPackData::Slice(bytes),
                     );
+
                     clean();
                     self.stats.read_pixels += 1;
                     Ok(())

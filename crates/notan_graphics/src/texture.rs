@@ -79,6 +79,7 @@ impl TextureFormat {
         use TextureFormat::*;
         match self {
             R8 | SRgba8 => 1,
+            R16Uint => 2,
             _ => 4,
         }
     }
@@ -237,6 +238,9 @@ pub enum TextureFormat {
     SRgba8,
     Rgba32,
     R8,
+    R16Uint,
+    R32Float,
+    R32Uint,
     Depth16,
 }
 
@@ -398,10 +402,17 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
                 source = Some(TextureSourceKind::Image(bytes.to_vec()));
             }
             Some(TextureKind::Bytes(bytes)) => {
-                #[cfg(debug_assertions)]
-                {
-                    let size = info.width * info.height * 4;
-                    debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, 4);
+                let size = (info.width * info.height * (info.bytes_per_pixel() as i32)) as usize;
+                if bytes.len() != size {
+                    return Err(format!(
+                        "Texture type {:?} with {} bytes, when it should be {} (width: {} * height: {} * bytes: {})",
+                        info.format,
+                        bytes.len(),
+                        size,
+                        info.width,
+                        info.height,
+                        info.bytes_per_pixel()
+                    ));
                 }
 
                 source = Some(TextureSourceKind::Bytes(bytes.to_vec()));
