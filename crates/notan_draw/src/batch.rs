@@ -82,8 +82,7 @@ fn rt_flip_v(texture: &Texture, matrix: Mat3) -> Mat3 {
         let (_, h) = texture.size();
         let translate = matrix * Mat3::from_translation(vec2(0.0, h * 0.5));
         let scale = translate * Mat3::from_scale(vec2(1.0, 1.0));
-        let matrix = scale * Mat3::from_translation(vec2(0.0, h * -0.5));
-        matrix
+        scale * Mat3::from_translation(vec2(0.0, h * -0.5))
     } else {
         matrix
     }
