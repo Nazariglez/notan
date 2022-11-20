@@ -41,7 +41,7 @@ impl Renderer {
 
     pub fn end(&mut self) {
         self.commands.push(Commands::End);
-        self.slot_count = 0;
+        self.unbind_textures();
     }
 
     pub fn set_size(&mut self, width: i32, height: i32) {
@@ -125,9 +125,13 @@ impl Renderer {
         })
     }
 
-    pub fn clear(&mut self) {
-        self.commands.clear();
+    pub fn unbind_textures(&mut self) {
         self.slot_count = 0;
+    }
+
+    pub fn clear(&mut self) {
+        self.unbind_textures();
+        self.commands.clear();
     }
 
     pub fn commands(&self) -> &[Commands] {

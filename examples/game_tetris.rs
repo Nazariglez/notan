@@ -79,7 +79,9 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
 
     // draw the current piece
     let total_movement_time = movement_time(state.score_lines);
+    state.time = 0.0;
     let interpolated_y = ((state.time / total_movement_time) * tile_size) - tile_size;
+    println!("{}", state.time);
     draw_piece(&mut draw, &state.texture, 0.0, interpolated_y, &state.piece);
 
     // draw the next piece
@@ -110,6 +112,7 @@ fn draw_piece(draw: &mut Draw, img: &Texture, x: f32, y: f32, piece: &Piece) {
     piece.points.iter().for_each(|(px, py)| {
         let pos_x = x + (px * TILE_SIZE) as f32;
         let pos_y = y + (py * TILE_SIZE) as f32;
+        println!("x: {x}, y: {y}, px: {px}, py: {py}, pos_x: {pos_x}, pos_y: {pos_y}");
         draw.image(img).position(pos_x, pos_y).color(color);
     });
 }

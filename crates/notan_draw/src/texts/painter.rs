@@ -220,7 +220,7 @@ impl GlyphPipeline for TextPainter {
         _size: (i32, i32),
         _region: Option<Rect>,
     ) {
-        renderer.bind_texture(0, texture);
+        renderer.bind_texture_slot(0, 0, texture);
         renderer.bind_buffers(&[&self.vbo, &self.ebo, &self.ubo]);
     }
 
