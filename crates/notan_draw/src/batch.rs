@@ -80,9 +80,10 @@ impl Batch {
 fn rt_flip_v(texture: &Texture, matrix: Mat3) -> Mat3 {
     if texture.is_render_texture() {
         let (_, h) = texture.size();
-        let translate = Mat3::from_translation(vec2(0.0, h));
-        let scale = Mat3::from_scale(vec2(1.0, -1.0));
-        matrix * (translate * scale)
+        let translate = matrix * Mat3::from_translation(vec2(0.0, h * 0.5));
+        let scale = translate * Mat3::from_scale(vec2(1.0, 1.0));
+        let matrix = scale * Mat3::from_translation(vec2(0.0, h * -0.5));
+        matrix
     } else {
         matrix
     }
