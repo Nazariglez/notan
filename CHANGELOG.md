@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - The method `Renderer::bind_texture` will set the slot automatically to the next one if using in a row.
 - Replaced `copypasta` dependency by `arboard` and moved clipboard features to app level.
 - Added clipboard support for web browsers using `wasm`.
+- Added `.flip_x` and `.flip_y` to `Image`, `Animation` and `Pattern` object from the Draw2d API. 
 
 ## v0.7.1 - 08/10/2022
 
