@@ -1,6 +1,6 @@
 use notan_glyph::OwnedSection;
 use notan_graphics::prelude::*;
-use notan_math::{vec2, Mat3, Vec3};
+use notan_math::{Mat3, Vec3};
 
 #[derive(Clone, Debug)]
 pub(crate) struct TextData {
@@ -8,6 +8,7 @@ pub(crate) struct TextData {
     pub section: OwnedSection,
     pub alpha: f32,
     pub count: usize,
+    pub flip: (bool, bool),
 }
 
 #[derive(Clone, Debug)]
@@ -46,12 +47,6 @@ impl Batch {
         let last_index = (self.vertices.len() / offset) as u32;
         self.indices.extend(indices.iter().map(|i| i + last_index));
 
-        let matrix = match &self.typ {
-            BatchType::Image { texture } => rt_flip_v(texture, matrix),
-            BatchType::Pattern { texture } => rt_flip_v(texture, matrix),
-            _ => matrix,
-        };
-
         //compute vertices
         vertices
             .iter()
@@ -74,16 +69,5 @@ impl Batch {
             BatchType::Shape => 6,
             BatchType::Text { .. } => 8,
         }
-    }
-}
-
-fn rt_flip_v(texture: &Texture, matrix: Mat3) -> Mat3 {
-    if texture.is_render_texture() {
-        let (_, h) = texture.size();
-        let translate = matrix * Mat3::from_translation(vec2(0.0, h * 0.5));
-        let scale = translate * Mat3::from_scale(vec2(1.0, 1.0));
-        scale * Mat3::from_translation(vec2(0.0, h * -0.5))
-    } else {
-        matrix
     }
 }

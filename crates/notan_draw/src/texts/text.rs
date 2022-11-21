@@ -19,6 +19,7 @@ pub struct TextSection<'a> {
     h_align: HorizontalAlign,
     v_align: VerticalAlign,
     alpha: f32,
+    flip: (bool, bool),
 }
 
 impl<'a> TextSection<'a> {
@@ -35,6 +36,10 @@ impl<'a> TextSection<'a> {
             h_align: HorizontalAlign::Left,
             v_align: VerticalAlign::Top,
             alpha: 1.0,
+            // flip only flips the texture not the spacing/trim of the letters
+            // so the effect for text is best achieved using scale(1.0, -1.0).
+            // I am keeping this in private for now because can be useful to do some effect
+            flip: (false, false),
         }
     }
 
@@ -120,6 +125,7 @@ impl DrawProcess for TextSection<'_> {
             h_align,
             v_align,
             alpha,
+            flip,
         } = self;
 
         let color = color.with_alpha(alpha);
@@ -146,6 +152,7 @@ impl DrawProcess for TextSection<'_> {
             transform: matrix.as_ref(),
             font,
             blend_mode,
+            flip,
         });
     }
 }

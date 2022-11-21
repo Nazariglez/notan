@@ -26,6 +26,7 @@ pub struct ImageAnimation<'a> {
     frames: Option<&'a [usize]>,
     matrix: Option<Mat3>,
     blend_mode: Option<BlendMode>,
+    flip: (bool, bool),
 }
 
 impl<'a> ImageAnimation<'a> {
@@ -44,6 +45,7 @@ impl<'a> ImageAnimation<'a> {
             blend_mode: None,
             frames: None,
             time: 0.0,
+            flip: (false, false),
         }
     }
 
@@ -58,6 +60,7 @@ impl<'a> ImageAnimation<'a> {
             blend_mode: None,
             frames: None,
             time: 0.0,
+            flip: (false, false),
         }
     }
 
@@ -100,6 +103,16 @@ impl<'a> ImageAnimation<'a> {
         self.blend_mode = Some(mode);
         self
     }
+
+    pub fn flip_x(&mut self, flip: bool) -> &mut Self {
+        self.flip.0 = flip;
+        self
+    }
+
+    pub fn flip_y(&mut self, flip: bool) -> &mut Self {
+        self.flip.1 = flip;
+        self
+    }
 }
 
 impl DrawTransform for ImageAnimation<'_> {
@@ -120,6 +133,7 @@ impl DrawProcess for ImageAnimation<'_> {
             matrix,
             blend_mode,
             frames,
+            flip: (flip_x, flip_y),
         } = self;
 
         match source {
@@ -157,6 +171,8 @@ impl DrawProcess for ImageAnimation<'_> {
                     .size(size.0, size.1)
                     .position(x, y)
                     .color(color)
+                    .flip_x(flip_x)
+                    .flip_y(flip_y)
                     .alpha(alpha);
             }
             TextureSource::List(list) => {
@@ -176,6 +192,8 @@ impl DrawProcess for ImageAnimation<'_> {
                     .size(size.0, size.1)
                     .position(x, y)
                     .color(color)
+                    .flip_x(flip_x)
+                    .flip_y(flip_y)
                     .alpha(alpha);
             }
         }

@@ -260,6 +260,7 @@ impl Draw {
                     transform: matrix,
                     alpha: self.alpha,
                     count: info.count,
+                    flip: info.flip,
                 });
             }
         }
@@ -372,6 +373,7 @@ pub struct TextInfo<'a> {
     pub section: &'a Section<'a>,
     pub font: &'a Font,
     pub blend_mode: Option<BlendMode>,
+    pub flip: (bool, bool),
 }
 
 impl DrawInfo for TextInfo<'_> {

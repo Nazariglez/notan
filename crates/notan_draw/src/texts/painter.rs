@@ -127,6 +127,7 @@ impl TextPainter {
                 let start = self.count_chars;
                 let end = start + count;
                 let vert = &self.font_vertices[start..end];
+                let (flip_x, flip_y) = d.flip;
                 vert.iter().enumerate().for_each(|(i, g_instance)| {
                     let GlyphInstance {
                         left_top: [x1, y1, _],
@@ -139,6 +140,9 @@ impl TextPainter {
                     let a = a * d.alpha;
 
                     let matrix = d.transform;
+
+                    let (u1, u2) = if flip_x { (u2, u1) } else { (u1, u2) };
+                    let (v1, v2) = if flip_y { (v2, v1) } else { (v1, v2) };
 
                     let verts = [
                         [x1, y1, u1, v1],
