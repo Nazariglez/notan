@@ -16,6 +16,7 @@ pub struct Pattern<'a> {
     color: Color,
     alpha: f32,
     blend_mode: Option<BlendMode>,
+    flip: (bool, bool),
 }
 
 impl<'a> Pattern<'a> {
@@ -30,6 +31,7 @@ impl<'a> Pattern<'a> {
             offset: (0.0, 0.0),
             scale: (1.0, 1.0),
             blend_mode: None,
+            flip: (false, false),
         }
     }
 
@@ -67,6 +69,16 @@ impl<'a> Pattern<'a> {
         self.blend_mode = Some(mode);
         self
     }
+
+    pub fn flip_x(&mut self, flip: bool) -> &mut Self {
+        self.flip.0 = flip;
+        self
+    }
+
+    pub fn flip_y(&mut self, flip: bool) -> &mut Self {
+        self.flip.1 = flip;
+        self
+    }
 }
 
 impl DrawTransform for Pattern<'_> {
@@ -87,6 +99,7 @@ impl DrawProcess for Pattern<'_> {
             scale: (sx, sy),
             offset: (ox, oy),
             blend_mode,
+            flip: (flip_x, flip_y),
         } = self;
 
         let c = color.with_alpha(color.a * alpha);
@@ -116,6 +129,15 @@ impl DrawProcess for Pattern<'_> {
         let fy = frame.y / base_height;
         let fw = frame.width / base_width;
         let fh = frame.height / base_height;
+
+        let flip_y = if texture.is_render_texture() {
+            !flip_y
+        } else {
+            flip_y
+        };
+
+        let (u1, u2) = if flip_x { (u2, u1) } else { (u1, u2) };
+        let (v1, v2) = if flip_y { (v2, v1) } else { (v1, v2) };
 
         #[rustfmt::skip]
         let vertices = [
