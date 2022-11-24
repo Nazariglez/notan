@@ -12,7 +12,7 @@ description = "Provides simple graphics API for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bytemuck = "1.12.1"
+bytemuck = "1.12.3"
 parking_lot = "0.12.1"
 image = { version = "0.24.4", default-features = false, features = ["jpeg", "png"] }
 notan_math = { path = "../notan_math", version = "0.7.1" }
