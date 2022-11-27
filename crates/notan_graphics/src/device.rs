@@ -270,7 +270,7 @@ impl Device {
             fragment_source,
             vertex_attrs,
             texture_locations,
-            options.clone(),
+            options,
         )?;
 
         Ok(Pipeline::new(

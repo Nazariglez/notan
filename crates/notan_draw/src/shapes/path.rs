@@ -18,6 +18,7 @@ pub struct Path {
     alpha: f32,
     matrix: Option<Mat3>,
     blend_mode: Option<BlendMode>,
+    alpha_mode: Option<BlendMode>,
     modes: [Option<TessMode>; 2],
     mode_index: usize,
     fill_color: Option<Color>,
@@ -41,6 +42,7 @@ impl Path {
             alpha: 1.0,
             matrix: None,
             blend_mode: None,
+            alpha_mode: None,
             modes: [None; 2],
             mode_index: 0,
             fill_color: None,
@@ -177,6 +179,11 @@ impl Path {
         self.blend_mode = Some(mode);
         self
     }
+
+    pub fn alpha_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.alpha_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawProcess for Path {
@@ -214,6 +221,7 @@ fn fill(path: &Path, draw: &mut Draw) {
         alpha,
         matrix,
         blend_mode,
+        alpha_mode,
         fill_color,
         ..
     } = *path;
@@ -229,6 +237,7 @@ fn fill(path: &Path, draw: &mut Draw) {
         vertices: &vertices,
         indices: &indices,
         blend_mode,
+        alpha_mode,
     });
 }
 
@@ -239,6 +248,7 @@ fn stroke(path: &Path, draw: &mut Draw) {
         alpha,
         matrix,
         blend_mode,
+        alpha_mode,
         stroke_color,
         ..
     } = *path;
@@ -254,5 +264,6 @@ fn stroke(path: &Path, draw: &mut Draw) {
         vertices: &vertices,
         indices: &indices,
         blend_mode,
+        alpha_mode,
     });
 }

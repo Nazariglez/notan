@@ -17,7 +17,8 @@ pub struct Draw {
     projection: Option<Mat4>,
     pub(crate) inverse_projection: Option<Mat4>,
     size: (f32, f32),
-    blend_mode: BlendMode,
+    blend_mode: Option<BlendMode>,
+    alpha_mode: Option<BlendMode>,
     pub(crate) batches: Vec<Batch>,
     pub(crate) current_batch: Option<Batch>,
     pub(crate) shape_pipeline: CustomPipeline,
@@ -44,7 +45,8 @@ impl Draw {
             projection: None,
             inverse_projection: None,
             size: (width as _, height as _),
-            blend_mode: BlendMode::NORMAL,
+            blend_mode: Some(BlendMode::NORMAL),
+            alpha_mode: None,
             shape_pipeline: Default::default(),
             image_pipeline: Default::default(),
             pattern_pipeline: Default::default(),
@@ -136,12 +138,20 @@ impl Draw {
         self.alpha
     }
 
-    pub fn blend_mode(&self) -> BlendMode {
+    pub fn blend_mode(&self) -> Option<BlendMode> {
         self.blend_mode
     }
 
-    pub fn set_blend_mode(&mut self, mode: BlendMode) {
+    pub fn set_blend_mode(&mut self, mode: Option<BlendMode>) {
         self.blend_mode = mode;
+    }
+
+    pub fn alpha_mode(&self) -> Option<BlendMode> {
+        self.alpha_mode
+    }
+
+    pub fn set_alpha_mode(&mut self, mode: Option<BlendMode>) {
+        self.alpha_mode = mode;
     }
 
     pub fn transform(&mut self) -> &mut Transform {
@@ -172,7 +182,8 @@ impl Draw {
                 BatchType::Text { .. } => &self.text_pipeline,
             };
 
-            let blend = info.blend_mode().unwrap_or(self.blend_mode);
+            let cbm = info.blend_mode().or(self.blend_mode);
+            let abm = info.alpha_mode().or(self.alpha_mode);
 
             self.current_batch = Some(Batch {
                 typ: create_type(info),
@@ -180,7 +191,8 @@ impl Draw {
                 indices: vec![],
                 pipeline: custom.pipeline.clone(),
                 uniform_buffers: custom.uniforms.clone(),
-                blend_mode: blend,
+                blend_mode: cbm,
+                alpha_mode: abm,
                 is_mask: false,
                 masking: self.masking,
             });
@@ -312,6 +324,7 @@ trait DrawInfo {
     fn vertices(&self) -> &[f32];
     fn indices(&self) -> &[u32];
     fn blend_mode(&self) -> Option<BlendMode>;
+    fn alpha_mode(&self) -> Option<BlendMode>;
 }
 
 /// Information to render the image or pattern
@@ -321,6 +334,7 @@ pub struct ImageInfo<'a> {
     pub vertices: &'a [f32],
     pub indices: &'a [u32],
     pub blend_mode: Option<BlendMode>,
+    pub alpha_mode: Option<BlendMode>,
 }
 
 impl DrawInfo for ImageInfo<'_> {
@@ -339,6 +353,10 @@ impl DrawInfo for ImageInfo<'_> {
     fn blend_mode(&self) -> Option<BlendMode> {
         self.blend_mode
     }
+
+    fn alpha_mode(&self) -> Option<BlendMode> {
+        self.alpha_mode
+    }
 }
 
 /// Information to render the shape
@@ -347,6 +365,7 @@ pub struct ShapeInfo<'a> {
     pub vertices: &'a [f32],
     pub indices: &'a [u32],
     pub blend_mode: Option<BlendMode>,
+    pub alpha_mode: Option<BlendMode>,
 }
 
 impl DrawInfo for ShapeInfo<'_> {
@@ -365,6 +384,10 @@ impl DrawInfo for ShapeInfo<'_> {
     fn blend_mode(&self) -> Option<BlendMode> {
         self.blend_mode
     }
+
+    fn alpha_mode(&self) -> Option<BlendMode> {
+        self.alpha_mode
+    }
 }
 
 pub struct TextInfo<'a> {
@@ -373,6 +396,7 @@ pub struct TextInfo<'a> {
     pub section: &'a Section<'a>,
     pub font: &'a Font,
     pub blend_mode: Option<BlendMode>,
+    pub alpha_mode: Option<BlendMode>,
     pub flip: (bool, bool),
 }
 
@@ -391,6 +415,10 @@ impl DrawInfo for TextInfo<'_> {
 
     fn blend_mode(&self) -> Option<BlendMode> {
         self.blend_mode
+    }
+
+    fn alpha_mode(&self) -> Option<BlendMode> {
+        self.alpha_mode
     }
 }
 
@@ -420,10 +448,12 @@ fn needs_new_batch<I: DrawInfo, F: Fn(&Batch, &I) -> bool>(
             }
 
             // new batch if the blend_mode is different
-            if let Some(bm) = info.blend_mode() {
-                if bm != b.blend_mode {
-                    return true;
-                }
+            if info.blend_mode() != b.blend_mode {
+                return true;
+            }
+
+            if info.alpha_mode() != b.alpha_mode {
+                return true;
             }
 
             // if cfg!(not(target_os = "osx")) {
