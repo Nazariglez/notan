@@ -12,7 +12,10 @@ const OUTLINE_COLOR: Color = Color::from_rgb(0.0, 0.8, 0.7);
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win = WindowConfig::default().size(BOARD_SIZE as _, BOARD_SIZE as _);
+    let win = WindowConfig::default()
+        .size(BOARD_SIZE as _, BOARD_SIZE as _)
+        .multisampling(8);
+
     notan::init_with(State::new)
         .add_config(win)
         .add_config(DrawConfig)
@@ -102,11 +105,9 @@ fn draw_tile(draw: &mut Draw, font: &Font, x: usize, y: usize, value: u8) {
     let yy = y as f32 * TILE_SIZE;
     draw.rect((xx, yy), (TILE_SIZE, TILE_SIZE))
         .corner_radius(10.0)
-        .color(FILL_COLOR);
-
-    draw.rect((xx, yy), (TILE_SIZE, TILE_SIZE))
-        .corner_radius(10.0)
-        .color(OUTLINE_COLOR)
+        .fill_color(FILL_COLOR)
+        .fill()
+        .stroke_color(OUTLINE_COLOR)
         .stroke(5.0);
 
     draw.text(font, &format!("{}", value))
