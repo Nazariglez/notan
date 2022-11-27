@@ -78,7 +78,7 @@ impl TextureFormat {
     pub fn bytes_per_pixel(&self) -> u8 {
         use TextureFormat::*;
         match self {
-            R8 | SRgba8 => 1,
+            R8 => 1,
             R16Uint => 2,
             _ => 4,
         }
