@@ -12,6 +12,7 @@ pub struct TextSection<'a> {
     matrix: Option<Mat3>,
     font: &'a Font,
     blend_mode: Option<BlendMode>,
+    alpha_mode: Option<BlendMode>,
     pos: (f32, f32),
     size: f32,
     color: Color,
@@ -29,6 +30,7 @@ impl<'a> TextSection<'a> {
             matrix: None,
             font,
             blend_mode: None,
+            alpha_mode: None,
             pos: (0.0, 0.0),
             size: 16.0,
             color: Color::WHITE,
@@ -103,6 +105,11 @@ impl<'a> TextSection<'a> {
         self.blend_mode = Some(mode);
         self
     }
+
+    pub fn alpha_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.alpha_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawTransform for TextSection<'_> {
@@ -118,6 +125,7 @@ impl DrawProcess for TextSection<'_> {
             matrix,
             font,
             blend_mode,
+            alpha_mode,
             pos,
             size,
             color,
@@ -152,6 +160,7 @@ impl DrawProcess for TextSection<'_> {
             transform: matrix.as_ref(),
             font,
             blend_mode,
+            alpha_mode,
             flip,
         });
     }

@@ -18,6 +18,7 @@ pub struct Circle {
     matrix: Option<Mat3>,
     tolerance: f32,
     blend_mode: Option<BlendMode>,
+    alpha_mode: Option<BlendMode>,
     modes: [Option<TessMode>; 2],
     mode_index: usize,
     fill_color: Option<Color>,
@@ -35,6 +36,7 @@ impl Circle {
             matrix: None,
             tolerance: StrokeOptions::DEFAULT_TOLERANCE,
             blend_mode: None,
+            alpha_mode: None,
             modes: [None; 2],
             mode_index: 0,
             fill_color: None,
@@ -89,6 +91,11 @@ impl Circle {
         self.blend_mode = Some(mode);
         self
     }
+
+    pub fn alpha_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.alpha_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawTransform for Circle {
@@ -125,6 +132,7 @@ fn stroke(circle: &Circle, draw: &mut Draw) {
         matrix,
         tolerance,
         blend_mode,
+        alpha_mode,
         stroke_color,
         ..
     } = *circle;
@@ -144,6 +152,7 @@ fn stroke(circle: &Circle, draw: &mut Draw) {
         vertices: &vertices,
         indices: &indices,
         blend_mode,
+        alpha_mode,
     });
 }
 
@@ -156,6 +165,7 @@ fn fill(circle: &Circle, draw: &mut Draw) {
         matrix,
         tolerance,
         blend_mode,
+        alpha_mode,
         fill_color,
         ..
     } = *circle;
@@ -173,5 +183,6 @@ fn fill(circle: &Circle, draw: &mut Draw) {
         vertices: &vertices,
         indices: &indices,
         blend_mode,
+        alpha_mode,
     });
 }

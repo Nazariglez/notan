@@ -82,7 +82,7 @@ impl Renderer {
     pub fn set_pipeline(&mut self, pipeline: &Pipeline) {
         self.commands.push(Commands::Pipeline {
             id: pipeline.id(),
-            options: pipeline.options.clone(),
+            options: pipeline.options,
         });
     }
 

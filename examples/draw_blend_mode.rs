@@ -11,7 +11,7 @@ fn draw(gfx: &mut Graphics) {
     draw.clear(Color::new(0.1, 0.2, 0.3, 1.0));
 
     // set and additive color blend for everything draw from here
-    draw.set_blend_mode(BlendMode::ADD);
+    draw.set_blend_mode(Some(BlendMode::ADD));
 
     draw.circle(150.0)
         .position(400.0, 225.0)

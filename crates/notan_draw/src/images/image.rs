@@ -16,6 +16,7 @@ pub struct Image<'a> {
     color: Color,
     alpha: f32,
     blend_mode: Option<BlendMode>,
+    alpha_mode: Option<BlendMode>,
     flip: (bool, bool),
 }
 
@@ -30,6 +31,7 @@ impl<'a> Image<'a> {
             size: None,
             crop: None,
             blend_mode: None,
+            alpha_mode: None,
             flip: (false, false),
         }
     }
@@ -71,6 +73,11 @@ impl<'a> Image<'a> {
         self
     }
 
+    pub fn alpha_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.alpha_mode = Some(mode);
+        self
+    }
+
     pub fn flip_x(&mut self, flip: bool) -> &mut Self {
         self.flip.0 = flip;
         self
@@ -99,6 +106,7 @@ impl DrawProcess for Image<'_> {
             size,
             crop,
             blend_mode,
+            alpha_mode,
             flip: (flip_x, flip_y),
         } = self;
 
@@ -157,6 +165,7 @@ impl DrawProcess for Image<'_> {
             vertices: &vertices,
             indices: &[0, 1, 2, 2, 1, 3],
             blend_mode,
+            alpha_mode,
         });
     }
 }

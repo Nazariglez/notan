@@ -14,6 +14,7 @@ pub struct Triangle {
     alpha: f32,
     matrix: Option<Mat3>,
     blend_mode: Option<BlendMode>,
+    alpha_mode: Option<BlendMode>,
     modes: [Option<TessMode>; 2],
     mode_index: usize,
     fill_color: Option<Color>,
@@ -29,6 +30,7 @@ impl Triangle {
             alpha: 1.0,
             matrix: None,
             blend_mode: None,
+            alpha_mode: None,
             modes: [None; 2],
             mode_index: 0,
             fill_color: None,
@@ -80,6 +82,11 @@ impl Triangle {
         self.blend_mode = Some(mode);
         self
     }
+
+    pub fn alpha_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.alpha_mode = Some(mode);
+        self
+    }
 }
 
 impl DrawTransform for Triangle {
@@ -114,6 +121,7 @@ fn stroke(triangle: &Triangle, draw: &mut Draw) {
         alpha,
         matrix,
         blend_mode,
+        alpha_mode,
         stroke_color,
         ..
     } = *triangle;
@@ -122,6 +130,10 @@ fn stroke(triangle: &Triangle, draw: &mut Draw) {
 
     if let Some(bm) = blend_mode {
         path.blend_mode(bm);
+    }
+
+    if let Some(abm) = alpha_mode {
+        path.alpha_mode(abm);
     }
 
     let color = stroke_color.unwrap_or(ca);
@@ -147,6 +159,7 @@ fn fill(triangle: &Triangle, draw: &mut Draw) {
         alpha,
         matrix,
         blend_mode,
+        alpha_mode,
         fill_color,
         ..
     } = *triangle;
@@ -168,5 +181,6 @@ fn fill(triangle: &Triangle, draw: &mut Draw) {
         vertices: &vertices,
         indices: &indices,
         blend_mode,
+        alpha_mode,
     });
 }
