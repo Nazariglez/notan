@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## v0.8.0 - 25/11/2022
+## v0.8.0 - 28/11/2022
 
 - Updated `notan_egui` to the latest version of `egui` 0.19.
 - Added mipmapping support with `TextureBuilder::generate_mipmaps`.
@@ -29,6 +29,8 @@ All notable changes to this project will be documented in this file.
 - Replaced `copypasta` dependency by `arboard` and moved clipboard features to app level.
 - Added clipboard support for web browsers using `wasm`.
 - Added `.flip_x` and `.flip_y` to `Image`, `Animation` and `Pattern` object from the Draw2d API. 
+- Changed `Draw::set_blend_mode` needs an `Option<BlendMode>` now, and passing None the blending mode can be canceled.
+- Added `Draw::set_alpha_mode` and `DrawBuilder::alpha_mode` to set the blend mode for the alpha composition.
 
 ## v0.7.1 - 08/10/2022
 
