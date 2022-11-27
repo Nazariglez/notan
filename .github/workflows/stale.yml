@@ -1,22 +1,22 @@
-# Number of days of inactivity before an issue becomes stale
-daysUntilStale: 60
+name: Close inactive issues
+on:
+  schedule:
+    - cron: "30 11 * * *"
 
-# Number of days of inactivity before a stale issue is closed
-daysUntilClose: 14
-
-# Issues with these labels will never be considered stale
-#exemptLabels:
-#  - pinned
-#  - security
-
-# Label to use when marking an issue as stale
-staleLabel: "stale"
-
-# Comment to post when marking an issue as stale. Set to `false` to disable
-markComment: >
-  This issue has been automatically marked as stale because it has not had
-  recent activity. It will be closed if no further activity occurs. Thank you
-  for your contributions.
-
-# Comment to post when closing a stale issue. Set to `false` to disable
-# closeComment: false
+jobs:
+  close-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v5
+        with:
+          days-before-issue-stale: 60
+          days-before-issue-close: 14
+          stale-issue-label: "stale"
+          stale-issue-message: "This issue is stale because it has been open for 60 days with no activity."
+          close-issue-message: "This issue was closed because it has been inactive for 14 days since being marked as stale. Do not hesitate to open a new issue if you need it."
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
