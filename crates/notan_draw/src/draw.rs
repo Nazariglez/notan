@@ -448,18 +448,20 @@ fn needs_new_batch<I: DrawInfo, F: Fn(&Batch, &I) -> bool>(
             }
 
             // new batch if the blend_mode is different
-            if info.blend_mode() != b.blend_mode {
+            let cbm = info.blend_mode().or(draw.blend_mode);
+            if cbm != b.blend_mode {
                 return true;
             }
 
-            if info.alpha_mode() != b.alpha_mode {
+            let abm = info.alpha_mode().or(draw.alpha_mode);
+            if abm != b.alpha_mode {
                 return true;
             }
 
             // if cfg!(not(target_os = "osx")) {
-            //     if b.indices.len() + info.indices().len() >= u16::MAX as usize {
-            //         return true;
-            //     }
+            // if b.indices.len() + info.indices().len() >= u16::MAX as usize {
+            //     return true;
+            // }
             // }
 
             // by default we batch calls
