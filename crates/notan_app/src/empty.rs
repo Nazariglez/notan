@@ -17,20 +17,34 @@ use notan_audio::AudioBackend;
 #[derive(Default)]
 pub struct EmptyWindowBackend {
     size: (i32, i32),
+    position: (i32, i32),
     is_fullscreen: bool,
     is_always_on_top: bool,
     lazy: bool,
     captured: bool,
     visible: bool,
+    mouse_passthrough: bool,
 }
 
 impl WindowBackend for EmptyWindowBackend {
+    fn id(&self) -> u64 {
+        0
+    }
+
     fn set_size(&mut self, width: i32, height: i32) {
         self.size = (width, height);
     }
 
     fn size(&self) -> (i32, i32) {
         self.size
+    }
+
+    fn set_position(&mut self, x: i32, y: i32) {
+        self.position = (x, y);
+    }
+
+    fn position(&self) -> (i32, i32) {
+        self.position
     }
 
     fn set_fullscreen(&mut self, enabled: bool) {
@@ -86,6 +100,14 @@ impl WindowBackend for EmptyWindowBackend {
     fn visible(&self) -> bool {
         self.visible
     }
+
+    fn mouse_passthrough(&mut self) -> bool {
+        self.mouse_passthrough
+    }
+
+    fn set_mouse_passthrough(&mut self, pass_through: bool) {
+        self.mouse_passthrough = pass_through;
+    }
 }
 
 #[derive(Default)]
@@ -103,6 +125,8 @@ impl Backend for EmptyBackend {
     fn window(&mut self) -> &mut dyn WindowBackend {
         &mut self.window
     }
+
+    fn set_clipboard_text(&mut self, _text: &str) {}
 
     fn events_iter(&mut self) -> EventIterator {
         Default::default()
@@ -156,6 +180,14 @@ impl DeviceBackend for EmptyDeviceBackend {
         ""
     }
 
+    fn stats(&self) -> GpuStats {
+        GpuStats::default()
+    }
+
+    fn reset_stats(&mut self) {
+        // no-op
+    }
+
     fn create_pipeline(
         &mut self,
         _vertex_source: &[u8],
@@ -177,7 +209,7 @@ impl DeviceBackend for EmptyDeviceBackend {
         Ok(self.id_count)
     }
 
-    fn create_index_buffer(&mut self) -> Result<u64, String> {
+    fn create_index_buffer(&mut self, _format: IndexFormat) -> Result<u64, String> {
         self.id_count += 1;
         Ok(self.id_count)
     }

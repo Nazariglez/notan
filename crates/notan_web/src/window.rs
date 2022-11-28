@@ -12,6 +12,9 @@ use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, Element, Event as WebEvent, HtmlCanvasElement, Window};
 
+#[cfg(feature = "clipboard")]
+use crate::clipboard::{enable_clipboard, ClipboardCallbacks};
+
 #[cfg(feature = "drop_files")]
 use crate::files::{enable_files, FileCallbacks};
 
@@ -46,6 +49,9 @@ pub struct WebWindowBackend {
     pub(crate) keyboard_callbacks: KeyboardCallbacks,
     pub(crate) touch_callbacks: PointerCallbacks,
 
+    #[cfg(feature = "clipboard")]
+    pub(crate) clipboard_callbacks: ClipboardCallbacks,
+
     #[cfg(feature = "drop_files")]
     pub(crate) file_callbacks: FileCallbacks,
 
@@ -58,6 +64,8 @@ pub struct WebWindowBackend {
 
     capture_requested: Rc<RefCell<Option<bool>>>,
     pub(crate) captured: Rc<RefCell<bool>>,
+
+    mouse_passthrough: bool,
 }
 
 impl WebWindowBackend {
@@ -100,11 +108,15 @@ impl WebWindowBackend {
         let keyboard_callbacks = Default::default();
         let touch_callbacks = Default::default();
 
+        #[cfg(feature = "clipboard")]
+        let clipboard_callbacks = Default::default();
+
         #[cfg(feature = "drop_files")]
         let file_callbacks = Default::default();
 
         let antialias = config.multisampling != 0;
         let transparent = config.transparent;
+        let mouse_passthrough = config.mouse_passthrough;
 
         let dpi = window.device_pixel_ratio();
         let lazy = Rc::new(RefCell::new(config.lazy_loop));
@@ -118,6 +130,9 @@ impl WebWindowBackend {
             mouse_callbacks,
             keyboard_callbacks,
             touch_callbacks,
+
+            #[cfg(feature = "clipboard")]
+            clipboard_callbacks,
 
             #[cfg(feature = "drop_files")]
             file_callbacks,
@@ -143,6 +158,8 @@ impl WebWindowBackend {
             capture_requested,
             captured: Rc::new(RefCell::new(false)),
             visible,
+
+            mouse_passthrough,
         };
 
         win.init()
@@ -183,6 +200,9 @@ impl WebWindowBackend {
         enable_mouse(&mut self, fullscreen_dispatcher.clone())?;
         enable_keyboard(&mut self, fullscreen_dispatcher.clone())?;
         enable_touch(&mut self, fullscreen_dispatcher.clone())?;
+
+        #[cfg(feature = "clipboard")]
+        enable_clipboard(&mut self)?;
 
         #[cfg(feature = "drop_files")]
         enable_files(&mut self)?;
@@ -231,6 +251,10 @@ impl WebWindowBackend {
 }
 
 impl WindowBackend for WebWindowBackend {
+    fn id(&self) -> u64 {
+        0
+    }
+
     fn set_size(&mut self, width: i32, height: i32) {
         set_size_dpi(&self.canvas, width as _, height as _);
         self.config.width = width;
@@ -239,6 +263,14 @@ impl WindowBackend for WebWindowBackend {
 
     fn size(&self) -> (i32, i32) {
         get_notan_size(&self.canvas)
+    }
+
+    // No operation, as unsupported in browser
+    fn set_position(&mut self, _x: i32, _y: i32) {}
+
+    // No operation, as unsupported in browser
+    fn position(&self) -> (i32, i32) {
+        (0, 0)
     }
 
     fn set_fullscreen(&mut self, enabled: bool) {
@@ -322,6 +354,18 @@ impl WindowBackend for WebWindowBackend {
 
     // Unsupported in browser, always false
     fn is_always_on_top(&self) -> bool {
+        false
+    }
+
+    fn set_mouse_passthrough(&mut self, clickable: bool) {
+        if self.mouse_passthrough != clickable {
+            self.mouse_passthrough = clickable;
+            canvas_mouse_passthrough(&self.canvas, clickable);
+        }
+    }
+
+    // No operation, as unsupported in browser
+    fn mouse_passthrough(&mut self) -> bool {
         false
     }
 }

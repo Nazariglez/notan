@@ -76,15 +76,12 @@ pub enum Event {
     /// A file was dropped into the window
     Drop(DroppedFile),
 
-    #[cfg(feature = "clipboard")]
     /// Text copied to the clipboard
     Copy,
 
-    #[cfg(feature = "clipboard")]
     /// Text cut to the clipboard
     Cut,
 
-    #[cfg(feature = "clipboard")]
     /// Text pasted from the clipboard
     Paste(String),
 }

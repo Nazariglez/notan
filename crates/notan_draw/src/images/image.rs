@@ -16,6 +16,8 @@ pub struct Image<'a> {
     color: Color,
     alpha: f32,
     blend_mode: Option<BlendMode>,
+    alpha_mode: Option<BlendMode>,
+    flip: (bool, bool),
 }
 
 impl<'a> Image<'a> {
@@ -29,6 +31,8 @@ impl<'a> Image<'a> {
             size: None,
             crop: None,
             blend_mode: None,
+            alpha_mode: None,
+            flip: (false, false),
         }
     }
 
@@ -68,6 +72,21 @@ impl<'a> Image<'a> {
         self.blend_mode = Some(mode);
         self
     }
+
+    pub fn alpha_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.alpha_mode = Some(mode);
+        self
+    }
+
+    pub fn flip_x(&mut self, flip: bool) -> &mut Self {
+        self.flip.0 = flip;
+        self
+    }
+
+    pub fn flip_y(&mut self, flip: bool) -> &mut Self {
+        self.flip.1 = flip;
+        self
+    }
 }
 
 impl DrawTransform for Image<'_> {
@@ -87,6 +106,8 @@ impl DrawProcess for Image<'_> {
             size,
             crop,
             blend_mode,
+            alpha_mode,
+            flip: (flip_x, flip_y),
         } = self;
 
         let c = color.with_alpha(color.a * alpha);
@@ -110,6 +131,12 @@ impl DrawProcess for Image<'_> {
             },
         );
 
+        let flip_y = if texture.is_render_texture() {
+            !flip_y
+        } else {
+            flip_y
+        };
+
         let (u1, v1, u2, v2) = {
             let base_width = texture.base_width();
             let base_height = texture.base_height();
@@ -117,6 +144,10 @@ impl DrawProcess for Image<'_> {
             let v1 = sy / base_height;
             let u2 = (sx + sw) / base_width;
             let v2 = (sy + sh) / base_height;
+
+            let (u1, u2) = if flip_x { (u2, u1) } else { (u1, u2) };
+            let (v1, v2) = if flip_y { (v2, v1) } else { (v1, v2) };
+
             (u1, v1, u2, v2)
         };
 
@@ -134,6 +165,7 @@ impl DrawProcess for Image<'_> {
             vertices: &vertices,
             indices: &[0, 1, 2, 2, 1, 3],
             blend_mode,
+            alpha_mode,
         });
     }
 }

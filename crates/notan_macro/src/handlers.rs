@@ -14,7 +14,7 @@ pub(crate) fn process_tokens(input: String) -> String {
         GenericType::None
     };
 
-    let input = input.replace('!', "").replace('$', "");
+    let input = input.replace(['!', '$'], "");
     let tokens = get_tokens(&input);
     let enum_generated = enum_generator(&tokens);
     let enum_impl_generated = enum_impl_generator(&tokens);

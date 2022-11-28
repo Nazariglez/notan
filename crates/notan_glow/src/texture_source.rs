@@ -43,7 +43,7 @@ pub(crate) fn add_texture_from_bytes(
 ) -> Result<(u64, TextureInfo), String> {
     #[cfg(debug_assertions)]
     {
-        let size = info.width * info.height * 4;
+        let size = info.width * info.height * (info.bytes_per_pixel() as i32);
         debug_assert_eq!(
             bytes.len(),
             size as usize,
@@ -52,7 +52,7 @@ pub(crate) fn add_texture_from_bytes(
             size,
             info.width,
             info.height,
-            4
+            info.bytes_per_pixel(),
         );
     }
 

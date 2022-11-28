@@ -8,16 +8,19 @@ pub(crate) struct InnerTexture {
     pub texture: TextureKey,
     pub size: (i32, i32),
     pub is_srgba: bool,
+    pub use_mipmaps: bool,
 }
 
 impl InnerTexture {
     pub fn new(texture: TextureKey, info: &TextureInfo) -> Result<Self, String> {
         let size = (info.width, info.height);
         let is_srgba = info.format == TextureFormat::SRgba8;
+        let use_mipmaps = info.mipmap_filter.is_some();
         Ok(Self {
             texture,
             size,
             is_srgba,
+            use_mipmaps,
         })
     }
 
@@ -51,9 +54,25 @@ fn gl_slot(slot: u32) -> Result<u32, String> {
 
 pub(crate) struct TexInfo<'a> {
     pub texture: TextureKey,
-    pub typ: u32,
     pub format: u32,
     pub data: Option<&'a [u8]>,
+}
+
+const CANNOT_USE_LINEAR_FILTER: [TextureFormat; 1] = [TextureFormat::R32Float];
+
+fn assert_can_use_linear_filter(info: &TextureInfo) -> Result<(), String> {
+    let needs_check_filter = CANNOT_USE_LINEAR_FILTER.contains(&info.format);
+    if needs_check_filter
+        && (matches!(info.min_filter, TextureFilter::Linear)
+            || matches!(info.mag_filter, TextureFilter::Linear))
+    {
+        return Err(format!(
+            "Textures with format {:?} can only use TextureFiler::Nearest filter.",
+            info.format
+        ));
+    }
+
+    Ok(())
 }
 
 pub(crate) unsafe fn pre_create_texture<'a>(
@@ -61,12 +80,13 @@ pub(crate) unsafe fn pre_create_texture<'a>(
     bytes: Option<&'a [u8]>,
     info: &TextureInfo,
 ) -> Result<TexInfo<'a>, String> {
+    // Some texture types cannot use linear filtering
+    assert_can_use_linear_filter(info)?;
+
     let texture = gl.create_texture()?;
 
-    let bytes_per_pixel = info.bytes_per_pixel();
-    if bytes_per_pixel != 4 {
-        gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, bytes_per_pixel as _);
-    }
+    let bytes_per_pixel = info.bytes_per_pixel() as _;
+    gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, bytes_per_pixel);
 
     gl.bind_texture(glow::TEXTURE_2D, Some(texture));
 
@@ -87,19 +107,16 @@ pub(crate) unsafe fn pre_create_texture<'a>(
         glow::TEXTURE_MAG_FILTER,
         info.mag_filter.to_glow() as _,
     );
-    gl.tex_parameter_i32(
-        glow::TEXTURE_2D,
-        glow::TEXTURE_MIN_FILTER,
-        info.min_filter.to_glow() as _,
-    );
 
-    let depth = TextureFormat::Depth16 == info.format;
+    let min_filter = get_min_filter(info);
+
+    gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, min_filter as _);
+
+    let depth = matches!(info.format, TextureFormat::Depth16);
     let mut data = bytes;
-    let mut typ = glow::UNSIGNED_BYTE;
     let mut format = texture_format(&info.format);
     if depth {
         format = glow::DEPTH_COMPONENT;
-        typ = glow::UNSIGNED_SHORT;
         data = None;
 
         gl.tex_parameter_i32(
@@ -124,14 +141,28 @@ pub(crate) unsafe fn pre_create_texture<'a>(
 
     Ok(TexInfo {
         texture,
-        typ,
         format,
         data,
     })
 }
 
-pub(crate) unsafe fn post_create_texture(gl: &Context) {
-    //TODO mipmaps? gl.generate_mipmap(glow::TEXTURE_2D);
+fn get_min_filter(info: &TextureInfo) -> u32 {
+    match info.mipmap_filter {
+        None => info.min_filter.to_glow(),
+        Some(mipmap_filter) => match (info.min_filter, mipmap_filter) {
+            (TextureFilter::Linear, TextureFilter::Linear) => glow::LINEAR_MIPMAP_LINEAR,
+            (TextureFilter::Linear, TextureFilter::Nearest) => glow::LINEAR_MIPMAP_NEAREST,
+            (TextureFilter::Nearest, TextureFilter::Linear) => glow::NEAREST_MIPMAP_LINEAR,
+            (TextureFilter::Nearest, TextureFilter::Nearest) => glow::NEAREST_MIPMAP_NEAREST,
+        },
+    }
+}
+
+pub(crate) unsafe fn post_create_texture(gl: &Context, info: &TextureInfo) {
+    if info.mipmap_filter.is_some() {
+        gl.generate_mipmap(glow::TEXTURE_2D);
+    }
+
     gl.bind_texture(glow::TEXTURE_2D, None);
 }
 
@@ -142,7 +173,6 @@ pub(crate) unsafe fn create_texture(
 ) -> Result<TextureKey, String> {
     let TexInfo {
         texture,
-        typ,
         format,
         data,
     } = pre_create_texture(gl, bytes, info)?;
@@ -155,19 +185,32 @@ pub(crate) unsafe fn create_texture(
         info.height,
         0,
         format,
-        typ,
+        texture_type(&info.format),
         data,
     );
 
-    post_create_texture(gl);
+    post_create_texture(gl, info);
 
     Ok(texture)
+}
+
+pub(crate) fn texture_type(tf: &TextureFormat) -> u32 {
+    match tf {
+        TextureFormat::R32Float => glow::FLOAT,
+        TextureFormat::R32Uint => glow::UNSIGNED_INT,
+        TextureFormat::R16Uint => glow::UNSIGNED_SHORT,
+        TextureFormat::Depth16 => glow::UNSIGNED_SHORT,
+        _ => glow::UNSIGNED_BYTE,
+    }
 }
 
 pub(crate) fn texture_format(tf: &TextureFormat) -> u32 {
     match tf {
         TextureFormat::Rgba32 => glow::RGBA,
         TextureFormat::R8 => glow::RED,
+        TextureFormat::R16Uint => glow::RED_INTEGER,
+        TextureFormat::R32Float => glow::RED,
+        TextureFormat::R32Uint => glow::RED_INTEGER,
         TextureFormat::Depth16 => glow::DEPTH_COMPONENT16,
         TextureFormat::SRgba8 => glow::RGBA,
     }
@@ -176,6 +219,9 @@ pub(crate) fn texture_format(tf: &TextureFormat) -> u32 {
 pub(crate) fn texture_internal_format(tf: &TextureFormat) -> u32 {
     match tf {
         TextureFormat::R8 => glow::R8,
+        TextureFormat::R16Uint => R16UI,
+        TextureFormat::R32Float => glow::R32F,
+        TextureFormat::R32Uint => glow::R32UI,
         TextureFormat::SRgba8 => glow::SRGB8_ALPHA8,
         _ => texture_format(tf),
     }

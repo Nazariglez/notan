@@ -2,7 +2,8 @@
 
 # this script needs `scrot` installed on a linux machine
 run() {
-  cargo run --example "$f" --all-features
+  features=glyph,egui,text,extra,audio,links,drop_files,clipboard,save_file,texture_to_file
+  cargo run --example "$f" --features=$features
 }
 
 finish() {

@@ -1,4 +1,4 @@
-use glutin::dpi::LogicalSize;
+use glutin::dpi::{LogicalSize, PhysicalPosition};
 use glutin::event_loop::EventLoop;
 use glutin::window::Fullscreen::Borderless;
 use glutin::window::{CursorGrabMode, CursorIcon as WCursorIcon, Window, WindowBuilder};
@@ -15,9 +15,14 @@ pub struct WinitWindowBackend {
     visible: bool,
     high_dpi: bool,
     is_always_on_top: bool,
+    mouse_passthrough: bool,
 }
 
 impl WindowBackend for WinitWindowBackend {
+    fn id(&self) -> u64 {
+        self.window().id().into()
+    }
+
     fn set_size(&mut self, width: i32, height: i32) {
         self.window()
             .set_inner_size(LogicalSize::new(width, height));
@@ -27,6 +32,16 @@ impl WindowBackend for WinitWindowBackend {
         let inner = self.window().inner_size();
         let logical = inner.to_logical::<f64>(self.scale_factor);
         (logical.width as _, logical.height as _)
+    }
+
+    fn set_position(&mut self, x: i32, y: i32) {
+        self.window()
+            .set_outer_position(PhysicalPosition::new(x, y));
+    }
+
+    fn position(&self) -> (i32, i32) {
+        let position = self.window().outer_position().unwrap_or_default();
+        (position.x, position.y)
     }
 
     fn set_always_on_top(&mut self, enabled: bool) {
@@ -131,6 +146,19 @@ impl WindowBackend for WinitWindowBackend {
     fn visible(&self) -> bool {
         self.visible
     }
+
+    fn mouse_passthrough(&mut self) -> bool {
+        self.mouse_passthrough
+    }
+
+    fn set_mouse_passthrough(&mut self, pass_through: bool) {
+        self.mouse_passthrough = pass_through;
+
+        self.gl_ctx
+            .window()
+            .set_cursor_hittest(!pass_through)
+            .unwrap();
+    }
 }
 
 impl WinitWindowBackend {
@@ -192,6 +220,7 @@ impl WinitWindowBackend {
             visible: config.visible,
             high_dpi: config.high_dpi,
             is_always_on_top: false,
+            mouse_passthrough: config.mouse_passthrough,
         })
     }
 

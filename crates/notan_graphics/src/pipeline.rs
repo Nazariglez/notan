@@ -343,7 +343,7 @@ impl Default for DepthStencil {
 }
 
 /// Options to use with the render pipeline
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct PipelineOptions {
     pub color_blend: Option<BlendMode>,
     pub alpha_blend: Option<BlendMode>,

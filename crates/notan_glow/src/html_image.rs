@@ -1,8 +1,8 @@
 #![cfg(target_arch = "wasm32")]
 
 use crate::texture::{
-    post_create_texture, pre_create_texture, texture_format, texture_internal_format, TexInfo,
-    TextureKey,
+    post_create_texture, pre_create_texture, texture_format, texture_internal_format, texture_type,
+    TexInfo, TextureKey,
 };
 use crate::GlowBackend;
 use glow::Context;
@@ -81,7 +81,7 @@ pub(crate) unsafe fn update_texture_from_html_image(
         opts.x_offset,
         opts.y_offset,
         texture_format(&opts.format), // 3d texture needs another value?
-        glow::UNSIGNED_BYTE,          // todo UNSIGNED SHORT FOR DEPTH (3d) TEXTURES
+        texture_type(&opts.format),
         image,
     );
 
@@ -94,10 +94,7 @@ pub(crate) unsafe fn create_texture_from_html_image(
     info: &TextureInfo,
 ) -> Result<TextureKey, String> {
     let TexInfo {
-        texture,
-        typ,
-        format,
-        ..
+        texture, format, ..
     } = pre_create_texture(gl, None, info)?;
 
     gl.tex_image_2d_with_html_image(
@@ -105,11 +102,11 @@ pub(crate) unsafe fn create_texture_from_html_image(
         0,
         texture_internal_format(&info.format) as _,
         format,
-        typ,
+        texture_type(&info.format),
         image,
     );
 
-    post_create_texture(gl);
+    post_create_texture(gl, info);
 
     Ok(texture)
 }

@@ -19,6 +19,31 @@ pub enum ResourceId {
     RenderTexture(u64),
 }
 
+/// Represents what the GPU did in the last frame
+#[derive(Clone, Copy, Default, Debug)]
+pub struct GpuStats {
+    /// Number of draw calls
+    pub draw_calls: usize,
+    /// Number of read_pixels callas
+    pub read_pixels: usize,
+    /// Number of textures updated
+    pub texture_updates: usize,
+    /// Number of textures created
+    pub texture_creation: usize,
+    /// Number of buffers updated
+    pub buffer_updates: usize,
+    /// Number of buffers created
+    pub buffer_creation: usize,
+    /// Any other interaction with the GPU
+    pub misc: usize,
+}
+
+impl GpuStats {
+    pub fn total(&self) -> usize {
+        self.draw_calls + self.read_pixels + self.misc
+    }
+}
+
 /// Represents a the implementation graphics backend like glow, wgpu or another
 pub trait DeviceBackend {
     /// Returns the name of the api used (like webgl, wgpu, etc...)
@@ -28,6 +53,12 @@ pub trait DeviceBackend {
     fn limits(&self) -> Limits {
         Default::default()
     }
+
+    /// Return the GPU stats
+    fn stats(&self) -> GpuStats;
+
+    /// Reset the GPU stats
+    fn reset_stats(&mut self);
 
     /// Create a new pipeline and returns the id
     fn create_pipeline(
@@ -47,7 +78,7 @@ pub trait DeviceBackend {
     ) -> Result<u64, String>;
 
     /// Create a new index buffer object and returns the id
-    fn create_index_buffer(&mut self) -> Result<u64, String>;
+    fn create_index_buffer(&mut self, format: IndexFormat) -> Result<u64, String>;
 
     /// Create a new uniform buffer and returns the id
     fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<u64, String>;
@@ -134,6 +165,11 @@ impl Device {
     #[inline]
     pub fn limits(&self) -> Limits {
         self.backend.limits()
+    }
+
+    #[inline]
+    pub fn stats(&self) -> GpuStats {
+        self.backend.stats()
     }
 
     #[inline]
@@ -234,7 +270,7 @@ impl Device {
             fragment_source,
             vertex_attrs,
             texture_locations,
-            options.clone(),
+            options,
         )?;
 
         Ok(Pipeline::new(
@@ -291,14 +327,16 @@ impl Device {
     #[inline]
     pub(crate) fn inner_create_index_buffer(
         &mut self,
-        data: Option<&[u32]>,
+        data: Option<IndexBufferWrapper>,
+        format: IndexFormat,
     ) -> Result<Buffer, String> {
-        let id = self.backend.create_index_buffer()?;
-
+        let id = self.backend.create_index_buffer(format)?;
         let buffer = Buffer::new(id, BufferUsage::Index, None, self.drop_manager.clone());
-
         if let Some(d) = data {
-            self.set_buffer_data(&buffer, d);
+            match d {
+                IndexBufferWrapper::Uint16(s) => self.set_buffer_data(&buffer, s),
+                IndexBufferWrapper::Uint32(s) => self.set_buffer_data(&buffer, s),
+            }
         }
         Ok(buffer)
     }
@@ -346,7 +384,8 @@ impl Device {
             .create_texture(TextureSourceKind::Empty, info)?;
 
         let id = self.backend.create_render_texture(tex_id, &info)?;
-        let texture = Texture::new(tex_id, info, self.drop_manager.clone());
+        let mut texture = Texture::new(tex_id, info, self.drop_manager.clone());
+        texture.is_render_texture = true;
         Ok(RenderTexture::new(id, texture, self.drop_manager.clone()))
     }
 
@@ -380,8 +419,8 @@ impl Device {
         // Check if the buffer size is enough to read the pixels
         if cfg!(debug_assertions) {
             let size = (texture.width() * texture.height()) as usize;
-            let bbp = texture.format().bytes_per_pixel() as usize;
-            let len = size * bbp;
+            let bpp = texture.format().bytes_per_pixel() as usize;
+            let len = size * bpp;
             debug_assert_eq!(
                 len,
                 bytes.len(),
@@ -396,6 +435,8 @@ impl Device {
 
     #[inline]
     pub fn clean(&mut self) {
+        self.backend.reset_stats();
+
         if self.drop_manager.dropped.read().is_empty() {
             return;
         }

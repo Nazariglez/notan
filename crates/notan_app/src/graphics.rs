@@ -172,6 +172,12 @@ impl Graphics {
     pub fn set_dpi(&mut self, scale_factor: f64) {
         self.device.set_dpi(scale_factor);
     }
+
+    /// Return the GPU stats
+    #[inline]
+    pub fn stats(&self) -> GpuStats {
+        self.device.stats()
+    }
 }
 
 impl std::ops::Deref for Graphics {

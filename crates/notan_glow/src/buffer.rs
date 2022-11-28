@@ -1,6 +1,7 @@
 use crate::pipeline::VertexAttributes;
 use crate::pipeline::*;
 use glow::*;
+use notan_graphics::buffer::IndexFormat;
 use std::fmt::Formatter;
 
 //https://sotrh.github.io/learn-wgpu/beginner/tutorial6-uniforms/#a-perspective-camera
@@ -8,7 +9,7 @@ use std::fmt::Formatter;
 
 pub(crate) enum Kind {
     Vertex(VertexAttributes),
-    Index,
+    Index(IndexFormat),
     Uniform(u32, String),
 }
 
@@ -16,7 +17,7 @@ impl std::fmt::Display for Kind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Kind::Vertex(_) => write!(f, "Vertex"),
-            Kind::Index => write!(f, "Index"),
+            Kind::Index(_) => write!(f, "Index"),
             Kind::Uniform(loc, id) => write!(f, "Uniform(location: {}, id: {})", loc, id),
         }
     }
@@ -62,7 +63,7 @@ impl InnerBuffer {
 
         let draw_target = match &kind {
             Kind::Vertex(_) => glow::ARRAY_BUFFER,
-            Kind::Index => glow::ELEMENT_ARRAY_BUFFER,
+            Kind::Index(_) => glow::ELEMENT_ARRAY_BUFFER,
             Kind::Uniform(_, _) => glow::UNIFORM_BUFFER,
         };
 

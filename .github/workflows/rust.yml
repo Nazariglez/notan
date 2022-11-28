@@ -1,0 +1,49 @@
+on: [push, pull_request]
+
+name: CI
+
+jobs:
+  fmt-clippy-check-test:
+    name: Format + clippy + check + test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - name: Update apt
+        run: sudo apt update
+      - name: Install alsa
+        run: sudo apt-get install libasound2-dev
+
+      - name: Install rust stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: default
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+      - name: Set up cargo cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Run cargo clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
+
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --locked
+
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --workspace --exclude "notan_web" --features=glyph,egui,text,extra,audio,links,drop_files,clipboard,save_file,texture_to_file

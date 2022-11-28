@@ -1,9 +1,36 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## UNRELEASED
+## v0.8.0 - 28/11/2022
 
--
+- Updated `notan_egui` to the latest version of `egui` 0.19.
+- Added mipmapping support with `TextureBuilder::generate_mipmaps`.
+- Added `WindowBackend::position` and `WindowBackend::set_position`.
+- Fix lint warning `notan_main` macro.
+- Added methods `.fill_color` and `stroke_color` for the Draw2d shapes to allow to stroke and fill with the same builder.
+- Added method `Draw::star(spikes, outser_radius, inner_radius)` to draw stars.
+- Added method `Draw::polygon(sides, radius)` to draw regular polygons.
+- Added `shaderc` feature to compile shaders using `shaderc` instead of `glsl_to_spirv`.
+- Fix `RenderTexture` orientation when drawing using the Draw2d API.
+- Added `IndexBufferBuilder::with_data_u16` to create index buffers using u16 slices.
+- Added `Text::last_bounds` to get the bounding box of the latest text drawn. 
+- Added `Text::bounds` to get the bounding box of all the text elements combined.
+- Added `Draw::last_text_bounds` to get the bounding box of the latest text drawn using the Draw2d API.
+- New examples `text_bounds.rs` and `draw_text_bounds.rs` to show how to measure the text size with real use cases.
+- Added a CI action to check if the code meets a minimal quality conditions.
+- Added `WindowBackend::set_mouse_passthrough` to change the passthrough condition at runtime. 
+- Fix custom pipelines for the Draw2d APIs. They were working only for images, now they work all (shapes, patterns, etc..)
+- Added example `draw_shapes_shader.rs` to show how to set a custom pipeline drawing shapes.
+- Renamed `draw_shader.rs` to `draw_image_shader.rs`
+- Added `Graphics::stats() -> GpuStats` to get more info about what the GPU did the last frame. 
+- Added new texture formats. `TextureFormat::R16Uint`, `R32Uint`, `R32Float`. 
+- New example `renderer_texture_r32.rs` to show how to use new texture types.
+- The method `Renderer::bind_texture` will set the slot automatically to the next one if using in a row.
+- Replaced `copypasta` dependency by `arboard` and moved clipboard features to app level.
+- Added clipboard support for web browsers using `wasm`.
+- Added `.flip_x` and `.flip_y` to `Image`, `Animation` and `Pattern` object from the Draw2d API. 
+- Changed `Draw::set_blend_mode` needs an `Option<BlendMode>` now, and passing None the blending mode can be canceled.
+- Added `Draw::set_alpha_mode` and `DrawBuilder::alpha_mode` to set the blend mode for the alpha composition.
 
 ## v0.7.1 - 08/10/2022
 

@@ -9,9 +9,9 @@ pub use instance::GlyphInstance;
 pub use builder::GlyphBrushBuilder;
 pub use glyph_brush::ab_glyph;
 pub use glyph_brush::{
-    BuiltInLineBreaker, Extra, FontId, GlyphCruncher, GlyphPositioner, HorizontalAlign, Layout,
-    LineBreak, LineBreaker, OwnedSection, OwnedText, Section, SectionGeometry, SectionGlyph,
-    SectionGlyphIter, SectionText, Text, VerticalAlign,
+    BuiltInLineBreaker, Extra, FontId, GlyphCalculator, GlyphCalculatorBuilder, GlyphCruncher,
+    GlyphPositioner, HorizontalAlign, Layout, LineBreak, LineBreaker, OwnedSection, OwnedText,
+    Section, SectionGeometry, SectionGlyph, SectionGlyphIter, SectionText, Text, VerticalAlign,
 };
 pub use pipeline::{DefaultGlyphPipeline, GlyphPipeline};
 
@@ -21,7 +21,6 @@ use core::hash::BuildHasher;
 use std::borrow::Cow;
 
 use glyph_brush::{BrushAction, BrushError, DefaultSectionHasher};
-use log::{log_enabled, warn};
 use notan_app::Graphics;
 use notan_graphics::prelude::ClearOptions;
 use notan_graphics::{Device, Renderer, Texture};
@@ -253,15 +252,13 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
                         suggested
                     };
 
-                    if log_enabled!(log::Level::Warn) {
-                        warn!(
-                            "Increasing glyph texture size {old:?} -> {new:?}. \
+                    log::debug!(
+                        "Increasing glyph texture size {old:?} -> {new:?}. \
                              Consider building with `.initial_cache_size({new:?})` to avoid \
                              resizing",
-                            old = self.glyph_brush.texture_dimensions(),
-                            new = (new_width, new_height),
-                        );
-                    }
+                        old = self.glyph_brush.texture_dimensions(),
+                        new = (new_width, new_height),
+                    );
 
                     self.cache = Cache::new(device, new_width, new_height).unwrap();
                     self.glyph_brush.resize_texture(new_width, new_height);

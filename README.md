@@ -138,7 +138,7 @@ fn setup(gfx: &mut Graphics) -> State {
         .unwrap();
 
     #[rustfmt::skip]
-        let vertices = [
+    let vertices = [
         0.5, 1.0,   1.0, 0.2, 0.3,
         0.0, 0.0,   0.1, 1.0, 0.3,
         1.0, 0.0,   0.1, 0.2, 1.0,
@@ -181,33 +181,47 @@ Add `notan` to your project from [crates.io](https://crates.io). The `main` bran
 
 ## WebAssembly
 
-We treat the web as a first class citizen. Our web backend is made using [web-sys](https://github.com/rustwasm/wasm-bindgen/tree/master/crates/web-sys) and you can compile it using [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen)
-or [wasm-pack](https://github.com/rustwasm/wasm-pack). Take in account that you need to create an `index.html` file and call the main function from the `wasm` module.
+We treat the web as a first class citizen. WebAssembly compilation is dead simple, we recommend to just use [trunk](https://trunkrs.dev/). 
+You only need to add an `index.html` file to your project and run `trunk serve` to see it working. 
 
-Using `wasm-pack build --release --target web` you need to load the module with something similar to this:
+Here is a simple `index.html` file as an example:
 
 ```html
-
 <html>
-<head>
-    <title>Notan App</title>
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport"
-          content="minimal-ui, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-</head>
-<body>
-<script type="module">
-    import init from './pkg/YOUR_PROJECT_NAME.js'; // replace this 
-    let module = await init();
-    module.notan_main();
-</script>
-<div id="examples">
-    <canvas id="notan_canvas"></canvas>
-</div>
-</body>
+    <head>
+        <title>Notan App</title>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport"
+              content="minimal-ui, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <style>
+            html, body {
+                width: 100%;
+                height: 100%;
+                padding: 0;
+                margin: 0;
+                background-color: #252526;
+            }
+
+            * {
+                outline: none;
+            }
+
+            body {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="notan_canvas"></canvas>
+    </body>
+</html>
 ```
+
+However, you can also use [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen) or [wasm-pack](https://rustwasm.github.io/wasm-pack/). 
 
 ## How it works
 

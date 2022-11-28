@@ -25,6 +25,9 @@ pub trait Backend: Downcast {
     /// Returns the window implementation
     fn window(&mut self) -> &mut dyn WindowBackend;
 
+    /// Sets text to clipboard if the platform supports it
+    fn set_clipboard_text(&mut self, text: &str);
+
     /// Returns an iterator that contains the backend events
     fn events_iter(&mut self) -> EventIterator;
 
@@ -111,11 +114,20 @@ pub enum CursorIcon {
 
 /// Represents a window
 pub trait WindowBackend {
+    // Returns the window id
+    fn id(&self) -> u64;
+
     /// Sets the window's size
     fn set_size(&mut self, width: i32, height: i32);
 
     /// Returns the window's size
     fn size(&self) -> (i32, i32);
+
+    /// Sets the window's position
+    fn set_position(&mut self, x: i32, y: i32);
+
+    /// Returns the window's position
+    fn position(&self) -> (i32, i32);
 
     /// Enable or disable the fullscreen mode
     fn set_fullscreen(&mut self, enabled: bool);
@@ -168,4 +180,10 @@ pub trait WindowBackend {
 
     /// Returns if the window is visible
     fn visible(&self) -> bool;
+
+    // sets whether you can click through the window
+    fn set_mouse_passthrough(&mut self, pass_through: bool);
+
+    // returns whether you can click through the window
+    fn mouse_passthrough(&mut self) -> bool;
 }

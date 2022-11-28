@@ -13,12 +13,16 @@ pub struct Circle {
     color: Color,
     pos: (f32, f32),
     radius: f32,
-    mode: TessMode,
     stroke_width: f32,
     alpha: f32,
     matrix: Option<Mat3>,
     tolerance: f32,
     blend_mode: Option<BlendMode>,
+    alpha_mode: Option<BlendMode>,
+    modes: [Option<TessMode>; 2],
+    mode_index: usize,
+    fill_color: Option<Color>,
+    stroke_color: Option<Color>,
 }
 
 impl Circle {
@@ -27,12 +31,16 @@ impl Circle {
             color: Color::WHITE,
             pos: (0.0, 0.0),
             radius,
-            mode: TessMode::Fill,
             stroke_width: 1.0,
             alpha: 1.0,
             matrix: None,
             tolerance: StrokeOptions::DEFAULT_TOLERANCE,
             blend_mode: None,
+            alpha_mode: None,
+            modes: [None; 2],
+            mode_index: 0,
+            fill_color: None,
+            stroke_color: None,
         }
     }
 
@@ -43,6 +51,16 @@ impl Circle {
 
     pub fn tolerance(&mut self, value: f32) -> &mut Self {
         self.tolerance = value;
+        self
+    }
+
+    pub fn fill_color(&mut self, color: Color) -> &mut Self {
+        self.fill_color = Some(color);
+        self
+    }
+
+    pub fn stroke_color(&mut self, color: Color) -> &mut Self {
+        self.stroke_color = Some(color);
         self
     }
 
@@ -57,18 +75,25 @@ impl Circle {
     }
 
     pub fn fill(&mut self) -> &mut Self {
-        self.mode = TessMode::Fill;
+        self.modes[self.mode_index] = Some(TessMode::Fill);
+        self.mode_index = (self.mode_index + 1) % 2;
         self
     }
 
     pub fn stroke(&mut self, width: f32) -> &mut Self {
-        self.mode = TessMode::Stroke;
+        self.modes[self.mode_index] = Some(TessMode::Stroke);
         self.stroke_width = width;
+        self.mode_index = (self.mode_index + 1) % 2;
         self
     }
 
     pub fn blend_mode(&mut self, mode: BlendMode) -> &mut Self {
         self.blend_mode = Some(mode);
+        self
+    }
+
+    pub fn alpha_mode(&mut self, mode: BlendMode) -> &mut Self {
+        self.alpha_mode = Some(mode);
         self
     }
 }
@@ -81,14 +106,23 @@ impl DrawTransform for Circle {
 
 impl DrawProcess for Circle {
     fn draw_process(self, draw: &mut Draw) {
-        match self.mode {
-            TessMode::Fill => fill(self, draw),
-            TessMode::Stroke => stroke(self, draw),
-        }
+        let modes = self.modes;
+        modes.iter().enumerate().for_each(|(i, mode)| match mode {
+            None => {
+                if i == 0 {
+                    // fill by default
+                    fill(&self, draw);
+                }
+            }
+            Some(mode) => match mode {
+                TessMode::Fill => fill(&self, draw),
+                TessMode::Stroke => stroke(&self, draw),
+            },
+        });
     }
 }
 
-fn stroke(circle: Circle, draw: &mut Draw) {
+fn stroke(circle: &Circle, draw: &mut Draw) {
     let Circle {
         color,
         pos: (x, y),
@@ -98,12 +132,16 @@ fn stroke(circle: Circle, draw: &mut Draw) {
         matrix,
         tolerance,
         blend_mode,
+        alpha_mode,
+        stroke_color,
         ..
-    } = circle;
+    } = *circle;
 
     let stroke_options = StrokeOptions::default()
         .with_line_width(stroke_width)
         .with_tolerance(tolerance);
+
+    let color = stroke_color.unwrap_or(color);
     let color = color.with_alpha(color.a * alpha);
 
     let path = geometry::circle(x, y, radius);
@@ -114,10 +152,11 @@ fn stroke(circle: Circle, draw: &mut Draw) {
         vertices: &vertices,
         indices: &indices,
         blend_mode,
+        alpha_mode,
     });
 }
 
-fn fill(circle: Circle, draw: &mut Draw) {
+fn fill(circle: &Circle, draw: &mut Draw) {
     let Circle {
         color,
         pos: (x, y),
@@ -126,10 +165,14 @@ fn fill(circle: Circle, draw: &mut Draw) {
         matrix,
         tolerance,
         blend_mode,
+        alpha_mode,
+        fill_color,
         ..
-    } = circle;
+    } = *circle;
 
     let fill_options = FillOptions::default().with_tolerance(tolerance);
+
+    let color = fill_color.unwrap_or(color);
     let color = color.with_alpha(color.a * alpha);
 
     let path = geometry::circle(x, y, radius);
@@ -140,5 +183,6 @@ fn fill(circle: Circle, draw: &mut Draw) {
         vertices: &vertices,
         indices: &indices,
         blend_mode,
+        alpha_mode,
     });
 }

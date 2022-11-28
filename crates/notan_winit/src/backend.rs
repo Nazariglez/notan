@@ -3,6 +3,9 @@ use crate::{keyboard, mouse, touch};
 use glutin::event_loop::ControlFlow;
 use notan_app::{FrameState, WindowConfig};
 
+#[cfg(feature = "clipboard")]
+use crate::clipboard;
+
 #[cfg(feature = "drop_files")]
 use notan_app::DroppedFile;
 
@@ -41,6 +44,19 @@ impl WinitBackend {
 impl Backend for WinitBackend {
     fn window(&mut self) -> &mut dyn WindowBackend {
         self.window.as_mut().unwrap()
+    }
+
+    fn set_clipboard_text(&mut self, text: &str) {
+        #[cfg(feature = "clipboard")]
+        clipboard::set_clipboard_text(text);
+
+        #[cfg(not(feature = "clipboard"))]
+        {
+            log::warn!(
+                "Cannot set {} to clipboard without the feature 'clipboard' enabled.",
+                text
+            );
+        }
     }
 
     fn events_iter(&mut self) -> EventIterator {
@@ -99,7 +115,7 @@ impl BackendSystem for WinitBackend {
             };
 
             event_loop.run(move |event, _win_target, control_flow| {
-                let b = backend(&mut app);
+                let b = backend(&mut app.backend);
 
                 // Await for the next event to run the loop again
                 let is_lazy = b.window.as_ref().unwrap().lazy;
@@ -120,6 +136,11 @@ impl BackendSystem for WinitBackend {
                         }
 
                         if let Some(evt) = touch::process_events(event, dpi_scale) {
+                            add_event(b, &mut request_redraw, evt);
+                        }
+
+                        #[cfg(feature = "clipboard")]
+                        if let Some(evt) = clipboard::process_events(event, &app.keyboard) {
                             add_event(b, &mut request_redraw, evt);
                         }
 
@@ -233,7 +254,11 @@ impl BackendSystem for WinitBackend {
                     WEvent::RedrawRequested(_) => {
                         match cb(&mut app, &mut state) {
                             Ok(FrameState::End) => {
-                                backend(&mut app).window.as_mut().unwrap().swap_buffers();
+                                backend(&mut app.backend)
+                                    .window
+                                    .as_mut()
+                                    .unwrap()
+                                    .swap_buffers();
                             }
                             Ok(FrameState::Skip) => {
                                 // log::debug!("Frame skipped");
@@ -250,7 +275,7 @@ impl BackendSystem for WinitBackend {
                     _ => {}
                 }
 
-                let b = backend(&mut app);
+                let b = backend(&mut app.backend);
 
                 // Close the loop if the user want to exit
                 let exit_requested = b.exit_requested;
@@ -275,6 +300,6 @@ impl BackendSystem for WinitBackend {
     }
 }
 
-fn backend(app: &mut App) -> &mut WinitBackend {
-    app.backend.downcast_mut::<WinitBackend>().unwrap()
+fn backend(backend: &mut Box<dyn Backend>) -> &mut WinitBackend {
+    backend.downcast_mut::<WinitBackend>().unwrap()
 }

@@ -34,7 +34,7 @@ pub struct TextureUpdate {
     pub format: TextureFormat,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TextureInfo {
     pub width: i32,
     pub height: i32,
@@ -44,6 +44,7 @@ pub struct TextureInfo {
     pub wrap_x: TextureWrap,
     pub wrap_y: TextureWrap,
     pub premultiplied_alpha: bool,
+    pub mipmap_filter: Option<TextureFilter>,
 
     /// Used for render textures
     pub depth: bool,
@@ -61,6 +62,7 @@ impl Default for TextureInfo {
             height: 1,
             depth: false,
             premultiplied_alpha: false,
+            mipmap_filter: None,
         }
     }
 }
@@ -76,7 +78,8 @@ impl TextureFormat {
     pub fn bytes_per_pixel(&self) -> u8 {
         use TextureFormat::*;
         match self {
-            R8 | SRgba8 => 1,
+            R8 => 1,
+            R16Uint => 2,
             _ => 4,
         }
     }
@@ -104,6 +107,7 @@ pub struct Texture {
     min_filter: TextureFilter,
     mag_filter: TextureFilter,
     frame: Rect,
+    pub(crate) is_render_texture: bool,
 }
 
 //https://sotrh.github.io/learn-wgpu/beginner/tutorial5-textures/#getting-data-into-a-texture
@@ -137,6 +141,7 @@ impl Texture {
             min_filter,
             mag_filter,
             frame,
+            is_render_texture: false,
         }
     }
 
@@ -215,6 +220,10 @@ impl Texture {
     ) -> Result<(), String> {
         crate::to_file::save_to_png_file(gfx, self, false, path)
     }
+
+    pub fn is_render_texture(&self) -> bool {
+        self.is_render_texture
+    }
 }
 
 impl std::cmp::PartialEq for Texture {
@@ -235,6 +244,9 @@ pub enum TextureFormat {
     SRgba8,
     Rgba32,
     R8,
+    R16Uint,
+    R32Float,
+    R32Uint,
     Depth16,
 }
 
@@ -369,8 +381,18 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
     }
 
     /// Generate the mipmaps
-    pub fn generate_mipmap(self) -> Self {
-        todo!("generate mipmaps");
+    pub fn with_mipmaps(mut self, enable: bool) -> Self {
+        if enable {
+            self.info.mipmap_filter = Some(TextureFilter::Linear);
+        } else {
+            self.info.mipmap_filter = None;
+        }
+        self
+    }
+
+    pub fn with_mipmap_filter(mut self, filter: TextureFilter) -> Self {
+        self.info.mipmap_filter = Some(filter);
+        self
     }
 
     pub fn build(self) -> Result<Texture, String> {
@@ -386,10 +408,17 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
                 source = Some(TextureSourceKind::Image(bytes.to_vec()));
             }
             Some(TextureKind::Bytes(bytes)) => {
-                #[cfg(debug_assertions)]
-                {
-                    let size = info.width * info.height * 4;
-                    debug_assert_eq!(bytes.len(), size as usize, "Texture bytes of len {} when it should be {} (width: {} * height: {} * bytes: {})", bytes.len(), size, info.width, info.height, 4);
+                let size = (info.width * info.height * (info.bytes_per_pixel() as i32)) as usize;
+                if bytes.len() != size {
+                    return Err(format!(
+                        "Texture type {:?} with {} bytes, when it should be {} (width: {} * height: {} * bytes: {})",
+                        info.format,
+                        bytes.len(),
+                        size,
+                        info.width,
+                        info.height,
+                        info.bytes_per_pixel()
+                    ));
                 }
 
                 source = Some(TextureSourceKind::Bytes(bytes.to_vec()));

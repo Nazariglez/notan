@@ -235,7 +235,7 @@ pub(crate) fn process_pipeline(
         Some(pip) => {
             let masked = masked_pip(pip, batch.is_mask, batch.masking);
             let pip_to_use = masked.as_ref().unwrap_or(pip);
-            let blended = blended_pip(pip_to_use, batch.blend_mode);
+            let blended = blended_pip(pip_to_use, batch.blend_mode, batch.alpha_mode);
             let final_pip = blended.as_ref().unwrap_or(pip_to_use);
             renderer.set_pipeline(final_pip);
 
@@ -246,7 +246,7 @@ pub(crate) fn process_pipeline(
         _ => {
             let masked = masked_pip(default_pipeline, batch.is_mask, batch.masking);
             let pip_to_use = masked.as_ref().unwrap_or(default_pipeline);
-            let blended = blended_pip(pip_to_use, batch.blend_mode);
+            let blended = blended_pip(pip_to_use, batch.blend_mode, batch.alpha_mode);
             let final_pip = blended.as_ref().unwrap_or(pip_to_use);
             renderer.set_pipeline(final_pip);
         }
@@ -257,17 +257,22 @@ fn masked_pip(pip: &Pipeline, is_mask: bool, masking: bool) -> Option<Pipeline> 
     override_pipeline_options(pip, is_mask, masking)
 }
 
-fn blended_pip(pip: &Pipeline, blend_mode: BlendMode) -> Option<Pipeline> {
-    match pip.options.color_blend {
-        Some(bm) => {
-            if bm != blend_mode {
-                let mut blend_pip = pip.clone();
-                blend_pip.options.color_blend = Some(blend_mode);
-                Some(blend_pip)
-            } else {
-                None
-            }
-        }
-        _ => None,
+fn blended_pip(
+    pip: &Pipeline,
+    blend_mode: Option<BlendMode>,
+    alpha_mode: Option<BlendMode>,
+) -> Option<Pipeline> {
+    let new_cbm = pip.options.color_blend != blend_mode;
+    let new_abm = pip.options.alpha_blend != alpha_mode;
+    if new_cbm || new_abm {
+        let mut pipeline = pip.clone();
+        pipeline.options = PipelineOptions {
+            color_blend: blend_mode,
+            alpha_blend: alpha_mode,
+            ..pip.options
+        };
+        return Some(pipeline);
     }
+
+    None
 }

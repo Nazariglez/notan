@@ -196,9 +196,7 @@ fn draw_ui(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
     draw.clear(Color::from_rgb(0.1, 0.1, 0.1));
 
-    draw.image(&state.rt)
-        .translate(MARGIN_X, MARGIN_Y)
-        .scale_from((350.0, 250.0), (1.0, -1.0));
+    draw.image(&state.rt).translate(MARGIN_X, MARGIN_Y);
 
     draw.rect((MARGIN_X, MARGIN_Y), (WIDTH, HEIGHT))
         .color(Color::ORANGE)

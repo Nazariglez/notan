@@ -1,7 +1,7 @@
 use crate::epaint::Primitive;
 use crate::plugin::Output;
 use crate::TextureId;
-use egui::Rect;
+use egui::{PaintCallbackInfo, Rect};
 use notan_app::{
     BlendFactor, BlendMode, Buffer, CullMode, Device, Graphics, Pipeline, RenderTexture,
     ShaderSource, Texture, TextureFilter, TextureFormat, VertexFormat, VertexInfo,
@@ -110,6 +110,17 @@ const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
     }
 "#
 };
+
+pub struct EguiCallbackFn {
+    f: Box<dyn Fn(PaintCallbackInfo, &mut Device) + Sync + Send>,
+}
+
+impl EguiCallbackFn {
+    pub fn new<F: Fn(PaintCallbackInfo, &mut Device) + Sync + Send + 'static>(callback: F) -> Self {
+        let f = Box::new(callback);
+        EguiCallbackFn { f }
+    }
+}
 
 pub struct EguiExtension {
     pipeline: Pipeline,
@@ -331,7 +342,13 @@ impl EguiExtension {
                             pixels_per_point: device.dpi() as _,
                             screen_size_px: [width as _, height as _],
                         };
-                        callback.call(&info, device);
+
+                        match callback.callback.downcast_ref::<EguiCallbackFn>() {
+                            Some(callback) => (callback.f)(info, device),
+                            None => {
+                                log::warn!("Warning: Unsupported render callback. Expected notan_egui::CallbackFn");
+                            }
+                        }
                     }
                 }
             }
