@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## UNRELEASED
+
+- Fix alpha blending mode issue with text rendering using the Draw2D API.
+
 ## v0.8.0 - 28/11/2022
 
 - Updated `notan_egui` to the latest version of `egui` 0.19.
