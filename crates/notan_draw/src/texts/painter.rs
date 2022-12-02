@@ -244,6 +244,7 @@ pub fn create_text_pipeline(
         .from(&TEXT_VERTEX, fragment)
         .with_vertex_info(&vertex_info())
         .with_color_blend(BlendMode::NORMAL)
+        .with_alpha_blend(BlendMode::OVER)
         .with_texture_location(0, "u_texture")
         .build()
 }
