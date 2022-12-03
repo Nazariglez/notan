@@ -187,7 +187,7 @@ impl Draw {
             // 2. global draw blending
             // 3. in some cases (like text), default mode
             let cbm = info.blend_mode().or(self.blend_mode);
-            let abm = info.alpha_mode().or(self.alpha_mode).or_else(|| match typ {
+            let abm = info.alpha_mode().or(self.alpha_mode).or(match typ {
                 // text is drawn from a RT we need to set Over alpha by default
                 BatchType::Text { .. } => Some(BlendMode::OVER),
                 _ => None,
