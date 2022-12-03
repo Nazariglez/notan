@@ -30,6 +30,31 @@ pub struct Draw {
     pub(crate) glyphs_calculator: Calculator,
 }
 
+impl Clone for Draw {
+    fn clone(&self) -> Self {
+        Self {
+            alpha: self.alpha,
+            clear_color: self.clear_color,
+            batches: self.batches.clone(),
+            current_batch: self.current_batch.clone(),
+            transform: self.transform.clone(),
+            base_projection: self.base_projection,
+            projection: self.projection,
+            inverse_projection: self.inverse_projection,
+            size: self.size,
+            blend_mode: self.blend_mode,
+            alpha_mode: self.alpha_mode,
+            shape_pipeline: self.shape_pipeline.clone(),
+            image_pipeline: self.image_pipeline.clone(),
+            pattern_pipeline: self.pattern_pipeline.clone(),
+            text_pipeline: self.text_pipeline.clone(),
+            masking: self.masking,
+            text_batch_indices: self.text_batch_indices.clone(),
+            glyphs_calculator: Calculator::new(),
+        }
+    }
+}
+
 impl Draw {
     pub fn new(width: i32, height: i32) -> Self {
         let base_projection =
