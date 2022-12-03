@@ -100,9 +100,15 @@ impl ShapePainter {
         })
     }
 
-    pub fn push(&mut self, renderer: &mut Renderer, batch: &Batch, projection: &notan_math::Mat4) {
+    pub fn push(
+        &mut self,
+        renderer: &mut Renderer,
+        batch: &Batch,
+        projection: &notan_math::Mat4,
+        is_rt: bool,
+    ) {
         if let BatchType::Shape = &batch.typ {
-            process_pipeline(renderer, batch, &self.pipeline);
+            process_pipeline(renderer, batch, &self.pipeline, is_rt);
 
             let len = (self.count_vertices / self.pipeline.offset()) as u32;
             let offset = self.count_indices;

@@ -116,9 +116,10 @@ impl TextPainter {
         renderer: &mut Renderer,
         batch: &Batch,
         projection: &Mat4,
+        is_rt: bool,
     ) {
         if let BatchType::Text { texts } = &batch.typ {
-            process_pipeline(renderer, batch, &self.pipeline);
+            process_pipeline(renderer, batch, &self.pipeline, is_rt);
             let mut vertices = vec![];
             let mut indices = vec![];
 
