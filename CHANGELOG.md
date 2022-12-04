@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## UNRELEASED
+
+- Fix `Draw` structure is clonable again.
+- Change `SetupHandler` and `AppBuilder::initialize` to `FnOnce` allowing to embed notan easily.
+
 ## v0.8.0 - 28/11/2022
 
 - Updated `notan_egui` to the latest version of `egui` 0.19.
