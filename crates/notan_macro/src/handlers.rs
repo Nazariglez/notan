@@ -5,7 +5,7 @@ enum GenericType {
     None,
 }
 
-pub(crate) fn process_tokens(input: String) -> String {
+pub(crate) fn process_tokens(input: String, once: bool) -> String {
     let generic_type = if input.contains('!') {
         GenericType::Plugin
     } else if input.contains('$') {
@@ -14,12 +14,13 @@ pub(crate) fn process_tokens(input: String) -> String {
         GenericType::None
     };
 
+    let fn_literal = if once { "FnOnce" } else { "Fn" };
     let input = input.replace(['!', '$'], "");
     let tokens = get_tokens(&input);
-    let enum_generated = enum_generator(&tokens);
-    let enum_impl_generated = enum_impl_generator(&tokens);
+    let enum_generated = enum_generator(&tokens, fn_literal);
+    let enum_impl_generated = enum_impl_generator(&tokens, once);
     let trait_generated = trait_generator(&tokens, generic_type);
-    let trait_impl_generated = trait_impl_generator(&tokens, generic_type);
+    let trait_impl_generated = trait_impl_generator(&tokens, generic_type, fn_literal);
     [
         enum_generated,
         enum_impl_generated,
@@ -107,16 +108,16 @@ fn get_tokens(input: &str) -> Tokens {
     }
 }
 
-fn enum_generator(tokens: &Tokens) -> String {
+fn enum_generator(tokens: &Tokens, fn_literal: &str) -> String {
     let callback_ident = format!("{}Callback", tokens.name);
     format!(
         "pub enum {}<S> {{ {} }}",
         callback_ident,
-        enum_generics(&combo(&tokens.params), tokens.ret.as_ref())
+        enum_generics(&combo(&tokens.params), tokens.ret.as_ref(), fn_literal)
     )
 }
 
-fn enum_impl_generator(tokens: &Tokens) -> String {
+fn enum_impl_generator(tokens: &Tokens, once: bool) -> String {
     let callback_ident = format!("{}Callback", tokens.name);
     let params = params_generics(&tokens.params);
     let ret = tokens
@@ -126,19 +127,17 @@ fn enum_impl_generator(tokens: &Tokens) -> String {
         .unwrap_or_else(|| "".to_string());
     let callback = enum_callback_generics(&combo(&tokens.params), &tokens.params);
 
+    let reference = once.then(|| "").or(Some("&")).unwrap();
+
     format!(
         r#"impl<S> {callback_ident}<S> {{
-            pub(crate) fn exec(&self, {params}){ret} {{
+            pub(crate) fn exec({reference}self, {params}){ret} {{
                 use {callback_ident}::*;
                 match self {{
                    {callback}
                 }}
             }}
         }}"#,
-        callback_ident = callback_ident,
-        params = params,
-        ret = ret,
-        callback = callback,
     )
 }
 
@@ -166,7 +165,7 @@ fn trait_generator(tokens: &Tokens, gen_type: GenericType) -> String {
     }
 }
 
-fn trait_impl_generator(tokens: &Tokens, gen_type: GenericType) -> String {
+fn trait_impl_generator(tokens: &Tokens, gen_type: GenericType, fn_literal: &str) -> String {
     let callback_ident = format!("{}Callback", tokens.name);
     let handler_ident = format!("{}Handler", tokens.name);
     let combinations = combo(&tokens.params);
@@ -195,7 +194,7 @@ fn trait_impl_generator(tokens: &Tokens, gen_type: GenericType) -> String {
         impl<R, F, S> {handler_ident}<R, S, ({params})> for F
         where
             R: GfxRenderer,
-            F: Fn({params}){ret} + 'static,
+            F: {fn_literal}({params}){ret} + 'static,
             S: {s_type}
         {{
             fn callback(self) -> {callback_ident}<S> {{
@@ -203,12 +202,6 @@ fn trait_impl_generator(tokens: &Tokens, gen_type: GenericType) -> String {
             }}
         }}
     "#,
-                    s_type = s_type,
-                    callback_ident = callback_ident,
-                    handler_ident = handler_ident,
-                    params = params,
-                    ret = ret,
-                    i = i
                 )
             } else {
                 format!(
@@ -216,7 +209,7 @@ fn trait_impl_generator(tokens: &Tokens, gen_type: GenericType) -> String {
         #[allow(unused_parens)]
         impl<F, S> {handler_ident}<S, ({params})> for F
         where
-            F: Fn({params}){ret} + 'static,
+            F: {fn_literal}({params}){ret} + 'static,
             S: {s_type}
         {{
             fn callback(self) -> {callback_ident}<S> {{
@@ -224,12 +217,6 @@ fn trait_impl_generator(tokens: &Tokens, gen_type: GenericType) -> String {
             }}
         }}
     "#,
-                    s_type = s_type,
-                    callback_ident = callback_ident,
-                    handler_ident = handler_ident,
-                    params = params,
-                    ret = ret,
-                    i = i
                 )
             }
         })
@@ -258,13 +245,13 @@ fn combo(arr: &[String]) -> Vec<Vec<String>> {
     combi
 }
 
-fn enum_generics(g: &[Vec<String>], r: Option<&String>) -> String {
+fn enum_generics(g: &[Vec<String>], r: Option<&String>, fn_literal: &str) -> String {
     g.iter()
         .enumerate()
         .map(|(i, n)| {
             let gen = n.join(", ");
             format!(
-                "_{}(Box<dyn Fn({}){}>)",
+                "_{}(Box<dyn {fn_literal}({}){}>)",
                 i,
                 gen,
                 r.map(|v| format!(" -> {}", v))
