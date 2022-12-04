@@ -6,6 +6,7 @@ use notan_core::events::Event;
 
 // Order of params App, AssetManager, Graphics, GlyphManager, Plugins, S, Event
 notan_macro::handler_once!(Setup<&mut App, &mut Assets, &mut Graphics, &mut Plugins> -> S);
+notan_macro::handler_once!(Init<&mut App, &mut Assets, &mut Plugins, &mut S>);
 notan_macro::handler!(App<&mut App, &mut Assets, &mut Plugins, &mut S>);
 notan_macro::handler!(Event<&mut App, &mut Assets, &mut Plugins, &mut S, Event>);
 notan_macro::handler!(Draw<&mut App, &mut Assets, &mut Graphics, &mut Plugins, &mut S>);

@@ -127,7 +127,7 @@ fn enum_impl_generator(tokens: &Tokens, once: bool) -> String {
         .unwrap_or_else(|| "".to_string());
     let callback = enum_callback_generics(&combo(&tokens.params), &tokens.params);
 
-    let reference = once.then(|| "").or(Some("&")).unwrap();
+    let reference = if once { "" } else { "&" };
 
     format!(
         r#"impl<S> {callback_ident}<S> {{
