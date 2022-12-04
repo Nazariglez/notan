@@ -1,7 +1,7 @@
 #![cfg(feature = "clipboard")]
 
-use glutin::event::VirtualKeyCode;
-use glutin::event::{ElementState, WindowEvent};
+use winit::event::VirtualKeyCode;
+use winit::event::{ElementState, WindowEvent};
 use notan_core::events::Event;
 use notan_input::keyboard::Keyboard;
 

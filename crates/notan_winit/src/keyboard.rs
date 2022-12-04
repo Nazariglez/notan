@@ -1,6 +1,6 @@
-use glutin::event::ElementState;
-use glutin::event::VirtualKeyCode;
-use glutin::event::WindowEvent;
+use winit::event::ElementState;
+use winit::event::VirtualKeyCode;
+use winit::event::WindowEvent;
 use notan_core::events::Event;
 use notan_core::keyboard::KeyCode;
 

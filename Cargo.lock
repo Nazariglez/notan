@@ -1952,6 +1952,7 @@ dependencies = [
  "notan_input",
  "notan_oddio",
  "webbrowser",
+ "winit",
 ]
 
 [[package]]
