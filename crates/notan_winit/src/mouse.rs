@@ -1,7 +1,7 @@
-use glutin::dpi::LogicalPosition;
+use winit::dpi::LogicalPosition;
 
-use glutin::event::ElementState;
-use glutin::event::{MouseButton as WMouseButton, MouseScrollDelta, WindowEvent};
+use winit::event::ElementState;
+use winit::event::{MouseButton as WMouseButton, MouseScrollDelta, WindowEvent};
 use notan_core::events::Event;
 use notan_core::mouse::MouseButton;
 

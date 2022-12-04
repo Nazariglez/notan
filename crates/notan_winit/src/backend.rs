@@ -1,6 +1,6 @@
 use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse, touch};
-use glutin::event_loop::ControlFlow;
+use winit::event_loop::ControlFlow;
 use notan_app::{FrameState, WindowConfig};
 
 #[cfg(feature = "clipboard")]
@@ -22,8 +22,8 @@ use std::cell::RefCell;
 #[cfg(feature = "audio")]
 use std::rc::Rc;
 
-use glutin::event::{Event as WEvent, WindowEvent};
-use glutin::event_loop::EventLoop;
+use winit::event::{Event as WEvent, WindowEvent};
+use winit::event_loop::EventLoop;
 
 pub struct WinitBackend {
     window: Option<WinitWindowBackend>,

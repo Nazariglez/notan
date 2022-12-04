@@ -1,7 +1,7 @@
-use glutin::dpi::{LogicalSize, PhysicalPosition};
-use glutin::event_loop::EventLoop;
-use glutin::window::Fullscreen::Borderless;
-use glutin::window::{CursorGrabMode, CursorIcon as WCursorIcon, Window, WindowBuilder};
+use winit::dpi::{LogicalSize, PhysicalPosition};
+use winit::event_loop::EventLoop;
+use winit::window::Fullscreen::Borderless;
+use winit::window::{CursorGrabMode, CursorIcon as WCursorIcon, Window, WindowBuilder};
 use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
@@ -175,7 +175,7 @@ impl WinitWindowBackend {
 
         #[cfg(target_os = "macos")]
         {
-            use glutin::platform::macos::WindowBuilderExtMacOS;
+            use winit::platform::macos::WindowBuilderExtMacOS;
             builder = builder.with_disallow_hidpi(!config.high_dpi);
         }
 

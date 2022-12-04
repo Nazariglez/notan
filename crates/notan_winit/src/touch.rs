@@ -1,4 +1,4 @@
-use glutin::event::{Touch, TouchPhase, WindowEvent};
+use winit::event::{Touch, TouchPhase, WindowEvent};
 use notan_core::events::Event;
 
 pub fn process_events(event: &WindowEvent, scale_factor: f64) -> Option<Event> {
