@@ -56,7 +56,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
         .frames(&[14, 15, 16, 17, 18, 19, 20])
         .time(state.time);
 
-    // frames in the 4rd row of the image
+    // frames in the 4th row of the image
     draw.animation_grid(&state.texture, cols, rows)
         .position(650.0, 440.0)
         .frames(&[21, 22, 23, 24, 25, 26, 27])
