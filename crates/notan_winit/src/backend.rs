@@ -294,7 +294,7 @@ impl BackendSystem for WinitBackend {
     }
 
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend> {
-        let ctx = &self.window.as_ref().unwrap().gl_display;
+        let ctx = &self.window.as_ref().unwrap().gl_manager.display;
         let backend = notan_glow::GlowBackend::new(|s| {
             let symbol = CString::new(s).unwrap();
             ctx.get_proc_address(symbol.as_c_str()).cast()
