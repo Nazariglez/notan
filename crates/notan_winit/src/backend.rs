@@ -18,7 +18,6 @@ use notan_audio::AudioBackend;
 use notan_oddio::OddioBackend;
 
 use glutin::display::GlDisplay;
-use glutin::surface::GlSurface;
 #[cfg(feature = "audio")]
 use std::cell::RefCell;
 use std::ffi::CString;
@@ -121,7 +120,7 @@ impl BackendSystem for WinitBackend {
                 let b = backend(&mut app.backend);
 
                 // Await for the next event to run the loop again
-                let is_lazy = b.window.as_ref().unwrap().lazy;
+                let is_lazy = b.window.as_ref().map_or(false, |w| w.lazy);
                 if is_lazy {
                     *control_flow = ControlFlow::Wait;
                 }
@@ -155,7 +154,9 @@ impl BackendSystem for WinitBackend {
                                 app.exit();
                             }
                             WindowEvent::Resized(size) => {
-                                b.window.as_mut().unwrap().resize(size.width, size.height);
+                                if let Some(win) = &mut b.window {
+                                    win.resize(size.width, size.height);
+                                }
 
                                 let logical_size = size.to_logical::<f64>(dpi_scale);
                                 add_event(
@@ -171,10 +172,11 @@ impl BackendSystem for WinitBackend {
                                 scale_factor,
                                 new_inner_size: size,
                             } => {
-                                b.window.as_mut().unwrap().resize(size.width, size.height);
-                                let win = b.window.as_mut().unwrap();
-                                dpi_scale = *scale_factor;
-                                win.scale_factor = dpi_scale;
+                                if let Some(win) = &mut b.window {
+                                    win.resize(size.width, size.height);
+                                    dpi_scale = *scale_factor;
+                                    win.scale_factor = dpi_scale;
+                                }
 
                                 let logical_size = size.to_logical::<f64>(dpi_scale);
 
@@ -251,7 +253,9 @@ impl BackendSystem for WinitBackend {
                     WEvent::MainEventsCleared => {
                         let needs_redraw = !is_lazy || request_redraw;
                         if needs_redraw {
-                            b.window.as_mut().unwrap().window().request_redraw();
+                            if let Some(win) = &mut b.window {
+                                win.window().request_redraw();
+                            }
                         }
                     }
                     WEvent::RedrawRequested(_) => {
