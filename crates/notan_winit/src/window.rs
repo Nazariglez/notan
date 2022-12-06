@@ -1,13 +1,54 @@
+use std::num::NonZeroU32;
 use winit::dpi::{LogicalSize, PhysicalPosition};
 use winit::event_loop::EventLoop;
 use winit::window::Fullscreen::Borderless;
 use winit::window::{CursorGrabMode, CursorIcon as WCursorIcon, Window, WindowBuilder};
-use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
+// use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
+use glutin::config::{Api, Config, ConfigTemplateBuilder, GlConfig};
+use glutin::context::{
+    ContextApi, ContextAttributesBuilder, GlProfile, NotCurrentGlContextSurfaceAccessor, Version,
+};
+use glutin::display::{Display, GetGlDisplay, GlDisplay};
+use glutin::surface::{GlSurface, Surface, SurfaceAttributesBuilder, SwapInterval, WindowSurface};
+use glutin_winit::{ApiPrefence, DisplayBuilder};
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
+use raw_window_handle::HasRawWindowHandle;
+
+pub struct GlWindow {
+    // XXX the surface must be dropped before the window.
+    pub surface: Surface<WindowSurface>,
+
+    pub window: Window,
+}
+
+impl GlWindow {
+    pub fn new(window: Window, config: &Config) -> Self {
+        let (width, height): (u32, u32) = window.inner_size().into();
+        let raw_window_handle = window.raw_window_handle();
+        let attrs = SurfaceAttributesBuilder::<WindowSurface>::new()
+            .with_srgb(Some(true))
+            .build(
+                raw_window_handle,
+                NonZeroU32::new(width).unwrap(),
+                NonZeroU32::new(height).unwrap(),
+            );
+
+        let surface = unsafe {
+            config
+                .display()
+                .create_window_surface(config, &attrs)
+                .unwrap()
+        };
+
+        Self { window, surface }
+    }
+}
 
 pub struct WinitWindowBackend {
-    pub(crate) gl_ctx: ContextWrapper<PossiblyCurrent, Window>,
+    // pub(crate) gl_ctx: ContextWrapper<PossiblyCurrent, Window>,
+    pub(crate) gl_display: Display,
+    pub(crate) gl_win: GlWindow,
     pub(crate) scale_factor: f64,
     pub(crate) lazy: bool,
     cursor: CursorIcon,
@@ -87,7 +128,7 @@ impl WindowBackend for WinitWindowBackend {
 
     fn request_frame(&mut self) {
         if self.lazy {
-            self.gl_ctx.window().request_redraw();
+            // self.gl_ctx.window().request_redraw();
         }
     }
 
@@ -154,10 +195,10 @@ impl WindowBackend for WinitWindowBackend {
     fn set_mouse_passthrough(&mut self, pass_through: bool) {
         self.mouse_passthrough = pass_through;
 
-        self.gl_ctx
-            .window()
-            .set_cursor_hittest(!pass_through)
-            .unwrap();
+        // self.gl_ctx
+        //     .window()
+        //     .set_cursor_hittest(!pass_through)
+        //     .unwrap();
     }
 }
 
@@ -187,49 +228,140 @@ impl WinitWindowBackend {
             builder = builder.with_max_inner_size(LogicalSize::new(w, h));
         }
 
-        let windowed_context = ContextBuilder::new()
-            .with_vsync(config.vsync)
-            .with_gl(glutin::GlRequest::GlThenGles {
-                opengl_version: (3, 3),
-                opengles_version: (3, 0),
+        let mut template = ConfigTemplateBuilder::new()
+            .with_api(Api::GLES3)
+            .with_transparency(config.transparent);
+
+        if config.multisampling > 0 {
+            template = template.with_multisampling(config.multisampling);
+        }
+
+        let (mut window, gl_config) = DisplayBuilder::new()
+            .with_window_builder(Some(builder))
+            .build(event_loop, template, |configs| {
+                configs
+                    .reduce(|accum, conf| {
+                        let next_srgb = conf.srgb_capable();
+                        let next_transparency = conf.supports_transparency().unwrap_or(false);
+                        let more_samples = conf.num_samples() > accum.num_samples();
+
+                        // value of transparency for the priority check
+                        let transparency_check = if config.transparent {
+                            next_transparency
+                        } else {
+                            true
+                        };
+
+                        // priority 1: supports srgba, transparency and has more samples than current one
+                        let full_support = next_srgb && transparency_check && more_samples;
+
+                        // priority 2: we don't care about transparency if it's not supported by next config
+                        let srgba_plus_samples = next_srgb && more_samples;
+
+                        // priority 3: if it supports srgba is enough
+                        let only_srgba = next_srgb;
+
+                        // select the config in order of priority
+                        let select_config = full_support || srgba_plus_samples || only_srgba;
+
+                        if select_config {
+                            conf
+                        } else {
+                            accum
+                        }
+                    })
+                    .unwrap()
             })
-            .with_srgb(true)
-            .with_gl_profile(glutin::GlProfile::Core)
-            .with_multisampling(config.multisampling)
-            .build_windowed(builder, event_loop)
-            .map_err(|e| format!("{}", e))?;
+            .map_err(|e| e.to_string())?;
 
-        let gl_ctx = unsafe { windowed_context.make_current().unwrap() };
+        let raw_window_handle = window.as_ref().map(|window| window.raw_window_handle());
 
-        if config.mouse_passthrough {
-            gl_ctx.window().set_cursor_hittest(false).unwrap();
+        let gl_display = gl_config.display();
+
+        let context_attributes = ContextAttributesBuilder::new()
+            .with_profile(GlProfile::Core)
+            .with_context_api(ContextApi::OpenGl(Some(Version::new(3, 3))))
+            .build(raw_window_handle);
+
+        let fallback_context_attributes = ContextAttributesBuilder::new()
+            .with_context_api(ContextApi::Gles(Some(Version::new(3, 0))))
+            .build(raw_window_handle);
+
+        let mut not_current_gl_context = Some(unsafe {
+            gl_display
+                .create_context(&gl_config, &context_attributes)
+                .unwrap_or_else(|_| {
+                    gl_display
+                        .create_context(&gl_config, &fallback_context_attributes)
+                        .expect("failed to create context")
+                })
+        });
+
+        //GlWindow?
+        let gl_window = GlWindow::new(window.unwrap(), &gl_config);
+        // Make it current.
+        let gl_context = not_current_gl_context
+            .take()
+            .unwrap()
+            .make_current(&gl_window.surface)
+            .unwrap();
+
+        // Try setting vsync.
+        if config.vsync {
+            if let Err(res) = gl_window
+                .surface
+                .set_swap_interval(&gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
+            {
+                log::error!("Error setting vsync: {:?}", res);
+            }
         }
 
-        let monitor = gl_ctx.window().current_monitor();
-        let scale_factor = monitor.as_ref().map_or(1.0, |m| m.scale_factor());
-        if config.fullscreen {
-            gl_ctx.window().set_fullscreen(Some(Borderless(monitor)));
-        }
+        // let windowed_context = ContextBuilder::new()
+        //     .with_vsync(config.vsync)
+        //     .with_gl(glutin::GlRequest::GlThenGles {
+        //         opengl_version: (3, 3),
+        //         opengles_version: (3, 0),
+        //     })
+        //     .with_srgb(true)
+        //     .with_gl_profile(glutin::GlProfile::Core)
+        //     .with_multisampling(config.multisampling)
+        //     .build_windowed(builder, event_loop)
+        //     .map_err(|e| format!("{}", e))?;
+
+        // let gl_ctx = unsafe { windowed_context.make_current().unwrap() };
+        //
+        // if template.mouse_passthrough {
+        //     gl_ctx.window().set_cursor_hittest(false).unwrap();
+        // }
+        //
+        // let monitor = gl_ctx.window().current_monitor();
+        // let scale_factor = monitor.as_ref().map_or(1.0, |m| m.scale_factor());
+        // if template.fullscreen {
+        //     gl_ctx.window().set_fullscreen(Some(Borderless(monitor)));
+        // }
 
         Ok(Self {
-            gl_ctx,
-            scale_factor,
-            lazy: config.lazy_loop,
+            // gl_ctx,
+            gl_display,
+            gl_win: gl_window,
+            scale_factor: 1.0, //TODO
+            lazy: false,       //template.lazy_loop,
             cursor: CursorIcon::Default,
             captured: false,
-            visible: config.visible,
-            high_dpi: config.high_dpi,
+            visible: false,  //template.visible,
+            high_dpi: false, //template.high_dpi,
             is_always_on_top: false,
-            mouse_passthrough: config.mouse_passthrough,
+            mouse_passthrough: false, //template.mouse_passthrough,
         })
     }
 
     pub(crate) fn window(&self) -> &Window {
-        self.gl_ctx.window()
+        // self.gl_ctx.window()
+        &self.gl_win.window
     }
 
     pub(crate) fn swap_buffers(&self) {
-        self.gl_ctx.swap_buffers().unwrap();
+        // self.gl_ctx.swap_buffers().unwrap();
     }
 }
 

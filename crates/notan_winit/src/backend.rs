@@ -1,7 +1,7 @@
 use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse, touch};
-use winit::event_loop::ControlFlow;
 use notan_app::{FrameState, WindowConfig};
+use winit::event_loop::ControlFlow;
 
 #[cfg(feature = "clipboard")]
 use crate::clipboard;
@@ -17,8 +17,10 @@ use notan_audio::AudioBackend;
 #[cfg(feature = "audio")]
 use notan_oddio::OddioBackend;
 
+use glutin::display::GlDisplay;
 #[cfg(feature = "audio")]
 use std::cell::RefCell;
+use std::ffi::CString;
 #[cfg(feature = "audio")]
 use std::rc::Rc;
 
@@ -152,7 +154,8 @@ impl BackendSystem for WinitBackend {
                                 app.exit();
                             }
                             WindowEvent::Resized(size) => {
-                                b.window.as_mut().unwrap().gl_ctx.resize(*size);
+                                // b.window.as_mut().unwrap().gl_ctx.resize(*size);
+                                // b.window.as_mut().unwrap().gl_win.surface.resize()
 
                                 let logical_size = size.to_logical::<f64>(dpi_scale);
                                 add_event(
@@ -168,7 +171,7 @@ impl BackendSystem for WinitBackend {
                                 scale_factor,
                                 new_inner_size: size,
                             } => {
-                                b.window.as_mut().unwrap().gl_ctx.resize(**size);
+                                // b.window.as_mut().unwrap().gl_ctx.resize(**size);
                                 let win = b.window.as_mut().unwrap();
                                 dpi_scale = *scale_factor;
                                 win.scale_factor = dpi_scale;
@@ -287,9 +290,12 @@ impl BackendSystem for WinitBackend {
     }
 
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend> {
-        let ctx = &self.window.as_ref().unwrap().gl_ctx;
-        let backend =
-            notan_glow::GlowBackend::new(|s| ctx.get_proc_address(s) as *const _).unwrap();
+        let ctx = &self.window.as_ref().unwrap().gl_display;
+        let backend = notan_glow::GlowBackend::new(|s| {
+            let symbol = CString::new(s).unwrap();
+            ctx.get_proc_address(symbol.as_c_str()).cast()
+        })
+        .unwrap();
         Box::new(backend)
     }
 
