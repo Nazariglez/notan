@@ -162,7 +162,7 @@ fn setup(gfx: &mut Graphics) -> State {
     );
     let mvp = Mat4::IDENTITY * projection * view;
 
-    // Postion buffer, Step mode by default is per Vertex
+    // Position buffer, Step mode by default is per Vertex
     let pos_vbo = gfx
         .create_vertex_buffer()
         .with_info(&vertex_pos_info)

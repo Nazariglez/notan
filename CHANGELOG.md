@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 ## UNRELEASED
 
 - Fix alpha blending mode issue with text rendering using the Draw2D API.
+- Fix `Draw` structure is clonable again.
+- Change `SetupHandler` and `AppBuilder::initialize` to `FnOnce` allowing to embed notan easily.
 
 ## v0.8.0 - 28/11/2022
 
@@ -17,22 +19,22 @@ All notable changes to this project will be documented in this file.
 - Added `shaderc` feature to compile shaders using `shaderc` instead of `glsl_to_spirv`.
 - Fix `RenderTexture` orientation when drawing using the Draw2d API.
 - Added `IndexBufferBuilder::with_data_u16` to create index buffers using u16 slices.
-- Added `Text::last_bounds` to get the bounding box of the latest text drawn. 
+- Added `Text::last_bounds` to get the bounding box of the latest text drawn.
 - Added `Text::bounds` to get the bounding box of all the text elements combined.
 - Added `Draw::last_text_bounds` to get the bounding box of the latest text drawn using the Draw2d API.
 - New examples `text_bounds.rs` and `draw_text_bounds.rs` to show how to measure the text size with real use cases.
 - Added a CI action to check if the code meets a minimal quality conditions.
-- Added `WindowBackend::set_mouse_passthrough` to change the passthrough condition at runtime. 
+- Added `WindowBackend::set_mouse_passthrough` to change the passthrough condition at runtime.
 - Fix custom pipelines for the Draw2d APIs. They were working only for images, now they work all (shapes, patterns, etc..)
 - Added example `draw_shapes_shader.rs` to show how to set a custom pipeline drawing shapes.
 - Renamed `draw_shader.rs` to `draw_image_shader.rs`
-- Added `Graphics::stats() -> GpuStats` to get more info about what the GPU did the last frame. 
-- Added new texture formats. `TextureFormat::R16Uint`, `R32Uint`, `R32Float`. 
+- Added `Graphics::stats() -> GpuStats` to get more info about what the GPU did the last frame.
+- Added new texture formats. `TextureFormat::R16Uint`, `R32Uint`, `R32Float`.
 - New example `renderer_texture_r32.rs` to show how to use new texture types.
 - The method `Renderer::bind_texture` will set the slot automatically to the next one if using in a row.
 - Replaced `copypasta` dependency by `arboard` and moved clipboard features to app level.
 - Added clipboard support for web browsers using `wasm`.
-- Added `.flip_x` and `.flip_y` to `Image`, `Animation` and `Pattern` object from the Draw2d API. 
+- Added `.flip_x` and `.flip_y` to `Image`, `Animation` and `Pattern` object from the Draw2d API.
 - Changed `Draw::set_blend_mode` needs an `Option<BlendMode>` now, and passing None the blending mode can be canceled.
 - Added `Draw::set_alpha_mode` and `DrawBuilder::alpha_mode` to set the blend mode for the alpha composition.
 
@@ -51,9 +53,9 @@ All notable changes to this project will be documented in this file.
 - Added `WindowConfig::always_on_top` and `WindowBackend::set_always_on_top/is_always_on_top` to force the window to the foreground. Has no effect on the web.
 - Added `notan_random` and feature `random` to allow users to disable the default random features and use their own.
 - In EguiPlugin, handle `CMD` key on web.
-- Fix, inverted the direction of the horizontal mouse wheel on web. 
-- Added `TextureBuilder::from_source(raw)` to create textures that are backend dependant. 
-- Added `TextureUpdater::with_source(raw)` to update textures that are backend dependant.
+- Fix, inverted the direction of the horizontal mouse wheel on web.
+- Added `TextureBuilder::from_source(raw)` to create textures that are backend dependent.
+- Added `TextureUpdater::with_source(raw)` to update textures that are backend dependent.
 - Added support to load and update `web_sys::HtmlImageElement` using the default backend.
 
 ## v0.6.0 - 27/08/2022
@@ -69,7 +71,7 @@ All notable changes to this project will be documented in this file.
 - Fix 15 Puzzle game bug.
 - Change `WindowConfig` to take values instead of set the `!default` value.
 - Fix `wasm32` warnings due a leaked reference.
-- Add `WindoConfig::canvas_id` to use or create a custom canvas.
+- Add `WindowConfig::canvas_id` to use or create a custom canvas.
 - Remove the deprecated `notan::math::DEG_TO_RAD` and `notan::math::RAD_TO_DEG`.
 - Fix using `lazy_mode` an empty buffer after the first swap buffers.
 - Add `draw_projection.rs` example.
@@ -79,13 +81,13 @@ All notable changes to this project will be documented in this file.
 
 ## v0.5.1  04/07/2022
 
-- Fixed window shader compilation. 
+- Fixed window shader compilation.
 - Egui will call RequestRedraw when there is some animation, no need to call it manually anymore.
 
 ## v0.5.0 - 26/06/2022
 
 - Removed chrono due to a security issue.
-- Fixed viewport issues where the Y axis was inverted and wasn't using DPI to calculate min positon.
+- Fixed viewport issues where the Y axis was inverted and wasn't using DPI to calculate min position.
 - Fixed EGUI 0.18.1. Paint callback feature.
 - Added `Window::set_capture_cursor` and `Window::capture_cursor` to confine the cursor into the window's app.
 - Added `app.mouse.wheel_delta` to read the delta without checking the event loop.

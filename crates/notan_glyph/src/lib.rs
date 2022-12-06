@@ -26,7 +26,7 @@ use notan_graphics::prelude::ClearOptions;
 use notan_graphics::{Device, Renderer, Texture};
 use notan_math::Mat4;
 
-/// Object allowing glyph drawing, containing cache state. Manages glyph positioning cacheing,
+/// Object allowing glyph drawing, containing cache state. Manages glyph positioning caching,
 /// glyph draw caching & efficient GPU texture cache updating and re-sizing on demand.
 ///
 /// Build using a [`GlyphBrushBuilder`](struct.GlyphBrushBuilder.html).
