@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 - Fix `Draw` structure is clonable again.
 - Change `SetupHandler` and `AppBuilder::initialize` to `FnOnce` allowing to embed notan easily.
+- Updated the crate `glutin` to `0.30.2`. 
 
 ## v0.8.0 - 28/11/2022
 
