@@ -1,9 +1,9 @@
 #![cfg(feature = "clipboard")]
 
-use winit::event::VirtualKeyCode;
-use winit::event::{ElementState, WindowEvent};
 use notan_core::events::Event;
 use notan_input::keyboard::Keyboard;
+use winit::event::VirtualKeyCode;
+use winit::event::{ElementState, WindowEvent};
 
 pub fn process_events(event: &WindowEvent, keyboard: &Keyboard) -> Option<Event> {
     match event {

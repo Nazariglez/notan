@@ -1,9 +1,9 @@
 use winit::dpi::LogicalPosition;
 
-use winit::event::ElementState;
-use winit::event::{MouseButton as WMouseButton, MouseScrollDelta, WindowEvent};
 use notan_core::events::Event;
 use notan_core::mouse::MouseButton;
+use winit::event::ElementState;
+use winit::event::{MouseButton as WMouseButton, MouseScrollDelta, WindowEvent};
 
 pub fn process_events(
     event: &WindowEvent,
