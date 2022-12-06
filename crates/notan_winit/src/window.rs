@@ -5,7 +5,7 @@ use glutin::context::{
 };
 use glutin::display::{Display, GetGlDisplay, GlDisplay};
 use glutin::surface::{GlSurface, Surface, SurfaceAttributesBuilder, SwapInterval, WindowSurface};
-use glutin_winit::{ApiPrefence, DisplayBuilder};
+use glutin_winit::DisplayBuilder;
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
 use raw_window_handle::HasRawWindowHandle;
@@ -240,7 +240,7 @@ impl WinitWindowBackend {
             template = template.with_multisampling(config.multisampling);
         }
 
-        let (mut window, gl_config) = DisplayBuilder::new()
+        let (window, gl_config) = DisplayBuilder::new()
             .with_window_builder(Some(builder))
             .build(event_loop, template, |configs| {
                 configs
@@ -308,8 +308,8 @@ impl WinitWindowBackend {
                 })
         });
 
-        //GlWindow?
         let gl_window = GlWindow::new(window.unwrap(), &gl_config);
+
         // Make it current.
         let gl_context = not_current_gl_context
             .take()
