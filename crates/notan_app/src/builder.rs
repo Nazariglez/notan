@@ -5,7 +5,7 @@ use crate::config::*;
 use crate::graphics::Graphics;
 use crate::handlers::{
     AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler,
-    ExtensionHandler, PluginHandler, SetupCallback,
+    ExtensionHandler, InitCallback, InitHandler, PluginHandler, SetupCallback,
 };
 use crate::parsers::*;
 use crate::plugins::*;
@@ -44,7 +44,7 @@ pub struct AppBuilder<S, B> {
     plugins: Plugins,
     assets: Assets,
 
-    init_callback: Option<AppCallback<S>>,
+    init_callback: Option<InitCallback<S>>,
     update_callback: Option<AppCallback<S>>,
     draw_callback: Option<DrawCallback<S>>,
     event_callback: Option<EventCallback<S>>,
@@ -128,7 +128,7 @@ where
     /// Sets a callback used before the application loop starts running
     pub fn initialize<H, Params>(mut self, handler: H) -> Self
     where
-        H: AppHandler<S, Params>,
+        H: InitHandler<S, Params>,
     {
         self.init_callback = Some(handler.callback());
         self
@@ -273,7 +273,7 @@ where
         })?;
 
         // app init life event
-        if let Some(cb) = &init_callback {
+        if let Some(cb) = init_callback {
             cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
         }
 

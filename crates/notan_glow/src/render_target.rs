@@ -83,7 +83,7 @@ unsafe fn create_fbo(
     let status = gl.check_framebuffer_status(glow::FRAMEBUFFER);
     if status != glow::FRAMEBUFFER_COMPLETE {
         return Err(
-            "Cannot create a render target because the frambuffer is incomplete...".to_string(),
+            "Cannot create a render target because the framebuffer is incomplete...".to_string(),
         );
     }
 

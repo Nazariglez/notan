@@ -46,7 +46,19 @@ pub fn handler(input: TokenStream) -> TokenStream {
         .map(|s| s.to_string())
         .collect::<Vec<_>>()
         .join(" ");
-    let code = handlers::process_tokens(input_sting);
+    let code = handlers::process_tokens(input_sting, false);
+    code.parse().unwrap()
+}
+
+#[proc_macro]
+pub fn handler_once(input: TokenStream) -> TokenStream {
+    let inputs: Vec<_> = input.into_iter().collect();
+    let input_sting = inputs
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>()
+        .join(" ");
+    let code = handlers::process_tokens(input_sting, true);
     code.parse().unwrap()
 }
 
