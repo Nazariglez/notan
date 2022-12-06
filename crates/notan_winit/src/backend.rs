@@ -18,6 +18,7 @@ use notan_audio::AudioBackend;
 use notan_oddio::OddioBackend;
 
 use glutin::display::GlDisplay;
+use glutin::surface::GlSurface;
 #[cfg(feature = "audio")]
 use std::cell::RefCell;
 use std::ffi::CString;
@@ -154,8 +155,7 @@ impl BackendSystem for WinitBackend {
                                 app.exit();
                             }
                             WindowEvent::Resized(size) => {
-                                // b.window.as_mut().unwrap().gl_ctx.resize(*size);
-                                // b.window.as_mut().unwrap().gl_win.surface.resize()
+                                b.window.as_mut().unwrap().resize(size.width, size.height);
 
                                 let logical_size = size.to_logical::<f64>(dpi_scale);
                                 add_event(
@@ -171,7 +171,7 @@ impl BackendSystem for WinitBackend {
                                 scale_factor,
                                 new_inner_size: size,
                             } => {
-                                // b.window.as_mut().unwrap().gl_ctx.resize(**size);
+                                b.window.as_mut().unwrap().resize(size.width, size.height);
                                 let win = b.window.as_mut().unwrap();
                                 dpi_scale = *scale_factor;
                                 win.scale_factor = dpi_scale;
