@@ -1,12 +1,7 @@
-use std::num::NonZeroU32;
-use winit::dpi::{LogicalSize, PhysicalPosition};
-use winit::event_loop::EventLoop;
-use winit::window::Fullscreen::Borderless;
-use winit::window::{CursorGrabMode, CursorIcon as WCursorIcon, Window, WindowBuilder};
-// use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
 use glutin::config::{Api, Config, ConfigTemplateBuilder, GlConfig};
 use glutin::context::{
-    ContextApi, ContextAttributesBuilder, GlProfile, NotCurrentGlContextSurfaceAccessor, Version,
+    ContextApi, ContextAttributesBuilder, GlProfile, NotCurrentGlContextSurfaceAccessor,
+    PossiblyCurrentContext, Version,
 };
 use glutin::display::{Display, GetGlDisplay, GlDisplay};
 use glutin::surface::{GlSurface, Surface, SurfaceAttributesBuilder, SwapInterval, WindowSurface};
@@ -14,6 +9,11 @@ use glutin_winit::{ApiPrefence, DisplayBuilder};
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
 use raw_window_handle::HasRawWindowHandle;
+use std::num::NonZeroU32;
+use winit::dpi::{LogicalSize, PhysicalPosition};
+use winit::event_loop::EventLoop;
+use winit::window::Fullscreen::Borderless;
+use winit::window::{CursorGrabMode, CursorIcon as WCursorIcon, Window, WindowBuilder};
 
 pub struct GlWindow {
     // XXX the surface must be dropped before the window.
@@ -46,9 +46,9 @@ impl GlWindow {
 }
 
 pub struct WinitWindowBackend {
-    // pub(crate) gl_ctx: ContextWrapper<PossiblyCurrent, Window>,
     pub(crate) gl_display: Display,
-    pub(crate) gl_win: GlWindow,
+    pub(crate) gl_window: GlWindow,
+    pub(crate) gl_context: PossiblyCurrentContext,
     pub(crate) scale_factor: f64,
     pub(crate) lazy: bool,
     cursor: CursorIcon,
@@ -85,15 +85,6 @@ impl WindowBackend for WinitWindowBackend {
         (position.x, position.y)
     }
 
-    fn set_always_on_top(&mut self, enabled: bool) {
-        self.window().set_always_on_top(enabled);
-        self.is_always_on_top = enabled;
-    }
-
-    fn is_always_on_top(&self) -> bool {
-        self.is_always_on_top
-    }
-
     fn set_fullscreen(&mut self, enabled: bool) {
         if enabled {
             let monitor = self.window().current_monitor();
@@ -105,6 +96,15 @@ impl WindowBackend for WinitWindowBackend {
 
     fn is_fullscreen(&self) -> bool {
         self.window().fullscreen().is_some()
+    }
+
+    fn set_always_on_top(&mut self, enabled: bool) {
+        self.window().set_always_on_top(enabled);
+        self.is_always_on_top = enabled;
+    }
+
+    fn is_always_on_top(&self) -> bool {
+        self.is_always_on_top
     }
 
     fn dpi(&self) -> f64 {
@@ -128,7 +128,7 @@ impl WindowBackend for WinitWindowBackend {
 
     fn request_frame(&mut self) {
         if self.lazy {
-            // self.gl_ctx.window().request_redraw();
+            self.gl_window.window.request_redraw();
         }
     }
 
@@ -188,17 +188,17 @@ impl WindowBackend for WinitWindowBackend {
         self.visible
     }
 
-    fn mouse_passthrough(&mut self) -> bool {
-        self.mouse_passthrough
-    }
-
     fn set_mouse_passthrough(&mut self, pass_through: bool) {
         self.mouse_passthrough = pass_through;
 
-        // self.gl_ctx
-        //     .window()
-        //     .set_cursor_hittest(!pass_through)
-        //     .unwrap();
+        self.gl_window
+            .window
+            .set_cursor_hittest(!pass_through)
+            .unwrap();
+    }
+
+    fn mouse_passthrough(&mut self) -> bool {
+        self.mouse_passthrough
     }
 }
 
@@ -233,6 +233,10 @@ impl WinitWindowBackend {
             .with_transparency(config.transparent);
 
         if config.multisampling > 0 {
+            if !config.multisampling.is_power_of_two() {
+                return Err("Multisampling must be a power of two.".to_string());
+            }
+
             template = template.with_multisampling(config.multisampling);
         }
 
@@ -241,6 +245,7 @@ impl WinitWindowBackend {
             .build(event_loop, template, |configs| {
                 configs
                     .reduce(|accum, conf| {
+                        println!("here {:?}", conf);
                         let next_srgb = conf.srgb_capable();
                         let next_transparency = conf.supports_transparency().unwrap_or(false);
                         let more_samples = conf.num_samples() > accum.num_samples();
@@ -272,7 +277,13 @@ impl WinitWindowBackend {
                     })
                     .unwrap()
             })
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| {
+                let mut err = String::from("Cannot select a valid OpenGL configuration");
+                if config.multisampling != 0 {
+                    err.push_str(", try to reduce the number of samples");
+                }
+                format!("{}: {}", err, e)
+            })?;
 
         let raw_window_handle = window.as_ref().map(|window| window.raw_window_handle());
 
@@ -316,52 +327,55 @@ impl WinitWindowBackend {
             }
         }
 
-        // let windowed_context = ContextBuilder::new()
-        //     .with_vsync(config.vsync)
-        //     .with_gl(glutin::GlRequest::GlThenGles {
-        //         opengl_version: (3, 3),
-        //         opengles_version: (3, 0),
-        //     })
-        //     .with_srgb(true)
-        //     .with_gl_profile(glutin::GlProfile::Core)
-        //     .with_multisampling(config.multisampling)
-        //     .build_windowed(builder, event_loop)
-        //     .map_err(|e| format!("{}", e))?;
+        if config.mouse_passthrough {
+            gl_window
+                .window
+                .set_cursor_hittest(false)
+                .map_err(|e| e.to_string())?;
+        }
 
-        // let gl_ctx = unsafe { windowed_context.make_current().unwrap() };
-        //
-        // if template.mouse_passthrough {
-        //     gl_ctx.window().set_cursor_hittest(false).unwrap();
-        // }
-        //
-        // let monitor = gl_ctx.window().current_monitor();
-        // let scale_factor = monitor.as_ref().map_or(1.0, |m| m.scale_factor());
-        // if template.fullscreen {
-        //     gl_ctx.window().set_fullscreen(Some(Borderless(monitor)));
-        // }
+        let monitor = gl_window.window.current_monitor();
+        let scale_factor = monitor.as_ref().map_or(1.0, |m| m.scale_factor());
+        if config.fullscreen {
+            gl_window.window.set_fullscreen(Some(Borderless(monitor)));
+        }
 
         Ok(Self {
-            // gl_ctx,
             gl_display,
-            gl_win: gl_window,
-            scale_factor: 1.0, //TODO
-            lazy: false,       //template.lazy_loop,
+            gl_window,
+            gl_context,
+            scale_factor,
+            lazy: config.lazy_loop,
             cursor: CursorIcon::Default,
             captured: false,
-            visible: false,  //template.visible,
-            high_dpi: false, //template.high_dpi,
+            visible: config.visible,
+            high_dpi: config.high_dpi,
             is_always_on_top: false,
-            mouse_passthrough: false, //template.mouse_passthrough,
+            mouse_passthrough: config.mouse_passthrough,
         })
     }
 
     pub(crate) fn window(&self) -> &Window {
-        // self.gl_ctx.window()
-        &self.gl_win.window
+        &self.gl_window.window
     }
 
     pub(crate) fn swap_buffers(&self) {
-        // self.gl_ctx.swap_buffers().unwrap();
+        self.gl_window
+            .surface
+            .swap_buffers(&self.gl_context)
+            .unwrap();
+    }
+
+    pub(crate) fn resize(&self, width: u32, height: u32) {
+        if width == 0 || height == 0 {
+            return;
+        }
+
+        self.gl_window.surface.resize(
+            &self.gl_context,
+            NonZeroU32::new(width).unwrap(),
+            NonZeroU32::new(height).unwrap(),
+        );
     }
 }
 
