@@ -135,18 +135,15 @@ impl GlManager {
     }
 
     pub fn enable_vsync(&self, enable: bool) -> Result<(), String> {
-        if enable {
-            self.surface
-                .set_swap_interval(
-                    &self.context,
-                    SwapInterval::Wait(NonZeroU32::new(1).unwrap()),
-                )
-                .map_err(|e| e.to_string())
+        let interval = if enable {
+            SwapInterval::Wait(NonZeroU32::new(1).unwrap())
         } else {
-            self.surface
-                .set_swap_interval(&self.context, SwapInterval::DontWait)
-                .map_err(|e| e.to_string())
-        }
+            SwapInterval::DontWait
+        };
+
+        self.surface
+            .set_swap_interval(&self.context, interval)
+            .map_err(|e| e.to_string())
     }
 
     pub fn set_cursor_hittest(&self, enable: bool) -> Result<(), String> {
