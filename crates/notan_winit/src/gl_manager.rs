@@ -134,13 +134,19 @@ impl GlManager {
         })
     }
 
-    pub fn enable_vsync(&self) -> Result<(), String> {
-        self.surface
-            .set_swap_interval(
-                &self.context,
-                SwapInterval::Wait(NonZeroU32::new(1).unwrap()),
-            )
-            .map_err(|e| e.to_string())
+    pub fn enable_vsync(&self, enable: bool) -> Result<(), String> {
+        if enable {
+            self.surface
+                .set_swap_interval(
+                    &self.context,
+                    SwapInterval::Wait(NonZeroU32::new(1).unwrap()),
+                )
+                .map_err(|e| e.to_string())
+        } else {
+            self.surface
+                .set_swap_interval(&self.context, SwapInterval::DontWait)
+                .map_err(|e| e.to_string())
+        }
     }
 
     pub fn set_cursor_hittest(&self, enable: bool) -> Result<(), String> {

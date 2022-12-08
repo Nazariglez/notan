@@ -186,14 +186,12 @@ impl WinitWindowBackend {
         let gl_manager = GlManager::new(builder, event_loop, &config)?;
 
         // Try setting vsync.
-        if config.vsync {
-            if let Err(e) = gl_manager.enable_vsync() {
-                // Should we send up the error if vsync fails?
-                // how about if drivers invalidates the vsync option?
-                // I think that the app should run no matter if vsync
-                // is enabled or not
-                log::error!("Error setting vsync: {:?}", e);
-            }
+        if let Err(e) = gl_manager.enable_vsync(config.vsync) {
+            // Should we send up the error if vsync fails?
+            // how about if drivers invalidates the vsync option?
+            // I think that the app should run no matter if vsync
+            // is enabled or not
+            log::error!("Error setting vsync to {}: {:?}", config.vsync, e);
         }
 
         if config.mouse_passthrough {
