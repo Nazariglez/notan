@@ -1,6 +1,6 @@
 // check this https://docs.rs/wgpu/0.8.1/wgpu/struct.Limits.html
 
-/// Limit are overrided by the graphic implementation
+/// Limit are overridden by the graphic implementation
 #[derive(Debug, Clone, Copy)]
 pub struct Limits {
     pub max_texture_size: u32,

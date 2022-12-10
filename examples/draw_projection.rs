@@ -28,7 +28,7 @@ fn draw(gfx: &mut Graphics) {
     draw.clear(Color::BLACK);
 
     // We set our projection here
-    // Anything draw bellow will keep the aspect ratio
+    // Anything draw below will keep the aspect ratio
     draw.set_projection(Some(projection));
 
     // Our resolution bounds

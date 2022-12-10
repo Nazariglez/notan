@@ -136,8 +136,7 @@ impl DrawProcess for TextSection<'_> {
             flip,
         } = self;
 
-        let color = color.with_alpha(alpha);
-
+        let color = color.with_alpha(color.a * alpha);
         let count = text.chars().filter(|c| !c.is_whitespace()).count();
 
         let g_text = Text::new(text)

@@ -335,7 +335,7 @@ mod test {
             );
         });
 
-        // Using a scaled projection and rotated nd scaled view
+        // Using a scaled projection and rotated 2nd scaled view
         let proj = Mat4::orthographic_rh_gl(
             0.0,
             screen_size.x * 0.5,
@@ -354,7 +354,7 @@ mod test {
             assert_eq!(
                 screen.round(),
                 pos,
-                "Using a scaled projection and rotated nd scaled view"
+                "Using a scaled projection and rotated 2nd scaled view"
             );
         });
     }

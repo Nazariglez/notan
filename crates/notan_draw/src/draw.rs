@@ -207,8 +207,16 @@ impl Draw {
                 BatchType::Text { .. } => &self.text_pipeline,
             };
 
+            // blending modes, by priority:
+            // 1. element draw
+            // 2. global draw blending
+            // 3. in some cases (like text), default mode
             let cbm = info.blend_mode().or(self.blend_mode);
-            let abm = info.alpha_mode().or(self.alpha_mode);
+            let abm = info.alpha_mode().or(self.alpha_mode).or(match typ {
+                // text is drawn from a RT we need to set Over alpha by default
+                BatchType::Text { .. } => Some(BlendMode::OVER),
+                _ => None,
+            });
 
             self.current_batch = Some(Batch {
                 typ: create_type(info),
@@ -284,7 +292,8 @@ impl Draw {
         self.add_batch(info, is_diff_type, create_type);
 
         if let Some(b) = &mut self.current_batch {
-            // vertices and indices are calculated before the flush to the gpu, so we need to store the text until that time
+            // vertices and indices are calculated before the flush to the gpu,
+            // so we need to store the text until that time
             if let BatchType::Text { texts } = &mut b.typ {
                 let global_matrix = *self.transform.matrix();
                 let matrix = match *info.transform() {
