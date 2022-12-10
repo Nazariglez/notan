@@ -25,6 +25,8 @@ impl Color {
     pub const OLIVE: Color = Color::new(0.5, 0.5, 0.0, 1.0);
     pub const PURPLE: Color = Color::new(0.5, 0.0, 0.5, 1.0);
     pub const MAROON: Color = Color::new(0.5, 0.0, 0.0, 1.0);
+    pub const BROWN: Color = Color::new(0.647, 0.164, 0.164, 1.0);
+    pub const SADDLE_BROWN: Color = Color::new(0.545, 0.27, 0.074, 1.0);
     pub const AQUA: Color = Color::new(0.0, 1.0, 1.0, 1.0);
     pub const TEAL: Color = Color::new(0.0, 0.5, 0.5, 1.0);
     pub const NAVY: Color = Color::new(0.0, 0.0, 0.5, 1.0);
