@@ -59,7 +59,7 @@ glsl-to-spirv = ["notan_macro/glsl-to-spirv"]
 shaderc = ["notan_macro/shaderc"]
 
 [dev-dependencies]
-egui_demo_lib = "0.19.0"
+egui_demo_lib = "0.20.0"
 bytemuck = "1.12.3"
 
 [[example]]

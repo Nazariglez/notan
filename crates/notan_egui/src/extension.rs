@@ -231,7 +231,7 @@ impl EguiExtension {
                     );
 
                     let data: Vec<u8> = image
-                        .srgba_pixels(gamma)
+                        .srgba_pixels(Some(gamma))
                         .flat_map(|a| a.to_array())
                         .collect();
 
@@ -270,7 +270,7 @@ impl EguiExtension {
                 );
 
                 let data: Vec<u8> = image
-                    .srgba_pixels(gamma)
+                    .srgba_pixels(Some(gamma))
                     .flat_map(|a| a.to_array())
                     .collect();
 
