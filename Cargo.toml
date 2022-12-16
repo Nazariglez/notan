@@ -99,6 +99,10 @@ name = "draw_animation_list"
 required-features = ["draw"]
 
 [[example]]
+name = "draw_arcs"
+required-features = ["draw"]
+
+[[example]]
 name = "draw_atlas"
 required-features = ["draw"]
 
