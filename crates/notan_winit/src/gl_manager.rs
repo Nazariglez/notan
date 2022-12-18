@@ -1,4 +1,4 @@
-use glutin::config::{Api, ConfigTemplateBuilder, GlConfig};
+use glutin::config::{ConfigTemplateBuilder, GlConfig};
 use glutin::context::{
     ContextApi, ContextAttributesBuilder, GlProfile, NotCurrentGlContextSurfaceAccessor,
     PossiblyCurrentContext, Version,
@@ -26,9 +26,7 @@ impl GlManager {
         event_loop: &EventLoop<()>,
         config: &WindowConfig,
     ) -> Result<Self, String> {
-        let mut template = ConfigTemplateBuilder::new()
-            .with_api(Api::GLES3)
-            .with_transparency(config.transparent);
+        let mut template = ConfigTemplateBuilder::new().with_transparency(config.transparent);
 
         if config.multisampling > 0 {
             if !config.multisampling.is_power_of_two() {
