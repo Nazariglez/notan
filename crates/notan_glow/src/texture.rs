@@ -208,6 +208,7 @@ pub(crate) fn texture_format(tf: &TextureFormat) -> u32 {
     match tf {
         TextureFormat::Rgba32 => glow::RGBA,
         TextureFormat::R8 => glow::RED,
+        TextureFormat::R8Uint => glow::RED_INTEGER,
         TextureFormat::R16Uint => glow::RED_INTEGER,
         TextureFormat::R32Float => glow::RED,
         TextureFormat::R32Uint => glow::RED_INTEGER,
@@ -219,6 +220,7 @@ pub(crate) fn texture_format(tf: &TextureFormat) -> u32 {
 pub(crate) fn texture_internal_format(tf: &TextureFormat) -> u32 {
     match tf {
         TextureFormat::R8 => glow::R8,
+        TextureFormat::R8Uint => glow::R8UI,
         TextureFormat::R16Uint => R16UI,
         TextureFormat::R32Float => glow::R32F,
         TextureFormat::R32Uint => glow::R32UI,
