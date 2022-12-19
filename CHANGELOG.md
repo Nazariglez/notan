@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Change `SetupHandler` and `AppBuilder::initialize` to `FnOnce` allowing to embed notan easily.
 - Updated the crate `glutin` to `0.30.2`. 
 - New example `draw_arcs.rs` to show how to draw circle sections.
+- Added new texture format `R8Uint`.
 
 ## v0.8.0 - 28/11/2022
 
