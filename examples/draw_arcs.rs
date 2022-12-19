@@ -10,9 +10,9 @@ fn draw(gfx: &mut Graphics) {
     let mut draw = gfx.create_draw();
     draw.clear(Color::BLACK);
 
-    let center_x: f32 = 400.0;  // x-coordinate of center of arc
-    let center_y: f32 = 300.0;  // y-coordinate of center of arc
-    let radius: f32 = 150.0;  // radius of arc
+    let center_x: f32 = 400.0; // x-coordinate of center of arc
+    let center_y: f32 = 300.0; // y-coordinate of center of arc
+    let radius: f32 = 150.0; // radius of arc
 
     let mut draw = gfx.create_draw();
     draw.clear(Color::BLACK);
@@ -26,9 +26,7 @@ fn draw(gfx: &mut Graphics) {
         let mut path = draw.path();
         path.move_to(center_x, center_y);
         draw_circle_section(&mut path, center_x, center_y, radius, 240.0, 360.0);
-        path.color(Color::BLUE)
-            .stroke(4.0)
-            .fill();
+        path.color(Color::BLUE).stroke(4.0).fill();
     }
     {
         let mut path = draw.path();
@@ -39,8 +37,14 @@ fn draw(gfx: &mut Graphics) {
     gfx.render(&draw);
 }
 
-
-fn draw_arc(path: &mut Path, center_x: f32, center_y: f32, radius: f32, start_angle: f32, end_angle: f32) -> &mut Path {
+fn draw_arc(
+    path: &mut Path,
+    center_x: f32,
+    center_y: f32,
+    radius: f32,
+    start_angle: f32,
+    end_angle: f32,
+) -> &mut Path {
     let start_angle = start_angle + 270.0;
     let end_angle = end_angle + 270.0;
 
@@ -55,7 +59,14 @@ fn draw_arc(path: &mut Path, center_x: f32, center_y: f32, radius: f32, start_an
     path
 }
 
-fn draw_circle_section(path: &mut Path, center_x: f32, center_y: f32, radius: f32, start_angle: f32, end_angle: f32) -> &mut Path {
+fn draw_circle_section(
+    path: &mut Path,
+    center_x: f32,
+    center_y: f32,
+    radius: f32,
+    start_angle: f32,
+    end_angle: f32,
+) -> &mut Path {
     let start_angle = start_angle + 270.0;
     let end_angle = end_angle + 270.0;
 
@@ -70,7 +81,6 @@ fn draw_circle_section(path: &mut Path, center_x: f32, center_y: f32, radius: f3
     path.line_to(center_x, center_y);
     path
 }
-
 
 fn get_coords(center_x: f32, center_y: f32, radius: f32, degrees: f32) -> (f32, f32) {
     let x = center_x + radius * (degrees as f32 * std::f32::consts::PI / 180.0).cos();
