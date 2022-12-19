@@ -137,6 +137,14 @@ impl DrawProcess for Image<'_> {
             flip_y
         };
 
+        let blend_mode = blend_mode.or_else(|| {
+            if texture.is_render_texture() {
+                Some(BlendMode::OVER)
+            } else {
+                None
+            }
+        });
+
         let (u1, v1, u2, v2) = {
             let base_width = texture.base_width();
             let base_height = texture.base_height();

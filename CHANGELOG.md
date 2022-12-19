@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## UNRELEASED
 
 - Fix alpha blending mode issue with text rendering using the Draw2D API.
+- Improve how the alpha blending behaves rendering from and to `RenderTexture` using Draw2D API.
 - Fix `Draw` structure is clonable again.
 - Change `SetupHandler` and `AppBuilder::initialize` to `FnOnce` allowing to embed notan easily.
 - Updated the crate `glutin` to `0.30.2`. 

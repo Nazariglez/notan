@@ -48,9 +48,9 @@ impl GfxRenderer for Draw {
             "Missing DrawExtension. You may need to add 'DrawConfig' to notan.".to_string()
         })?;
 
-        let cmds = ext
-            .manager
-            .process_draw(self, device, text_ext.glyph_brush_mut());
+        let cmds =
+            ext.manager
+                .process_draw(self, device, text_ext.glyph_brush_mut(), target.is_some());
         match target {
             None => device.render(cmds),
             Some(rt) => device.render_to(rt, cmds),

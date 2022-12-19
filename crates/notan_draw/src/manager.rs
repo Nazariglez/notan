@@ -39,9 +39,10 @@ impl DrawManager {
         draw: &Draw,
         device: &mut Device,
         glyphs: &mut GlyphBrush,
+        is_rt: bool,
     ) -> &[Commands] {
         self.renderer.clear();
-        process_draw(self, draw, device, glyphs);
+        process_draw(self, draw, device, glyphs, is_rt);
         self.renderer.commands()
     }
 
@@ -88,6 +89,7 @@ fn paint_batch(
     glyphs: &mut GlyphBrush,
     b: &Batch,
     projection: &Mat4,
+    is_rt: bool,
 ) {
     if b.is_mask && !manager.drawing_mask {
         manager.renderer.end();
@@ -98,21 +100,23 @@ fn paint_batch(
     }
 
     match &b.typ {
-        BatchType::Image { .. } => manager
-            .image_painter
-            .push(&mut manager.renderer, b, projection),
+        BatchType::Image { .. } => {
+            manager
+                .image_painter
+                .push(&mut manager.renderer, b, projection, is_rt)
+        }
         BatchType::Shape => manager
             .shape_painter
-            .push(&mut manager.renderer, b, projection),
+            .push(&mut manager.renderer, b, projection, is_rt),
         BatchType::Pattern { .. } => {
             manager
                 .pattern_painter
-                .push(&mut manager.renderer, b, projection)
+                .push(&mut manager.renderer, b, projection, is_rt)
         }
         BatchType::Text { .. } => {
             manager
                 .text_painter
-                .push(device, glyphs, &mut manager.renderer, b, projection)
+                .push(device, glyphs, &mut manager.renderer, b, projection, is_rt)
         }
     }
 }
@@ -157,6 +161,7 @@ fn process_draw(
     draw: &Draw,
     device: &mut Device,
     glyphs: &mut GlyphBrush,
+    is_rt: bool,
 ) {
     process_glyphs(manager, draw, device, glyphs);
 
@@ -173,9 +178,9 @@ fn process_draw(
     let projection = draw.projection();
     draw.batches
         .iter()
-        .for_each(|b| paint_batch(device, manager, glyphs, b, &projection));
+        .for_each(|b| paint_batch(device, manager, glyphs, b, &projection, is_rt));
     if let Some(current) = &draw.current_batch {
-        paint_batch(device, manager, glyphs, current, &projection);
+        paint_batch(device, manager, glyphs, current, &projection, is_rt);
     }
 
     manager.renderer.end();
@@ -230,26 +235,17 @@ pub(crate) fn process_pipeline(
     renderer: &mut Renderer,
     batch: &Batch,
     default_pipeline: &Pipeline,
+    is_rt: bool,
 ) {
-    match &batch.pipeline {
-        Some(pip) => {
-            let masked = masked_pip(pip, batch.is_mask, batch.masking);
-            let pip_to_use = masked.as_ref().unwrap_or(pip);
-            let blended = blended_pip(pip_to_use, batch.blend_mode, batch.alpha_mode);
-            let final_pip = blended.as_ref().unwrap_or(pip_to_use);
-            renderer.set_pipeline(final_pip);
+    let pip = batch.pipeline.as_ref().unwrap_or(default_pipeline);
+    let masked = masked_pip(pip, batch.is_mask, batch.masking);
+    let pip_to_use = masked.as_ref().unwrap_or(pip);
+    let blended = blended_pip(pip_to_use, batch.blend_mode, batch.alpha_mode, is_rt);
+    let final_pip = blended.as_ref().unwrap_or(pip_to_use);
+    renderer.set_pipeline(final_pip);
 
-            if let Some(buffers) = &batch.uniform_buffers {
-                buffers.iter().for_each(|u| renderer.bind_buffer(u));
-            }
-        }
-        _ => {
-            let masked = masked_pip(default_pipeline, batch.is_mask, batch.masking);
-            let pip_to_use = masked.as_ref().unwrap_or(default_pipeline);
-            let blended = blended_pip(pip_to_use, batch.blend_mode, batch.alpha_mode);
-            let final_pip = blended.as_ref().unwrap_or(pip_to_use);
-            renderer.set_pipeline(final_pip);
-        }
+    if let Some(buffers) = &batch.uniform_buffers {
+        buffers.iter().for_each(|u| renderer.bind_buffer(u));
     }
 }
 
@@ -261,7 +257,10 @@ fn blended_pip(
     pip: &Pipeline,
     blend_mode: Option<BlendMode>,
     alpha_mode: Option<BlendMode>,
+    is_rt: bool,
 ) -> Option<Pipeline> {
+    // drawing to a rt needs over mode
+    let alpha_mode = alpha_mode.or(if is_rt { Some(BlendMode::OVER) } else { None });
     let new_cbm = pip.options.color_blend != blend_mode;
     let new_abm = pip.options.alpha_blend != alpha_mode;
     if new_cbm || new_abm {
