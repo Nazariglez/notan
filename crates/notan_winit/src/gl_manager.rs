@@ -1,4 +1,4 @@
-use glutin::config::{ConfigTemplateBuilder, GlConfig};
+use glutin::config::{Config, ConfigTemplateBuilder, GlConfig};
 use glutin::context::{
     ContextApi, ContextAttributesBuilder, GlProfile, NotCurrentGlContextSurfaceAccessor,
     PossiblyCurrentContext, Version,
@@ -38,40 +38,7 @@ impl GlManager {
 
         let (window, gl_config) = DisplayBuilder::new()
             .with_window_builder(Some(builder))
-            .build(event_loop, template, |configs| {
-                configs
-                    .reduce(|accum, conf| {
-                        let next_srgb = conf.srgb_capable();
-                        let next_transparency = conf.supports_transparency().unwrap_or(false);
-                        let more_samples = conf.num_samples() > accum.num_samples();
-
-                        // value of transparency for the priority check
-                        let transparency_check = if config.transparent {
-                            next_transparency
-                        } else {
-                            true
-                        };
-
-                        // priority 1: supports srgba, transparency and has more samples than current one
-                        let full_support = next_srgb && transparency_check && more_samples;
-
-                        // priority 2: we don't care about transparency if it's not supported by next config
-                        let srgba_plus_samples = next_srgb && more_samples;
-
-                        // priority 3: if it supports srgba is enough
-                        let only_srgba = next_srgb;
-
-                        // select the config in order of priority
-                        let select_config = full_support || srgba_plus_samples || only_srgba;
-
-                        if select_config {
-                            conf
-                        } else {
-                            accum
-                        }
-                    })
-                    .unwrap()
-            })
+            .build(event_loop, template, get_config(config))
             .map_err(|e| {
                 let mut err = String::from("Cannot select a valid OpenGL configuration");
                 if config.multisampling != 0 {
@@ -182,5 +149,64 @@ impl GlManager {
             NonZeroU32::new(width).unwrap(),
             NonZeroU32::new(height).unwrap(),
         );
+    }
+}
+
+#[cfg(not(feature = "nvidia-wayland"))]
+fn get_config(
+    config: &WindowConfig,
+) -> impl FnOnce(Box<dyn Iterator<Item = Config> + '_>) -> Config + '_ {
+    |configs| {
+        configs
+            .reduce(|accum, conf| {
+                let next_srgb = conf.srgb_capable();
+                let next_transparency = conf.supports_transparency().unwrap_or(false);
+                let more_samples = conf.num_samples() > accum.num_samples();
+
+                // value of transparency for the priority check
+                let transparency_check = if config.transparent {
+                    next_transparency
+                } else {
+                    true
+                };
+
+                // priority 1: supports srgba, transparency and has more samples than current one
+                let full_support = next_srgb && transparency_check && more_samples;
+
+                // priority 2: we don't care about transparency if it's not supported by next config
+                let srgba_plus_samples = next_srgb && more_samples;
+
+                // priority 3: if it supports srgba is enough
+                let only_srgba = next_srgb;
+
+                // select the config in order of priority
+                let select_config = full_support || srgba_plus_samples || only_srgba;
+
+                if select_config {
+                    conf
+                } else {
+                    accum
+                }
+            })
+            .unwrap()
+    }
+}
+#[cfg(feature = "nvidia-wayland")]
+fn get_config(
+    _config: &WindowConfig,
+) -> impl FnOnce(Box<dyn Iterator<Item = Config> + '_>) -> Config + '_ {
+    |configs| {
+        configs
+            .reduce(|accum, conf| {
+                let transparency_check = conf.supports_transparency().unwrap_or(false)
+                    & !accum.supports_transparency().unwrap_or(false);
+
+                if transparency_check || conf.num_samples() > accum.num_samples() {
+                    conf
+                } else {
+                    accum
+                }
+            })
+            .unwrap()
     }
 }

@@ -57,6 +57,7 @@ texture_to_file = ["notan_graphics/texture_to_file"]
 random = ["notan_random"]
 glsl-to-spirv = ["notan_macro/glsl-to-spirv"]
 shaderc = ["notan_macro/shaderc"]
+nvidia-wayland = ["notan_backend?/nvidia-wayland"]
 
 [dev-dependencies]
 egui_demo_lib = "0.20.0"
