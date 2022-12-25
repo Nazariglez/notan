@@ -11,6 +11,17 @@ mod handlers;
 mod shaders;
 mod state;
 
+#[cfg(all(feature = "glsl-to-spirv", feature = "shaderc"))]
+compile_error!(
+    "feature \"glsl-to-spirv\" and feature \"shaderc\" cannot be enabled at the same time"
+);
+
+#[cfg(all(feature = "glsl-to-spirv", feature = "naga"))]
+compile_error!("feature \"glsl-to-spirv\" and feature \"naga\" cannot be enabled at the same time");
+
+#[cfg(all(feature = "naga", feature = "shaderc"))]
+compile_error!("feature \"naga\" and feature \"shaderc\" cannot be enabled at the same time");
+
 #[proc_macro_attribute]
 pub fn notan_main(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(item as ItemFn);
@@ -68,6 +79,7 @@ pub fn state_derive(input: TokenStream) -> TokenStream {
 
 #[cfg(shader_compilation)]
 #[proc_macro]
+#[cfg(not(feature = "naga"))]
 pub fn vertex_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
     let content = input.value();
@@ -78,6 +90,7 @@ pub fn vertex_shader(input: TokenStream) -> TokenStream {
 
 #[cfg(shader_compilation)]
 #[proc_macro]
+#[cfg(not(feature = "naga"))]
 pub fn include_vertex_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
     let relative_path = input.value();
@@ -88,6 +101,7 @@ pub fn include_vertex_shader(input: TokenStream) -> TokenStream {
 
 #[cfg(shader_compilation)]
 #[proc_macro]
+#[cfg(not(feature = "naga"))]
 pub fn fragment_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
     let content = input.value();
@@ -98,6 +112,7 @@ pub fn fragment_shader(input: TokenStream) -> TokenStream {
 
 #[cfg(shader_compilation)]
 #[proc_macro]
+#[cfg(not(feature = "naga"))]
 pub fn include_fragment_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
     let relative_path = input.value();
@@ -118,4 +133,36 @@ pub fn uniform(_metadata: TokenStream, input: TokenStream) -> TokenStream {
         impl ::notan::graphics::Uniform for #ident {}
     };
     output.into()
+}
+
+#[proc_macro]
+#[cfg(feature = "naga")]
+pub fn vertex_shader(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as LitStr);
+    let content = input.value();
+    shaders::source_from_naga(&content, shaders::ShaderType::Vertex).unwrap()
+}
+
+#[proc_macro]
+#[cfg(feature = "naga")]
+pub fn include_vertex_shader(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as LitStr);
+    let relative_path = input.value();
+    shaders::source_from_file_naga(&relative_path, shaders::ShaderType::Vertex).unwrap()
+}
+
+#[proc_macro]
+#[cfg(feature = "naga")]
+pub fn fragment_shader(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as LitStr);
+    let content = input.value();
+    shaders::source_from_naga(&content, shaders::ShaderType::Fragment).unwrap()
+}
+
+#[proc_macro]
+#[cfg(feature = "naga")]
+pub fn include_fragment_shader(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as LitStr);
+    let relative_path = input.value();
+    shaders::source_from_file_naga(&relative_path, shaders::ShaderType::Fragment).unwrap()
 }

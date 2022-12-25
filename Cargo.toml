@@ -58,6 +58,7 @@ random = ["notan_random"]
 glsl-to-spirv = ["notan_macro/glsl-to-spirv", "notan_glyph?/glsl-to-spirv", "notan_draw?/glsl-to-spirv", "notan_egui?/glsl-to-spirv", "notan_text?/glsl-to-spirv"]
 shaderc = ["notan_macro/shaderc", "notan_glyph?/shaderc", "notan_draw?/shaderc", "notan_egui?/shaderc", "notan_text?/shaderc"]
 serde = ["notan_app/serde", "notan_math/serde", "notan_core/serde", "notan_input/serde"]
+naga = ["notan_macro/naga"]
 
 [dev-dependencies]
 egui_demo_lib = "0.21.0"

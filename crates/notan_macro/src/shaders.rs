@@ -1,11 +1,14 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
-use spirv_cross::{glsl, spirv, ErrorCode};
 use std::fs::read_to_string;
 use std::io::{Cursor, Read};
 use std::path::{Path, PathBuf};
 use std::{io, slice};
+use syn::token::Token;
+
+#[cfg(not(feature = "naga"))]
+use spirv_cross::{glsl, glsl::Version, spirv, ErrorCode};
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum ShaderType {
@@ -39,6 +42,16 @@ fn get_root_path() -> PathBuf {
     Path::new(&root).to_path_buf()
 }
 
+#[cfg(feature = "naga")]
+impl From<ShaderType> for naga::ShaderStage {
+    fn from(value: ShaderType) -> Self {
+        match value {
+            ShaderType::Vertex => naga::ShaderStage::Vertex,
+            ShaderType::Fragment => naga::ShaderStage::Fragment,
+        }
+    }
+}
+
 fn read_file(full_path: &Path) -> Result<String, String> {
     if !full_path.is_file() {
         return Err(format!("File {} was not found.", full_path.display()));
@@ -47,6 +60,7 @@ fn read_file(full_path: &Path) -> Result<String, String> {
     read_to_string(full_path).map_err(|e| e.to_string())
 }
 
+#[cfg(not(feature = "naga"))]
 pub(crate) fn spirv_from_file(relative_path: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
     let root_path = get_root_path();
     let full_path = root_path.join(Path::new(relative_path));
@@ -147,6 +161,7 @@ impl quote::ToTokens for ShaderBytes {
     }
 }
 
+#[cfg(not(feature = "naga"))]
 pub(crate) fn source_from_spirv(spirv: Vec<u8>) -> Result<TokenStream, String> {
     let webgl2_bytes = spirv_to(&spirv, Output::Webgl2)?;
     // let wgpu_bytes = spirv_to(&spirv, Output::Wgpu)?;
@@ -182,6 +197,7 @@ enum Output {
     Wgpu,
 }
 
+#[cfg(not(feature = "naga"))]
 impl From<Output> for Option<glsl::Version> {
     fn from(value: Output) -> Self {
         use glsl::Version::*;
@@ -195,6 +211,7 @@ impl From<Output> for Option<glsl::Version> {
     }
 }
 
+#[cfg(not(feature = "naga"))]
 fn spirv_to(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
     match output {
         Output::Wgpu => Ok(ShaderBytes(spirv.to_vec())),
@@ -202,6 +219,7 @@ fn spirv_to(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
     }
 }
 
+#[cfg(not(feature = "naga"))]
 fn spirv_to_glsl(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
     let spv = read_spirv(Cursor::new(spirv)).map_err(|e| e.to_string())?;
     let glsl = compile_spirv_to_glsl(&spv, output)?;
@@ -210,6 +228,7 @@ fn spirv_to_glsl(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
 }
 
 //- Most of this code is based on https://github.com/gfx-rs/gfx/blob/master/src/backend/gl/src/device.rs
+#[cfg(not(feature = "naga"))]
 fn compile_spirv_to_glsl(source: &[u32], api: Output) -> Result<String, String> {
     let module = spirv::Module::from_words(source);
     let mut ast = spirv::Ast::<glsl::Target>::parse(&module).map_err(error_code_to_string)?;
@@ -235,6 +254,7 @@ fn compile_spirv_to_glsl(source: &[u32], api: Output) -> Result<String, String> 
     ast.compile().map_err(error_code_to_string)
 }
 
+#[cfg(not(feature = "naga"))]
 fn fix_ast_for_gl(ast: &mut spirv::Ast<glsl::Target>, resources: &[spirv::Resource]) {
     resources.iter().for_each(|res| {
         ast.unset_decoration(res.id, spirv::Decoration::Binding)
@@ -244,6 +264,7 @@ fn fix_ast_for_gl(ast: &mut spirv::Ast<glsl::Target>, resources: &[spirv::Resour
     });
 }
 
+#[cfg(not(feature = "naga"))]
 fn error_code_to_string(err: ErrorCode) -> String {
     match err {
         ErrorCode::Unhandled => String::from("Unhandled"),
@@ -254,6 +275,7 @@ fn error_code_to_string(err: ErrorCode) -> String {
     }
 }
 
+#[cfg(not(feature = "naga"))]
 pub fn read_spirv<R: io::Read + io::Seek>(mut x: R) -> io::Result<Vec<u32>> {
     let size = x.seek(io::SeekFrom::End(0))?;
     if size % 4 != 0 {
@@ -290,4 +312,94 @@ pub fn read_spirv<R: io::Read + io::Seek>(mut x: R) -> io::Result<Vec<u32>> {
         ));
     }
     Ok(result)
+}
+
+#[cfg(feature = "naga")]
+pub(crate) fn source_from_naga(source: &str, typ: ShaderType) -> Result<TokenStream, String> {
+    println!("HERE");
+    use naga::back::glsl::*;
+    use naga::front::glsl::{Options, Parser, *};
+    use naga::valid::{Capabilities, ValidationFlags, Validator};
+
+    let stage = typ.into();
+    let options = Options::from(stage);
+    let mut parser = Parser::default();
+    println!("lol");
+    let module = parser.parse(&options, source).map_err(|e| {
+        let errors = e.iter().map(|e| e.to_string()).collect::<Vec<_>>();
+        errors.join("\n ")
+    })?;
+    println!("lol2");
+
+    let info = Validator::new(ValidationFlags::all(), Capabilities::empty())
+        .validate(&module)
+        .map_err(|e| e.to_string())?;
+
+    #[cfg(target_arch = "wasm32")]
+    let version = Version::Embedded {
+        version: 300,
+        is_webgl: true,
+    };
+
+    #[cfg(all(
+        not(target_arch = "wasm32"),
+        not(feature = "wgpu"),
+        not(target_os = "ios")
+    ))]
+    let version = Version::Desktop(330);
+
+    let options = naga::back::glsl::Options {
+        version,
+        writer_flags: WriterFlags::all(),
+        binding_map: Default::default(),
+    };
+
+    let pipeline_options = PipelineOptions {
+        shader_stage: stage,
+        entry_point: "main".to_string(),
+        multiview: None,
+    };
+
+    // let ep_name = module.entry_points
+
+    let mut buffer = String::new();
+    let mut writer = Writer::new(
+        &mut buffer,
+        &module,
+        &info,
+        &options,
+        &pipeline_options,
+        Default::default(),
+    )
+    .unwrap();
+    writer.write().map_err(|e| e.to_string())?;
+    Ok(to_shader_source(buffer.into_bytes()))
+}
+
+#[cfg(feature = "naga")]
+pub(crate) fn source_from_file_naga(
+    relative_path: &str,
+    typ: ShaderType,
+) -> Result<TokenStream, String> {
+    let root = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".into());
+    let root_path = Path::new(&root);
+    let full_path = root_path.join(Path::new(relative_path));
+
+    source_from_naga(&read_file(&full_path)?, typ)
+}
+
+#[cfg(feature = "naga")]
+fn to_shader_source(bytes: Vec<u8>) -> TokenStream {
+    let bytes = ShaderBytes(bytes);
+    (quote! {
+        ShaderSource {
+            sources: &[
+                #[cfg(target_arch = "wasm32")]
+                ("webgl2", &#bytes),
+
+                #[cfg(all(not(target_arch = "wasm32"), not(feature = "wgpu"), not(target_os = "ios")))]
+                ("opengl", &#bytes),
+            ]
+        }
+    }).into()
 }
