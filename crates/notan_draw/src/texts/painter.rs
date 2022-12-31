@@ -127,7 +127,7 @@ impl TextPainter {
                 let count = d.count;
                 let start = self.count_chars;
                 let end = start + count;
-                if &count <= &self.font_vertices.len() {
+                if count <= self.font_vertices.len() {
                     let vert = &self.font_vertices[start..end];
                     let (flip_x, flip_y) = d.flip;
                     vert.iter().enumerate().for_each(|(i, g_instance)| {
@@ -167,7 +167,6 @@ impl TextPainter {
                             n + 2, n + 1, n + 3
                         ]);
                     });
-
                 }
                 self.count_chars = end;
             });
