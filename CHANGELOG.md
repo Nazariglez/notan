@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Updated the crate `glutin` to `0.30.2`. 
 - New example `draw_arcs.rs` to show how to draw circle sections.
 - Added new texture format `R8Uint`.
+- Draw unsupported chars with a font does not panic anymore. 
 
 ## v0.8.0 - 28/11/2022
 
