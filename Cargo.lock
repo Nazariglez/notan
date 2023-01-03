@@ -1959,6 +1959,7 @@ dependencies = [
  "arboard",
  "glutin",
  "glutin-winit",
+ "image",
  "log",
  "mime_guess",
  "notan_app",
