@@ -5,9 +5,8 @@ use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
 use winit::dpi::{LogicalSize, PhysicalPosition};
 use winit::event_loop::EventLoop;
-use winit::platform::windows::WindowBuilderExtWindows;
 use winit::window::Fullscreen::Borderless;
-use winit::window::{CursorGrabMode, CursorIcon as WCursorIcon, Window, WindowBuilder, Icon};
+use winit::window::{CursorGrabMode, CursorIcon as WCursorIcon, Icon, Window, WindowBuilder};
 
 pub struct WinitWindowBackend {
     pub(crate) gl_manager: GlManager,
@@ -172,11 +171,10 @@ fn load_icon(path: &Option<PathBuf>) -> Option<Icon> {
                 (rgba, width, height)
             };
             Some(Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon"))
-        },
-        None => return None,
+        }
+        None => None,
     }
 }
-
 
 impl WinitWindowBackend {
     pub(crate) fn new(config: WindowConfig, event_loop: &EventLoop<()>) -> Result<Self, String> {
@@ -189,8 +187,13 @@ impl WinitWindowBackend {
             .with_always_on_top(config.always_on_top)
             .with_visible(config.visible)
             .with_decorations(config.decorations)
-            .with_window_icon(load_icon(&config.window_icon_path))
-            .with_taskbar_icon(load_icon(&config.taskbar_icon_path));
+            .with_window_icon(load_icon(&config.window_icon_path));
+
+        #[cfg(target_os = "windows")]
+        {
+            use winit::platform::windows::WindowBuilderExtWindows;
+            builder = builder.with_taskbar_icon(load_icon(&config.taskbar_icon_path));
+        }
 
         #[cfg(target_os = "macos")]
         {
