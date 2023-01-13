@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Added new texture format `R8Uint`.
 - Draw unsupported chars with a font does not panic anymore. 
 - Added `WindowConfig::window_icon` and `WindowConfig::taskbar_icon` to add icons for windows os.
+- Added example `egui_custom_font.rs`.
 
 ## v0.8.0 - 28/11/2022
 
