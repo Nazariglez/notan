@@ -21,7 +21,7 @@ const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
     layout(location = 1) in vec2 a_tc;
     layout(location = 2) in vec4 a_srgba;
 
-    layout(location = 0) out vec4 v_rgba;
+    layout(location = 0) out vec4 v_rgba_in_gamma;
     layout(location = 1) out vec2 v_tc;
     layout(location = 2) out float v_need_gamma_fix;
 
@@ -52,8 +52,7 @@ const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
             1.0
         );
 
-        // egui encodes vertex colors in gamma spaces, so we must decode the colors here:
-        v_rgba = linear_from_srgba(a_srgba);
+        v_rgba_in_gamma = a_srgba / 255.0;
         v_tc = a_tc;
     }
     "#
@@ -68,7 +67,7 @@ const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
         precision mediump float;
     #endif
 
-    layout(location = 0) in vec4 v_rgba;
+    layout(location = 0) in vec4 v_rgba_in_gamma;
     layout(location = 1) in vec2 v_tc;
     layout(location = 2) in float v_need_gamma_fix;
 
@@ -88,10 +87,27 @@ const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
         return vec4(srgb_from_linear(rgba.rgb), 255.0 * rgba.a);
     }
 
+    // 0-1 sRGB gamma  from  0-1 linear
+    vec3 srgb_gamma_from_linear(vec3 rgb) {
+        bvec3 cutoff = lessThan(rgb, vec3(0.0031308));
+        vec3 lower = rgb * vec3(12.92);
+        vec3 higher = vec3(1.055) * pow(rgb, vec3(1.0 / 2.4)) - vec3(0.055);
+        return mix(higher, lower, vec3(cutoff));
+    }
+
+    // 0-1 sRGBA gamma  from  0-1 linear
+    vec4 srgba_gamma_from_linear(vec4 rgba) {
+        return vec4(srgb_gamma_from_linear(rgba.rgb), rgba.a);
+    }
+
     void main() {
-        vec4 texture_rgba = texture(u_sampler, v_tc);
+    #if SRGB_TEXTURES
+        vec4 texture_in_gamma = srgba_gamma_from_linear(texture(u_sampler, v_tc));
+    #else
+        vec4 texture_in_gamma = texture(u_sampler, v_tc);
+    #endif
         // Multiply vertex color with texture color (in linear space).
-        color = v_rgba * texture_rgba;
+        color = v_rgba_in_gamma * texture_in_gamma;
         
         if (v_need_gamma_fix == 1.0) {
             if (color.a > 0.0) {
@@ -190,13 +206,6 @@ impl EguiExtension {
     ) -> Result<(), String> {
         let [width, height] = delta.image.size();
 
-        // todo mobile
-        let gamma = if cfg!(target_arch = "wasm32") {
-            1.0 / 2.2
-        } else {
-            1.0
-        };
-
         // update texture
         if let Some([x, y]) = delta.pos {
             let texture = self
@@ -231,7 +240,7 @@ impl EguiExtension {
                     );
 
                     let data: Vec<u8> = image
-                        .srgba_pixels(Some(gamma))
+                        .srgba_pixels(None)
                         .flat_map(|a| a.to_array())
                         .collect();
 
@@ -270,7 +279,7 @@ impl EguiExtension {
                 );
 
                 let data: Vec<u8> = image
-                    .srgba_pixels(Some(gamma))
+                    .srgba_pixels(None)
                     .flat_map(|a| a.to_array())
                     .collect();
 
@@ -460,7 +469,7 @@ fn create_texture(
     device
         .create_texture()
         .from_bytes(data, width, height)
-        .with_format(TextureFormat::SRgba8)
+        .with_format(TextureFormat::Rgba32)
         .with_filter(TextureFilter::Linear, TextureFilter::Linear)
         .build()
 }
