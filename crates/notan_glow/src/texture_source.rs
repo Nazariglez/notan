@@ -27,7 +27,6 @@ pub(crate) fn add_texture_from_image(
         data.to_vec()
     };
 
-    info.format = TextureFormat::Rgba32;
     info.width = data.width() as _;
     info.height = data.height() as _;
 
