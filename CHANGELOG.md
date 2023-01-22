@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Added example `egui_custom_font.rs`.
 - Fix images loaded from files can set the texture format other rgba.
 - Added `TextureFormat::Rgba32Float`.
+- Avoid some allocations when textures are loaded.
 
 ## v0.8.0 - 28/11/2022
 
