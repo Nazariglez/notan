@@ -1,6 +1,5 @@
 use crate::texture::{create_texture, TextureKey};
 use crate::GlowBackend;
-use image::ImageBuffer;
 use notan_graphics::color::Color;
 use notan_graphics::{TextureFormat, TextureInfo};
 
@@ -19,7 +18,7 @@ pub(crate) fn add_texture_from_image(
     mut info: TextureInfo,
 ) -> Result<(u64, TextureInfo), String> {
     let img = image::load_from_memory(&buffer).map_err(|e| e.to_string())?;
-    let (tex, width, height) = parse_image(backend, &img, &mut info)?;
+    let tex = parse_image(backend, &img, &mut info)?;
     let id = backend.add_inner_texture(tex, &info)?;
     Ok((id, info))
 }
@@ -28,7 +27,7 @@ fn parse_image(
     backend: &mut GlowBackend,
     img: &image::DynamicImage,
     info: &mut TextureInfo,
-) -> Result<(TextureKey, i32, i32), String> {
+) -> Result<TextureKey, String> {
     // TODO process the loading of more texture types directly?
     match info.format {
         TextureFormat::Rgba32Float => {
@@ -43,8 +42,8 @@ fn parse_image(
             info.width = width;
             info.height = height;
             let tex =
-                unsafe { create_texture(&backend.gl, Some(bytemuck::cast_slice(&data)), &info)? };
-            Ok((tex, width, height))
+                unsafe { create_texture(&backend.gl, Some(bytemuck::cast_slice(&data)), info)? };
+            Ok(tex)
         }
         _ => {
             let mut data = img.to_rgba8();
@@ -58,8 +57,8 @@ fn parse_image(
             info.width = width;
             info.height = height;
             let tex =
-                unsafe { create_texture(&backend.gl, Some(bytemuck::cast_slice(&data)), &info)? };
-            Ok((tex, width, height))
+                unsafe { create_texture(&backend.gl, Some(bytemuck::cast_slice(&data)), info)? };
+            Ok(tex)
         }
     }
 }
