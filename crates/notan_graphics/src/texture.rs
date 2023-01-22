@@ -81,6 +81,7 @@ impl TextureFormat {
             R8 => 1,
             R8Uint => 1,
             R16Uint => 2,
+            Rgba32Float => 4 * 4,
             _ => 4,
         }
     }
@@ -250,6 +251,7 @@ pub enum TextureFormat {
     R32Float,
     R32Uint,
     Depth16,
+    Rgba32Float,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

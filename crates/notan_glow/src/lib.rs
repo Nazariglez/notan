@@ -585,7 +585,7 @@ impl DeviceBackend for GlowBackend {
                         .bind_texture(glow::TEXTURE_2D, Some(texture.texture));
                     self.gl.pixel_store_i32(
                         glow::UNPACK_ALIGNMENT,
-                        opts.format.bytes_per_pixel() as _,
+                        opts.format.bytes_per_pixel().min(8) as _,
                     );
 
                     match source {
