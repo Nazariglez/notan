@@ -1,5 +1,6 @@
-use crate::texture::create_texture;
+use crate::texture::{create_texture, TextureKey};
 use crate::GlowBackend;
+use image::ImageBuffer;
 use notan_graphics::color::Color;
 use notan_graphics::{TextureFormat, TextureInfo};
 
@@ -17,22 +18,50 @@ pub(crate) fn add_texture_from_image(
     buffer: Vec<u8>,
     mut info: TextureInfo,
 ) -> Result<(u64, TextureInfo), String> {
-    let data = image::load_from_memory(&buffer)
-        .map_err(|e| e.to_string())?
-        .to_rgba8();
-
-    let pixels = if info.premultiplied_alpha {
-        premultiplied_alpha(&data)
-    } else {
-        data.to_vec()
-    };
-
-    info.width = data.width() as _;
-    info.height = data.height() as _;
-
-    let tex = unsafe { create_texture(&backend.gl, Some(&pixels), &info)? };
+    let img = image::load_from_memory(&buffer).map_err(|e| e.to_string())?;
+    let (tex, width, height) = parse_image(backend, &img, &mut info)?;
     let id = backend.add_inner_texture(tex, &info)?;
     Ok((id, info))
+}
+
+fn parse_image(
+    backend: &mut GlowBackend,
+    img: &image::DynamicImage,
+    info: &mut TextureInfo,
+) -> Result<(TextureKey, i32, i32), String> {
+    // TODO process the loading of more texture types directly?
+    match info.format {
+        TextureFormat::Rgba32Float => {
+            let mut data = img.to_rgba32f();
+            let width = data.width() as _;
+            let height = data.height() as _;
+            if info.premultiplied_alpha {
+                data.pixels_mut().for_each(|rgba| {
+                    rgba.0 = Color::from(rgba.0).to_premultiplied_alpha().into();
+                });
+            }
+            info.width = width;
+            info.height = height;
+            let tex =
+                unsafe { create_texture(&backend.gl, Some(bytemuck::cast_slice(&data)), &info)? };
+            Ok((tex, width, height))
+        }
+        _ => {
+            let mut data = img.to_rgba8();
+            let width = data.width() as _;
+            let height = data.height() as _;
+            if info.premultiplied_alpha {
+                data.pixels_mut().for_each(|rgba| {
+                    rgba.0 = Color::from(rgba.0).to_premultiplied_alpha().into();
+                });
+            }
+            info.width = width;
+            info.height = height;
+            let tex =
+                unsafe { create_texture(&backend.gl, Some(bytemuck::cast_slice(&data)), &info)? };
+            Ok((tex, width, height))
+        }
+    }
 }
 
 pub(crate) fn add_texture_from_bytes(
