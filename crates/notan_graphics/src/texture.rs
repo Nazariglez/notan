@@ -297,11 +297,17 @@ impl Debug for TextureUpdaterSourceKind<'_> {
     }
 }
 
+pub struct TextureMipMap<'b> {
+    bytes: &'b [u8],
+    level: u32,
+}
+
 pub struct TextureBuilder<'a, 'b> {
     device: &'a mut Device,
     info: TextureInfo,
     kind: Option<TextureKind<'b>>,
     source: Option<TextureSourceKind>,
+    mipmaps: Option<Vec<TextureMipMap<'b>>>,
 }
 
 impl<'a, 'b> TextureBuilder<'a, 'b> {
@@ -311,6 +317,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
             info: Default::default(),
             kind: None,
             source: None,
+            mipmaps: None,
         }
     }
 
@@ -387,11 +394,17 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
     /// Generate the mipmaps
     pub fn with_mipmaps(mut self, enable: bool) -> Self {
         if enable {
-            self.info.mipmap_filter = Some(TextureFilter::Linear);
+            if self.info.mipmap_filter.is_none() {
+                self.info.mipmap_filter = Some(TextureFilter::Linear);
+            }
         } else {
             self.info.mipmap_filter = None;
         }
         self
+    }
+
+    pub fn with_custom_mipmaps(mut self, levels: Vec<TextureMipMap>) -> Self {
+        self.mipmaps = Some(levels);
     }
 
     pub fn with_mipmap_filter(mut self, filter: TextureFilter) -> Self {
