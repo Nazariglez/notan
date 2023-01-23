@@ -1,6 +1,6 @@
 [package]
 name = "notan_graphics"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -15,9 +15,9 @@ description = "Provides simple graphics API for Notan"
 bytemuck = "1.13.0"
 parking_lot = "0.12.1"
 image = { version = "0.24.5", default-features = false, features = ["jpeg", "png"] }
-notan_math = { path = "../notan_math", version = "0.8.0" }
-notan_macro = { path = "../notan_macro", version = "0.8.0" }
-notan_utils = { path = "../notan_utils", version = "0.8.0" }
+notan_math = { path = "../notan_math", version = "0.9.0" }
+notan_macro = { path = "../notan_macro", version = "0.9.0" }
+notan_utils = { path = "../notan_utils", version = "0.9.0" }
 glsl-layout = { version = "0.5.0", features = ["glam"] }
 
 [features]
