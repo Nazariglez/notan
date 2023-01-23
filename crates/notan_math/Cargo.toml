@@ -1,6 +1,6 @@
 [package]
 name = "notan_math"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
