@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## UNRELEASED
+## v0.9.0 - 24/01/2023
 
 - Fix alpha blending mode issue with text rendering using the Draw2D API.
 - Improve how the alpha blending behaves rendering from and to `RenderTexture` using Draw2D API.
