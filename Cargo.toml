@@ -60,7 +60,7 @@ shaderc = ["notan_macro/shaderc"]
 
 [dev-dependencies]
 egui_demo_lib = "0.20.0"
-bytemuck = "1.12.3"
+bytemuck = "1.13.0"
 
 [[example]]
 name = "app_drop_file"

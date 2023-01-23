@@ -18,4 +18,4 @@ notan_math = { path = "../notan_math", version = "0.8.0" }
 log = "0.4.17"
 lazy_static = "1.4.0"
 parking_lot = "0.12.1"
-hashbrown = "0.12.3"
+hashbrown = "0.13.2"
