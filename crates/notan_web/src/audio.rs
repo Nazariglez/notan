@@ -110,12 +110,12 @@ pub(crate) fn enable_webaudio<F: FnMut() + 'static>(mut handler: F) {
         handler();
         let closure = cw.borrow();
         event_list.iter().for_each(|name| {
-            window_remove_event_listener(*name, closure.as_ref().unwrap()).unwrap();
+            window_remove_event_listener(name, closure.as_ref().unwrap()).unwrap();
         });
     }) as Box<dyn FnMut(_)>);
 
     event_list.iter().for_each(|name| {
-        win.add_event_listener_with_callback(*name, closure.as_ref().unchecked_ref())
+        win.add_event_listener_with_callback(name, closure.as_ref().unchecked_ref())
             .unwrap();
     });
 

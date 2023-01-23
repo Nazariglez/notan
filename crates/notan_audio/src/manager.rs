@@ -109,11 +109,5 @@ impl Audio {
 }
 
 fn clamp_volume(volume: f32) -> f32 {
-    if volume < 0.0 {
-        0.0
-    } else if volume > 1.0 {
-        1.0
-    } else {
-        volume
-    }
+    volume.clamp(0.0, 1.0)
 }

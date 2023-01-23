@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use crate::epaint::Primitive;
 use crate::plugin::Output;
 use crate::TextureId;
