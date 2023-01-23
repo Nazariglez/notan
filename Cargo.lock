@@ -1870,6 +1870,7 @@ dependencies = [
 name = "notan_macro"
 version = "0.8.0"
 dependencies = [
+ "cfg_aliases",
  "glsl-to-spirv",
  "num",
  "proc-macro2",
