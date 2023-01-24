@@ -8,11 +8,6 @@ mod handlers;
 mod shaders;
 mod state;
 
-#[cfg(all(feature = "glsl-to-spirv", feature = "shaderc"))]
-compile_error!(
-    "feature \"glsl-to-spirv\" and feature \"shaderc\" cannot be enabled at the same time"
-);
-
 #[proc_macro_attribute]
 pub fn notan_main(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(item as ItemFn);
@@ -46,7 +41,19 @@ pub fn handler(input: TokenStream) -> TokenStream {
         .map(|s| s.to_string())
         .collect::<Vec<_>>()
         .join(" ");
-    let code = handlers::process_tokens(input_sting);
+    let code = handlers::process_tokens(input_sting, false);
+    code.parse().unwrap()
+}
+
+#[proc_macro]
+pub fn handler_once(input: TokenStream) -> TokenStream {
+    let inputs: Vec<_> = input.into_iter().collect();
+    let input_sting = inputs
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>()
+        .join(" ");
+    let code = handlers::process_tokens(input_sting, true);
     code.parse().unwrap()
 }
 

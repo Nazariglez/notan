@@ -116,9 +116,10 @@ impl TextPainter {
         renderer: &mut Renderer,
         batch: &Batch,
         projection: &Mat4,
+        is_rt: bool,
     ) {
         if let BatchType::Text { texts } = &batch.typ {
-            process_pipeline(renderer, batch, &self.pipeline);
+            process_pipeline(renderer, batch, &self.pipeline, is_rt);
             let mut vertices = vec![];
             let mut indices = vec![];
 
@@ -126,46 +127,47 @@ impl TextPainter {
                 let count = d.count;
                 let start = self.count_chars;
                 let end = start + count;
-                let vert = &self.font_vertices[start..end];
-                let (flip_x, flip_y) = d.flip;
-                vert.iter().enumerate().for_each(|(i, g_instance)| {
-                    let GlyphInstance {
-                        left_top: [x1, y1, _],
-                        right_bottom: [x2, y2],
-                        tex_left_top: [u1, v1],
-                        tex_right_bottom: [u2, v2],
-                        color: [r, g, b, a],
-                    } = *g_instance;
+                if count <= self.font_vertices.len() {
+                    let vert = &self.font_vertices[start..end];
+                    let (flip_x, flip_y) = d.flip;
+                    vert.iter().enumerate().for_each(|(i, g_instance)| {
+                        let GlyphInstance {
+                            left_top: [x1, y1, _],
+                            right_bottom: [x2, y2],
+                            tex_left_top: [u1, v1],
+                            tex_right_bottom: [u2, v2],
+                            color: [r, g, b, a],
+                        } = *g_instance;
 
-                    let a = a * d.alpha;
+                        let a = a * d.alpha;
 
-                    let matrix = d.transform;
+                        let matrix = d.transform;
 
-                    let (u1, u2) = if flip_x { (u2, u1) } else { (u1, u2) };
-                    let (v1, v2) = if flip_y { (v2, v1) } else { (v1, v2) };
+                        let (u1, u2) = if flip_x { (u2, u1) } else { (u1, u2) };
+                        let (v1, v2) = if flip_y { (v2, v1) } else { (v1, v2) };
 
-                    let verts = [
-                        [x1, y1, u1, v1],
-                        [x2, y1, u2, v1],
-                        [x1, y2, u1, v2],
-                        [x2, y2, u2, v2],
-                    ];
+                        let verts = [
+                            [x1, y1, u1, v1],
+                            [x2, y1, u2, v1],
+                            [x1, y2, u1, v2],
+                            [x2, y2, u2, v2],
+                        ];
 
-                    // compute the matrices and push the vertices and attributes
-                    verts.into_iter().for_each(|[x, y, u, v]| {
-                        let xyz = matrix * Vec3::new(x, y, 1.0);
-                        vertices.extend_from_slice(&[xyz.x, xyz.y, u, v, r, g, b, a]);
+                        // compute the matrices and push the vertices and attributes
+                        verts.into_iter().for_each(|[x, y, u, v]| {
+                            let xyz = matrix * Vec3::new(x, y, 1.0);
+                            vertices.extend_from_slice(&[xyz.x, xyz.y, u, v, r, g, b, a]);
+                        });
+
+                        let n = ((start as u32) + (i as u32)) * 4;
+
+                        #[rustfmt::skip]
+                        indices.extend_from_slice(&[
+                            n    , n + 1, n + 2,
+                            n + 2, n + 1, n + 3
+                        ]);
                     });
-
-                    let n = ((start as u32) + (i as u32)) * 4;
-
-                    #[rustfmt::skip]
-                    indices.extend_from_slice(&[
-                        n    , n + 1, n + 2,
-                        n + 2, n + 1, n + 3
-                    ]);
-                });
-
+                }
                 self.count_chars = end;
             });
 
@@ -244,6 +246,7 @@ pub fn create_text_pipeline(
         .from(&TEXT_VERTEX, fragment)
         .with_vertex_info(&vertex_info())
         .with_color_blend(BlendMode::NORMAL)
+        .with_alpha_blend(BlendMode::OVER)
         .with_texture_location(0, "u_texture")
         .build()
 }

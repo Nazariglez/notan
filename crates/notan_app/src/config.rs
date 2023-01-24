@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::backend::Backend;
 use crate::builder::{AppBuilder, BuildConfig};
 
@@ -38,7 +40,7 @@ pub struct WindowConfig {
 
     /// Antialias nultisamples level
     /// `Web: WebGL will use this as antialias = false if the value is 0 or true otherwise`
-    pub multisampling: u16,
+    pub multisampling: u8,
 
     /// Enable High DPI viewport and drawing if the device pixel ratio is higher than 1
     /// This is `false` by default, enable it could consume more resources and require
@@ -66,6 +68,12 @@ pub struct WindowConfig {
 
     /// Use or create the canvas with this id. Only Web.
     pub canvas_id: String,
+
+    /// Window icon file
+    pub window_icon_path: Option<PathBuf>,
+
+    /// Task bar icon file
+    pub taskbar_icon_path: Option<PathBuf>,
 }
 
 impl Default for WindowConfig {
@@ -89,6 +97,8 @@ impl Default for WindowConfig {
             visible: true,
             mouse_passthrough: false,
             canvas_id: String::from("notan_canvas"),
+            window_icon_path: None,
+            taskbar_icon_path: None,
         }
     }
 }
@@ -155,7 +165,7 @@ impl WindowConfig {
     }
 
     /// Enabled multisampling aliasing (opengl)
-    pub fn multisampling(mut self, samples: u16) -> Self {
+    pub fn multisampling(mut self, samples: u8) -> Self {
         self.multisampling = samples;
         self
     }
@@ -199,6 +209,18 @@ impl WindowConfig {
     /// Use or create the canvas with this id. Only Web.
     pub fn canvas_id(mut self, canvas_id: &str) -> Self {
         self.canvas_id = canvas_id.to_string();
+        self
+    }
+
+    /// Window icon path
+    pub fn window_icon(mut self, window_icon_path: Option<PathBuf>) -> Self {
+        self.window_icon_path = window_icon_path;
+        self
+    }
+
+    /// Task bar icon path
+    pub fn taskbar_icon(mut self, taskbar_icon_path: Option<PathBuf>) -> Self {
+        self.taskbar_icon_path = taskbar_icon_path;
         self
     }
 }

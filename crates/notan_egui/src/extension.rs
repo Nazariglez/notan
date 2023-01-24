@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use crate::epaint::Primitive;
 use crate::plugin::Output;
 use crate::TextureId;
@@ -21,30 +23,14 @@ const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
     layout(location = 1) in vec2 a_tc;
     layout(location = 2) in vec4 a_srgba;
 
-    layout(location = 0) out vec4 v_rgba;
+    layout(location = 0) out vec4 v_rgba_in_gamma;
     layout(location = 1) out vec2 v_tc;
-    layout(location = 2) out float v_need_gamma_fix;
 
     layout(set = 0, binding = 0) uniform Locals {
         vec2 u_screen_size;
-        float u_need_gamma_fix;
     };
 
-    // 0-1 linear  from  0-255 sRGB
-    vec3 linear_from_srgb(vec3 srgb) {
-        bvec3 cutoff = lessThan(srgb, vec3(10.31475));
-        vec3 lower = srgb / vec3(3294.6);
-        vec3 higher = pow((srgb + vec3(14.025)) / vec3(269.025), vec3(2.4));
-        return mix(higher, lower, vec3(cutoff));
-    }
-
-    vec4 linear_from_srgba(vec4 srgba) {
-        return vec4(linear_from_srgb(srgba.rgb), srgba.a / 255.0);
-    }
-
     void main() {
-        v_need_gamma_fix = u_need_gamma_fix;
-
         gl_Position = vec4(
             2.0 * a_pos.x / u_screen_size.x - 1.0,
             1.0 - 2.0 * a_pos.y / u_screen_size.y,
@@ -52,8 +38,7 @@ const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
             1.0
         );
 
-        // egui encodes vertex colors in gamma spaces, so we must decode the colors here:
-        v_rgba = linear_from_srgba(a_srgba);
+        v_rgba_in_gamma = a_srgba / 255.0;
         v_tc = a_tc;
     }
     "#
@@ -68,45 +53,34 @@ const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
         precision mediump float;
     #endif
 
-    layout(location = 0) in vec4 v_rgba;
+    layout(location = 0) in vec4 v_rgba_in_gamma;
     layout(location = 1) in vec2 v_tc;
-    layout(location = 2) in float v_need_gamma_fix;
 
     layout(binding = 0) uniform sampler2D u_sampler;
 
     layout(location = 0) out vec4 color;
 
-    // 0-255 sRGB  from  0-1 linear
-    vec3 srgb_from_linear(vec3 rgb) {
+    // 0-1 sRGB gamma  from  0-1 linear
+    vec3 srgb_gamma_from_linear(vec3 rgb) {
         bvec3 cutoff = lessThan(rgb, vec3(0.0031308));
-        vec3 lower = rgb * vec3(3294.6);
-        vec3 higher = vec3(269.025) * pow(rgb, vec3(1.0 / 2.4)) - vec3(14.025);
+        vec3 lower = rgb * vec3(12.92);
+        vec3 higher = vec3(1.055) * pow(rgb, vec3(1.0 / 2.4)) - vec3(0.055);
         return mix(higher, lower, vec3(cutoff));
     }
 
-    vec4 srgba_from_linear(vec4 rgba) {
-        return vec4(srgb_from_linear(rgba.rgb), 255.0 * rgba.a);
+    // 0-1 sRGBA gamma  from  0-1 linear
+    vec4 srgba_gamma_from_linear(vec4 rgba) {
+        return vec4(srgb_gamma_from_linear(rgba.rgb), rgba.a);
     }
 
     void main() {
-        vec4 texture_rgba = texture(u_sampler, v_tc);
+    #if SRGB_TEXTURES
+        vec4 texture_in_gamma = srgba_gamma_from_linear(texture(u_sampler, v_tc));
+    #else
+        vec4 texture_in_gamma = texture(u_sampler, v_tc);
+    #endif
         // Multiply vertex color with texture color (in linear space).
-        color = v_rgba * texture_rgba;
-        
-        if (v_need_gamma_fix == 1.0) {
-            if (color.a > 0.0) {
-                color.rgb /= color.a;
-            }
-            
-            color.a *= sqrt(color.a);
-            
-            // We must gamma-encode again since WebGL doesn't support linear blending in the framebuffer.
-            color = srgba_from_linear(color) / 255.0;
-            
-            if (color.a > 0.0) {
-                color.rgb *= color.a;
-            }
-        }
+        color = v_rgba_in_gamma * texture_in_gamma;
     }
 "#
 };
@@ -128,7 +102,6 @@ pub struct EguiExtension {
     ebo: Buffer,
     ubo: Buffer,
     textures: HashMap<egui::TextureId, Texture>,
-    need_gamma_fix: bool,
 }
 
 impl EguiExtension {
@@ -159,7 +132,7 @@ impl EguiExtension {
         let ebo = gfx.create_index_buffer().build()?;
         let ubo = gfx
             .create_uniform_buffer(0, "Locals")
-            .with_data(&[0.0; 3])
+            .with_data(&[0.0; 2])
             .build()?;
 
         Ok(Self {
@@ -168,7 +141,6 @@ impl EguiExtension {
             ebo,
             ubo,
             textures: HashMap::new(),
-            need_gamma_fix: false,
         })
     }
 
@@ -189,13 +161,6 @@ impl EguiExtension {
         delta: &egui::epaint::ImageDelta,
     ) -> Result<(), String> {
         let [width, height] = delta.image.size();
-
-        // todo mobile
-        let gamma = if cfg!(target_arch = "wasm32") {
-            1.0 / 2.2
-        } else {
-            1.0
-        };
 
         // update texture
         if let Some([x, y]) = delta.pos {
@@ -231,7 +196,7 @@ impl EguiExtension {
                     );
 
                     let data: Vec<u8> = image
-                        .srgba_pixels(gamma)
+                        .srgba_pixels(None)
                         .flat_map(|a| a.to_array())
                         .collect();
 
@@ -270,7 +235,7 @@ impl EguiExtension {
                 );
 
                 let data: Vec<u8> = image
-                    .srgba_pixels(gamma)
+                    .srgba_pixels(None)
                     .flat_map(|a| a.to_array())
                     .collect();
 
@@ -316,7 +281,6 @@ impl EguiExtension {
             (rt.base_width() as _, rt.base_height() as _)
         });
 
-        self.need_gamma_fix = false;
         let uniforms: [f32; 3] = [width as _, height as _, 0.0];
         device.set_buffer_data(&self.ubo, &uniforms);
 
@@ -396,22 +360,6 @@ impl EguiExtension {
             .get(&primitive.texture_id)
             .ok_or_else(|| format!("Invalid EGUI texture id {:?}", &primitive.texture_id))?;
 
-        // webgl2 doesn't have a gl.enable(GL_FRAMEBUFFER_SRGB) so gamma should be fixed by fragment shader
-        // to do that a float 0.0 - 1.0 is passed to the shader to indicate if it should or not encode gamma
-        if cfg!(target_arch = "wasm32") {
-            let is_srgb = matches!(texture.format(), TextureFormat::SRgba8);
-            let ww: f32 = width_in_pixels as _;
-            let hh: f32 = height_in_pixels as _;
-
-            if is_srgb && !self.need_gamma_fix {
-                self.need_gamma_fix = true;
-                device.set_buffer_data(&self.ubo, &[ww, hh, 1.0]);
-            } else if !is_srgb && self.need_gamma_fix {
-                self.need_gamma_fix = false;
-                device.set_buffer_data(&self.ubo, &[ww, hh, 0.0]);
-            }
-        }
-
         // render pass
         let mut renderer = device.create_renderer();
         renderer.set_scissors(clip_min_x, clip_min_y, width, height);
@@ -460,7 +408,7 @@ fn create_texture(
     device
         .create_texture()
         .from_bytes(data, width, height)
-        .with_format(TextureFormat::SRgba8)
+        .with_format(TextureFormat::Rgba32)
         .with_filter(TextureFilter::Linear, TextureFilter::Linear)
         .build()
 }

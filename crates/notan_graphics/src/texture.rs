@@ -79,7 +79,9 @@ impl TextureFormat {
         use TextureFormat::*;
         match self {
             R8 => 1,
+            R8Uint => 1,
             R16Uint => 2,
+            Rgba32Float => 4 * 4,
             _ => 4,
         }
     }
@@ -244,10 +246,12 @@ pub enum TextureFormat {
     SRgba8,
     Rgba32,
     R8,
+    R8Uint,
     R16Uint,
     R32Float,
     R32Uint,
     Depth16,
+    Rgba32Float,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

@@ -144,6 +144,14 @@ impl DrawProcess for Pattern<'_> {
             flip_y
         };
 
+        let blend_mode = blend_mode.or_else(|| {
+            if texture.is_render_texture() {
+                Some(BlendMode::OVER)
+            } else {
+                None
+            }
+        });
+
         let (u1, u2) = if flip_x { (u2, u1) } else { (u1, u2) };
         let (v1, v2) = if flip_y { (v2, v1) } else { (v1, v2) };
 

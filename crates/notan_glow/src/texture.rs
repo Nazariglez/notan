@@ -85,7 +85,7 @@ pub(crate) unsafe fn pre_create_texture<'a>(
 
     let texture = gl.create_texture()?;
 
-    let bytes_per_pixel = info.bytes_per_pixel() as _;
+    let bytes_per_pixel = info.bytes_per_pixel().min(8) as _;
     gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, bytes_per_pixel);
 
     gl.bind_texture(glow::TEXTURE_2D, Some(texture));
@@ -197,6 +197,7 @@ pub(crate) unsafe fn create_texture(
 pub(crate) fn texture_type(tf: &TextureFormat) -> u32 {
     match tf {
         TextureFormat::R32Float => glow::FLOAT,
+        TextureFormat::Rgba32Float => glow::FLOAT,
         TextureFormat::R32Uint => glow::UNSIGNED_INT,
         TextureFormat::R16Uint => glow::UNSIGNED_SHORT,
         TextureFormat::Depth16 => glow::UNSIGNED_SHORT,
@@ -207,7 +208,9 @@ pub(crate) fn texture_type(tf: &TextureFormat) -> u32 {
 pub(crate) fn texture_format(tf: &TextureFormat) -> u32 {
     match tf {
         TextureFormat::Rgba32 => glow::RGBA,
+        TextureFormat::Rgba32Float => RGBA,
         TextureFormat::R8 => glow::RED,
+        TextureFormat::R8Uint => glow::RED_INTEGER,
         TextureFormat::R16Uint => glow::RED_INTEGER,
         TextureFormat::R32Float => glow::RED,
         TextureFormat::R32Uint => glow::RED_INTEGER,
@@ -219,10 +222,12 @@ pub(crate) fn texture_format(tf: &TextureFormat) -> u32 {
 pub(crate) fn texture_internal_format(tf: &TextureFormat) -> u32 {
     match tf {
         TextureFormat::R8 => glow::R8,
+        TextureFormat::R8Uint => glow::R8UI,
         TextureFormat::R16Uint => R16UI,
         TextureFormat::R32Float => glow::R32F,
         TextureFormat::R32Uint => glow::R32UI,
         TextureFormat::SRgba8 => glow::SRGB8_ALPHA8,
+        TextureFormat::Rgba32Float => glow::RGBA32F,
         _ => texture_format(tf),
     }
 }

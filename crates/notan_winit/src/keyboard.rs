@@ -1,8 +1,8 @@
-use glutin::event::ElementState;
-use glutin::event::VirtualKeyCode;
-use glutin::event::WindowEvent;
 use notan_core::events::Event;
 use notan_core::keyboard::KeyCode;
+use winit::event::ElementState;
+use winit::event::VirtualKeyCode;
+use winit::event::WindowEvent;
 
 pub fn process_events(event: &WindowEvent) -> Option<Event> {
     match event {

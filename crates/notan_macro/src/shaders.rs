@@ -14,7 +14,7 @@ pub(crate) enum ShaderType {
     //TODO more types
 }
 
-#[cfg(feature = "glsl-to-spirv")]
+#[cfg(use_glsl_to_spirv)]
 impl From<ShaderType> for glsl_to_spirv::ShaderType {
     fn from(value: ShaderType) -> Self {
         match value {
@@ -24,7 +24,7 @@ impl From<ShaderType> for glsl_to_spirv::ShaderType {
     }
 }
 
-#[cfg(feature = "shaderc")]
+#[cfg(use_shaderc)]
 impl From<ShaderType> for shaderc::ShaderKind {
     fn from(value: ShaderType) -> Self {
         match value {
@@ -50,7 +50,7 @@ pub(crate) fn spirv_from_file(relative_path: &str, typ: ShaderType) -> Result<Ve
     spirv_from(&read_file(&full_path)?, typ)
 }
 
-#[cfg(feature = "glsl-to-spirv")]
+#[cfg(use_glsl_to_spirv)]
 pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
     let source = source.trim();
     let mut spirv_output = glsl_to_spirv::compile(source, typ.into())
@@ -63,7 +63,7 @@ pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, Strin
     Ok(spirv)
 }
 
-#[cfg(feature = "shaderc")]
+#[cfg(use_shaderc)]
 pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
     let source = source.trim();
     let compiler = shaderc::Compiler::new().unwrap();

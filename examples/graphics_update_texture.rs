@@ -59,7 +59,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
         .update()
         .unwrap();
 
-    // Draw the texture usign the draw 2d API for convenience
+    // Draw the texture using the draw 2d API for convenience
     let mut draw = gfx.create_draw();
     draw.clear(Color::BLACK);
     draw.image(&state.texture);

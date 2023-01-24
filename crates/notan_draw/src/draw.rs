@@ -30,6 +30,31 @@ pub struct Draw {
     pub(crate) glyphs_calculator: Calculator,
 }
 
+impl Clone for Draw {
+    fn clone(&self) -> Self {
+        Self {
+            alpha: self.alpha,
+            clear_color: self.clear_color,
+            batches: self.batches.clone(),
+            current_batch: self.current_batch.clone(),
+            transform: self.transform.clone(),
+            base_projection: self.base_projection,
+            projection: self.projection,
+            inverse_projection: self.inverse_projection,
+            size: self.size,
+            blend_mode: self.blend_mode,
+            alpha_mode: self.alpha_mode,
+            shape_pipeline: self.shape_pipeline.clone(),
+            image_pipeline: self.image_pipeline.clone(),
+            pattern_pipeline: self.pattern_pipeline.clone(),
+            text_pipeline: self.text_pipeline.clone(),
+            masking: self.masking,
+            text_batch_indices: self.text_batch_indices.clone(),
+            glyphs_calculator: Calculator::new(),
+        }
+    }
+}
+
 impl Draw {
     pub fn new(width: i32, height: i32) -> Self {
         let base_projection =
@@ -182,8 +207,16 @@ impl Draw {
                 BatchType::Text { .. } => &self.text_pipeline,
             };
 
+            // blending modes, by priority:
+            // 1. element draw
+            // 2. global draw blending
+            // 3. in some cases (like text), default mode
             let cbm = info.blend_mode().or(self.blend_mode);
-            let abm = info.alpha_mode().or(self.alpha_mode);
+            let abm = info.alpha_mode().or(self.alpha_mode).or(match typ {
+                // text is drawn from a RT we need to set Over alpha by default
+                BatchType::Text { .. } => Some(BlendMode::OVER),
+                _ => None,
+            });
 
             self.current_batch = Some(Batch {
                 typ: create_type(info),
@@ -259,7 +292,8 @@ impl Draw {
         self.add_batch(info, is_diff_type, create_type);
 
         if let Some(b) = &mut self.current_batch {
-            // vertices and indices are calculated before the flush to the gpu, so we need to store the text until that time
+            // vertices and indices are calculated before the flush to the gpu,
+            // so we need to store the text until that time
             if let BatchType::Text { texts } = &mut b.typ {
                 let global_matrix = *self.transform.matrix();
                 let matrix = match *info.transform() {

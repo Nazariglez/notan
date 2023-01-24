@@ -1,13 +1,15 @@
-use glutin::dpi::{LogicalSize, PhysicalPosition};
-use glutin::event_loop::EventLoop;
-use glutin::window::Fullscreen::Borderless;
-use glutin::window::{CursorGrabMode, CursorIcon as WCursorIcon, Window, WindowBuilder};
-use glutin::{ContextBuilder, ContextWrapper, PossiblyCurrent};
+use std::path::PathBuf;
+
+use crate::gl_manager::GlManager;
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
+use winit::dpi::{LogicalSize, PhysicalPosition};
+use winit::event_loop::EventLoop;
+use winit::window::Fullscreen::Borderless;
+use winit::window::{CursorGrabMode, CursorIcon as WCursorIcon, Icon, Window, WindowBuilder};
 
 pub struct WinitWindowBackend {
-    pub(crate) gl_ctx: ContextWrapper<PossiblyCurrent, Window>,
+    pub(crate) gl_manager: GlManager,
     pub(crate) scale_factor: f64,
     pub(crate) lazy: bool,
     cursor: CursorIcon,
@@ -44,15 +46,6 @@ impl WindowBackend for WinitWindowBackend {
         (position.x, position.y)
     }
 
-    fn set_always_on_top(&mut self, enabled: bool) {
-        self.window().set_always_on_top(enabled);
-        self.is_always_on_top = enabled;
-    }
-
-    fn is_always_on_top(&self) -> bool {
-        self.is_always_on_top
-    }
-
     fn set_fullscreen(&mut self, enabled: bool) {
         if enabled {
             let monitor = self.window().current_monitor();
@@ -64,6 +57,15 @@ impl WindowBackend for WinitWindowBackend {
 
     fn is_fullscreen(&self) -> bool {
         self.window().fullscreen().is_some()
+    }
+
+    fn set_always_on_top(&mut self, enabled: bool) {
+        self.window().set_always_on_top(enabled);
+        self.is_always_on_top = enabled;
+    }
+
+    fn is_always_on_top(&self) -> bool {
+        self.is_always_on_top
     }
 
     fn dpi(&self) -> f64 {
@@ -87,7 +89,7 @@ impl WindowBackend for WinitWindowBackend {
 
     fn request_frame(&mut self) {
         if self.lazy {
-            self.gl_ctx.window().request_redraw();
+            self.window().request_redraw();
         }
     }
 
@@ -147,17 +149,30 @@ impl WindowBackend for WinitWindowBackend {
         self.visible
     }
 
+    fn set_mouse_passthrough(&mut self, pass_through: bool) {
+        self.mouse_passthrough = pass_through;
+        self.gl_manager.set_cursor_hittest(!pass_through).unwrap();
+    }
+
     fn mouse_passthrough(&mut self) -> bool {
         self.mouse_passthrough
     }
+}
 
-    fn set_mouse_passthrough(&mut self, pass_through: bool) {
-        self.mouse_passthrough = pass_through;
-
-        self.gl_ctx
-            .window()
-            .set_cursor_hittest(!pass_through)
-            .unwrap();
+fn load_icon(path: &Option<PathBuf>) -> Option<Icon> {
+    match path {
+        Some(path) => {
+            let (icon_rgba, icon_width, icon_height) = {
+                let image = image::open(path)
+                    .expect("Failed to open icon path")
+                    .into_rgba8();
+                let (width, height) = image.dimensions();
+                let rgba = image.into_raw();
+                (rgba, width, height)
+            };
+            Some(Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon"))
+        }
+        None => None,
     }
 }
 
@@ -171,11 +186,18 @@ impl WinitWindowBackend {
             .with_transparent(config.transparent)
             .with_always_on_top(config.always_on_top)
             .with_visible(config.visible)
-            .with_decorations(config.decorations);
+            .with_decorations(config.decorations)
+            .with_window_icon(load_icon(&config.window_icon_path));
+
+        #[cfg(target_os = "windows")]
+        {
+            use winit::platform::windows::WindowBuilderExtWindows;
+            builder = builder.with_taskbar_icon(load_icon(&config.taskbar_icon_path));
+        }
 
         #[cfg(target_os = "macos")]
         {
-            use glutin::platform::macos::WindowBuilderExtMacOS;
+            use winit::platform::macos::WindowBuilderExtMacOS;
             builder = builder.with_disallow_hidpi(!config.high_dpi);
         }
 
@@ -187,32 +209,28 @@ impl WinitWindowBackend {
             builder = builder.with_max_inner_size(LogicalSize::new(w, h));
         }
 
-        let windowed_context = ContextBuilder::new()
-            .with_vsync(config.vsync)
-            .with_gl(glutin::GlRequest::GlThenGles {
-                opengl_version: (3, 3),
-                opengles_version: (3, 0),
-            })
-            .with_srgb(true)
-            .with_gl_profile(glutin::GlProfile::Core)
-            .with_multisampling(config.multisampling)
-            .build_windowed(builder, event_loop)
-            .map_err(|e| format!("{}", e))?;
+        let gl_manager = GlManager::new(builder, event_loop, &config)?;
 
-        let gl_ctx = unsafe { windowed_context.make_current().unwrap() };
-
-        if config.mouse_passthrough {
-            gl_ctx.window().set_cursor_hittest(false).unwrap();
+        // Try setting vsync.
+        if let Err(e) = gl_manager.enable_vsync(config.vsync) {
+            // Should we send up the error if vsync fails?
+            // how about if drivers invalidates the vsync option?
+            // I think that the app should run no matter if vsync
+            // is enabled or not
+            log::error!("Error setting vsync to {}: {:?}", config.vsync, e);
         }
 
-        let monitor = gl_ctx.window().current_monitor();
-        let scale_factor = monitor.as_ref().map_or(1.0, |m| m.scale_factor());
+        if config.mouse_passthrough {
+            gl_manager.set_cursor_hittest(false)?;
+        }
+
+        let scale_factor = gl_manager.scale_factor();
         if config.fullscreen {
-            gl_ctx.window().set_fullscreen(Some(Borderless(monitor)));
+            gl_manager.set_fullscreen(config.fullscreen);
         }
 
         Ok(Self {
-            gl_ctx,
+            gl_manager,
             scale_factor,
             lazy: config.lazy_loop,
             cursor: CursorIcon::Default,
@@ -225,11 +243,15 @@ impl WinitWindowBackend {
     }
 
     pub(crate) fn window(&self) -> &Window {
-        self.gl_ctx.window()
+        &self.gl_manager.window
     }
 
     pub(crate) fn swap_buffers(&self) {
-        self.gl_ctx.swap_buffers().unwrap();
+        self.gl_manager.swap_buffers().unwrap();
+    }
+
+    pub(crate) fn resize(&self, width: u32, height: u32) {
+        self.gl_manager.resize(width, height);
     }
 }
 
