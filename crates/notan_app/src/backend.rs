@@ -118,10 +118,10 @@ pub trait WindowBackend {
     fn id(&self) -> u64;
 
     /// Sets the window's size
-    fn set_size(&mut self, width: i32, height: i32);
+    fn set_size(&mut self, width: u32, height: u32);
 
     /// Returns the window's size
-    fn size(&self) -> (i32, i32);
+    fn size(&self) -> (u32, u32);
 
     /// Sets the window's position
     fn set_position(&mut self, x: i32, y: i32);
@@ -142,12 +142,12 @@ pub trait WindowBackend {
     fn is_always_on_top(&self) -> bool;
 
     /// Window's width
-    fn width(&self) -> i32 {
+    fn width(&self) -> u32 {
         self.size().0
     }
 
     /// Window's height
-    fn height(&self) -> i32 {
+    fn height(&self) -> u32 {
         self.size().1
     }
 

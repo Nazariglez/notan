@@ -90,7 +90,7 @@ struct PostProcessTarget {
 }
 
 impl PostProcessTarget {
-    fn new(gfx: &mut Graphics, width: i32, height: i32) -> Self {
+    fn new(gfx: &mut Graphics, width: u32, height: u32) -> Self {
         let render_texture = gfx
             .create_render_texture(width, height)
             .with_depth()

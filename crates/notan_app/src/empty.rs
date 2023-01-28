@@ -16,7 +16,7 @@ use notan_audio::AudioBackend;
 
 #[derive(Default)]
 pub struct EmptyWindowBackend {
-    size: (i32, i32),
+    size: (u32, u32),
     position: (i32, i32),
     is_fullscreen: bool,
     is_always_on_top: bool,
@@ -31,11 +31,11 @@ impl WindowBackend for EmptyWindowBackend {
         0
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {
+    fn set_size(&mut self, width: u32, height: u32) {
         self.size = (width, height);
     }
 
-    fn size(&self) -> (i32, i32) {
+    fn size(&self) -> (u32, u32) {
         self.size
     }
 
@@ -229,7 +229,7 @@ impl DeviceBackend for EmptyDeviceBackend {
         log::info!("{:?}", to_clean);
     }
 
-    fn set_size(&mut self, _width: i32, _height: i32) {}
+    fn set_size(&mut self, _width: u32, _height: u32) {}
 
     fn set_dpi(&mut self, _scale_factor: f64) {}
 
