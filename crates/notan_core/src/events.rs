@@ -17,7 +17,7 @@ pub enum Event {
     WindowMove { x: i32, y: i32 },
 
     /// Represents the current window's size after it was resized
-    WindowResize { width: i32, height: i32 },
+    WindowResize { width: u32, height: u32 },
 
     /// Represents a change on the screen aspect ration
     ScreenAspectChange { ratio: f64 },

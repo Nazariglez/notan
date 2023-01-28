@@ -117,6 +117,27 @@ pub trait WindowBackend {
     /// Returns if the mouse is confined in the app
     fn capture_cursor(&self) -> bool;
 
+    // Returns the window id
+    fn id(&self) -> u64;
+
+    /// Sets the window's size
+    fn set_size(&mut self, width: u32, height: u32);
+
+    /// Returns the window's size
+    fn size(&self) -> (u32, u32);
+
+    /// Sets the window's position
+    fn set_position(&mut self, x: i32, y: i32);
+
+    /// Returns the window's position
+    fn position(&self) -> (i32, i32);
+
+    /// Enable or disable the fullscreen mode
+    fn set_fullscreen(&mut self, enabled: bool);
+
+    /// Returns true if the window is in fullscreen mode
+    fn is_fullscreen(&self) -> bool;
+
     /// Returns the container size. Meaning the screen size on native
     /// and the canva's parent element size on `web`
     fn container_size(&self) -> (i32, i32) {
@@ -129,28 +150,24 @@ pub trait WindowBackend {
     /// Screen's DPI
     fn dpi(&self) -> f64;
 
+    /// Window's width
+    fn width(&self) -> u32 {
+        self.size().0
+    }
+
     /// Window's height
-    fn height(&self) -> i32 {
+    fn height(&self) -> u32 {
         self.size().1
     }
 
-    // Returns the window id
-    fn id(&self) -> u64;
-
     /// Returns true if window is drawn above others
     fn is_always_on_top(&self) -> bool;
-
-    /// Returns true if the window is in fullscreen mode
-    fn is_fullscreen(&self) -> bool;
 
     /// Returns true if the lazy mode is enabled
     fn lazy_loop(&self) -> bool;
 
     // returns whether you can click through the window
     fn mouse_passthrough(&mut self) -> bool;
-
-    /// Returns the window's position
-    fn position(&self) -> (i32, i32);
 
     /// Request next frame
     fn request_frame(&mut self);
@@ -167,26 +184,14 @@ pub trait WindowBackend {
     /// Sets the mouse cursor icon
     fn set_cursor(&mut self, cursor: CursorIcon);
 
-    /// Enable or disable the fullscreen mode
-    fn set_fullscreen(&mut self, enabled: bool);
-
     /// Enable or disable the lazy mode for the app's loop
     fn set_lazy_loop(&mut self, lazy: bool);
 
     // sets whether you can click through the window
     fn set_mouse_passthrough(&mut self, pass_through: bool);
 
-    /// Sets the window's position
-    fn set_position(&mut self, x: i32, y: i32);
-
-    /// Sets the window's size
-    fn set_size(&mut self, width: i32, height: i32);
-
     /// Hide or show the window
     fn set_visible(&mut self, visible: bool);
-
-    /// Returns the window's size
-    fn size(&self) -> (i32, i32);
 
     /// Set the window's title
     fn set_title(&mut self, title: &str);
@@ -196,9 +201,4 @@ pub trait WindowBackend {
 
     /// Returns if the window is visible
     fn visible(&self) -> bool;
-
-    /// Window's width
-    fn width(&self) -> i32 {
-        self.size().0
-    }
 }
