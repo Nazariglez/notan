@@ -13,7 +13,7 @@ license = "MIT OR Apache-2.0"
 description = "A simple portable multimedia layer to create apps or games easily"
 
 [package.metadata.docs.rs]
-features = ["default", "glyph", "egui", "text", "extra", "audio", "links", "drop_files", "clipboard", "save_file", "texture_to_file", ]
+features = ["default", "glyph", "egui", "text", "extra", "audio", "links", "drop_files", "clipboard", "save_file", "texture_to_file"]
 
 [profile.release]
 lto = true
