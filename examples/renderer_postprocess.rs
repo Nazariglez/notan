@@ -165,7 +165,7 @@ impl PostProcessTarget {
 
         let mut renderer = gfx.create_renderer();
 
-        renderer.begin(Some(&ClearOptions::none()));
+        renderer.begin(Some(ClearOptions::none()));
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_texture(0, &self.render_texture);
         renderer.bind_buffers(&[
@@ -327,7 +327,7 @@ impl Cube {
         gfx.set_buffer_data(&self.uniform_buffer, &rotated_matrix(self.mvp, self.angle));
 
         let mut renderer = gfx.create_renderer();
-        renderer.begin(Some(&ClearOptions {
+        renderer.begin(Some(ClearOptions {
             color: Some(Color::new(0.1, 0.2, 0.3, 1.0)),
             depth: Some(1.0),
             ..Default::default()
