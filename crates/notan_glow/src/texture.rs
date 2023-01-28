@@ -6,7 +6,7 @@ pub(crate) type TextureKey = <glow::Context as glow::HasContext>::Texture;
 
 pub(crate) struct InnerTexture {
     pub texture: TextureKey,
-    pub size: (i32, i32),
+    pub size: (u32, u32),
     pub is_srgba: bool,
     pub use_mipmaps: bool,
 }
@@ -180,8 +180,8 @@ pub(crate) unsafe fn create_texture(
         glow::TEXTURE_2D,
         0,
         texture_internal_format(&info.format) as _,
-        info.width,
-        info.height,
+        info.width as _,
+        info.height as _,
         0,
         format,
         texture_type(&info.format),

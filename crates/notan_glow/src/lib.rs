@@ -33,7 +33,7 @@ pub struct GlowBackend {
     texture_count: u64,
     pipeline_count: u64,
     render_target_count: u64,
-    size: (i32, i32),
+    size: (u32, u32),
     dpi: f32,
     pipelines: HashMap<u64, InnerPipeline>,
     buffers: HashMap<u64, InnerBuffer>,
@@ -205,7 +205,7 @@ impl GlowBackend {
 
     #[inline]
     fn scissors(&mut self, x: f32, y: f32, width: f32, height: f32, dpi: f32) {
-        let canvas_height = ((self.size.1 - (height + y) as i32) as f32 * dpi) as i32;
+        let canvas_height = ((self.size.1 - (height + y) as u32) as f32 * dpi) as _;
         let x = x * dpi;
         let width = width * dpi;
         let height = height * dpi;
@@ -527,7 +527,7 @@ impl DeviceBackend for GlowBackend {
         });
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {
+    fn set_size(&mut self, width: u32, height: u32) {
         self.size = (width, height);
     }
 
@@ -592,10 +592,10 @@ impl DeviceBackend for GlowBackend {
                             self.gl.tex_sub_image_2d(
                                 glow::TEXTURE_2D,
                                 0,
-                                opts.x_offset,
-                                opts.y_offset,
-                                opts.width,
-                                opts.height,
+                                opts.x_offset as _,
+                                opts.y_offset as _,
+                                opts.width as _,
+                                opts.height as _,
                                 texture_format(&opts.format),
                                 texture_type(&opts.format),
                                 PixelUnpackData::Slice(bytes),
@@ -646,10 +646,10 @@ impl DeviceBackend for GlowBackend {
 
                 if can_read {
                     self.gl.read_pixels(
-                        opts.x_offset,
-                        opts.y_offset,
-                        opts.width,
-                        opts.height,
+                        opts.x_offset as _,
+                        opts.y_offset as _,
+                        opts.width as _,
+                        opts.height as _,
                         texture_format(&opts.format),
                         texture_type(&opts.format),
                         glow::PixelPackData::Slice(bytes),

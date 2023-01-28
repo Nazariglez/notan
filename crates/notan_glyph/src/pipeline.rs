@@ -10,7 +10,7 @@ pub trait GlyphPipeline {
         texture: &Texture,
         clear: Option<ClearOptions>,
         transform: Mat4,
-        size: (i32, i32),
+        size: (u32, u32),
         region: Option<Rect>,
     ) -> Renderer {
         let mut renderer = device.create_renderer();
@@ -34,7 +34,7 @@ pub trait GlyphPipeline {
         texture: &Texture,
         clear: Option<ClearOptions>,
         transform: Mat4,
-        size: (i32, i32),
+        size: (u32, u32),
         region: Option<Rect>,
     );
 
@@ -166,7 +166,7 @@ impl GlyphPipeline for DefaultGlyphPipeline {
         texture: &Texture,
         clear: Option<ClearOptions>,
         transform: Mat4,
-        size: (i32, i32),
+        size: (u32, u32),
         region: Option<Rect>,
     ) {
         if self.current_transform != transform {

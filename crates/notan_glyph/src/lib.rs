@@ -136,7 +136,7 @@ pub struct RenderQueueBuilder<'a, F = FontArc, H = DefaultSectionHasher> {
     pipeline: &'a mut dyn GlyphPipeline,
     clear: Option<ClearOptions>,
     region: Option<notan_math::Rect>,
-    size: Option<(i32, i32)>,
+    size: Option<(u32, u32)>,
     transform: Option<Mat4>,
 }
 
@@ -177,7 +177,7 @@ impl<'a, F: Font + Sync, H: BuildHasher> RenderQueueBuilder<'a, F, H> {
         self
     }
 
-    pub fn size(mut self, width: i32, height: i32) -> Self {
+    pub fn size(mut self, width: u32, height: u32) -> Self {
         self.size = Some((width, height));
         self
     }

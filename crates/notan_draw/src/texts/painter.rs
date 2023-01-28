@@ -223,7 +223,7 @@ impl GlyphPipeline for TextPainter {
         texture: &Texture,
         _clear: Option<ClearOptions>,
         _transform: Mat4,
-        _size: (i32, i32),
+        _size: (u32, u32),
         _region: Option<Rect>,
     ) {
         renderer.bind_texture_slot(0, 0, texture);
