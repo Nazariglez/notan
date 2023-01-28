@@ -26,7 +26,7 @@ fn decode_bytes(bytes: Vec<u8>) -> Result<(Vec<f32>, u32), String> {
             &Default::default(),
             &Default::default(),
         )
-        .map_err(|e| format!("Cannot parse audio file: {}", e))?
+        .map_err(|e| format!("Cannot parse audio file: {e}"))?
         .format;
 
     let track = format
@@ -37,7 +37,7 @@ fn decode_bytes(bytes: Vec<u8>) -> Result<(Vec<f32>, u32), String> {
 
     let mut decoder = get_codecs()
         .make(&track.codec_params, &Default::default())
-        .map_err(|e| format!("Cannot get decoder: {}", e))?;
+        .map_err(|e| format!("Cannot get decoder: {e}"))?;
 
     let sample_rate = decoder
         .codec_params()
@@ -65,8 +65,8 @@ fn get_samples(
             Err(err) => {
                 if let IoError(err) = err {
                     if err.kind() != UnexpectedEof {
-                        let e = format!("Error decoding: {}", err);
-                        log::error!("{}", e);
+                        let e = format!("Error decoding: {err}");
+                        log::error!("{e}");
                         return Err(e);
                     } else {
                         break;
@@ -96,6 +96,6 @@ fn decode_packet(
 
             Ok(())
         }
-        Err(err) => Err(format!("Error decoding: {}", err)),
+        Err(err) => Err(format!("Error decoding: {err}")),
     }
 }

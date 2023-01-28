@@ -329,7 +329,7 @@ fn create_pipeline(
     #[cfg(debug_assertions)]
     {
         for name in not_used_textures.iter() {
-            panic!("Wrong texture location id: {}", name);
+            panic!("Wrong texture location id: {name}");
         }
     }
 
@@ -368,12 +368,11 @@ fn create_shader(gl: &Context, typ: u32, source: &str) -> Result<Shader, String>
         let typ_name = match typ {
             glow::VERTEX_SHADER => "vertex".to_string(),
             glow::FRAGMENT_SHADER => "fragment".to_string(),
-            _ => format!("unknown type ({})", typ),
+            _ => format!("unknown type ({typ})"),
         };
 
         Err(format!(
-            "{} with {} shader: \n--\n{}\n--\n",
-            err, typ_name, source
+            "{err} with {typ_name} shader: \n--\n{source}\n--\n"
         ))
     }
 }

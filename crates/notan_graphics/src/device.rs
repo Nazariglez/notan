@@ -293,10 +293,10 @@ impl Device {
         let api = self.backend.api_name();
         let vertex = vertex_source
             .get_source(api)
-            .ok_or(format!("Vertex shader for api '{}' not available.", api))?;
+            .ok_or(format!("Vertex shader for api '{api}' not available."))?;
         let fragment = fragment_source
             .get_source(api)
-            .ok_or(format!("Fragment shader for api '{}' not available.", api))?;
+            .ok_or(format!("Fragment shader for api '{api}' not available."))?;
         self.inner_create_pipeline_from_raw(
             vertex,
             fragment,

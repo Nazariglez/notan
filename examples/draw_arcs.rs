@@ -54,7 +54,7 @@ fn draw_arc(
         let (x1, y1) = get_coords(center_x, center_y, radius, degrees as f32);
         path.line_to(x1, y1);
     }
-    let (end_x, end_y) = get_coords(center_x, center_y, radius, end_angle as f32);
+    let (end_x, end_y) = get_coords(center_x, center_y, radius, end_angle);
     path.line_to(end_x, end_y);
     path
 }
@@ -76,14 +76,14 @@ fn draw_circle_section(
         let (x1, y1) = get_coords(center_x, center_y, radius, degrees as f32);
         path.line_to(x1, y1);
     }
-    let (end_x, end_y) = get_coords(center_x, center_y, radius, end_angle as f32);
+    let (end_x, end_y) = get_coords(center_x, center_y, radius, end_angle);
     path.line_to(end_x, end_y);
     path.line_to(center_x, center_y);
     path
 }
 
 fn get_coords(center_x: f32, center_y: f32, radius: f32, degrees: f32) -> (f32, f32) {
-    let x = center_x + radius * (degrees as f32 * std::f32::consts::PI / 180.0).cos();
-    let y = center_y + radius * (degrees as f32 * std::f32::consts::PI / 180.0).sin();
+    let x = center_x + radius * (degrees * std::f32::consts::PI / 180.0).cos();
+    let y = center_y + radius * (degrees * std::f32::consts::PI / 180.0).sin();
     (x, y)
 }

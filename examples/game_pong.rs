@@ -278,8 +278,8 @@ trait BoundCalc {
 
 #[inline]
 fn check_intersection(ball_bounds: &Bounds, state: &mut State) -> bool {
-    intersect_between(&ball_bounds, &state.paddle_1.bounds())
-        || intersect_between(&ball_bounds, &state.paddle_2.bounds())
+    intersect_between(ball_bounds, &state.paddle_1.bounds())
+        || intersect_between(ball_bounds, &state.paddle_2.bounds())
 }
 
 #[inline]

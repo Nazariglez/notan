@@ -242,7 +242,7 @@ impl Draw {
         }
     }
 
-    pub fn add_image<'a>(&mut self, info: &ImageInfo<'a>) {
+    pub fn add_image(&mut self, info: &ImageInfo) {
         let is_diff_type = |b: &Batch, i: &ImageInfo| {
             match &b.typ {
                 //different texture
@@ -260,14 +260,14 @@ impl Draw {
         self.add_batch(info, is_diff_type, create_type);
     }
 
-    pub fn add_shape<'a>(&mut self, info: &ShapeInfo<'a>) {
+    pub fn add_shape(&mut self, info: &ShapeInfo) {
         let is_diff_type = |b: &Batch, _: &ShapeInfo| !b.is_shape();
         let create_type = |_: &ShapeInfo| BatchType::Shape;
 
         self.add_batch(info, is_diff_type, create_type);
     }
 
-    pub fn add_pattern<'a>(&mut self, info: &ImageInfo<'a>) {
+    pub fn add_pattern(&mut self, info: &ImageInfo) {
         let is_diff_type = |b: &Batch, i: &ImageInfo| {
             match &b.typ {
                 //different texture
@@ -285,7 +285,7 @@ impl Draw {
         self.add_batch(info, is_diff_type, create_type);
     }
 
-    pub fn add_text<'a>(&mut self, info: &TextInfo<'a>) {
+    pub fn add_text(&mut self, info: &TextInfo) {
         let is_diff_type = |b: &Batch, _: &TextInfo| !b.is_text();
         let create_type = |_: &TextInfo| BatchType::Text { texts: vec![] };
 

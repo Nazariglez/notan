@@ -39,7 +39,7 @@ impl AssetStorage {
         let fut = Box::pin(
             wasm_bindgen_futures::JsFuture::from(f.array_buffer()).map(|res| match res {
                 Ok(buffer) => Ok(js_sys::Uint8Array::new(&buffer).to_vec()),
-                Err(e) => Err(format!("{:?}", e)),
+                Err(e) => Err(format!("{e:?}")),
             }),
         );
 
@@ -113,12 +113,11 @@ impl AssetStorage {
         let tracker = self
             .to_load
             .remove(id)
-            .ok_or_else(|| format!("Asset '{}' not found.", id))?;
+            .ok_or_else(|| format!("Asset '{id}' not found."))?;
 
         if !tracker.is_loaded() {
             return Err(format!(
-                "The loader of '{}' should call 'storage.parse({}, asset)' before it ends.",
-                id, id
+                "The loader of '{id}' should call 'storage.parse({id}, asset)' before it ends.",
             ));
         }
 

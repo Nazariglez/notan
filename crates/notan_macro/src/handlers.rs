@@ -123,7 +123,7 @@ fn enum_impl_generator(tokens: &Tokens, once: bool) -> String {
     let ret = tokens
         .ret
         .as_ref()
-        .map(|v| format!(" -> {}", v))
+        .map(|v| format!(" -> {v}"))
         .unwrap_or_else(|| "".to_string());
     let callback = enum_callback_generics(&combo(&tokens.params), &tokens.params);
 
@@ -147,20 +147,18 @@ fn trait_generator(tokens: &Tokens, gen_type: GenericType) -> String {
     if matches!(gen_type, GenericType::Extension) {
         format!(
             r#"
-        pub trait {}<R, S, Params> {{
-            fn callback(self) -> {}<S>;
+        pub trait {handler_ident}<R, S, Params> {{
+            fn callback(self) -> {callback_ident}<S>;
         }}
-        "#,
-            handler_ident, callback_ident
+        "#
         )
     } else {
         format!(
             r#"
-        pub trait {}<S, Params> {{
-            fn callback(self) -> {}<S>;
+        pub trait {handler_ident}<S, Params> {{
+            fn callback(self) -> {callback_ident}<S>;
         }}
-        "#,
-            handler_ident, callback_ident
+        "#
         )
     }
 }
@@ -172,7 +170,7 @@ fn trait_impl_generator(tokens: &Tokens, gen_type: GenericType, fn_literal: &str
     let ret = tokens
         .ret
         .as_ref()
-        .map(|v| format!(" -> {}", v))
+        .map(|v| format!(" -> {v}"))
         .unwrap_or_else(|| "".to_string());
 
     let s_type = match gen_type {
@@ -254,7 +252,7 @@ fn enum_generics(g: &[Vec<String>], r: Option<&String>, fn_literal: &str) -> Str
                 "_{}(Box<dyn {fn_literal}({}){}>)",
                 i,
                 gen,
-                r.map(|v| format!(" -> {}", v))
+                r.map(|v| format!(" -> {v}"))
                     .unwrap_or_else(|| "".to_string())
             )
         })
@@ -265,7 +263,7 @@ fn enum_generics(g: &[Vec<String>], r: Option<&String>, fn_literal: &str) -> Str
 fn params_generics(g: &[String]) -> String {
     g.iter()
         .enumerate()
-        .map(|(i, n)| format!("param_{}: {}", i, n))
+        .map(|(i, n)| format!("param_{i}: {n}"))
         .collect::<Vec<_>>()
         .join(",")
 }
@@ -281,12 +279,12 @@ fn enum_callback_generics(g: &[Vec<String>], list: &[String]) -> String {
                         String::from("")
                     } else {
                         let index = list.iter().position(|g| g == gen).unwrap();
-                        format!("param_{}", index)
+                        format!("param_{index}")
                     }
                 })
                 .collect::<Vec<_>>()
                 .join(", ");
-            format!("_{}(cb) => cb({})", i, gen)
+            format!("_{i}(cb) => cb({gen})")
         })
         .collect::<Vec<_>>()
         .join(",")

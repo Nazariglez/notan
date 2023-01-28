@@ -77,7 +77,7 @@ impl GlManager {
                 if config.multisampling != 0 {
                     err.push_str(", try to reduce the number of samples");
                 }
-                format!("{}: {}", err, e)
+                format!("{err}: {e}")
             })?;
 
         let raw_window_handle = window.as_ref().map(|window| window.raw_window_handle());

@@ -290,7 +290,7 @@ impl Debug for TextureUpdaterSourceKind<'_> {
             f,
             "{}",
             match self {
-                TextureUpdaterSourceKind::Bytes(bytes) => format!("Bytes({:?})", bytes),
+                TextureUpdaterSourceKind::Bytes(bytes) => format!("Bytes({bytes:?})"),
                 TextureUpdaterSourceKind::Raw(_) => "Raw(dyn TextureSource)".to_string(), // todo assign an id to TextureSource?
             }
         )

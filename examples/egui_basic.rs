@@ -17,7 +17,7 @@ fn main() -> Result<(), String> {
 
 fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
     let mut output = plugins.egui(|ctx| {
-        egui::SidePanel::left("side_panel").show(&ctx, |ui| {
+        egui::SidePanel::left("side_panel").show(ctx, |ui| {
             ui.heading("Egui Plugin Example");
 
             ui.separator();

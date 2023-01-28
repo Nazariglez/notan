@@ -110,7 +110,7 @@ fn draw_tile(draw: &mut Draw, font: &Font, x: usize, y: usize, value: u8) {
         .stroke_color(OUTLINE_COLOR)
         .stroke(5.0);
 
-    draw.text(font, &format!("{}", value))
+    draw.text(font, &format!("{value}"))
         .color(Color::BLACK)
         .size(34.0)
         .position(xx + TILE_SIZE * 0.5, yy + TILE_SIZE * 0.5)

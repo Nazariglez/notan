@@ -86,7 +86,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
         .size(30.0);
 
     if let Some(last_score) = state.last_score {
-        draw.text(&state.font, &format!("Last Score: {}", last_score))
+        draw.text(&state.font, &format!("Last Score: {last_score}"))
             .position(10.0, 50.0)
             .size(20.0);
     }

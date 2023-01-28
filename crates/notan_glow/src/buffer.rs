@@ -18,7 +18,7 @@ impl std::fmt::Display for Kind {
         match self {
             Kind::Vertex(_) => write!(f, "Vertex"),
             Kind::Index(_) => write!(f, "Index"),
-            Kind::Uniform(loc, id) => write!(f, "Uniform(location: {}, id: {})", loc, id),
+            Kind::Uniform(loc, id) => write!(f, "Uniform(location: {loc}, id: {id})"),
         }
     }
 }

@@ -170,7 +170,7 @@ impl WebWindowBackend {
 
         self.window
             .open_with_url_and_target(url, target)
-            .map_err(|err| format!("{:?}", err))?;
+            .map_err(|err| format!("{err:?}"))?;
 
         Ok(())
     }

@@ -71,7 +71,7 @@ pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, Strin
 
     let spirv_output = compiler
         .compile_into_spirv(source, typ.into(), "shader.glsl", "main", Some(&options))
-        .unwrap_or_else(|e| panic!("Invalid {:#?} shader: \n{}", typ, e));
+        .unwrap_or_else(|e| panic!("Invalid {typ:#?} shader: \n{e}"));
 
     let mut spirv = vec![];
     spirv_output
@@ -169,7 +169,7 @@ fn spirv_to_glsl(spirv: &[u8], output: Output) -> Result<ShaderBytes, String> {
 fn compile_spirv_to_glsl(source: &[u32], api: Output) -> Result<String, String> {
     let module = spirv::Module::from_words(source);
     let mut ast = spirv::Ast::<glsl::Target>::parse(&module).map_err(error_code_to_string)?;
-    let res = ast.get_shader_resources().map_err(|e| format!("{:?}", e))?;
+    let res = ast.get_shader_resources().map_err(|e| format!("{e:?}"))?;
 
     let version: Option<glsl::Version> = api.into();
     let version = version.ok_or("Invalid GLSL version")?;
@@ -204,7 +204,7 @@ fn error_code_to_string(err: ErrorCode) -> String {
     match err {
         ErrorCode::Unhandled => String::from("Unhandled"),
         ErrorCode::CompilationError(e) => {
-            println!("e-> {}", e);
+            println!("e-> {e}");
             e
         }
     }
@@ -223,7 +223,7 @@ pub fn read_spirv<R: io::Read + io::Seek>(mut x: R) -> io::Result<Vec<u32>> {
     }
     let words = (size / 4) as usize;
     let mut result = Vec::<u32>::with_capacity(words);
-    x.seek(io::SeekFrom::Start(0))?;
+    x.rewind()?;
     unsafe {
         // Writing all bytes through a pointer with less strict alignment when our type has no
         // invalid bitpatterns is safe.

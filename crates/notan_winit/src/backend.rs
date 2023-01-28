@@ -148,7 +148,7 @@ impl BackendSystem for WinitBackend {
 
                         match event {
                             WindowEvent::Touch(t) => {
-                                println!("{:?}", t);
+                                println!("{t:?}");
                             }
                             WindowEvent::CloseRequested => {
                                 app.exit();
