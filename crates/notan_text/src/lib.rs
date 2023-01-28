@@ -299,8 +299,8 @@ impl Drop for ChainTextBuilder<'_, '_> {
 
 // get minX, minY, maxX, maxY for sections here...
 pub struct Text<'a> {
-    pub(crate) width: i32,
-    pub(crate) height: i32,
+    pub(crate) width: u32,
+    pub(crate) height: u32,
     pub(crate) sections: Vec<Section<'a>>,
     pub(crate) pipeline_type: Option<TypeId>,
     pub(crate) clear_options: Option<ClearOptions>,
@@ -310,7 +310,7 @@ pub struct Text<'a> {
 }
 
 impl<'a> Text<'a> {
-    pub fn new(width: i32, height: i32) -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         Self {
             sections: vec![],
             width,

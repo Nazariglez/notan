@@ -6,7 +6,7 @@ use notan_graphics::prelude::*;
 pub(crate) struct InnerRenderTexture {
     fbo: Framebuffer,
     depth_texture: Option<TextureKey>,
-    pub size: (i32, i32),
+    pub size: (u32, u32),
     pub use_mipmaps: bool,
 }
 
@@ -95,6 +95,6 @@ unsafe fn create_fbo(
 }
 
 struct DepthInfo {
-    width: i32,
-    height: i32,
+    width: u32,
+    height: u32,
 }

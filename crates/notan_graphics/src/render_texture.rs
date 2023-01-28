@@ -80,7 +80,7 @@ pub struct RenderTextureBuilder<'a> {
 }
 
 impl<'a> RenderTextureBuilder<'a> {
-    pub fn new(device: &'a mut Device, width: i32, height: i32) -> Self {
+    pub fn new(device: &'a mut Device, width: u32, height: u32) -> Self {
         let info = TextureInfo {
             width,
             height,

@@ -70,7 +70,7 @@ fn setup(gfx: &mut Graphics) -> State {
         .build()
         .unwrap();
 
-    let (width, height) = (texture.width() as i32, texture.height() as i32);
+    let (width, height) = (texture.width() as _, texture.height() as _);
     let render_texture = gfx.create_render_texture(width, height).build().unwrap();
     let render_texture2 = gfx.create_render_texture(width, height).build().unwrap();
 
