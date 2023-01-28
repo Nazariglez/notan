@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+- Added `Fn` keys to `egui`.
+
+## v0.9.1 - 26/01/2023
+
+- Fix docs compilation.
+
 ## v0.9.0 - 24/01/2023
 
 - Fix alpha blending mode issue with text rendering using the Draw2D API.
