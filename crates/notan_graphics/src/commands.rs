@@ -5,8 +5,8 @@ use crate::pipeline::*;
 #[derive(Debug, Clone)]
 pub enum Commands {
     Size {
-        width: i32,
-        height: i32,
+        width: u32,
+        height: u32,
     },
     Viewport {
         x: f32,

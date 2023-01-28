@@ -25,12 +25,12 @@ impl WindowBackend for WinitWindowBackend {
         self.window().id().into()
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {
+    fn set_size(&mut self, width: u32, height: u32) {
         self.window()
             .set_inner_size(LogicalSize::new(width, height));
     }
 
-    fn size(&self) -> (i32, i32) {
+    fn size(&self) -> (u32, u32) {
         let inner = self.window().inner_size();
         let logical = inner.to_logical::<f64>(self.scale_factor);
         (logical.width as _, logical.height as _)

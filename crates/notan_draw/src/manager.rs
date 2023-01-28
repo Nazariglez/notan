@@ -46,7 +46,7 @@ impl DrawManager {
         self.renderer.commands()
     }
 
-    pub fn create_draw(&self, width: i32, height: i32) -> Draw {
+    pub fn create_draw(&self, width: u32, height: u32) -> Draw {
         Draw::new(width, height)
     }
 

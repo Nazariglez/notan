@@ -56,7 +56,7 @@ impl Clone for Draw {
 }
 
 impl Draw {
-    pub fn new(width: i32, height: i32) -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         let base_projection =
             Mat4::orthographic_rh_gl(0.0, width as _, height as _, 0.0, -1.0, 1.0);
 

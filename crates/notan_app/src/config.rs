@@ -11,20 +11,20 @@ pub struct WindowConfig {
     pub title: String,
 
     /// Window's width
-    pub width: i32,
+    pub width: u32,
 
     /// Window's height
-    pub height: i32,
+    pub height: u32,
 
     /// Start window in fullscreen mode
     /// `Web: no-op`
     pub fullscreen: bool,
 
     /// Minimum resizable window's size
-    pub min_size: Option<(i32, i32)>,
+    pub min_size: Option<(u32, u32)>,
 
     /// Maximum resizable window's size
-    pub max_size: Option<(i32, i32)>,
+    pub max_size: Option<(u32, u32)>,
 
     /// Start the window maximized
     /// `Web: The canvas will fill the size of the parent of the HtmlCanvasElement`
@@ -122,7 +122,7 @@ impl WindowConfig {
     }
 
     /// Sets the window's width and height
-    pub fn size(mut self, width: i32, height: i32) -> Self {
+    pub fn size(mut self, width: u32, height: u32) -> Self {
         self.width = width;
         self.height = height;
         self
@@ -135,13 +135,13 @@ impl WindowConfig {
     }
 
     /// Sets the window's minimum size
-    pub fn min_size(mut self, width: i32, height: i32) -> Self {
+    pub fn min_size(mut self, width: u32, height: u32) -> Self {
         self.min_size = Some((width, height));
         self
     }
 
     /// Sets the window's maximum size
-    pub fn max_size(mut self, width: i32, height: i32) -> Self {
+    pub fn max_size(mut self, width: u32, height: u32) -> Self {
         self.max_size = Some((width, height));
         self
     }

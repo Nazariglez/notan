@@ -402,8 +402,8 @@ impl EguiRegisterTexture for Graphics {
 fn create_texture(
     device: &mut Device,
     data: &[u8],
-    width: i32,
-    height: i32,
+    width: u32,
+    height: u32,
 ) -> Result<Texture, String> {
     device
         .create_texture()
@@ -420,8 +420,8 @@ fn update_texture(
     data: &[u8],
     x: i32,
     y: i32,
-    width: i32,
-    height: i32,
+    width: u32,
+    height: u32,
 ) -> Result<(), String> {
     device
         .update_texture(texture)

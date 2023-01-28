@@ -36,11 +36,11 @@ pub struct WebWindowBackend {
     events: Rc<RefCell<EventIterator>>,
 
     fullscreen_requested: Rc<RefCell<Option<bool>>>,
-    fullscreen_last_size: Rc<RefCell<Option<(i32, i32)>>>,
+    fullscreen_last_size: Rc<RefCell<Option<(u32, u32)>>>,
     fullscreen_callback_ref: Option<Closure<dyn FnMut(WebEvent)>>,
 
-    min_size: Option<(i32, i32)>,
-    max_size: Option<(i32, i32)>,
+    min_size: Option<(u32, u32)>,
+    max_size: Option<(u32, u32)>,
     resize_callback_ref: Option<Closure<dyn FnMut(WebEvent)>>,
 
     _context_menu_callback_ref: Closure<dyn FnMut(WebEvent)>,
@@ -186,8 +186,8 @@ impl WebWindowBackend {
 
         let (ww, hh) = if self.config.maximized {
             (
-                self.canvas_parent.client_width(),
-                self.canvas_parent.client_height(),
+                self.canvas_parent.client_width() as _,
+                self.canvas_parent.client_height() as _,
             )
         } else {
             (self.config.width, self.config.height)
@@ -255,13 +255,13 @@ impl WindowBackend for WebWindowBackend {
         0
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {
+    fn set_size(&mut self, width: u32, height: u32) {
         set_size_dpi(&self.canvas, width as _, height as _);
         self.config.width = width;
         self.config.height = height;
     }
 
-    fn size(&self) -> (i32, i32) {
+    fn size(&self) -> (u32, u32) {
         get_notan_size(&self.canvas)
     }
 
@@ -382,7 +382,7 @@ fn enable_fullscreen(win: &mut WebWindowBackend) -> Result<(), String> {
         win.fullscreen_callback_ref =
             Some(window_add_event_listener("fullscreenchange", move |_| {
                 let (width, height) = if document.fullscreen() {
-                    (canvas.client_width(), canvas.client_height())
+                    (canvas.client_width() as _, canvas.client_height() as _)
                 } else {
                     match *last_size.borrow() {
                         Some(size) => size,
@@ -412,8 +412,8 @@ fn fullscreen_dispatcher_callback(win: &mut WebWindowBackend) -> Rc<RefCell<dyn 
     Rc::new(RefCell::new(move || {
         if let Some(full) = fullscreen_requested.borrow_mut().take() {
             if full {
-                let width = canvas.client_width();
-                let height = canvas.client_height();
+                let width = canvas.client_width() as _;
+                let height = canvas.client_height() as _;
                 *last_size.borrow_mut() = Some((width, height));
                 if let Err(e) = canvas.request_fullscreen() {
                     log::error!("{:?}", e);
@@ -440,8 +440,8 @@ fn enable_resize(win: &mut WebWindowBackend) -> Result<(), String> {
     let max_size = win.max_size;
     let add_event = win.add_event_fn();
     win.resize_callback_ref = Some(window_add_event_listener("resize", move |_| {
-        let mut p_width = parent.client_width();
-        let mut p_height = parent.client_height();
+        let mut p_width = parent.client_width() as _;
+        let mut p_height = parent.client_height() as _;
 
         if let Some((w, h)) = min_size {
             if p_width < w {
@@ -463,7 +463,7 @@ fn enable_resize(win: &mut WebWindowBackend) -> Result<(), String> {
             }
         }
 
-        set_size_dpi(&canvas, p_width as _, p_height as _);
+        set_size_dpi(&canvas, p_width, p_height);
         add_event(Event::WindowResize {
             width: p_width,
             height: p_height,
