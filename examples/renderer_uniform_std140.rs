@@ -261,7 +261,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
         stencil: None,
     };
 
-    renderer.begin(Some(&clear));
+    renderer.begin(Some(clear));
 
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_buffers(&[&state.vbo, &state.transform_ubo, &state.light_ubo]);

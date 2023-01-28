@@ -103,7 +103,7 @@ impl GfxRenderer for Output {
         if let Some(shapes) = self.shapes.borrow_mut().take() {
             if self.clear_color.is_some() {
                 let mut clear_renderer = device.create_renderer();
-                clear_renderer.begin(Some(&ClearOptions {
+                clear_renderer.begin(Some(ClearOptions {
                     color: self.clear_color,
                     ..Default::default()
                 }));

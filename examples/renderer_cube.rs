@@ -162,7 +162,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
     gfx.set_buffer_data(&state.ubo, &rotated_matrix(state.mvp, state.angle));
 
-    renderer.begin(Some(&state.clear_options));
+    renderer.begin(Some(state.clear_options));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_buffers(&[&state.vbo, &state.ebo, &state.ubo]);
     renderer.draw(0, 36);

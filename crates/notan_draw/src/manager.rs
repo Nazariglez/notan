@@ -171,7 +171,7 @@ fn process_draw(
     manager.text_painter.clear();
 
     let stencil = draw.needs_to_clean_stencil.then_some(0x00);
-    manager.renderer.begin(Some(&ClearOptions {
+    manager.renderer.begin(Some(ClearOptions {
         color: draw.clear_color,
         stencil,
         ..Default::default()
