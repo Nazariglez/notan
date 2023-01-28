@@ -418,8 +418,8 @@ fn update_texture(
     device: &mut Device,
     texture: &mut Texture,
     data: &[u8],
-    x: i32,
-    y: i32,
+    x: u32,
+    y: u32,
     width: u32,
     height: u32,
 ) -> Result<(), String> {
