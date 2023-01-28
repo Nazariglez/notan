@@ -96,7 +96,7 @@ fn paint_batch(
         manager.drawing_mask = true;
     } else if !b.is_mask && manager.drawing_mask {
         manager.drawing_mask = false;
-        manager.renderer.begin(Some(&Default::default()));
+        manager.renderer.begin(Some(Default::default()));
     }
 
     match &b.typ {
@@ -170,7 +170,7 @@ fn process_draw(
     manager.pattern_painter.clear();
     manager.text_painter.clear();
 
-    manager.renderer.begin(Some(&ClearOptions {
+    manager.renderer.begin(Some(ClearOptions {
         color: draw.clear_color,
         ..Default::default()
     }));

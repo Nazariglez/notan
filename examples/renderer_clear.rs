@@ -17,7 +17,7 @@ fn draw(app: &mut App, gfx: &mut Graphics) {
     let mut renderer = gfx.create_renderer();
 
     // begin a pass to clear the screen
-    renderer.begin(Some(&ClearOptions::color(color)));
+    renderer.begin(Some(ClearOptions::color(color)));
     renderer.end();
 
     // render to screen
