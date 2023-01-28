@@ -2,7 +2,7 @@ use notan::math::*;
 use notan::prelude::*;
 use std::ops::Rem;
 
-const TEXTURE_SIZE: IVec2 = IVec2::new(10, 10);
+const TEXTURE_SIZE: UVec2 = UVec2::new(10, 10);
 const TOTAL: usize = (TEXTURE_SIZE.x * TEXTURE_SIZE.y) as usize;
 
 //language=glsl

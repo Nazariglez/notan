@@ -1,8 +1,8 @@
 use notan::draw::*;
 use notan::prelude::*;
 
-const WIDTH: i32 = 800;
-const HEIGHT: i32 = 580;
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 580;
 const WALL_SIZE: f32 = 20.0;
 const PADDLE_WIDTH: f32 = 30.0;
 const PADDLE_HEIGHT: f32 = PADDLE_WIDTH * 4.0;
@@ -109,7 +109,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     draw.rect((0.0, 0.0), (width, WALL_SIZE));
     draw.rect((0.0, height - WALL_SIZE), (width, WALL_SIZE));
 
-    let points = HEIGHT / WALL_SIZE as i32;
+    let points = HEIGHT / WALL_SIZE as u32;
     for i in (0..points).step_by(2) {
         draw.rect(
             (width * 0.5 - WALL_SIZE * 0.5, WALL_SIZE * i as f32),
