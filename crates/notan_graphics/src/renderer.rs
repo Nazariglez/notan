@@ -22,7 +22,7 @@ impl Renderer {
         }
     }
 
-    pub fn begin(&mut self, options: Option<&ClearOptions>) {
+    pub fn begin(&mut self, options: Option<ClearOptions>) {
         let (color, stencil, depth) = match options {
             Some(opts) => (opts.color, opts.stencil, opts.depth),
             _ => (None, None, None),

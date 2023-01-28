@@ -84,7 +84,7 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    renderer.begin(Some(&ClearOptions::color(Color::BLACK)));
+    renderer.begin(Some(ClearOptions::color(Color::BLACK)));
     renderer.set_pipeline(&state.pipeline);
     renderer.set_primitive(DrawPrimitive::LineStrip);
     renderer.bind_buffers(&[&state.vertex_buffer, &state.index_buffer]);

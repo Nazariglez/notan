@@ -154,7 +154,7 @@ fn render_texture(
 ) -> Renderer {
     let mut renderer = gfx.create_renderer();
 
-    renderer.begin(Some(&ClearOptions {
+    renderer.begin(Some(ClearOptions {
         color: clear_color,
         ..Default::default()
     }));
