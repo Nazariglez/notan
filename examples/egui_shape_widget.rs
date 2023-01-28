@@ -2,8 +2,8 @@ use notan::draw::*;
 use notan::egui::{self, *};
 use notan::prelude::*;
 
-const WIDTH: i32 = 1200;
-const HEIGHT: i32 = 800;
+const WIDTH: u32 = 1200;
+const HEIGHT: u32 = 800;
 
 #[derive(AppState)]
 struct State {
