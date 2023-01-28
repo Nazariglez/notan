@@ -180,7 +180,7 @@ impl GlyphPipeline for DefaultGlyphPipeline {
             renderer.set_scissors(region.x, region.y, region.width, region.height);
         }
 
-        renderer.begin(clear.as_ref());
+        renderer.begin(clear);
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_texture(0, texture);
         renderer.bind_buffers(&[&self.vbo, &self.ubo]);

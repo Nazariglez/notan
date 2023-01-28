@@ -92,7 +92,7 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    renderer.begin(Some(&state.clear_options));
+    renderer.begin(Some(state.clear_options));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_buffers(&[&state.vertex_buffer, &state.index_buffer]);
     renderer.draw(0, 6);
