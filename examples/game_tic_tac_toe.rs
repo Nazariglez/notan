@@ -100,6 +100,7 @@ fn update(app: &mut App, state: &mut State) {
 
     let (mx, my) = app.mouse.position();
     if app.mouse.was_pressed(MouseButton::Left) {
+        // check bounds
         if mx < x || mx > x + width {
             return;
         }
@@ -114,6 +115,10 @@ fn update(app: &mut App, state: &mut State) {
         let index = index_from_pos(col as _, row as _);
 
         // set piece
+        let is_empty = matches!(state.table[index], Player::Empty);
+        if !is_empty {
+            return;
+        }
         state.table[index] = state.turn;
 
         // change turn
@@ -168,6 +173,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
     let tile_height = height / 3.0;
     let padding = 20.0;
 
+    // draw "who is playing"
     let size = vec2(tile_width, tile_height);
     draw_text(
         &mut draw,
@@ -208,6 +214,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
         }
     });
 
+    // draw final menu
     if let Some(winner) = state.winner {
         draw.rect((0.0, 0.0), (WIDTH, HEIGHT))
             .color(Color::BLACK)
