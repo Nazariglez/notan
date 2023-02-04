@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Added `Fn` keys to `egui`.
 - New example `game_tic_tac_toe.rs`.
 - Fix corners of shapes using the Draw2D API. 
+- New example `draw_text_max_width.rs`.
 
 ## v0.9.1 - 26/01/2023
 
