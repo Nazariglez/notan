@@ -47,8 +47,7 @@ where
         Arc::try_unwrap(self.inner)
             .map_err(|_| {
                 format!(
-                    "Asset: '{}' cannot be unwrapped because exists more than one reference to it.",
-                    id
+                    "Asset: '{id}' cannot be unwrapped because exists more than one reference to it.",
                 )
             })
             .map(|asset_lock| asset_lock.into_inner().unwrap())

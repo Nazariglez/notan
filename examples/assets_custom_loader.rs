@@ -27,7 +27,7 @@ impl State {
             .create_font(include_bytes!("assets/Ubuntu-B.ttf"))
             .unwrap();
 
-        Self { font, text: text }
+        Self { font, text }
     }
 }
 
@@ -67,5 +67,5 @@ fn asset_path(path: &str) -> String {
         "./examples/assets"
     };
 
-    format!("{}/{}", base, path)
+    format!("{base}/{path}")
 }

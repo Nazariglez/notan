@@ -36,10 +36,10 @@ fn event(state: &mut State, evt: Event) {
             state.text = "Moving...".to_string();
         }
         Event::MouseDown { button, .. } => {
-            state.text = format!("{:?} pressed...", button);
+            state.text = format!("{button:?} pressed...");
         }
         Event::MouseUp { button, .. } => {
-            state.text = format!("{:?} released...", button);
+            state.text = format!("{button:?} released...");
         }
         Event::MouseEnter { .. } => {
             state.text = "Entered...".to_string();

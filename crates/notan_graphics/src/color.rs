@@ -214,5 +214,5 @@ pub fn hex_to_rgba(hex: u32) -> [f32; 4] {
 #[inline(always)]
 /// Converts a hexadecimal value to string
 pub fn hex_to_string(hex: u32) -> String {
-    format!("{:#X}", hex)
+    format!("{hex:#X}")
 }

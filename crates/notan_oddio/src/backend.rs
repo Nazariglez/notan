@@ -213,7 +213,7 @@ impl InnerBackend {
 
         let sample_rate = device
             .default_output_config()
-            .map_err(|e| format!("{:?}", e))?
+            .map_err(|e| format!("{e:?}"))?
             .sample_rate();
 
         let config = cpal::StreamConfig {
@@ -242,9 +242,9 @@ impl InnerBackend {
                     log::error!("{:?}", err);
                 },
             )
-            .map_err(|e| format!("{:?}", e))?;
+            .map_err(|e| format!("{e:?}"))?;
 
-        stream.play().map_err(|e| format!("{:?}", e))?;
+        stream.play().map_err(|e| format!("{e:?}"))?;
 
         Ok(Self {
             source_id_count: 0,

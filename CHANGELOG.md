@@ -1,6 +1,19 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## v0.9.2 - 05/02/2023
+
+- Added `Fn` keys to `egui`.
+- New example `game_tic_tac_toe.rs`.
+- Fix corners of shapes using the Draw2D API. 
+- New example `draw_text_max_width.rs`.
+- Fix window's transparency issue on x11 linux.
+- Fix an issue with some windows to select the OpenGL context. 
+
+## v0.9.1 - 26/01/2023
+
+- Fix docs compilation.
+
 ## v0.9.0 - 24/01/2023
 
 - Fix alpha blending mode issue with text rendering using the Draw2D API.

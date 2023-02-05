@@ -57,5 +57,5 @@ fn asset_path(path: &str) -> String {
         "./examples/assets"
     };
 
-    format!("{}/{}", base, path)
+    format!("{base}/{path}")
 }

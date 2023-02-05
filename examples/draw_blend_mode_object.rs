@@ -77,7 +77,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
             .blend_mode(*mode);
 
         // print names
-        draw.text(&state.font, *name)
+        draw.text(&state.font, name)
             .size(20.0)
             .position(xx + 10.0, 10.0)
             .color(Color::BLACK);

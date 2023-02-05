@@ -320,7 +320,7 @@ impl GlowBackend {
         if cfg!(debug_assertions) {
             self.current_uniforms.get(*location as usize)
                 .as_ref()
-                .ok_or_else(|| format!("Invalid uniform location {}, this could means that you're trying to access a uniform not used in the shader code.", location))
+                .ok_or_else(|| format!("Invalid uniform location {location}, this could means that you're trying to access a uniform not used in the shader code."))
                 .unwrap()
         } else {
             &self.current_uniforms[*location as usize]
@@ -556,8 +556,7 @@ impl DeviceBackend for GlowBackend {
         info: &TextureInfo,
     ) -> Result<u64, String> {
         let texture = self.textures.get(&texture_id).ok_or(format!(
-            "Error creating render target: texture id '{}' not found.",
-            texture_id
+            "Error creating render target: texture id '{texture_id}' not found.",
         ))?;
 
         let inner_rt = InnerRenderTexture::new(&self.gl, texture, info)?;

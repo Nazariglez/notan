@@ -122,7 +122,7 @@ fn draw_controls(index: usize, name: &str, ctx: &Context, app: &mut App, state: 
 fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     let len = state.music.len();
     let mut output = plugins.egui(|ctx| {
-        (0..len).for_each(|i| draw_controls(i, &format!("Music {}", i), ctx, app, state));
+        (0..len).for_each(|i| draw_controls(i, &format!("Music {i}"), ctx, app, state));
     });
 
     output.clear_color(Color::GRAY);

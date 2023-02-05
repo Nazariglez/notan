@@ -1,3 +1,4 @@
+use glutin::config::Config as GConfig;
 use glutin::config::{ConfigTemplateBuilder, GlConfig};
 use glutin::context::{
     ContextApi, ContextAttributesBuilder, GlProfile, NotCurrentGlContextSurfaceAccessor,
@@ -12,6 +13,12 @@ use std::num::NonZeroU32;
 use winit::event_loop::EventLoop;
 use winit::window::Fullscreen::Borderless;
 use winit::window::{Window, WindowBuilder};
+
+enum GlSupport {
+    Full(GConfig),
+    Srgba(GConfig),
+    Any(GConfig),
+}
 
 pub(crate) struct GlManager {
     pub surface: Surface<WindowSurface>,
@@ -36,48 +43,54 @@ impl GlManager {
             template = template.with_multisampling(config.multisampling);
         }
 
+        let needs_transparency = config.transparent;
         let (window, gl_config) = DisplayBuilder::new()
             .with_window_builder(Some(builder))
             .build(event_loop, template, |configs| {
-                configs
-                    .reduce(|accum, conf| {
-                        let next_srgb = conf.srgb_capable();
-                        let next_transparency = conf.supports_transparency().unwrap_or(false);
-                        let more_samples = conf.num_samples() > accum.num_samples();
-
-                        // value of transparency for the priority check
-                        let transparency_check = if config.transparent {
-                            next_transparency
-                        } else {
-                            true
-                        };
-
-                        // priority 1: supports srgba, transparency and has more samples than current one
-                        let full_support = next_srgb && transparency_check && more_samples;
-
-                        // priority 2: we don't care about transparency if it's not supported by next config
-                        let srgba_plus_samples = next_srgb && more_samples;
-
-                        // priority 3: if it supports srgba is enough
-                        let only_srgba = next_srgb;
-
-                        // select the config in order of priority
-                        let select_config = full_support || srgba_plus_samples || only_srgba;
-
-                        if select_config {
-                            conf
-                        } else {
-                            accum
+                let mut support: Option<GlSupport> = None;
+                configs.into_iter().for_each(|new_conf| match &support {
+                    Some(GlSupport::Full(conf)) => {
+                        let is = check_support(needs_transparency, conf, &new_conf);
+                        if is.full_support && is.more_samples {
+                            support = Some(GlSupport::Full(new_conf));
                         }
-                    })
-                    .unwrap()
+                    }
+                    Some(GlSupport::Srgba(conf)) => {
+                        let is = check_support(needs_transparency, conf, &new_conf);
+                        if is.full_support {
+                            support = Some(GlSupport::Full(new_conf));
+                        } else if is.srgb && is.more_samples {
+                            support = Some(GlSupport::Srgba(new_conf));
+                        }
+                    }
+                    Some(GlSupport::Any(conf)) => {
+                        let is = check_support(needs_transparency, conf, &new_conf);
+                        if is.full_support {
+                            support = Some(GlSupport::Full(new_conf));
+                        } else if is.srgb {
+                            support = Some(GlSupport::Srgba(new_conf));
+                        } else if is.more_samples {
+                            support = Some(GlSupport::Any(new_conf));
+                        }
+                    }
+                    None => support = Some(GlSupport::Any(new_conf)),
+                });
+
+                match support {
+                    Some(gl_support) => match gl_support {
+                        GlSupport::Full(c) => c,
+                        GlSupport::Srgba(c) => c,
+                        GlSupport::Any(c) => c,
+                    },
+                    None => panic!("There is no OpenGL context available."),
+                }
             })
             .map_err(|e| {
                 let mut err = String::from("Cannot select a valid OpenGL configuration");
                 if config.multisampling != 0 {
                     err.push_str(", try to reduce the number of samples");
                 }
-                format!("{}: {}", err, e)
+                format!("{err}: {e}")
             })?;
 
         let raw_window_handle = window.as_ref().map(|window| window.raw_window_handle());
@@ -182,5 +195,33 @@ impl GlManager {
             NonZeroU32::new(width).unwrap(),
             NonZeroU32::new(height).unwrap(),
         );
+    }
+}
+
+struct InnerSupport {
+    more_samples: bool,
+    srgb: bool,
+    full_support: bool,
+}
+
+fn check_support(
+    needs_transparency: bool,
+    current_conf: &GConfig,
+    new_conf: &GConfig,
+) -> InnerSupport {
+    let more_samples = new_conf.num_samples() > current_conf.num_samples();
+    let srgb = new_conf.srgb_capable();
+    let supports_transparency = new_conf.supports_transparency().unwrap_or(false);
+    let transparency = if needs_transparency {
+        supports_transparency
+    } else {
+        !supports_transparency
+    };
+    let full_support = srgb && transparency;
+
+    InnerSupport {
+        more_samples,
+        srgb,
+        full_support,
     }
 }

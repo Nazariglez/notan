@@ -144,26 +144,28 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
 fn draw_board(mouse: &Mouse, gfx: &mut Graphics, state: &mut State) {
     let mut draw = state.rt.create_draw();
-    if mouse.x >= MARGIN_X && mouse.x <= MARGIN_X + WIDTH {
-        if mouse.y >= MARGIN_Y && mouse.y <= MARGIN_Y + HEIGHT {
-            let x = mouse.x - MARGIN_X;
-            let y = mouse.y - MARGIN_Y;
+    if mouse.x >= MARGIN_X
+        && mouse.x <= MARGIN_X + WIDTH
+        && mouse.y >= MARGIN_Y
+        && mouse.y <= MARGIN_Y + HEIGHT
+    {
+        let x = mouse.x - MARGIN_X;
+        let y = mouse.y - MARGIN_Y;
 
-            if mouse.was_pressed(MouseButton::Left) {
-                state.last_x = x;
-                state.last_y = y;
-            } else if mouse.is_down(MouseButton::Left) {
-                draw.path()
-                    .move_to(state.last_x, state.last_y)
-                    .line_to(x, y)
-                    .stroke(10.0)
-                    .round_join()
-                    .round_cap()
-                    .color(state.color);
+        if mouse.was_pressed(MouseButton::Left) {
+            state.last_x = x;
+            state.last_y = y;
+        } else if mouse.is_down(MouseButton::Left) {
+            draw.path()
+                .move_to(state.last_x, state.last_y)
+                .line_to(x, y)
+                .stroke(10.0)
+                .round_join()
+                .round_cap()
+                .color(state.color);
 
-                state.last_x = x;
-                state.last_y = y;
-            }
+            state.last_x = x;
+            state.last_y = y;
         }
     }
 

@@ -69,6 +69,27 @@ pub(crate) fn to_egui_key(key: &KeyCode) -> Option<egui::Key> {
         KeyCode::Y => egui::Key::Y,
         KeyCode::Z => egui::Key::Z,
 
+        KeyCode::F1 => egui::Key::F1,
+        KeyCode::F2 => egui::Key::F2,
+        KeyCode::F3 => egui::Key::F3,
+        KeyCode::F4 => egui::Key::F4,
+        KeyCode::F5 => egui::Key::F5,
+        KeyCode::F6 => egui::Key::F6,
+        KeyCode::F7 => egui::Key::F7,
+        KeyCode::F8 => egui::Key::F8,
+        KeyCode::F9 => egui::Key::F9,
+        KeyCode::F10 => egui::Key::F10,
+        KeyCode::F11 => egui::Key::F11,
+        KeyCode::F12 => egui::Key::F12,
+        KeyCode::F13 => egui::Key::F13,
+        KeyCode::F14 => egui::Key::F14,
+        KeyCode::F15 => egui::Key::F15,
+        KeyCode::F16 => egui::Key::F16,
+        KeyCode::F17 => egui::Key::F17,
+        KeyCode::F18 => egui::Key::F18,
+        KeyCode::F19 => egui::Key::F19,
+        KeyCode::F20 => egui::Key::F20,
+
         _ => return None,
     })
 }

@@ -44,7 +44,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
                 .position(x, y)
                 .color(COLORS[(index as usize).rem(COLORS.len())]);
 
-            draw.text(&state.font, &format!("{} -> {:.0}x{:.0}", index, x, y))
+            draw.text(&state.font, &format!("{index} -> {x:.0}x{y:.0}"))
                 .position(x, y - 16.0)
                 .h_align_center()
                 .v_align_bottom();

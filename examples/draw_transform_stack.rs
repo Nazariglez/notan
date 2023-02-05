@@ -154,7 +154,7 @@ impl Container {
         let translation = Mat3::from_translation(self.pos);
         let rotation = Mat3::from_angle(self.rotation);
         let scale = Mat3::from_scale(self.scale);
-        return translation * rotation * scale;
+        translation * rotation * scale
     }
 }
 

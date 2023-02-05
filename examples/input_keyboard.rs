@@ -66,7 +66,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
         .size(20.0);
 
     if let Some(key) = &state.last_key {
-        draw.text(&state.font, &format!("Last key: {:?}", key))
+        draw.text(&state.font, &format!("Last key: {key:?}"))
             .position(10.0, 560.0)
             .size(20.0);
     }

@@ -206,10 +206,10 @@ fn chain_output(dispatch: fern::Dispatch) -> fern::Dispatch {
 
 #[cfg(target_arch = "wasm32")]
 fn print_apply_error(e: &str) {
-    console_error(&format!("Error initializing logs: {}", e));
+    console_error(&format!("Error initializing logs: {e}"));
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 fn print_apply_error(e: &str) {
-    println!("Error initializing logs: {}", e);
+    println!("Error initializing logs: {e}");
 }

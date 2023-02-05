@@ -167,7 +167,7 @@ impl EguiExtension {
             let texture = self
                 .textures
                 .get_mut(&id)
-                .ok_or_else(|| format!("Failed to find EGUI texture {:?}", id))?;
+                .ok_or_else(|| format!("Failed to find EGUI texture {id:?}"))?;
 
             match &delta.image {
                 egui::ImageData::Color(image) => {

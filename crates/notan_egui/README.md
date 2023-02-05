@@ -1,7 +1,7 @@
 EGUI
 ===
 
-This is the implementation of [egui 0.18](https://github.com/emilk/egui) for notan.
+This is the implementation of [egui 0.20](https://github.com/emilk/egui) for notan.
 
 It should support all the features that __egui__ uses. Only `clipboard` remains unsupported for now.
 

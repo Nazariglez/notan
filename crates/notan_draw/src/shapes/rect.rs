@@ -173,6 +173,7 @@ fn stroke(quad: &Rectangle, draw: &mut Draw) {
     } = *quad;
 
     let stroke_options = StrokeOptions::default()
+        .with_miter_limit(stroke_width * 2.0)
         .with_line_width(stroke_width)
         .with_tolerance(corner_tolerance);
 

@@ -20,26 +20,23 @@ pub fn set_size_dpi(canvas: &HtmlCanvasElement, width: i32, height: i32) {
     canvas.set_width(ww as _);
     canvas.set_height(hh as _);
 
-    if let Err(e) = canvas
-        .style()
-        .set_property("width", &format!("{}px", width))
-    {
-        log::error!("{:?}", e);
+    if let Err(e) = canvas.style().set_property("width", &format!("{width}px")) {
+        log::error!("{e:?}");
     }
 
     if let Err(e) = canvas
         .style()
-        .set_property("height", &format!("{}px", height))
+        .set_property("height", &format!("{height}px"))
     {
-        log::error!("{:?}", e);
+        log::error!("{e:?}");
     }
 
     if let Err(e) = canvas.set_attribute("notan-width", &width.to_string()) {
-        log::error!("{:?}", e);
+        log::error!("{e:?}");
     }
 
     if let Err(e) = canvas.set_attribute("notan-height", &height.to_string()) {
-        log::error!("{:?}", e);
+        log::error!("{e:?}");
     }
 }
 
@@ -52,14 +49,12 @@ pub fn get_or_create_canvas(doc: &Document, canvas_id: &str) -> Result<HtmlCanva
     let canvas = match doc.get_element_by_id(canvas_id) {
         Some(c) => c,
         None => {
-            let c = doc
-                .create_element("canvas")
-                .map_err(|e| format!("{:?}", e))?;
+            let c = doc.create_element("canvas").map_err(|e| format!("{e:?}"))?;
 
             let body = doc
                 .body()
                 .ok_or_else(|| "body doesn't exists on document.".to_string())?;
-            body.append_child(&c).map_err(|e| format!("{:?}", e))?;
+            body.append_child(&c).map_err(|e| format!("{e:?}"))?;
 
             c.set_id(canvas_id);
             c
@@ -68,10 +63,10 @@ pub fn get_or_create_canvas(doc: &Document, canvas_id: &str) -> Result<HtmlCanva
 
     let canvas_element = canvas
         .dyn_into::<HtmlCanvasElement>()
-        .map_err(|e| format!("{:?}", e))?;
+        .map_err(|e| format!("{e:?}"))?;
 
     if let Err(e) = canvas_element.style().set_property("touch-action", "none") {
-        log::error!("Cannot set touch-action: none {:?}", e);
+        log::error!("Cannot set touch-action: none {e:?}");
     }
 
     Ok(canvas_element)
@@ -93,7 +88,7 @@ where
 
     canvas
         .add_event_listener_with_callback(name, closure.as_ref().unchecked_ref())
-        .map_err(|_| format!("Invalid event name: {}", name))?;
+        .map_err(|_| format!("Invalid event name: {name}"))?;
     Ok(closure)
 }
 
@@ -113,7 +108,7 @@ where
     }) as Box<dyn FnMut(_)>);
 
     win.add_event_listener_with_callback(name, closure.as_ref().unchecked_ref())
-        .map_err(|_| format!("Invalid event name: {}", name))?;
+        .map_err(|_| format!("Invalid event name: {name}"))?;
     Ok(closure)
 }
 
@@ -136,7 +131,7 @@ where
     }) as Box<dyn FnMut(_)>);
 
     doc.add_event_listener_with_callback(name, closure.as_ref().unchecked_ref())
-        .map_err(|_| format!("Invalid event name: {}", name))?;
+        .map_err(|_| format!("Invalid event name: {name}"))?;
     Ok(closure)
 }
 
@@ -150,7 +145,7 @@ where
 {
     let win = web_sys::window().ok_or_else(|| "global window doesn't exists".to_string())?;
     win.remove_event_listener_with_callback(name, closure.as_ref().unchecked_ref())
-        .map_err(|_| format!("Invalid event name: {}", name))?;
+        .map_err(|_| format!("Invalid event name: {name}"))?;
 
     Ok(())
 }

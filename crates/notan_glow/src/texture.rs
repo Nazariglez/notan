@@ -46,8 +46,7 @@ fn gl_slot(slot: u32) -> Result<u32, String> {
         Ok(glow::TEXTURE0 + slot)
     } else {
         Err(format!(
-            "Unsupported texture slot '{}', You can use up to 16.",
-            slot
+            "Unsupported texture slot '{slot}', You can use up to 16.",
         ))
     }
 }

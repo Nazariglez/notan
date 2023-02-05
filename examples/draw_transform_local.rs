@@ -52,5 +52,5 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     // Render the frame
     gfx.render(&draw);
 
-    state.rot = state.rot + app.timer.delta_f32() * 25.0;
+    state.rot += app.timer.delta_f32() * 25.0;
 }

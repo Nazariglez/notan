@@ -267,8 +267,7 @@ where
         let _ = plugins.init(&mut app, &mut assets, &mut graphics).map(|flow| match flow {
             AppFlow::Next => Ok(()),
             _ => Err(format!(
-                "Aborted application loop because a plugin returns on the init method AppFlow::{:?} instead of AppFlow::Next",
-                flow
+                "Aborted application loop because a plugin returns on the init method AppFlow::{flow:?} instead of AppFlow::Next",
             )),
         })?;
 

@@ -45,7 +45,7 @@ fn update(app: &mut App, state: &mut State) {
         state.move_to(MoveTo::Down);
     }
 
-    if state.drop_lines.len() != 0 {
+    if !state.drop_lines.is_empty() {
         state.remove_lines_time -= app.timer.delta_f32();
         if state.remove_lines_time <= 0.0 {
             state.remove_lines();
@@ -97,7 +97,7 @@ fn draw(gfx: &mut Graphics, state: &mut State) {
         .size(40.0);
 
     if let Some(lines) = state.last_score {
-        draw.text(&state.font, &format!("Last score: {}", lines))
+        draw.text(&state.font, &format!("Last score: {lines}"))
             .position(text_x, next_y * 6.0)
             .size(20.0);
     }
@@ -177,8 +177,8 @@ impl Shape {
                 let (x, y) = points[1];
                 let z = if *self == Z { 1 } else { -1 };
                 match rot {
-                    0 => [(x + z, y), (x, y), (x, y - 1), (x + z * -1, y - 1)],
-                    1 => [(x, y + z), (x, y), (x + 1, y), (x + 1, y + z * -1)],
+                    0 => [(x + z, y), (x, y), (x, y - 1), (x + -z, y - 1)],
+                    1 => [(x, y + z), (x, y), (x + 1, y), (x + 1, y + -z)],
                     _ => *points,
                 }
             }
@@ -222,7 +222,7 @@ impl Piece {
     }
 
     fn move_points(&mut self, x: i32, y: i32) -> [(i32, i32); 4] {
-        let mut new_points = self.points.clone();
+        let mut new_points = self.points;
         new_points.iter_mut().for_each(|(px, py)| {
             *px += x;
             *py += y;
@@ -343,13 +343,13 @@ impl State {
 
         self.add_shape();
         self.check_lines();
-        if self.drop_lines.len() != 0 {
+        if !self.drop_lines.is_empty() {
             self.remove_lines_time = movement_time(self.score_lines) * 0.9;
         }
     }
 
     fn remove_lines(&mut self) {
-        if self.drop_lines.len() == 0 {
+        if self.drop_lines.is_empty() {
             return;
         }
 
@@ -373,15 +373,13 @@ impl State {
             MoveTo::Right => self.piece.right_points(),
         };
 
-        if !self.set_points(points) {
-            if dir == MoveTo::Down {
-                if self.is_out() {
-                    self.reset();
-                    return;
-                }
-
-                self.put_on_grid();
+        if !self.set_points(points) && dir == MoveTo::Down {
+            if self.is_out() {
+                self.reset();
+                return;
             }
+
+            self.put_on_grid();
         }
     }
 
@@ -446,7 +444,7 @@ impl State {
 }
 
 fn random_piece(bag: &mut ShuffleBag<Shape>) -> Piece {
-    Piece::new(bag.item().unwrap().clone())
+    Piece::new(*bag.item().unwrap())
 }
 
 fn xy(index: i32) -> (i32, i32) {

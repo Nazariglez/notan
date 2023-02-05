@@ -33,8 +33,10 @@ impl Default for Path {
 
 impl Path {
     pub fn new() -> Self {
+        let stroke_options = StrokeOptions::DEFAULT.with_miter_limit(f32::MAX);
+
         Self {
-            stroke_options: StrokeOptions::default(),
+            stroke_options,
             fill_options: FillOptions::default(),
             builder: lyon::path::Path::builder(),
             initialized: false,
