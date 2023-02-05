@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## v0.9.2 - 05/02/2023
 
 - Added `Fn` keys to `egui`.
 - New example `game_tic_tac_toe.rs`.
