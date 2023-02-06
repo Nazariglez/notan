@@ -291,7 +291,7 @@ impl Plugin for EguiPlugin {
 
     fn update(&mut self, app: &mut App, _assets: &mut Assets) -> Result<AppFlow, String> {
         self.raw_input.pixels_per_point = Some(app.window().dpi() as _);
-        self.raw_input.time = Some(app.timer.time_since_init() as _);
+        self.raw_input.time = Some(app.timer.elapsed_f32() as _);
         self.raw_input.predicted_dt = app.timer.delta_f32();
 
         let (w, h) = app.window().size();
