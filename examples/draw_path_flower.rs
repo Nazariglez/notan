@@ -24,7 +24,7 @@ fn main() -> Result<(), String> {
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics) {
-    let time = app.timer.time_since_init() * 1000.0;
+    let time = app.timer.elapsed_f32() * 1000.0;
 
     let mut draw = gfx.create_draw();
     draw.clear(Color::BLACK);
