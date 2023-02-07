@@ -107,7 +107,7 @@ pub(crate) fn source_from_spirv(spirv: Vec<u8>) -> Result<TokenStream, String> {
     let webgl2_bytes = spirv_to(&spirv, Output::Webgl2)?;
     // let wgpu_bytes = spirv_to(&spirv, Output::Wgpu)?;
     let opengl_3_3_bytes = spirv_to(&spirv, Output::OpenGl3_3)?;
-    // let opengl_es_bytes = spirv_to(&spirv, Output::OpenGl_ES)?;
+    let opengl_es_bytes = spirv_to(&spirv, Output::OpenGl_ES)?;
 
     Ok((quote! {
         ShaderSource {
@@ -121,8 +121,8 @@ pub(crate) fn source_from_spirv(spirv: Vec<u8>) -> Result<TokenStream, String> {
                 #[cfg(all(not(target_arch = "wasm32"), not(feature = "wgpu"), not(target_os = "ios")))]
                 ("opengl", &#opengl_3_3_bytes),
 
-                // #[cfg(any(target_os = "ios", target_os = "android"))]
-                // ("opengl_es", &#opengl_es_bytes),
+                #[cfg(any(target_os = "ios", target_os = "android"))]
+                ("opengl_es", &#opengl_es_bytes),
             ]
         }
     })

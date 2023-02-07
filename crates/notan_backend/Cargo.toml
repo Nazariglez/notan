@@ -14,8 +14,11 @@ description = "Provides a default backend for Notan"
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 notan_web = { path = "../notan_web", version = "0.9.2" }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+[target.'cfg(all(not(target_arch = "wasm32"), not(target_os = "ios")))'.dependencies]
 notan_winit = { path = "../notan_winit", version = "0.9.2" }
+
+[target.'cfg(target_os = "ios")'.dependencies]
+notan_app = { path = "../notan_app", version = "0.9.2" }
 
 [features]
 audio = ["notan_web/audio", "notan_winit/audio"]

@@ -40,7 +40,7 @@ notan_random = { path = "crates/notan_random", version = "0.9.2", optional = tru
 members = ["crates/*"]
 
 [features]
-default = ["backend", "log", "draw", "random", "glsl-to-spirv"]
+default = ["backend", "log", "draw", "random", "shaderc"]
 backend = ["notan_backend"]
 log = ["notan_log"]
 glyph = ["notan_glyph"]

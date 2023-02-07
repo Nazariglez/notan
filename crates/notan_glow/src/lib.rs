@@ -173,8 +173,11 @@ impl GlowBackend {
                 (rt.size.0, rt.size.1, 1.0)
             }
             None => {
-                unsafe {
-                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+                #[cfg(not(target_os = "ios"))]
+                {
+                    unsafe {
+                        self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+                    }
                 }
                 self.drawing_to_render_texture = false;
                 self.render_texture_mipmaps = false;
@@ -231,6 +234,7 @@ impl GlowBackend {
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
             self.gl.bind_buffer(glow::UNIFORM_BUFFER, None);
             self.gl.bind_vertex_array(None);
+            #[cfg(not(target_os = "ios"))]
             self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
         }
 

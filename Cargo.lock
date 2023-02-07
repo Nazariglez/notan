@@ -1778,6 +1778,7 @@ dependencies = [
 name = "notan_backend"
 version = "0.9.2"
 dependencies = [
+ "notan_app",
  "notan_web",
  "notan_winit",
 ]
