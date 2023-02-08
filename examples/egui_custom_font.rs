@@ -4,9 +4,9 @@ use notan::prelude::*;
 #[notan_main]
 fn main() -> Result<(), String> {
     let win = WindowConfig::new()
-        .vsync(true)
-        .lazy_loop(true)
-        .high_dpi(true);
+        .set_vsync(true)
+        .set_lazy_loop(true)
+        .set_high_dpi(true);
 
     notan::init()
         .add_config(win)

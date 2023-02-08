@@ -62,7 +62,7 @@ fn set_volume(index: usize, app: &mut App, state: &mut State) {
 fn main() -> Result<(), String> {
     notan::init_with(setup)
         .add_config(EguiConfig)
-        .add_config(WindowConfig::default().size(300, 300))
+        .add_config(WindowConfig::default().set_size(300, 300))
         .draw(draw)
         .build()
 }

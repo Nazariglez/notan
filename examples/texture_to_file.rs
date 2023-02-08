@@ -117,7 +117,7 @@ impl State {
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win_config = WindowConfig::default().vsync(true).lazy_loop(true);
+    let win_config = WindowConfig::default().set_vsync(true).set_lazy_loop(true);
 
     notan::init_with(State::new)
         .add_config(win_config)
