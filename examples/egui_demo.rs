@@ -9,12 +9,12 @@ struct State {
 #[notan_main]
 fn main() -> Result<(), String> {
     let win = WindowConfig::default()
-        .resizable(true)
-        .size(1280, 1024)
-        .vsync(true)
-        .high_dpi(true)
+        .set_resizable(true)
+        .set_size(1280, 1024)
+        .set_vsync(true)
+        .set_high_dpi(true)
         // enable lazy mode to only draw after an input
-        .lazy_loop(true);
+        .set_lazy_loop(true);
 
     notan::init_with(State::default)
         .add_config(win)

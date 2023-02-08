@@ -17,7 +17,7 @@ const PI: f32 = std::f32::consts::PI;
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init()
-        .add_config(WindowConfig::new().multisampling(8))
+        .add_config(WindowConfig::new().set_multisampling(8))
         .add_config(DrawConfig)
         .draw(draw)
         .build()

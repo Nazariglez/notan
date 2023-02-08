@@ -10,7 +10,7 @@ struct State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup)
-        .add_config(WindowConfig::default().vsync(true))
+        .add_config(WindowConfig::default().set_vsync(true))
         .draw(draw)
         .build()
 }

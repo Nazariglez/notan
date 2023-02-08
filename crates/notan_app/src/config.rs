@@ -110,116 +110,116 @@ impl WindowConfig {
     }
 
     /// Sets the window's title
-    pub fn title(mut self, title: &str) -> Self {
+    pub fn set_title(mut self, title: &str) -> Self {
         self.title = title.to_string();
         self
     }
 
     /// Inner loop will run only after an input event
-    pub fn lazy_loop(mut self, lazy: bool) -> Self {
+    pub fn set_lazy_loop(mut self, lazy: bool) -> Self {
         self.lazy_loop = lazy;
         self
     }
 
     /// Sets the window's width and height
-    pub fn size(mut self, width: u32, height: u32) -> Self {
+    pub fn set_size(mut self, width: u32, height: u32) -> Self {
         self.width = width;
         self.height = height;
         self
     }
 
     /// Enable fullscreen mode
-    pub fn fullscreen(mut self, fullscreen: bool) -> Self {
+    pub fn set_fullscreen(mut self, fullscreen: bool) -> Self {
         self.fullscreen = fullscreen;
         self
     }
 
     /// Sets the window's minimum size
-    pub fn min_size(mut self, width: u32, height: u32) -> Self {
+    pub fn set_min_size(mut self, width: u32, height: u32) -> Self {
         self.min_size = Some((width, height));
         self
     }
 
     /// Sets the window's maximum size
-    pub fn max_size(mut self, width: u32, height: u32) -> Self {
+    pub fn set_max_size(mut self, width: u32, height: u32) -> Self {
         self.max_size = Some((width, height));
         self
     }
 
     /// Starts the window maximized
-    pub fn maximized(mut self, maximized: bool) -> Self {
+    pub fn set_maximized(mut self, maximized: bool) -> Self {
         self.maximized = maximized;
         self
     }
 
     /// Allow the window to be resizable
-    pub fn resizable(mut self, resizable: bool) -> Self {
+    pub fn set_resizable(mut self, resizable: bool) -> Self {
         self.resizable = resizable;
         self
     }
 
     /// Enable vsync
-    pub fn vsync(mut self, vsync: bool) -> Self {
+    pub fn set_vsync(mut self, vsync: bool) -> Self {
         self.vsync = vsync;
         self
     }
 
     /// Enabled multisampling aliasing (opengl)
-    pub fn multisampling(mut self, samples: u8) -> Self {
+    pub fn set_multisampling(mut self, samples: u8) -> Self {
         self.multisampling = samples;
         self
     }
 
     /// Enable High DPI
-    pub fn high_dpi(mut self, enabled: bool) -> Self {
+    pub fn set_high_dpi(mut self, enabled: bool) -> Self {
         self.high_dpi = enabled;
         self
     }
 
     /// Set the background as transparent
-    pub fn transparent(mut self, transparent: bool) -> Self {
+    pub fn set_transparent(mut self, transparent: bool) -> Self {
         self.transparent = transparent;
         self
     }
 
     /// Set the background as transparent
-    pub fn always_on_top(mut self, always_on_top: bool) -> Self {
+    pub fn set_always_on_top(mut self, always_on_top: bool) -> Self {
         self.always_on_top = always_on_top;
         self
     }
 
     /// Enable or disable decorations
-    pub fn decorations(mut self, decorations: bool) -> Self {
+    pub fn set_decorations(mut self, decorations: bool) -> Self {
         self.decorations = decorations;
         self
     }
 
     /// Hide or show the window
-    pub fn visible(mut self, visible: bool) -> Self {
+    pub fn set_visible(mut self, visible: bool) -> Self {
         self.visible = visible;
         self
     }
 
     /// Mouse events pass through window
-    pub fn mouse_passthrough(mut self, mouse_passthrough: bool) -> Self {
+    pub fn set_mouse_passthrough(mut self, mouse_passthrough: bool) -> Self {
         self.mouse_passthrough = mouse_passthrough;
         self
     }
 
     /// Use or create the canvas with this id. Only Web.
-    pub fn canvas_id(mut self, canvas_id: &str) -> Self {
+    pub fn set_canvas_id(mut self, canvas_id: &str) -> Self {
         self.canvas_id = canvas_id.to_string();
         self
     }
 
     /// Window icon path
-    pub fn window_icon(mut self, window_icon_path: Option<PathBuf>) -> Self {
+    pub fn set_window_icon(mut self, window_icon_path: Option<PathBuf>) -> Self {
         self.window_icon_path = window_icon_path;
         self
     }
 
     /// Task bar icon path
-    pub fn taskbar_icon(mut self, taskbar_icon_path: Option<PathBuf>) -> Self {
+    pub fn set_taskbar_icon(mut self, taskbar_icon_path: Option<PathBuf>) -> Self {
         self.taskbar_icon_path = taskbar_icon_path;
         self
     }
