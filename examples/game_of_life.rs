@@ -63,7 +63,7 @@ fn main() -> Result<(), String> {
     let width = WIDTH * 4;
     let height = HEIGHT * 4;
 
-    let win_config = WindowConfig::new().size(width as _, height as _);
+    let win_config = WindowConfig::new().set_size(width as _, height as _);
 
     notan::init_with(setup)
         .initialize(init)

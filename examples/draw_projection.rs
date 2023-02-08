@@ -8,7 +8,7 @@ const WORK_SIZE: Vec2 = vec2(800.0, 600.0);
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win_config = WindowConfig::default().resizable(true);
+    let win_config = WindowConfig::default().set_resizable(true);
 
     notan::init()
         .add_config(win_config)

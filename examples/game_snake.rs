@@ -12,7 +12,7 @@ const MIN_MOVEMENT_MS: f32 = 0.02;
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win_config = WindowConfig::new().size(800, 600).vsync(true);
+    let win_config = WindowConfig::new().set_size(800, 600).set_vsync(true);
 
     notan::init_with(State::new)
         .add_config(win_config)
