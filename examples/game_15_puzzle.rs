@@ -13,8 +13,8 @@ const OUTLINE_COLOR: Color = Color::from_rgb(0.0, 0.8, 0.7);
 #[notan_main]
 fn main() -> Result<(), String> {
     let win = WindowConfig::default()
-        .size(BOARD_SIZE as _, BOARD_SIZE as _)
-        .multisampling(8);
+        .set_size(BOARD_SIZE as _, BOARD_SIZE as _)
+        .set_multisampling(8);
 
     notan::init_with(State::new)
         .add_config(win)

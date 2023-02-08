@@ -55,7 +55,7 @@ struct State {
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win_config = WindowConfig::new().size(400, 400).lazy_loop(true);
+    let win_config = WindowConfig::new().set_size(400, 400).set_lazy_loop(true);
 
     notan::init_with(setup)
         .add_config(win_config)
