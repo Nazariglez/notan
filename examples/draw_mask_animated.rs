@@ -11,7 +11,6 @@ fn main() {
             let elapsed = app.timer.time_since_init();
             let pulse_progress = ((elapsed % 4.) - 2.).abs() / 2.; // 4s roundtrip pulse
             let radius = 200. * (1. - pulse_progress);
-            dbg!(radius, pulse_progress);
 
             let mut mask = gfx.create_draw();
             mask.clear(Color::BLACK);
