@@ -251,34 +251,12 @@ impl WebWindowBackend {
 }
 
 impl WindowBackend for WebWindowBackend {
-    fn id(&self) -> u64 {
-        0
+    fn capture_cursor(&self) -> bool {
+        *self.captured.borrow()
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {
-        set_size_dpi(&self.canvas, width as _, height as _);
-        self.config.width = width;
-        self.config.height = height;
-    }
-
-    fn size(&self) -> (i32, i32) {
-        get_notan_size(&self.canvas)
-    }
-
-    // No operation, as unsupported in browser
-    fn set_position(&mut self, _x: i32, _y: i32) {}
-
-    // No operation, as unsupported in browser
-    fn position(&self) -> (i32, i32) {
-        (0, 0)
-    }
-
-    fn set_fullscreen(&mut self, enabled: bool) {
-        *self.fullscreen_requested.borrow_mut() = Some(enabled);
-    }
-
-    fn is_fullscreen(&self) -> bool {
-        self.document.fullscreen()
+    fn cursor(&self) -> CursorIcon {
+        self.cursor
     }
 
     fn dpi(&self) -> f64 {
@@ -289,15 +267,31 @@ impl WindowBackend for WebWindowBackend {
         }
     }
 
-    fn set_lazy_loop(&mut self, lazy: bool) {
-        *self.lazy.borrow_mut() = lazy;
-        if !lazy {
-            self.request_frame();
-        }
+    fn id(&self) -> u64 {
+        0
+    }
+
+    // Unsupported in browser, always false
+    fn is_always_on_top(&self) -> bool {
+        false
+    }
+
+    fn is_fullscreen(&self) -> bool {
+        self.document.fullscreen()
     }
 
     fn lazy_loop(&self) -> bool {
         *self.lazy.borrow()
+    }
+
+    // No operation, as unsupported in browser
+    fn mouse_passthrough(&mut self) -> bool {
+        false
+    }
+
+    // No operation, as unsupported in browser
+    fn position(&self) -> (i32, i32) {
+        (0, 0)
     }
 
     fn request_frame(&mut self) {
@@ -306,6 +300,27 @@ impl WindowBackend for WebWindowBackend {
             *self.frame_requested.borrow_mut() = true;
             request_animation_frame(&self.window, self.raf.borrow().as_ref().unwrap());
         }
+    }
+
+    fn screen_size(&self) -> (i32, i32) {
+        let screen = self.window.screen().unwrap();
+
+        let width = screen.width().unwrap();
+        let height = screen.height().unwrap();
+        (width, height)
+    }
+
+    fn container_size(&self) -> (i32, i32) {
+        let width = self.canvas_parent.client_width();
+        let height = self.canvas_parent.client_height();
+        (width, height)
+    }
+
+    // No operation, as unsupported in browser
+    fn set_always_on_top(&mut self, _enabled: bool) {}
+
+    fn set_capture_cursor(&mut self, capture: bool) {
+        *self.capture_requested.borrow_mut() = Some(capture);
     }
 
     fn set_cursor(&mut self, cursor: CursorIcon) {
@@ -326,35 +341,15 @@ impl WindowBackend for WebWindowBackend {
         }
     }
 
-    fn cursor(&self) -> CursorIcon {
-        self.cursor
+    fn set_fullscreen(&mut self, enabled: bool) {
+        *self.fullscreen_requested.borrow_mut() = Some(enabled);
     }
 
-    fn set_capture_cursor(&mut self, capture: bool) {
-        *self.capture_requested.borrow_mut() = Some(capture);
-    }
-
-    fn capture_cursor(&self) -> bool {
-        *self.captured.borrow()
-    }
-
-    fn set_visible(&mut self, visible: bool) {
-        if self.visible != visible {
-            self.visible = visible;
-            canvas_visible(&self.canvas, visible);
+    fn set_lazy_loop(&mut self, lazy: bool) {
+        *self.lazy.borrow_mut() = lazy;
+        if !lazy {
+            self.request_frame();
         }
-    }
-
-    fn visible(&self) -> bool {
-        self.visible
-    }
-
-    // No operation, as unsupported in browser
-    fn set_always_on_top(&mut self, _enabled: bool) {}
-
-    // Unsupported in browser, always false
-    fn is_always_on_top(&self) -> bool {
-        false
     }
 
     fn set_mouse_passthrough(&mut self, clickable: bool) {
@@ -365,8 +360,27 @@ impl WindowBackend for WebWindowBackend {
     }
 
     // No operation, as unsupported in browser
-    fn mouse_passthrough(&mut self) -> bool {
-        false
+    fn set_position(&mut self, _x: i32, _y: i32) {}
+
+    fn set_size(&mut self, width: i32, height: i32) {
+        set_size_dpi(&self.canvas, width as _, height as _);
+        self.config.width = width;
+        self.config.height = height;
+    }
+
+    fn set_visible(&mut self, visible: bool) {
+        if self.visible != visible {
+            self.visible = visible;
+            canvas_visible(&self.canvas, visible);
+        }
+    }
+
+    fn size(&self) -> (i32, i32) {
+        get_notan_size(&self.canvas)
+    }
+
+    fn visible(&self) -> bool {
+        self.visible
     }
 }
 
