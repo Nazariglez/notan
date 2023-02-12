@@ -17,13 +17,9 @@ fn main() {
             mask.clear(Color::BLACK);
             mask.circle(radius).position(250., 250.);
 
-            // draw.circle(10.0).position(100.0, 100.0).color(Color::RED);
-
             draw.mask(Some(&mask));
             draw.rect((0., 0.), (500., 500.)).color(Color::GREEN);
             draw.mask(None);
-
-            // draw.circle(10.0).position(10.0, 10.0).color(Color::RED);
 
             gfx.render(&draw);
         })
