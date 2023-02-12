@@ -1,6 +1,6 @@
 [package]
 name = "notan_egui"
-version = "0.9.2"
+version = "0.9.3"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -15,9 +15,9 @@ description = "Provides EGUI support for Notan"
 log = "0.4.17"
 egui = { version = "0.20.1", features = ["bytemuck"] }
 bytemuck = "1.13.0"
-notan_core = { path = "../notan_core", version = "0.9.2" }
-notan_app = { path = "../notan_app", version = "0.9.2" }
-notan_macro = { path = "../notan_macro", version = "0.9.2" }
+notan_core = { path = "../notan_core", version = "0.9.3" }
+notan_app = { path = "../notan_app", version = "0.9.3" }
+notan_macro = { path = "../notan_macro", version = "0.9.3" }
 
 [features]
 links = []

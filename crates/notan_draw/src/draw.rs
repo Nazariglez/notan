@@ -26,7 +26,8 @@ pub struct Draw {
     pub(crate) pattern_pipeline: CustomPipeline,
     pub(crate) text_pipeline: CustomPipeline,
     pub(crate) text_batch_indices: Option<Vec<usize>>,
-    masking: bool,
+    pub(crate) masking: bool,
+    pub(crate) needs_to_clean_stencil: bool,
     pub(crate) glyphs_calculator: Calculator,
 }
 
@@ -49,6 +50,7 @@ impl Clone for Draw {
             pattern_pipeline: self.pattern_pipeline.clone(),
             text_pipeline: self.text_pipeline.clone(),
             masking: self.masking,
+            needs_to_clean_stencil: self.needs_to_clean_stencil,
             text_batch_indices: self.text_batch_indices.clone(),
             glyphs_calculator: Calculator::new(),
         }
@@ -77,6 +79,7 @@ impl Draw {
             pattern_pipeline: Default::default(),
             text_pipeline: Default::default(),
             masking: false,
+            needs_to_clean_stencil: false,
             text_batch_indices: None,
             glyphs_calculator: Calculator::new(),
         }
@@ -99,6 +102,7 @@ impl Draw {
         match mask {
             Some(m) => {
                 self.masking = true;
+                self.needs_to_clean_stencil = true;
 
                 //Move the current batch to the queue
                 if let Some(b) = self.current_batch.take() {

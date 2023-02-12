@@ -21,51 +21,12 @@ pub struct WinitWindowBackend {
 }
 
 impl WindowBackend for WinitWindowBackend {
-    fn id(&self) -> u64 {
-        self.window().id().into()
+    fn capture_cursor(&self) -> bool {
+        self.captured
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {
-        self.window()
-            .set_inner_size(LogicalSize::new(width, height));
-    }
-
-    fn size(&self) -> (i32, i32) {
-        let inner = self.window().inner_size();
-        let logical = inner.to_logical::<f64>(self.scale_factor);
-        (logical.width as _, logical.height as _)
-    }
-
-    fn set_position(&mut self, x: i32, y: i32) {
-        self.window()
-            .set_outer_position(PhysicalPosition::new(x, y));
-    }
-
-    fn position(&self) -> (i32, i32) {
-        let position = self.window().outer_position().unwrap_or_default();
-        (position.x, position.y)
-    }
-
-    fn set_fullscreen(&mut self, enabled: bool) {
-        if enabled {
-            let monitor = self.window().current_monitor();
-            self.window().set_fullscreen(Some(Borderless(monitor)));
-        } else {
-            self.window().set_fullscreen(None);
-        }
-    }
-
-    fn is_fullscreen(&self) -> bool {
-        self.window().fullscreen().is_some()
-    }
-
-    fn set_always_on_top(&mut self, enabled: bool) {
-        self.window().set_always_on_top(enabled);
-        self.is_always_on_top = enabled;
-    }
-
-    fn is_always_on_top(&self) -> bool {
-        self.is_always_on_top
+    fn cursor(&self) -> CursorIcon {
+        self.cursor
     }
 
     fn dpi(&self) -> f64 {
@@ -76,15 +37,29 @@ impl WindowBackend for WinitWindowBackend {
         self.scale_factor
     }
 
-    fn set_lazy_loop(&mut self, lazy: bool) {
-        self.lazy = lazy;
-        if !self.lazy {
-            self.request_frame();
-        }
+    fn id(&self) -> u64 {
+        self.window().id().into()
+    }
+
+    fn is_always_on_top(&self) -> bool {
+        self.is_always_on_top
+    }
+
+    fn is_fullscreen(&self) -> bool {
+        self.window().fullscreen().is_some()
     }
 
     fn lazy_loop(&self) -> bool {
         self.lazy
+    }
+
+    fn mouse_passthrough(&mut self) -> bool {
+        self.mouse_passthrough
+    }
+
+    fn position(&self) -> (i32, i32) {
+        let position = self.window().outer_position().unwrap_or_default();
+        (position.x, position.y)
     }
 
     fn request_frame(&mut self) {
@@ -93,23 +68,19 @@ impl WindowBackend for WinitWindowBackend {
         }
     }
 
-    fn set_cursor(&mut self, cursor: CursorIcon) {
-        if cursor != self.cursor {
-            self.cursor = cursor;
-            match winit_cursor(cursor) {
-                None => {
-                    self.window().set_cursor_visible(false);
-                }
-                Some(icon) => {
-                    self.window().set_cursor_visible(true);
-                    self.window().set_cursor_icon(icon);
-                }
-            }
-        }
+    fn screen_size(&self) -> (i32, i32) {
+        self.window()
+            .current_monitor()
+            .map(|m| {
+                let logical = m.size().to_logical::<f64>(self.scale_factor);
+                (logical.width as _, logical.height as _)
+            })
+            .unwrap_or((0, 0))
     }
 
-    fn cursor(&self) -> CursorIcon {
-        self.cursor
+    fn set_always_on_top(&mut self, enabled: bool) {
+        self.window().set_always_on_top(enabled);
+        self.is_always_on_top = enabled;
     }
 
     fn set_capture_cursor(&mut self, capture: bool) {
@@ -134,8 +105,50 @@ impl WindowBackend for WinitWindowBackend {
         }
     }
 
-    fn capture_cursor(&self) -> bool {
-        self.captured
+    fn set_cursor(&mut self, cursor: CursorIcon) {
+        if cursor != self.cursor {
+            self.cursor = cursor;
+            match winit_cursor(cursor) {
+                None => {
+                    self.window().set_cursor_visible(false);
+                }
+                Some(icon) => {
+                    self.window().set_cursor_visible(true);
+                    self.window().set_cursor_icon(icon);
+                }
+            }
+        }
+    }
+
+    fn set_fullscreen(&mut self, enabled: bool) {
+        if enabled {
+            let monitor = self.window().current_monitor();
+            self.window().set_fullscreen(Some(Borderless(monitor)));
+        } else {
+            self.window().set_fullscreen(None);
+        }
+    }
+
+    fn set_lazy_loop(&mut self, lazy: bool) {
+        self.lazy = lazy;
+        if !self.lazy {
+            self.request_frame();
+        }
+    }
+
+    fn set_mouse_passthrough(&mut self, pass_through: bool) {
+        self.mouse_passthrough = pass_through;
+        self.gl_manager.set_cursor_hittest(!pass_through).unwrap();
+    }
+
+    fn set_position(&mut self, x: i32, y: i32) {
+        self.window()
+            .set_outer_position(PhysicalPosition::new(x, y));
+    }
+
+    fn set_size(&mut self, width: i32, height: i32) {
+        self.window()
+            .set_inner_size(LogicalSize::new(width, height));
     }
 
     fn set_visible(&mut self, visible: bool) {
@@ -145,17 +158,14 @@ impl WindowBackend for WinitWindowBackend {
         }
     }
 
+    fn size(&self) -> (i32, i32) {
+        let inner = self.window().inner_size();
+        let logical = inner.to_logical::<f64>(self.scale_factor);
+        (logical.width as _, logical.height as _)
+    }
+
     fn visible(&self) -> bool {
         self.visible
-    }
-
-    fn set_mouse_passthrough(&mut self, pass_through: bool) {
-        self.mouse_passthrough = pass_through;
-        self.gl_manager.set_cursor_hittest(!pass_through).unwrap();
-    }
-
-    fn mouse_passthrough(&mut self) -> bool {
-        self.mouse_passthrough
     }
 }
 
