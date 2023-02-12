@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 - Added `WindowBackend::screen_size` to get the screen's resolution size.
 - Added `WindowBackend::container_size` to get the windows container size (screen on native, parent element on web).
+- Fix Draw2D masking issue about the stencil clearing
 
 ## v0.9.2 - 05/02/2023
 
