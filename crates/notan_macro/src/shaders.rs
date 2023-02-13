@@ -70,14 +70,47 @@ pub(crate) fn spirv_from(
 pub(crate) fn spirv_from(
     source: &str,
     typ: ShaderType,
-    _file_path: Option<PathBuf>,
+    file_path: Option<PathBuf>,
 ) -> Result<Vec<u8>, String> {
+    use shaderc::IncludeType;
+
     let source = source.trim();
     let compiler = shaderc::Compiler::new().unwrap();
-    let options = shaderc::CompileOptions::new().unwrap();
+    let mut options = shaderc::CompileOptions::new().unwrap();
+
+    if let Some(file_path) = file_path.as_ref() {
+        let file_dir = file_path.parent().unwrap();
+
+        options.set_include_callback(|name, type_, _filename, _include_depth| {
+            if type_ == IncludeType::Relative {
+                let include_path = file_dir.join(name);
+                let include_path_string = include_path.to_string_lossy().into_owned();
+
+                if let Ok(file_content) = read_file(&include_path.as_path()) {
+                    Ok(shaderc::ResolvedInclude {
+                        content: file_content,
+                        resolved_name: include_path_string,
+                    })
+                } else {
+                    Err(format!(
+                        "Failed to include file: \"{}\" (from \"{}\")",
+                        name, include_path_string
+                    ))
+                }
+            } else {
+                todo!()
+            }
+        });
+    }
+
+    let input_file_name = file_path
+        .as_ref()
+        .and_then(|f| f.file_name())
+        .and_then(|f| f.to_str())
+        .unwrap_or("shader.glsl");
 
     let spirv_output = compiler
-        .compile_into_spirv(source, typ.into(), "shader.glsl", "main", Some(&options))
+        .compile_into_spirv(source, typ.into(), input_file_name, "main", Some(&options))
         .unwrap_or_else(|e| panic!("Invalid {typ:#?} shader: \n{e}"));
 
     let mut spirv = vec![];
