@@ -50,17 +50,6 @@ impl WindowBackend for WinitWindowBackend {
         self.window().fullscreen().is_some()
     }
 
-    fn set_size(&mut self, width: u32, height: u32) {
-        self.window()
-            .set_inner_size(LogicalSize::new(width, height));
-    }
-
-    fn size(&self) -> (u32, u32) {
-        let inner = self.window().inner_size();
-        let logical = inner.to_logical::<f64>(self.scale_factor);
-        (logical.width as _, logical.height as _)
-    }
-
     fn lazy_loop(&self) -> bool {
         self.lazy
     }
@@ -158,11 +147,22 @@ impl WindowBackend for WinitWindowBackend {
             .set_outer_position(PhysicalPosition::new(x, y));
     }
 
+    fn set_size(&mut self, width: u32, height: u32) {
+        self.window()
+            .set_inner_size(LogicalSize::new(width, height));
+    }
+
     fn set_visible(&mut self, visible: bool) {
         if self.visible != visible {
             self.visible = visible;
             self.window().set_visible(visible);
         }
+    }
+
+    fn size(&self) -> (u32, u32) {
+        let inner = self.window().inner_size();
+        let logical = inner.to_logical::<f64>(self.scale_factor);
+        (logical.width as _, logical.height as _)
     }
 
     fn visible(&self) -> bool {

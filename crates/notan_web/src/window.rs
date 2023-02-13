@@ -260,6 +260,12 @@ impl WindowBackend for WebWindowBackend {
         *self.captured.borrow()
     }
 
+    fn container_size(&self) -> (i32, i32) {
+        let width = self.canvas_parent.client_width();
+        let height = self.canvas_parent.client_height();
+        (width, height)
+    }
+
     fn cursor(&self) -> CursorIcon {
         self.cursor
     }
@@ -270,16 +276,6 @@ impl WindowBackend for WebWindowBackend {
         } else {
             1.0
         }
-    }
-
-    fn set_size(&mut self, width: u32, height: u32) {
-        set_size_dpi(&self.canvas, width as _, height as _);
-        self.config.width = width;
-        self.config.height = height;
-    }
-
-    fn size(&self) -> (u32, u32) {
-        get_notan_size(&self.canvas)
     }
 
     fn id(&self) -> u64 {
@@ -322,12 +318,6 @@ impl WindowBackend for WebWindowBackend {
 
         let width = screen.width().unwrap();
         let height = screen.height().unwrap();
-        (width, height)
-    }
-
-    fn container_size(&self) -> (i32, i32) {
-        let width = self.canvas_parent.client_width();
-        let height = self.canvas_parent.client_height();
         (width, height)
     }
 
@@ -377,11 +367,21 @@ impl WindowBackend for WebWindowBackend {
     // No operation, as unsupported in browser
     fn set_position(&mut self, _x: i32, _y: i32) {}
 
+    fn set_size(&mut self, width: u32, height: u32) {
+        set_size_dpi(&self.canvas, width as _, height as _);
+        self.config.width = width;
+        self.config.height = height;
+    }
+
     fn set_visible(&mut self, visible: bool) {
         if self.visible != visible {
             self.visible = visible;
             canvas_visible(&self.canvas, visible);
         }
+    }
+
+    fn size(&self) -> (u32, u32) {
+        get_notan_size(&self.canvas)
     }
 
     fn visible(&self) -> bool {
