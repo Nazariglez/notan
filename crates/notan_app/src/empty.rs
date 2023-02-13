@@ -51,14 +51,6 @@ impl WindowBackend for EmptyWindowBackend {
     fn is_fullscreen(&self) -> bool {
         self.is_fullscreen
     }
-    fn set_size(&mut self, width: u32, height: u32) {
-        self.size = (width, height);
-    }
-
-    fn size(&self) -> (u32, u32) {
-        self.size
-    }
-
     fn lazy_loop(&self) -> bool {
         self.lazy
     }
@@ -105,8 +97,16 @@ impl WindowBackend for EmptyWindowBackend {
         self.position = (x, y);
     }
 
+    fn set_size(&mut self, width: u32, height: u32) {
+        self.size = (width, height);
+    }
+
     fn set_visible(&mut self, visible: bool) {
         self.visible = visible;
+    }
+
+    fn size(&self) -> (u32, u32) {
+        self.size
     }
 
     fn visible(&self) -> bool {
