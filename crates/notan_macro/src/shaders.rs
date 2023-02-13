@@ -82,41 +82,27 @@ pub(crate) fn spirv_from(
     let compiler = shaderc::Compiler::new().unwrap();
     let mut options = shaderc::CompileOptions::new().unwrap();
 
+    // Resolve `#include` directives
     if let Some(file_path) = file_path.as_ref() {
         let file_dir = file_path.parent().unwrap();
 
         options.set_include_callback(|name, type_, _filename, _include_depth| {
-            if type_ == IncludeType::Relative {
-                let include_path = file_dir.join(name);
-                let include_path_string = include_path.to_string_lossy().into_owned();
+            let include_path = match type_ {
+                IncludeType::Relative => file_dir.join(name),
+                IncludeType::Standard => get_root_path().join(name),
+            };
+            let include_path_string = include_path.to_string_lossy().into_owned();
 
-                if let Ok(file_content) = read_file(&include_path.as_path()) {
-                    Ok(shaderc::ResolvedInclude {
-                        content: file_content,
-                        resolved_name: include_path_string,
-                    })
-                } else {
-                    Err(format!(
-                        "Failed to include file: \"{}\" (from \"{}\")",
-                        name, include_path_string
-                    ))
-                }
+            if let Ok(file_content) = read_file(&include_path.as_path()) {
+                Ok(shaderc::ResolvedInclude {
+                    content: file_content,
+                    resolved_name: include_path_string,
+                })
             } else {
-                let root_path = get_root_path();
-                let include_path = root_path.join(name);
-                let include_path_string = include_path.to_string_lossy().into_owned();
-
-                if let Ok(file_content) = read_file(&include_path.as_path()) {
-                    Ok(shaderc::ResolvedInclude {
-                        content: file_content,
-                        resolved_name: include_path_string,
-                    })
-                } else {
-                    Err(format!(
-                        "Failed to include file: \"{}\" (from \"{}\")",
-                        name, include_path_string
-                    ))
-                }
+                Err(format!(
+                    "Failed to include file: \"{}\" (from \"{}\")",
+                    name, include_path_string
+                ))
             }
         });
     }
