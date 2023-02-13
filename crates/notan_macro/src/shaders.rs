@@ -34,6 +34,11 @@ impl From<ShaderType> for shaderc::ShaderKind {
     }
 }
 
+fn get_root_path() -> PathBuf {
+    let root = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".into());
+    Path::new(&root).to_path_buf()
+}
+
 fn read_file(full_path: &Path) -> Result<String, String> {
     if !full_path.is_file() {
         return Err(format!("File {} was not found.", full_path.display()));
@@ -43,8 +48,7 @@ fn read_file(full_path: &Path) -> Result<String, String> {
 }
 
 pub(crate) fn spirv_from_file(relative_path: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
-    let root = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".into());
-    let root_path = Path::new(&root);
+    let root_path = get_root_path();
     let full_path = root_path.join(Path::new(relative_path));
     spirv_from(&read_file(&full_path)?, typ, Some(full_path))
 }
@@ -98,7 +102,21 @@ pub(crate) fn spirv_from(
                     ))
                 }
             } else {
-                todo!()
+                let root_path = get_root_path();
+                let include_path = root_path.join(name);
+                let include_path_string = include_path.to_string_lossy().into_owned();
+
+                if let Ok(file_content) = read_file(&include_path.as_path()) {
+                    Ok(shaderc::ResolvedInclude {
+                        content: file_content,
+                        resolved_name: include_path_string,
+                    })
+                } else {
+                    Err(format!(
+                        "Failed to include file: \"{}\" (from \"{}\")",
+                        name, include_path_string
+                    ))
+                }
             }
         });
     }
