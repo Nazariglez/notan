@@ -4,7 +4,7 @@ use quote::quote;
 use spirv_cross::{glsl, spirv, ErrorCode};
 use std::fs::read_to_string;
 use std::io::{Cursor, Read};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{io, slice};
 
 #[derive(Debug, Clone, Copy)]
@@ -46,12 +46,15 @@ pub(crate) fn spirv_from_file(relative_path: &str, typ: ShaderType) -> Result<Ve
     let root = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".into());
     let root_path = Path::new(&root);
     let full_path = root_path.join(Path::new(relative_path));
-
-    spirv_from(&read_file(&full_path)?, typ)
+    spirv_from(&read_file(&full_path)?, typ, Some(full_path))
 }
 
 #[cfg(use_glsl_to_spirv)]
-pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
+pub(crate) fn spirv_from(
+    source: &str,
+    typ: ShaderType,
+    _file_path: Option<PathBuf>,
+) -> Result<Vec<u8>, String> {
     let source = source.trim();
     let mut spirv_output = glsl_to_spirv::compile(source, typ.into())
         .unwrap_or_else(|e| panic!("Invalid {typ:#?} shader: \n{e}"));
@@ -64,7 +67,11 @@ pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, Strin
 }
 
 #[cfg(use_shaderc)]
-pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
+pub(crate) fn spirv_from(
+    source: &str,
+    typ: ShaderType,
+    _file_path: Option<PathBuf>,
+) -> Result<Vec<u8>, String> {
     let source = source.trim();
     let compiler = shaderc::Compiler::new().unwrap();
     let options = shaderc::CompileOptions::new().unwrap();
