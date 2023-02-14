@@ -418,15 +418,15 @@ impl Device {
     ) -> Result<(), String> {
         // Check if the buffer size is enough to read the pixels
         if cfg!(debug_assertions) {
-            let size = (texture.width() * texture.height()) as usize;
-            let bpp = texture.format().bytes_per_pixel() as usize;
+            let size = (opts.width * opts.height) as usize;
+            let bpp = opts.format.bytes_per_pixel() as usize;
             let len = size * bpp;
-            debug_assert_eq!(
-                len,
+            debug_assert!(
+                bytes.len() >= len,
+                "The provided buffer len of {} is less than the required {} when reading pixels from texture {}",
                 bytes.len(),
-                "To read the pixels the texture {} needs at a buffer of {} len",
-                texture.id(),
-                len
+                len,
+                texture.id()
             );
         }
 
