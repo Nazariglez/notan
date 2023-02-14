@@ -93,7 +93,7 @@ pub(crate) fn spirv_from(
             };
             let include_path_string = include_path.to_string_lossy().into_owned();
 
-            if let Ok(file_content) = read_file(&include_path.as_path()) {
+            if let Ok(file_content) = read_file(include_path.as_path()) {
                 Ok(shaderc::ResolvedInclude {
                     content: file_content,
                     resolved_name: include_path_string,
