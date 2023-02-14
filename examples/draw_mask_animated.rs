@@ -2,13 +2,13 @@ use notan::{draw::*, prelude::*};
 
 fn main() {
     notan::init()
-        .add_config(WindowConfig::new().size(500, 500))
+        .add_config(WindowConfig::new().set_size(500, 500))
         .add_config(DrawConfig)
         .draw(|app: &mut App, gfx: &mut Graphics| {
             let mut draw = gfx.create_draw();
             draw.clear(Color::BLACK);
 
-            let elapsed = app.timer.time_since_init();
+            let elapsed = app.timer.elapsed_f32();
             let pulse_progress = ((elapsed % 4.) - 2.).abs() / 2.; // 4s roundtrip pulse
             let radius = 200. * (1. - pulse_progress);
 
