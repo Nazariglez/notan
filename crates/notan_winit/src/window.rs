@@ -18,6 +18,7 @@ pub struct WinitWindowBackend {
     high_dpi: bool,
     is_always_on_top: bool,
     mouse_passthrough: bool,
+    title: String,
 }
 
 impl WindowBackend for WinitWindowBackend {
@@ -167,6 +168,15 @@ impl WindowBackend for WinitWindowBackend {
     fn visible(&self) -> bool {
         self.visible
     }
+
+    fn set_title(&mut self, title: &str) {
+        self.title = title.to_string();
+        self.window().set_title(&self.title);
+    }
+
+    fn title(&self) -> &str {
+        &self.title
+    }
 }
 
 fn load_icon(path: &Option<PathBuf>) -> Option<Icon> {
@@ -239,16 +249,26 @@ impl WinitWindowBackend {
             gl_manager.set_fullscreen(config.fullscreen);
         }
 
+        let WindowConfig {
+            lazy_loop,
+            visible,
+            high_dpi,
+            title,
+            mouse_passthrough,
+            ..
+        } = config;
+
         Ok(Self {
             gl_manager,
             scale_factor,
-            lazy: config.lazy_loop,
+            lazy: lazy_loop,
             cursor: CursorIcon::Default,
             captured: false,
-            visible: config.visible,
-            high_dpi: config.high_dpi,
+            visible,
+            high_dpi,
             is_always_on_top: false,
-            mouse_passthrough: config.mouse_passthrough,
+            mouse_passthrough,
+            title,
         })
     }
 

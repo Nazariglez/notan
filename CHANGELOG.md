@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+# UNRELEASED
+- Added `WindowBackend::set_title` and `WindowBackend::title` to change or get the title at any time.
+
 ## v0.9.3 - 12/02/2023
 
 - Added `WindowBackend::screen_size` to get the screen's resolution size.
