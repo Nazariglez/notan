@@ -136,12 +136,19 @@ impl DrawProcess for TextSection<'_> {
             flip,
         } = self;
 
+        #[cfg(debug_assertions)]
+        {
+            if size < 1.0 {
+                log::warn!("Text must use a size bigger or equal than 1.0");
+            }
+        }
+
         let color = color.with_alpha(color.a * alpha);
         let count = text.chars().filter(|c| !c.is_whitespace()).count();
 
         let g_text = Text::new(text)
             .with_color(color.rgba())
-            .with_scale(size)
+            .with_scale(size.max(1.0))
             .with_font_id(font);
 
         let mut section = Section::default()

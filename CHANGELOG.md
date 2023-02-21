@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 # UNRELEASED
 - Added `WindowBackend::set_title` and `WindowBackend::title` to change or get the title at any time.
 - Improved stencil clearing when setting a mask on the draw api at the end of the pass.
+- Fix panic using Draw API to draw text with `max_width` and `size` as 0. 
 
 ## v0.9.3 - 12/02/2023
 
