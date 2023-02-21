@@ -96,7 +96,7 @@ fn paint_batch(
         manager.drawing_mask = true;
     } else if !b.is_mask && manager.drawing_mask {
         manager.drawing_mask = false;
-        manager.renderer.begin(Some(&Default::default()));
+        manager.renderer.begin(None);
     }
 
     match &b.typ {
