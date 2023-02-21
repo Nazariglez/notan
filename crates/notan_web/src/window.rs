@@ -66,6 +66,8 @@ pub struct WebWindowBackend {
     pub(crate) captured: Rc<RefCell<bool>>,
 
     mouse_passthrough: bool,
+
+    title: String,
 }
 
 impl WebWindowBackend {
@@ -122,6 +124,8 @@ impl WebWindowBackend {
         let lazy = Rc::new(RefCell::new(config.lazy_loop));
         let frame_requested = Rc::new(RefCell::new(false));
 
+        let title = config.title.clone();
+
         let win = Self {
             window,
             document,
@@ -160,6 +164,7 @@ impl WebWindowBackend {
             visible,
 
             mouse_passthrough,
+            title,
         };
 
         win.init()
@@ -381,6 +386,14 @@ impl WindowBackend for WebWindowBackend {
 
     fn visible(&self) -> bool {
         self.visible
+    }
+
+    fn set_title(&mut self, title: &str) {
+        self.title = title.to_string();
+    }
+
+    fn title(&self) -> &str {
+        &self.title
     }
 }
 

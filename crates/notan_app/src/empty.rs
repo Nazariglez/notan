@@ -16,6 +16,7 @@ use notan_audio::AudioBackend;
 
 #[derive(Default)]
 pub struct EmptyWindowBackend {
+    title: String,
     size: (i32, i32),
     position: (i32, i32),
     is_fullscreen: bool,
@@ -111,6 +112,14 @@ impl WindowBackend for EmptyWindowBackend {
 
     fn visible(&self) -> bool {
         self.visible
+    }
+
+    fn set_title(&mut self, title: &str) {
+        self.title = title.to_string();
+    }
+
+    fn title(&self) -> &str {
+        &self.title
     }
 }
 
