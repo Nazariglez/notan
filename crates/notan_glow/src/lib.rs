@@ -4,6 +4,9 @@ use notan_graphics::prelude::*;
 use notan_graphics::DeviceBackend;
 use std::any::Any;
 
+#[cfg(target_os = "ios")]
+use std::num::NonZeroU32;
+
 mod buffer;
 mod pipeline;
 mod render_target;
@@ -48,6 +51,7 @@ pub struct GlowBackend {
     drawing_srgba: bool,
     drawing_to_render_texture: bool,
     render_texture_mipmaps: bool,
+    default_gl_framebuffer: Option<Framebuffer>,
 }
 
 impl GlowBackend {
@@ -95,6 +99,16 @@ impl GlowBackend {
             }
         };
 
+        let mut default_gl_framebuffer: Option<Framebuffer> = None;
+        #[cfg(target_os = "ios")]
+        {
+            let default_gl_framebuffer_binding = unsafe {
+                gl.get_parameter_i32(glow::FRAMEBUFFER_BINDING) as u32
+            };
+            let non_zero_u32 = NonZeroU32::new(default_gl_framebuffer_binding).unwrap();
+            let framebuffer = NativeFramebuffer(non_zero_u32);
+            default_gl_framebuffer = Some(framebuffer);
+        }
         let stats = GpuStats::default();
 
         Ok(Self {
@@ -118,6 +132,7 @@ impl GlowBackend {
             drawing_srgba: false,
             drawing_to_render_texture: false,
             render_texture_mipmaps: false,
+            default_gl_framebuffer,
         })
     }
 }
@@ -173,11 +188,8 @@ impl GlowBackend {
                 (rt.size.0, rt.size.1, 1.0)
             }
             None => {
-                #[cfg(not(target_os = "ios"))]
-                {
-                    unsafe {
-                        self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
-                    }
+                unsafe {
+                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, self.default_gl_framebuffer);
                 }
                 self.drawing_to_render_texture = false;
                 self.render_texture_mipmaps = false;
@@ -234,8 +246,7 @@ impl GlowBackend {
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
             self.gl.bind_buffer(glow::UNIFORM_BUFFER, None);
             self.gl.bind_vertex_array(None);
-            #[cfg(not(target_os = "ios"))]
-            self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+            self.gl.bind_framebuffer(glow::FRAMEBUFFER, self.default_gl_framebuffer);
         }
 
         self.using_indices = None;
@@ -644,7 +655,7 @@ impl DeviceBackend for GlowBackend {
                 let can_read = status == glow::FRAMEBUFFER_COMPLETE;
 
                 let clean = || {
-                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
+                    self.gl.bind_framebuffer(glow::FRAMEBUFFER, self.default_gl_framebuffer);
                     self.gl.delete_framebuffer(fbo);
                 };
 

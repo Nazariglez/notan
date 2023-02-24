@@ -14,7 +14,7 @@ description = "Provides support for OpenGL, OpenGL ES and WebGL for Notan"
 [dependencies]
 log = "0.4.17"
 bytemuck = "1.13.0"
-glow = "0.11.2"
+glow = "0.12.1"
 notan_graphics = { path= "../notan_graphics", version = "0.9.2" }
 hashbrown = "0.13.2"
 image = { version = "0.24.5", default-features = false, features = ["jpeg", "png"] }
