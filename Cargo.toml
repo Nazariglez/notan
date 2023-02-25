@@ -1,6 +1,6 @@
 [package]
 name = "notan"
-version = "0.9.3"
+version = "0.9.4"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 categories = ["graphics", "rendering", "wasm", "gui", "multimedia"]
@@ -19,22 +19,22 @@ features = ["default", "glyph", "egui", "text", "extra", "audio", "links", "drop
 lto = true
 
 [dependencies]
-notan_core = { path = "crates/notan_core", version = "0.9.3" }
-notan_input = { path = "crates/notan_input", version = "0.9.3" }
-notan_app = { path = "crates/notan_app", version = "0.9.3" }
-notan_macro = { path = "crates/notan_macro", version = "0.9.3" }
-notan_math = { path = "crates/notan_math", version = "0.9.3" }
-notan_graphics = { path = "crates/notan_graphics", version = "0.9.3" }
-notan_utils = { path = "crates/notan_utils", version = "0.9.3" }
-notan_log = { path = "crates/notan_log", version = "0.9.3", optional = true }
-notan_glyph = { path = "crates/notan_glyph", version = "0.9.3", optional = true }
-notan_draw = { path = "crates/notan_draw", version = "0.9.3", optional = true }
-notan_backend = { path = "crates/notan_backend", version = "0.9.3", optional = true }
-notan_egui = { path = "crates/notan_egui", version = "0.9.3", optional = true }
-notan_text = { path = "crates/notan_text", version = "0.9.3", optional = true }
-notan_audio = { path = "crates/notan_audio", version = "0.9.3", optional = true }
-notan_extra = { path = "crates/notan_extra", version = "0.9.3", optional = true }
-notan_random = { path = "crates/notan_random", version = "0.9.3", optional = true }
+notan_core = { path = "crates/notan_core", version = "0.9.4" }
+notan_input = { path = "crates/notan_input", version = "0.9.4" }
+notan_app = { path = "crates/notan_app", version = "0.9.4" }
+notan_macro = { path = "crates/notan_macro", version = "0.9.4" }
+notan_math = { path = "crates/notan_math", version = "0.9.4" }
+notan_graphics = { path = "crates/notan_graphics", version = "0.9.4" }
+notan_utils = { path = "crates/notan_utils", version = "0.9.4" }
+notan_log = { path = "crates/notan_log", version = "0.9.4", optional = true }
+notan_glyph = { path = "crates/notan_glyph", version = "0.9.4", optional = true }
+notan_draw = { path = "crates/notan_draw", version = "0.9.4", optional = true }
+notan_backend = { path = "crates/notan_backend", version = "0.9.4", optional = true }
+notan_egui = { path = "crates/notan_egui", version = "0.9.4", optional = true }
+notan_text = { path = "crates/notan_text", version = "0.9.4", optional = true }
+notan_audio = { path = "crates/notan_audio", version = "0.9.4", optional = true }
+notan_extra = { path = "crates/notan_extra", version = "0.9.4", optional = true }
+notan_random = { path = "crates/notan_random", version = "0.9.4", optional = true }
 
 [workspace]
 members = ["crates/*"]
