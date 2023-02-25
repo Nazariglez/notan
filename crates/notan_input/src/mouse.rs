@@ -34,16 +34,6 @@ impl Mouse {
     }
 
     #[inline]
-    #[doc(hidden)]
-    #[deprecated]
-    #[allow(deprecated)]
-    /// Returns a local position
-    pub fn local_position(&self, m: Mat3) -> (f32, f32) {
-        let pos = notan_math::mat3_screen_to_local(self.x, self.y, m);
-        (pos.x, pos.y)
-    }
-
-    #[inline]
     /// Returns true if the button was released on the last frame
     pub fn was_released(&self, btn: MouseButton) -> bool {
         self.released.contains(&btn)
