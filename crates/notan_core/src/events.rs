@@ -6,8 +6,9 @@ use std::path::PathBuf;
 use crate::keyboard::KeyCode;
 use crate::mouse::MouseButton;
 
-#[derive(Debug, PartialEq, Clone)]
 /// Application events usually received from the user
+#[derive(Debug, PartialEq, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Event {
     /// When the app is about to close
     Exit,
@@ -88,17 +89,19 @@ pub enum Event {
 
 #[cfg(feature = "drop_files")]
 #[derive(Default, Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DroppedFile {
     pub path: Option<PathBuf>,
     pub name: String,
     pub mime: String,
 
     #[cfg(target_arch = "wasm32")]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub file: Option<web_sys::File>,
 }
 
-#[derive(Debug, Clone, Default)]
 /// Event iterator queue
+#[derive(Debug, Clone, Default)]
 pub struct EventIterator(VecDeque<Event>);
 
 impl EventIterator {

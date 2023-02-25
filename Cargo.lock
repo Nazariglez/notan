@@ -1062,6 +1062,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "12f597d56c1bd55a811a1be189459e8fad2bbc272616375602443bdfb37fa774"
 dependencies = [
  "bytemuck",
+ "serde",
 ]
 
 [[package]]
@@ -1230,6 +1231,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
  "ahash",
+ "serde",
 ]
 
 [[package]]
@@ -1763,6 +1765,7 @@ dependencies = [
  "notan_utils",
  "parking_lot",
  "platter2",
+ "serde",
  "wasm-bindgen-futures",
  "web-sys",
 ]
@@ -1786,6 +1789,7 @@ dependencies = [
 name = "notan_core"
 version = "0.9.3"
 dependencies = [
+ "serde",
  "web-sys",
 ]
 
@@ -1873,6 +1877,7 @@ dependencies = [
  "log",
  "notan_core",
  "notan_math",
+ "serde",
 ]
 
 [[package]]
@@ -1907,6 +1912,7 @@ name = "notan_math"
 version = "0.9.3"
 dependencies = [
  "glam",
+ "serde",
 ]
 
 [[package]]
