@@ -26,6 +26,7 @@ indexmap = "1.9.2"
 futures = "0.3.25"
 parking_lot = "0.12.1"
 bytemuck = "1.13.0"
+serde = { version = "1", optional = true, features = ["serde_derive"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 platter2 = "0.1.6"

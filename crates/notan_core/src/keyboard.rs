@@ -1,7 +1,8 @@
-#[derive(Debug, Hash, Ord, PartialOrd, PartialEq, Eq, Clone, Copy)]
-#[repr(u32)]
 /// KeyCode represents the symbolic name of the keyboard keys pressed
 /// This enum code comes from `winit` just adding the Unknown key for non-compatible keys between platforms
+#[derive(Debug, Hash, Ord, PartialOrd, PartialEq, Eq, Clone, Copy)]
+#[repr(u32)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum KeyCode {
     /// The '1' key over the letters.
     Key1,

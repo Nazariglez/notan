@@ -1,4 +1,5 @@
 #[derive(Default, Clone, Copy, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Rect {
     pub x: f32,
     pub y: f32,
