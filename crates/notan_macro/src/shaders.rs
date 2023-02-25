@@ -4,7 +4,7 @@ use quote::quote;
 use spirv_cross::{glsl, spirv, ErrorCode};
 use std::fs::read_to_string;
 use std::io::{Cursor, Read};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{io, slice};
 
 #[derive(Debug, Clone, Copy)]
@@ -34,6 +34,11 @@ impl From<ShaderType> for shaderc::ShaderKind {
     }
 }
 
+fn get_root_path() -> PathBuf {
+    let root = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".into());
+    Path::new(&root).to_path_buf()
+}
+
 fn read_file(full_path: &Path) -> Result<String, String> {
     if !full_path.is_file() {
         return Err(format!("File {} was not found.", full_path.display()));
@@ -43,15 +48,17 @@ fn read_file(full_path: &Path) -> Result<String, String> {
 }
 
 pub(crate) fn spirv_from_file(relative_path: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
-    let root = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".into());
-    let root_path = Path::new(&root);
+    let root_path = get_root_path();
     let full_path = root_path.join(Path::new(relative_path));
-
-    spirv_from(&read_file(&full_path)?, typ)
+    spirv_from(&read_file(&full_path)?, typ, Some(full_path))
 }
 
 #[cfg(use_glsl_to_spirv)]
-pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
+pub(crate) fn spirv_from(
+    source: &str,
+    typ: ShaderType,
+    _file_path: Option<PathBuf>,
+) -> Result<Vec<u8>, String> {
     let source = source.trim();
     let mut spirv_output = glsl_to_spirv::compile(source, typ.into())
         .unwrap_or_else(|e| panic!("Invalid {typ:#?} shader: \n{e}"));
@@ -64,13 +71,50 @@ pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, Strin
 }
 
 #[cfg(use_shaderc)]
-pub(crate) fn spirv_from(source: &str, typ: ShaderType) -> Result<Vec<u8>, String> {
+pub(crate) fn spirv_from(
+    source: &str,
+    typ: ShaderType,
+    file_path: Option<PathBuf>,
+) -> Result<Vec<u8>, String> {
+    use shaderc::IncludeType;
+
     let source = source.trim();
     let compiler = shaderc::Compiler::new().unwrap();
-    let options = shaderc::CompileOptions::new().unwrap();
+    let mut options = shaderc::CompileOptions::new().unwrap();
+
+    // Resolve `#include` directives
+    if let Some(file_path) = file_path.as_ref() {
+        let file_dir = file_path.parent().unwrap();
+
+        options.set_include_callback(|name, type_, _filename, _include_depth| {
+            let include_path = match type_ {
+                IncludeType::Relative => file_dir.join(name),
+                IncludeType::Standard => get_root_path().join(name),
+            };
+            let include_path_string = include_path.to_string_lossy().into_owned();
+
+            if let Ok(file_content) = read_file(include_path.as_path()) {
+                Ok(shaderc::ResolvedInclude {
+                    content: file_content,
+                    resolved_name: include_path_string,
+                })
+            } else {
+                Err(format!(
+                    "Failed to include file: \"{}\" (from \"{}\")",
+                    name, include_path_string
+                ))
+            }
+        });
+    }
+
+    let input_file_name = file_path
+        .as_ref()
+        .and_then(|f| f.file_name())
+        .and_then(|f| f.to_str())
+        .unwrap_or("shader.glsl");
 
     let spirv_output = compiler
-        .compile_into_spirv(source, typ.into(), "shader.glsl", "main", Some(&options))
+        .compile_into_spirv(source, typ.into(), input_file_name, "main", Some(&options))
         .unwrap_or_else(|e| panic!("Invalid {typ:#?} shader: \n{e}"));
 
     let mut spirv = vec![];

@@ -3,6 +3,7 @@ use notan_core::events::Event;
 
 /// Represent a pointer event
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 struct Pointer {
     /// Pointer index
     _index: u8,
@@ -14,8 +15,9 @@ struct Pointer {
     y: f32,
 }
 
-#[derive(Default)]
 /// Represent the touches data
+#[derive(Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Touch {
     /// pressed touches
     pub pressed: HashSet<u8>,

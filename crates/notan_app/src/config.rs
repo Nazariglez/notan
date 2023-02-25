@@ -5,6 +5,7 @@ use crate::builder::{AppBuilder, BuildConfig};
 
 /// Builder configuration for the window options
 #[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WindowConfig {
     /// Window's title
     /// `Web: no-op`

@@ -1,6 +1,6 @@
 [package]
 name = "notan_app"
-version = "0.9.3"
+version = "0.9.4"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -14,18 +14,19 @@ description = "Provides the core API for Notan"
 [dependencies]
 log = "0.4.17"
 hashbrown = "0.13.2"
-notan_core = { path = "../notan_core", version = "0.9.3" }
-notan_input = { path = "../notan_input", version = "0.9.3" }
-notan_math = { path = "../notan_math", version = "0.9.3" }
-notan_macro = { path = "../notan_macro", version = "0.9.3" }
-notan_graphics = { path = "../notan_graphics", version = "0.9.3" }
-notan_utils = { path = "../notan_utils", version = "0.9.3" }
-notan_audio = { path = "../notan_audio", version = "0.9.3", optional = true }
+notan_core = { path = "../notan_core", version = "0.9.4" }
+notan_input = { path = "../notan_input", version = "0.9.4" }
+notan_math = { path = "../notan_math", version = "0.9.4" }
+notan_macro = { path = "../notan_macro", version = "0.9.4" }
+notan_graphics = { path = "../notan_graphics", version = "0.9.4" }
+notan_utils = { path = "../notan_utils", version = "0.9.4" }
+notan_audio = { path = "../notan_audio", version = "0.9.4", optional = true }
 downcast-rs = "1.2.0"
 indexmap = "1.9.2"
 futures = "0.3.25"
 parking_lot = "0.12.1"
 bytemuck = "1.13.0"
+serde = { version = "1", optional = true, features = ["serde_derive"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 platter2 = "0.1.6"

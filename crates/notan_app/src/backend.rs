@@ -188,6 +188,12 @@ pub trait WindowBackend {
     /// Returns the window's size
     fn size(&self) -> (i32, i32);
 
+    /// Set the window's title
+    fn set_title(&mut self, title: &str);
+
+    /// Returns current windows title
+    fn title(&self) -> &str;
+
     /// Returns if the window is visible
     fn visible(&self) -> bool;
 

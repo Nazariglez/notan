@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## v0.9.4 - 26/02/2023
+
+- Added `WindowBackend::set_title` and `WindowBackend::title` to change or get the title at any time.
+- Improved stencil clearing when setting a mask on the draw api at the end of the pass.
+- Fix panic using Draw API to draw text with `max_width` and `size` as 0. 
+- Fix `debug_assert` in `Device::inner_read_pixels`.
+- Added support for `include` directives using `shaderc`.
+- Added optional feature `serde` to serialize/deserialize some core types.
+
 ## v0.9.3 - 12/02/2023
 
 - Added `WindowBackend::screen_size` to get the screen's resolution size.
