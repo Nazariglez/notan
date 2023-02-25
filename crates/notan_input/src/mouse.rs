@@ -2,7 +2,7 @@ use hashbrown::{HashMap, HashSet};
 use notan_core::events::Event;
 
 pub use notan_core::mouse::MouseButton;
-use notan_math::{Mat3, Vec2};
+use notan_math::Vec2;
 
 #[derive(Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
