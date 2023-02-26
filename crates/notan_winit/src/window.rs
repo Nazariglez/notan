@@ -6,7 +6,9 @@ use notan_app::{CursorIcon, WindowBackend};
 use winit::dpi::{LogicalSize, PhysicalPosition};
 use winit::event_loop::EventLoop;
 use winit::window::Fullscreen::Borderless;
-use winit::window::{CursorGrabMode, CursorIcon as WCursorIcon, Icon, Window, WindowBuilder};
+use winit::window::{
+    CursorGrabMode, CursorIcon as WCursorIcon, Icon, Window, WindowBuilder, WindowLevel,
+};
 
 pub struct WinitWindowBackend {
     pub(crate) gl_manager: GlManager,
@@ -80,7 +82,12 @@ impl WindowBackend for WinitWindowBackend {
     }
 
     fn set_always_on_top(&mut self, enabled: bool) {
-        self.window().set_always_on_top(enabled);
+        let level = if enabled {
+            WindowLevel::AlwaysOnTop
+        } else {
+            WindowLevel::Normal
+        };
+        self.window().set_window_level(level);
         self.is_always_on_top = enabled;
     }
 
@@ -198,13 +205,18 @@ fn load_icon(path: &Option<PathBuf>) -> Option<Icon> {
 
 impl WinitWindowBackend {
     pub(crate) fn new(config: WindowConfig, event_loop: &EventLoop<()>) -> Result<Self, String> {
+        let level = if config.always_on_top {
+            WindowLevel::AlwaysOnTop
+        } else {
+            WindowLevel::Normal
+        };
         let mut builder = WindowBuilder::new()
             .with_title(&config.title)
             .with_inner_size(LogicalSize::new(config.width, config.height))
             .with_maximized(config.maximized)
             .with_resizable(config.resizable)
             .with_transparent(config.transparent)
-            .with_always_on_top(config.always_on_top)
+            .with_window_level(level)
             .with_visible(config.visible)
             .with_decorations(config.decorations)
             .with_window_icon(load_icon(&config.window_icon_path));

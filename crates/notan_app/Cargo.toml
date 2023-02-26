@@ -23,7 +23,7 @@ notan_utils = { path = "../notan_utils", version = "0.9.4" }
 notan_audio = { path = "../notan_audio", version = "0.9.4", optional = true }
 downcast-rs = "1.2.0"
 indexmap = "1.9.2"
-futures = "0.3.25"
+futures = "0.3.26"
 parking_lot = "0.12.1"
 bytemuck = "1.13.0"
 serde = { version = "1", optional = true, features = ["serde_derive"] }
@@ -32,10 +32,10 @@ serde = { version = "1", optional = true, features = ["serde_derive"] }
 platter2 = "0.1.6"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = { version = "0.3.60", optional = true }
-wasm-bindgen-futures = { version = "0.4.33", optional = true }
-futures-util = { version = "0.3.25", optional = true }
-js-sys = { version = "0.3.60", optional = true }
+web-sys = { version = "0.3.61", optional = true }
+wasm-bindgen-futures = { version = "0.4.34", optional = true }
+futures-util = { version = "0.3.26", optional = true }
+js-sys = { version = "0.3.61", optional = true }
 platter2 = { version = "0.1.6", features = ["web-sys"] }
 
 [features]
