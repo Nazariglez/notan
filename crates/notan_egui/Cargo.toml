@@ -22,3 +22,5 @@ notan_macro = { path = "../notan_macro", version = "0.9.4" }
 [features]
 links = []
 drop_files = []
+glsl-to-spirv = ["notan_macro/glsl-to-spirv"]
+shaderc = ["notan_macro/shaderc"]
