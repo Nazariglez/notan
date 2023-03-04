@@ -1,5 +1,6 @@
 use crate::instance::GlyphInstance;
 use notan_app::graphics::*;
+use notan_macro::*;
 use notan_math::Mat4;
 use notan_math::Rect;
 

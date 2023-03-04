@@ -19,3 +19,7 @@ log = "0.4.17"
 lazy_static = "1.4.0"
 parking_lot = "0.12.1"
 hashbrown = "0.13.2"
+
+[features]
+glsl-to-spirv = ["notan_glyph/glsl-to-spirv"]
+shaderc = ["notan_glyph/shaderc"]
