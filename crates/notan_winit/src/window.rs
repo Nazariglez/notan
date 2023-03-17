@@ -188,21 +188,41 @@ impl WindowBackend for WinitWindowBackend {
     }
 }
 
-fn load_icon(path: &Option<PathBuf>) -> Option<Icon> {
-    match path {
-        Some(path) => {
-            let (icon_rgba, icon_width, icon_height) = {
-                let image = image::open(path)
-                    .expect("Failed to open icon path")
-                    .into_rgba8();
-                let (width, height) = image.dimensions();
-                let rgba = image.into_raw();
-                (rgba, width, height)
-            };
-            Some(Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon"))
+fn load_icon(path: &Option<PathBuf>, data: &Option<&'static [u8]>) -> Option<Icon> {
+    match (path, data) {
+        (Some(path), None) => Some(load_icon_from_path(path)), // Handle Path
+        (None, Some(data)) => Some(load_icon_from_data(data)), // Handle Data
+        (Some(_), Some(data)) => {
+            // Handle User Passing Both
+            log::warn!("Creating Icon from Data. You have set a path and data for your Icon, please choose only one!");
+            Some(load_icon_from_data(data))
         }
-        None => None,
+        (None, None) => None,
     }
+}
+
+fn load_icon_from_path(path: &PathBuf) -> Icon {
+    let (icon_rgba, icon_width, icon_height) = {
+        let image = image::open(path)
+            .expect("Failed to open icon path")
+            .into_rgba8();
+        let (width, height) = image.dimensions();
+        let rgba = image.into_raw();
+        (rgba, width, height)
+    };
+    Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon")
+}
+
+fn load_icon_from_data(data: &'static [u8]) -> Icon {
+    let icon_data = image::load_from_memory(data)
+        .expect("Failed to Create Icon from Data")
+        .into_rgba8();
+
+    let icon_width = icon_data.width();
+    let icon_height = icon_data.height();
+    let icon_rgba = icon_data.into_raw();
+
+    Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon")
 }
 
 impl WinitWindowBackend {
@@ -216,12 +236,18 @@ impl WinitWindowBackend {
             .with_always_on_top(config.always_on_top)
             .with_visible(config.visible)
             .with_decorations(config.decorations)
-            .with_window_icon(load_icon(&config.window_icon_path));
+            .with_window_icon(load_icon(
+                &config.window_icon_path,
+                &config.window_icon_data,
+            ));
 
         #[cfg(target_os = "windows")]
         {
             use winit::platform::windows::WindowBuilderExtWindows;
-            builder = builder.with_taskbar_icon(load_icon(&config.taskbar_icon_path));
+            builder = builder.with_taskbar_icon(load_icon(
+                &config.taskbar_icon_path,
+                &config.taskbar_icon_data,
+            ));
         }
 
         #[cfg(target_os = "macos")]

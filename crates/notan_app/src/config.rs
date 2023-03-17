@@ -70,11 +70,17 @@ pub struct WindowConfig {
     /// Use or create the canvas with this id. Only Web.
     pub canvas_id: String,
 
-    /// Window icon file
+    /// Optinal Window icon filepath
     pub window_icon_path: Option<PathBuf>,
 
-    /// Task bar icon file
+    /// Optinal Window icon filedata
+    pub window_icon_data: Option<&'static [u8]>,
+
+    /// Optinal Task bar icon filepath
     pub taskbar_icon_path: Option<PathBuf>,
+
+    /// Optinal Task bar icon filedata
+    pub taskbar_icon_data: Option<&'static [u8]>,
 }
 
 impl Default for WindowConfig {
@@ -99,7 +105,9 @@ impl Default for WindowConfig {
             mouse_passthrough: false,
             canvas_id: String::from("notan_canvas"),
             window_icon_path: None,
+            window_icon_data: None,
             taskbar_icon_path: None,
+            taskbar_icon_data: None,
         }
     }
 }
@@ -219,9 +227,21 @@ impl WindowConfig {
         self
     }
 
+    /// Window icon data
+    pub fn set_window_icon_data(mut self, window_icon_data: Option<&'static [u8]>) -> Self {
+        self.window_icon_data = window_icon_data;
+        self
+    }
+
     /// Task bar icon path
     pub fn taskbar_icon(mut self, taskbar_icon_path: Option<PathBuf>) -> Self {
         self.taskbar_icon_path = taskbar_icon_path;
+        self
+    }
+
+    /// Task bar icon data
+    pub fn set_taskbar_icon_data(mut self, taskbar_icon_data: Option<&'static [u8]>) -> Self {
+        self.taskbar_icon_data = taskbar_icon_data;
         self
     }
 }
