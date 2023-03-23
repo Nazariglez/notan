@@ -7,7 +7,6 @@ pub(crate) type TextureKey = <glow::Context as glow::HasContext>::Texture;
 pub(crate) struct InnerTexture {
     pub texture: TextureKey,
     pub size: (u32, u32),
-    pub is_srgba: bool,
     pub use_mipmaps: bool,
 }
 
