@@ -44,6 +44,7 @@ struct AtlasFrame {
     sprite_source_size: AtlasRect,
     #[serde(alias = "sourceSize")]
     source_size: AtlasSize,
+    #[serde(default)]
     pivot: AtlasPoint,
 }
 
@@ -61,6 +62,12 @@ struct AtlasMeta {
 struct AtlasPoint {
     x: f32,
     y: f32,
+}
+
+impl Default for AtlasPoint {
+    fn default() -> Self {
+        Self { x: 0.5, y: 0.5 }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
