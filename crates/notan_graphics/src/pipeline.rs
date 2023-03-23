@@ -434,16 +434,11 @@ impl Default for StencilOptions {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum DrawPrimitive {
     Lines,
     LineStrip,
+    #[default]
     Triangles,
     TriangleStrip,
-}
-
-impl Default for DrawPrimitive {
-    fn default() -> Self {
-        DrawPrimitive::Triangles
-    }
 }
