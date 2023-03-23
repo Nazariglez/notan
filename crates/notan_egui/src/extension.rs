@@ -44,21 +44,19 @@ const EGUI_VERTEX: ShaderSource = notan_macro::vertex_shader! {
     "#
 };
 
+#[cfg(target_arch = "wasm32")]
 //language=glsl
 const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
     r#"
     #version 450
-    
-    #ifdef GL_ES
-        precision mediump float;
-    #endif
+    precision mediump float;
 
     layout(location = 0) in vec4 v_rgba_in_gamma;
     layout(location = 1) in vec2 v_tc;
 
-    layout(binding = 0) uniform sampler2D u_sampler;
-
     layout(location = 0) out vec4 color;
+
+    layout(binding = 0) uniform sampler2D u_sampler;
 
     // 0-1 sRGB gamma  from  0-1 linear
     vec3 srgb_gamma_from_linear(vec3 rgb) {
@@ -74,11 +72,45 @@ const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
     }
 
     void main() {
-    #if SRGB_TEXTURES
         vec4 texture_in_gamma = srgba_gamma_from_linear(texture(u_sampler, v_tc));
-    #else
-        vec4 texture_in_gamma = texture(u_sampler, v_tc);
+        // Multiply vertex color with texture color (in linear space).
+        color = v_rgba_in_gamma * texture_in_gamma;
+    }
+"#
+};
+
+#[cfg(not(target_arch = "wasm32"))]
+//language=glsl
+const EGUI_FRAGMENT: ShaderSource = notan_macro::fragment_shader! {
+    r#"
+    #version 450
+    
+    #ifdef GL_ES
+        precision mediump float;
     #endif
+
+    layout(location = 0) in vec4 v_rgba_in_gamma;
+    layout(location = 1) in vec2 v_tc;
+
+    layout(location = 0) out vec4 color;
+
+    layout(binding = 0) uniform sampler2D u_sampler;
+
+    // 0-1 sRGB gamma  from  0-1 linear
+    vec3 srgb_gamma_from_linear(vec3 rgb) {
+        bvec3 cutoff = lessThan(rgb, vec3(0.0031308));
+        vec3 lower = rgb * vec3(12.92);
+        vec3 higher = vec3(1.055) * pow(rgb, vec3(1.0 / 2.4)) - vec3(0.055);
+        return mix(higher, lower, vec3(cutoff));
+    }
+
+    // 0-1 sRGBA gamma  from  0-1 linear
+    vec4 srgba_gamma_from_linear(vec4 rgba) {
+        return vec4(srgb_gamma_from_linear(rgba.rgb), rgba.a);
+    }
+
+    void main() {
+        vec4 texture_in_gamma = texture(u_sampler, v_tc);
         // Multiply vertex color with texture color (in linear space).
         color = v_rgba_in_gamma * texture_in_gamma;
     }
@@ -123,6 +155,7 @@ impl EguiExtension {
                 BlendFactor::InverseDestinationAlpha,
                 BlendFactor::One,
             ))
+            .with_srgb_space(cfg!(target_arch = "wasm32"))
             .with_cull_mode(CullMode::None)
             .with_texture_location(0, "u_sampler")
             .build()?;

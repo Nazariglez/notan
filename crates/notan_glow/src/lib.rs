@@ -45,7 +45,6 @@ pub struct GlowBackend {
     limits: Limits,
     stats: GpuStats,
     current_uniforms: Vec<UniformLocation>,
-    drawing_srgba: bool,
     drawing_to_render_texture: bool,
     render_texture_mipmaps: bool,
 }
@@ -86,7 +85,14 @@ impl GlowBackend {
     }
 
     fn from(gl: Context, api: &str) -> Result<Self, String> {
-        log::info!("Using {} graphics api", api);
+        unsafe {
+            let version = gl.get_parameter_string(glow::VERSION);
+            let renderer = gl.get_parameter_string(glow::RENDERER);
+            let vendor = gl.get_parameter_string(glow::VENDOR);
+            log::info!(
+                "OpenGL Info: \nVersion: {version}\nRenderer: {renderer}\nVendor: {vendor}\n---"
+            );
+        }
 
         let limits = unsafe {
             Limits {
@@ -115,7 +121,6 @@ impl GlowBackend {
             limits,
             stats,
             current_uniforms: vec![],
-            drawing_srgba: false,
             drawing_to_render_texture: false,
             render_texture_mipmaps: false,
         })
@@ -127,30 +132,6 @@ impl GlowBackend {
     fn clear(&mut self, color: &Option<Color>, depth: &Option<f32>, stencil: &Option<i32>) {
         clear(&self.gl, color, depth, stencil);
         self.stats.misc += 1;
-    }
-
-    #[inline]
-    fn enable_srgba(&mut self) {
-        if self.drawing_srgba {
-            return;
-        }
-
-        self.drawing_srgba = true;
-        unsafe {
-            self.gl.enable(glow::FRAMEBUFFER_SRGB);
-        }
-    }
-
-    #[inline]
-    fn disable_srgba(&mut self) {
-        if !self.drawing_srgba {
-            return;
-        }
-
-        self.drawing_srgba = false;
-        unsafe {
-            self.gl.disable(glow::FRAMEBUFFER_SRGB);
-        }
     }
 
     fn begin(
@@ -225,7 +206,6 @@ impl GlowBackend {
             if self.drawing_to_render_texture && self.render_texture_mipmaps {
                 self.gl.generate_mipmap(glow::TEXTURE_2D);
             }
-            self.disable_srgba();
             self.gl.disable(glow::SCISSOR_TEST);
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
@@ -291,7 +271,7 @@ impl GlowBackend {
 
     fn bind_texture(&mut self, id: u64, slot: u32, location: u32) {
         if let Some(pip) = self.pipelines.get(&self.current_pipeline) {
-            let is_srgba = if let Some(texture) = self.textures.get(&id) {
+            if let Some(texture) = self.textures.get(&id) {
                 #[cfg(debug_assertions)]
                 if !pip.texture_locations.contains_key(&location) {
                     log::warn!("Uniform location {} for texture {} should be declared when the pipeline is created.", location, id);
@@ -302,15 +282,6 @@ impl GlowBackend {
                     .get(&location)
                     .unwrap_or_else(|| self.get_texture_uniform_loc(&location));
                 texture.bind(&self.gl, slot, loc);
-                texture.is_srgba
-            } else {
-                false
-            };
-
-            if is_srgba {
-                self.enable_srgba();
-            } else {
-                self.disable_srgba();
             }
         }
     }
