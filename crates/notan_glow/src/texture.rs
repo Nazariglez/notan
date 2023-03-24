@@ -13,12 +13,10 @@ pub(crate) struct InnerTexture {
 impl InnerTexture {
     pub fn new(texture: TextureKey, info: &TextureInfo) -> Result<Self, String> {
         let size = (info.width, info.height);
-        let is_srgba = info.format == TextureFormat::SRgba8;
         let use_mipmaps = info.mipmap_filter.is_some();
         Ok(Self {
             texture,
             size,
-            is_srgba,
             use_mipmaps,
         })
     }
