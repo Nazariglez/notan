@@ -168,12 +168,16 @@ impl EguiExtension {
             .with_data(&[0.0; 2])
             .build()?;
 
+        let fonts_texture = create_empty_texture(gfx, 0, 0)?;
+        let mut textures = HashMap::new();
+        textures.insert(egui::TextureId::default(), fonts_texture);
+
         Ok(Self {
             pipeline,
             vbo,
             ebo,
             ubo,
-            textures: HashMap::new(),
+            textures,
         })
     }
 
@@ -199,8 +203,8 @@ impl EguiExtension {
         if let Some([x, y]) = delta.pos {
             let texture = self
                 .textures
-                .get_mut(&id)
-                .ok_or_else(|| format!("Failed to find EGUI texture {id:?}"))?;
+                .entry(id)
+                .or_insert_with(|| create_empty_texture(device, width as _, height as _).unwrap());
 
             match &delta.image {
                 egui::ImageData::Color(image) => {
@@ -441,7 +445,17 @@ fn create_texture(
     device
         .create_texture()
         .from_bytes(data, width, height)
-        .with_format(TextureFormat::Rgba32)
+        .with_format(TextureFormat::SRgba8)
+        .with_filter(TextureFilter::Linear, TextureFilter::Linear)
+        .build()
+}
+
+#[inline]
+fn create_empty_texture(device: &mut Device, width: u32, height: u32) -> Result<Texture, String> {
+    device
+        .create_texture()
+        .from_empty_buffer(width, height)
+        .with_format(TextureFormat::SRgba8)
         .with_filter(TextureFilter::Linear, TextureFilter::Linear)
         .build()
 }
