@@ -239,10 +239,11 @@ where
         let audio = Audio::new(backend.get_audio_backend())?;
         #[cfg(feature = "audio")]
         let mut app = App::new(Box::new(backend), audio);
-        app.window().set_touch_as_mouse(use_touch_as_mouse);
 
         #[cfg(not(feature = "audio"))]
         let mut app = App::new(Box::new(backend));
+
+        app.window().set_touch_as_mouse(use_touch_as_mouse);
 
         let (width, height) = app.window().size();
         let win_dpi = app.window().dpi();
