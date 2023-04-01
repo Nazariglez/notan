@@ -285,7 +285,6 @@ fn create_pipeline(
     let uniform_locations = unsafe {
         let count = gl.get_active_uniforms(program);
         (0..count)
-            .into_iter()
             .filter_map(|index| match gl.get_active_uniform(program, index) {
                 Some(u) => match gl.get_uniform_location(program, &u.name) {
                     Some(loc) => {
