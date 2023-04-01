@@ -239,6 +239,7 @@ where
         let audio = Audio::new(backend.get_audio_backend())?;
         #[cfg(feature = "audio")]
         let mut app = App::new(Box::new(backend), audio);
+        app.window().set_touch_as_mouse(use_touch_as_mouse);
 
         #[cfg(not(feature = "audio"))]
         let mut app = App::new(Box::new(backend));
@@ -254,7 +255,7 @@ where
             cb(&mut app, &mut assets, &mut graphics, &mut plugins);
         }
 
-        // add plguins
+        // add plugins
         plugin_callbacks.reverse();
         while let Some(cb) = plugin_callbacks.pop() {
             cb(&mut app, &mut assets, &mut graphics, &mut plugins);
@@ -305,6 +306,8 @@ where
             assets.tick((app, &mut graphics, &mut plugins, &mut state))?;
 
             let delta = app.timer.delta_f32();
+
+            let use_touch_as_mouse = app.window().touch_as_mouse();
 
             // Manage each event
             let mut events = app.backend.events_iter();
