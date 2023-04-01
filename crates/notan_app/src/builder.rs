@@ -374,8 +374,13 @@ where
             #[cfg(feature = "audio")]
             app.audio.clean();
 
+            // dispatch Event::Exit before close the app
             if app.closed {
-                log::debug!("App Closed");
+                let evt = Event::Exit;
+                let _ = plugins.event(app, &mut assets, &evt)?;
+                if let Some(cb) = &event_callback {
+                    cb.exec(app, &mut assets, &mut plugins, state, evt);
+                }
             }
 
             // Using lazy loop we need to draw 2 frames at the beginning to avoid
