@@ -22,14 +22,14 @@ pub(crate) fn add_texture_from_image(
     let id = backend.add_inner_texture(tex, &info)?;
     let max_size = backend.limits.max_texture_size;
     if invalid_tex_size(max_size, &info) {
-        log::warn!(
+        return Err(format!(
             "Texture '{}' size '{}x{}' is bigger than maximum texture size allowed per side '{}x{}'",
             id,
             info.width,
             info.height,
             max_size,
             max_size
-        );
+        ));
     }
     Ok((id, info))
 }
