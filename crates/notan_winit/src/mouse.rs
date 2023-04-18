@@ -31,8 +31,8 @@ pub fn process_events(
         WindowEvent::MouseWheel { delta, .. } => {
             let evt = match delta {
                 MouseScrollDelta::LineDelta(x, y) => Event::MouseWheel {
-                    delta_x: *x,
-                    delta_y: *y,
+                    delta_x: *x * 50.0,
+                    delta_y: *y * 50.0,
                 },
                 MouseScrollDelta::PixelDelta(position) => {
                     let LogicalPosition { x, y } = position.to_logical::<f64>(scale_factor);

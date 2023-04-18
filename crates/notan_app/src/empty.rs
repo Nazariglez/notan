@@ -25,6 +25,7 @@ pub struct EmptyWindowBackend {
     captured: bool,
     visible: bool,
     mouse_passthrough: bool,
+    touch_as_mouse: bool,
 }
 
 impl WindowBackend for EmptyWindowBackend {
@@ -120,6 +121,14 @@ impl WindowBackend for EmptyWindowBackend {
 
     fn title(&self) -> &str {
         &self.title
+    }
+
+    fn set_touch_as_mouse(&mut self, enable: bool) {
+        self.touch_as_mouse = enable;
+    }
+
+    fn touch_as_mouse(&self) -> bool {
+        self.touch_as_mouse
     }
 }
 

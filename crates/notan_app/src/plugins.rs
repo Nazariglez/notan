@@ -10,10 +10,11 @@ use std::cell::{Ref, RefCell, RefMut};
 
 /// Control the flow of the application
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
 pub enum AppFlow {
     /// Keeps running as usual, calling the next callback
     /// This is the option by default
+    #[default]
     Next = 0,
 
     /// Cancels the execution of the next callback
@@ -21,12 +22,6 @@ pub enum AppFlow {
 
     /// Cancels the whole frame execution
     SkipFrame = 2,
-}
-
-impl Default for AppFlow {
-    fn default() -> AppFlow {
-        AppFlow::Next
-    }
 }
 
 // helper trait to be able to downcast from Any to RefCell<T: Plugin> (traits doesn't have size, so cannot be downcasted to)
