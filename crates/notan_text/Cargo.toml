@@ -1,6 +1,6 @@
 [package]
 name = "notan_text"
-version = "0.9.4"
+version = "0.9.5"
 edition = "2021"
 readme = "README.md"
 homepage = "https://github.com/Nazariglez/notan"
@@ -11,10 +11,10 @@ description = "Provides a simple Text API for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-notan_app = { path = "../notan_app", version = "0.9.4" }
-notan_graphics = { path = "../notan_graphics", version = "0.9.4" }
-notan_glyph = { path = "../notan_glyph", version = "0.9.4" }
-notan_math = { path = "../notan_math", version = "0.9.4" }
+notan_app = { path = "../notan_app", version = "0.9.5" }
+notan_graphics = { path = "../notan_graphics", version = "0.9.5" }
+notan_glyph = { path = "../notan_glyph", version = "0.9.5" }
+notan_math = { path = "../notan_math", version = "0.9.5" }
 log = "0.4.17"
 lazy_static = "1.4.0"
 parking_lot = "0.12.1"

@@ -68,6 +68,7 @@ pub struct WebWindowBackend {
     mouse_passthrough: bool,
 
     title: String,
+    use_touch_as_mouse: bool,
 }
 
 impl WebWindowBackend {
@@ -165,6 +166,7 @@ impl WebWindowBackend {
 
             mouse_passthrough,
             title,
+            use_touch_as_mouse: false,
         };
 
         win.init()
@@ -394,6 +396,14 @@ impl WindowBackend for WebWindowBackend {
 
     fn title(&self) -> &str {
         &self.title
+    }
+
+    fn set_touch_as_mouse(&mut self, enable: bool) {
+        self.use_touch_as_mouse = enable;
+    }
+
+    fn touch_as_mouse(&self) -> bool {
+        self.use_touch_as_mouse
     }
 }
 

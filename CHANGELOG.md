@@ -1,8 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## UNRELEASED 
-- 
+## v0.9.5 - 19/03/2023
+
+- Increased mouse wheel scroll speed on native platforms.
+- Added `WindowBackend::set_touch_as_mouse` and `touch_as_mouse` to enable/disable it at runtime.
+- Fix `Event::Exit` which is triggered now before the app is closed.
+- Add `WindowConfig::set_window_icon_data` and `set_taskbar_icon_data` to set them using bytes. Check `examples/window_icon_from_raw.rs` for more info.
+- Allow to load images without allocation limits, return an error if the image is bigger than the size supported by the GPU. 
 
 ## v0.9.4 - 26/02/2023
 

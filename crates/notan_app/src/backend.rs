@@ -201,4 +201,10 @@ pub trait WindowBackend {
     fn width(&self) -> u32 {
         self.size().0
     }
+
+    /// Use touch event as mouse events
+    fn set_touch_as_mouse(&mut self, enable: bool);
+
+    /// Returns if touch as mouse is enabled
+    fn touch_as_mouse(&self) -> bool;
 }

@@ -21,6 +21,7 @@ pub struct WinitWindowBackend {
     is_always_on_top: bool,
     mouse_passthrough: bool,
     title: String,
+    use_touch_as_mouse: bool,
 }
 
 impl WindowBackend for WinitWindowBackend {
@@ -184,6 +185,14 @@ impl WindowBackend for WinitWindowBackend {
     fn title(&self) -> &str {
         &self.title
     }
+
+    fn set_touch_as_mouse(&mut self, enable: bool) {
+        self.use_touch_as_mouse = enable;
+    }
+
+    fn touch_as_mouse(&self) -> bool {
+        self.use_touch_as_mouse
+    }
 }
 
 fn load_icon(path: &Option<PathBuf>, data: &Option<&'static [u8]>) -> Option<Icon> {
@@ -307,6 +316,7 @@ impl WinitWindowBackend {
             is_always_on_top: false,
             mouse_passthrough,
             title,
+            use_touch_as_mouse: false,
         })
     }
 
