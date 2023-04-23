@@ -202,6 +202,7 @@ impl Plugin for EguiPlugin {
                     self.add_event(egui::Event::Key {
                         key,
                         pressed: true,
+                        repeat: false,
                         modifiers,
                     })
                 }
@@ -212,6 +213,7 @@ impl Plugin for EguiPlugin {
                     self.add_event(egui::Event::Key {
                         key,
                         pressed: false,
+                        repeat: false,
                         modifiers,
                     })
                 }

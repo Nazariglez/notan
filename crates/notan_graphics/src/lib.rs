@@ -11,7 +11,7 @@ pub mod texture;
 
 pub mod prelude;
 
-pub use glsl_layout;
+pub use glsl_layout2;
 
 #[cfg(feature = "texture_to_file")]
 mod to_file;

@@ -1,6 +1,6 @@
 use crate::buffer::*;
 use crate::commands::*;
-use crate::glsl_layout::{Std140, Uniform as UniformLayout};
+use crate::glsl_layout2::{Std140, Uniform as UniformLayout};
 use crate::limits::Limits;
 use crate::pipeline::*;
 use crate::render_texture::*;

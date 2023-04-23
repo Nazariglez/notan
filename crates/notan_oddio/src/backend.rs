@@ -241,6 +241,7 @@ impl InnerBackend {
                 |err| {
                     log::error!("{:?}", err);
                 },
+                None,
             )
             .map_err(|e| format!("{e:?}"))?;
 
