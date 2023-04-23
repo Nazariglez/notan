@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## UNRELEASED
+
+- 
+
 ## v0.9.5 - 19/03/2023
 
 - Increased mouse wheel scroll speed on native platforms.
