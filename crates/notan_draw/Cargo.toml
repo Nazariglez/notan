@@ -20,7 +20,7 @@ notan_math = { path = "../notan_math", version = "0.10.0" }
 notan_glyph = { path = "../notan_glyph", version = "0.10.0" }
 notan_text = { path = "../notan_text", version = "0.10.0" }
 lyon = "1.0.1"
-serde = { version = "1.0.160", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.96"
 
 [features]
