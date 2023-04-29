@@ -112,7 +112,7 @@ pub fn uniform(_metadata: TokenStream, input: TokenStream) -> TokenStream {
     let ident = derive.ident;
     let input: proc_macro2::TokenStream = input.into();
     let output = quote! {
-        #[derive(glsl_layout2::Uniform)]
+        #[derive(::notan::graphics::crevice::std140::AsStd140)]
         #input
 
         impl ::notan::graphics::Uniform for #ident {}

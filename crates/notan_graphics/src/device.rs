@@ -1,6 +1,6 @@
 use crate::buffer::*;
 use crate::commands::*;
-use crate::glsl_layout2::{Std140, Uniform as UniformLayout};
+use crate::crevice::std140::{AsStd140, Std140};
 use crate::limits::Limits;
 use crate::pipeline::*;
 use crate::render_texture::*;
@@ -458,7 +458,7 @@ impl Device {
     }
 }
 
-pub trait Uniform: UniformLayout {}
+pub trait Uniform: AsStd140 {}
 pub trait BufferData {
     fn upload(&self, device: &mut Device, id: u64);
     fn save_as_bytes(&self, _data: &mut Vec<u8>) {}
@@ -519,11 +519,13 @@ where
     #[inline]
     fn upload(&self, device: &mut Device, id: u64) {
         // TODO check opengl version or driver if it uses std140 to layout or not
-        device.backend.set_buffer_data(id, self.std140().as_raw());
+        device
+            .backend
+            .set_buffer_data(id, self.as_std140().as_bytes());
     }
 
     fn save_as_bytes(&self, data: &mut Vec<u8>) {
-        data.extend_from_slice(self.std140().as_raw());
+        data.extend_from_slice(self.as_std140().as_bytes());
     }
 }
 

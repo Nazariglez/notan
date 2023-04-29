@@ -486,6 +486,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "crevice_notan"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0bb0b2bca5ce777a79dd787fafb8113f2be4f020e4c2468363b473041f2d9b90"
+dependencies = [
+ "bytemuck",
+ "crevice_notan-derive",
+ "glam",
+ "mint",
+]
+
+[[package]]
+name = "crevice_notan-derive"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c99d1aa96f6017828f2d26743f8d4fa3a80927a2a169b9c5c5871cfb3b51f30"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -930,11 +953,12 @@ dependencies = [
 
 [[package]]
 name = "glam"
-version = "0.23.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e4afd9ad95555081e109fe1d21f2a30c691b5f0919c67dfa690a2e1eb6bd51c"
+checksum = "ad83ab008a4fa3b31dfa713dd41b5a9bdea1e94e4cf1e2fc274ffbd49b0271d3"
 dependencies = [
  "bytemuck",
+ "mint",
  "serde",
 ]
 
@@ -954,27 +978,6 @@ dependencies = [
  "slotmap",
  "wasm-bindgen",
  "web-sys",
-]
-
-[[package]]
-name = "glsl-layout-derive2"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97358420718d57acc74b1078a791d3f8835c695fedf458355d6b23c996f964ed"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.15",
-]
-
-[[package]]
-name = "glsl-layout2"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "287cce4170621f135184be78412adb7805b437ebc72ee34c8db506d04f5f14a0"
-dependencies = [
- "glam",
- "glsl-layout-derive2",
 ]
 
 [[package]]
@@ -1705,7 +1708,7 @@ name = "notan_graphics"
 version = "0.10.0"
 dependencies = [
  "bytemuck",
- "glsl-layout2",
+ "crevice_notan",
  "image",
  "notan_macro",
  "notan_math",
