@@ -86,6 +86,7 @@ impl InnerPipeline {
             set_color_mask(gl, options);
             set_culling(gl, options);
             set_blend_mode(gl, options);
+            #[cfg(not(target_arch = "wasm32"))]
             set_srgb_space(gl, options);
         }
     }
