@@ -65,7 +65,7 @@ impl EguiPlugin {
             shapes: RefCell::new(Some(shapes)),
             textures_delta,
             clear_color: None,
-            needs_repaint: needs_repaint,
+            needs_repaint,
         }
     }
 }

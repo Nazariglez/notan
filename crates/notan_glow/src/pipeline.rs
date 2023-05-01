@@ -246,6 +246,7 @@ unsafe fn set_blend_mode(gl: &Context, options: &PipelineOptions) {
 }
 
 #[inline(always)]
+#[cfg(not(target_arch = "wasm32"))]
 fn set_srgb_space(gl: &Context, opts: &PipelineOptions) {
     unsafe {
         if opts.srgb_space {
