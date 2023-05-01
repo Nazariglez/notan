@@ -47,10 +47,10 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
     // An animation list take a &[&Texture] as frames
     draw.animation_list(&state.textures.iter().collect::<Vec<_>>())
-        // just a matrix translation
-        .translate(300.0, 200.0)
         // just a matrix scale
         .scale(2.0, 2.0)
+        // just a matrix translation
+        .translate(300.0, 200.0)
         // normalized frame time
         .time(state.time);
 
