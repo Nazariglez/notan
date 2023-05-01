@@ -1,3 +1,4 @@
+use notan::draw::*;
 use notan::egui::{self, *};
 use notan::prelude::*;
 
@@ -11,24 +12,34 @@ fn main() -> Result<(), String> {
     notan::init()
         .add_config(win)
         .add_config(EguiConfig)
+        .add_config(DrawConfig)
         .initialize(initialize)
         .draw(draw)
         .build()
 }
 
-fn draw(gfx: &mut Graphics, plugins: &mut Plugins) {
+fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
     let mut output = plugins.egui(|ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("egui using custom fonts");
-            ui.label("This text is using a custom font");
+            ui.label(&format!(
+                "This text is using a custom font {}",
+                app.timer.delta_f32()
+            ));
         });
     });
 
-    output.clear_color(Color::BLACK);
+    output.clear_color(Color::ORANGE);
 
     if output.needs_repaint() {
+        notan::log::info!("paint...");
         gfx.render(&output);
+        app.exit();
     }
+
+    // let mut draw = gfx.create_draw();
+    // draw.circle(20.0).position(100.0, 100.0);
+    // gfx.render(&draw);
 }
 
 // Initialize callback is called just once after setup and before the app's loop
@@ -43,24 +54,24 @@ fn setup(ctx: &egui::Context) {
 
     // Install my own font (maybe supporting non-latin characters).
     // .ttf and .otf files supported.
-    fonts.font_data.insert(
-        "my_font".to_owned(),
-        egui::FontData::from_static(include_bytes!("./assets/Ubuntu-B.ttf")),
-    );
+    // fonts.font_data.insert(
+    //     "my_font".to_owned(),
+    //     egui::FontData::from_static(include_bytes!("./assets/Ubuntu-B.ttf")),
+    // );
 
-    // Put my font first (highest priority) for proportional text:
-    fonts
-        .families
-        .entry(egui::FontFamily::Proportional)
-        .or_default()
-        .insert(0, "my_font".to_owned());
+    // // Put my font first (highest priority) for proportional text:
+    // fonts
+    //     .families
+    //     .entry(egui::FontFamily::Proportional)
+    //     .or_default()
+    //     .insert(0, "my_font".to_owned());
 
-    // Put my font as last fallback for monospace:
-    fonts
-        .families
-        .entry(egui::FontFamily::Monospace)
-        .or_default()
-        .push("my_font".to_owned());
+    // // Put my font as last fallback for monospace:
+    // fonts
+    //     .families
+    //     .entry(egui::FontFamily::Monospace)
+    //     .or_default()
+    //     .push("my_font".to_owned());
 
     // Tell egui to use these fonts:
     ctx.set_fonts(fonts);

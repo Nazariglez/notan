@@ -57,6 +57,12 @@ impl EguiPlugin {
             self.needs_repaint = needs_repaint;
         }
 
+        log::info!(
+            "# needs_repaint {} textures_delta: {:?}",
+            needs_repaint,
+            textures_delta.free
+        );
+
         self.platform_output = Some(platform_output);
 
         Output {
@@ -100,7 +106,9 @@ impl GfxRenderer for Output {
             "Missing EguiExtension. You may need to add 'EguiConfig' to notan.".to_string()
         })?;
 
+        log::info!("render...");
         if let Some(shapes) = self.shapes.borrow_mut().take() {
+            log::info!("-> shapes");
             if self.clear_color.is_some() {
                 let mut clear_renderer = device.create_renderer();
                 clear_renderer.begin(Some(ClearOptions {

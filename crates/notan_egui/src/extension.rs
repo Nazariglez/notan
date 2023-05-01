@@ -168,8 +168,9 @@ impl EguiExtension {
             .with_data(&[0.0; 2])
             .build()?;
 
-        let fonts_texture = create_empty_texture(gfx, 0, 0)?;
         let mut textures = HashMap::new();
+        let fonts_texture = create_empty_texture(gfx, 0, 0)?;
+        log::info!("font texture created {}", fonts_texture.id());
         textures.insert(egui::TextureId::default(), fonts_texture);
 
         Ok(Self {
@@ -206,6 +207,7 @@ impl EguiExtension {
                 .entry(id)
                 .or_insert_with(|| create_empty_texture(device, width as _, height as _).unwrap());
 
+            log::info!("set_texture");
             match &delta.image {
                 egui::ImageData::Color(image) => {
                     debug_assert_eq!(
@@ -285,6 +287,7 @@ impl EguiExtension {
     }
 
     fn free_texture(&mut self, tex_id: egui::TextureId) {
+        log::info!("free texture!!");
         self.textures.remove(&tex_id);
     }
 
@@ -295,6 +298,7 @@ impl EguiExtension {
         textures_delta: &egui::TexturesDelta,
         target: Option<&RenderTexture>,
     ) -> Result<(), String> {
+        log::info!("TexturesDelta {:?}", textures_delta.free);
         for (id, image_delta) in &textures_delta.set {
             self.set_texture(device, *id, image_delta)?;
         }
@@ -397,6 +401,7 @@ impl EguiExtension {
             .get(&primitive.texture_id)
             .ok_or_else(|| format!("Invalid EGUI texture id {:?}", &primitive.texture_id))?;
 
+        log::info!("paint_mesh {:?} -> {:?}", primitive.texture_id, texture);
         // render pass
         let mut renderer = device.create_renderer();
         renderer.set_scissors(clip_min_x, clip_min_y, width, height);
@@ -470,6 +475,7 @@ fn update_texture(
     width: u32,
     height: u32,
 ) -> Result<(), String> {
+    log::info!("texture update {}", texture.id());
     device
         .update_texture(texture)
         .with_data(data)
