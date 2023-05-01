@@ -1,4 +1,3 @@
-use notan::draw::*;
 use notan::egui::{self, *};
 use notan::prelude::*;
 
@@ -12,29 +11,26 @@ fn main() -> Result<(), String> {
     notan::init()
         .add_config(win)
         .add_config(EguiConfig)
-        .add_config(DrawConfig)
         .initialize(initialize)
         .draw(draw)
         .build()
 }
 
-fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
+fn draw(gfx: &mut Graphics, plugins: &mut Plugins) {
     let mut output = plugins.egui(|ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("egui using custom fonts");
-            ui.label(&format!(
-                "This text is using a custom font {}",
-                app.timer.delta_f32()
-            ));
+            ui.label("This text is using a custom font");
         });
     });
 
-    output.clear_color(Color::ORANGE);
+    output.clear_color(Color::BLACK);
 
     if output.needs_repaint() {
         gfx.render(&output);
     }
 }
+
 // Initialize callback is called just once after setup and before the app's loop
 fn initialize(plugins: &mut Plugins) {
     plugins.egui(setup);
