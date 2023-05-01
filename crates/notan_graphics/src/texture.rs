@@ -87,7 +87,6 @@ impl TextureFormat {
     }
 }
 
-#[derive(Debug)]
 struct TextureIdRef {
     id: u64,
     drop_manager: Arc<DropManager>,
@@ -96,6 +95,12 @@ struct TextureIdRef {
 impl Drop for TextureIdRef {
     fn drop(&mut self) {
         self.drop_manager.push(ResourceId::Texture(self.id));
+    }
+}
+
+impl Debug for TextureIdRef {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "TextureIdRef({})", self.id)
     }
 }
 
