@@ -27,17 +27,17 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
     draw.rect((0.0, 0.0), (100.0, 100.0))
         .color(Color::AQUA)
-        // Matrix translation
-        .translate(220.0, 220.0)
         // Helper to pivot from a point using degrees
-        .rotate_degrees_from((50.0, 50.0), state.rot);
+        .rotate_degrees_from((50.0, 50.0), state.rot)
+        // Matrix translation
+        .translate(220.0, 220.0);
 
     draw.circle(20.0)
         .color(Color::ORANGE)
-        // Matrix translation
-        .translate(500.0, 320.0)
         // Helper to scale from a point
-        .scale_from((0.0, 0.0), (2.0 + n.sin(), 2.0 + n.cos()));
+        .scale_from((0.0, 0.0), (2.0 + n.sin(), 2.0 + n.cos()))
+        // Matrix translation
+        .translate(500.0, 320.0);
 
     // Create a matrix that we can set to the next paint
     let translation = Mat3::from_translation(Vec2::new(200.0, 400.0));
