@@ -32,9 +32,8 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
     output.clear_color(Color::ORANGE);
 
     if output.needs_repaint() {
-        notan::log::info!("paint...");
         gfx.render(&output);
-        app.exit();
+        // app.exit();
     }
 
     // let mut draw = gfx.create_draw();

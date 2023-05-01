@@ -49,19 +49,14 @@ impl EguiPlugin {
             shapes,
         } = self.ctx.run(new_input, run_ui);
 
-        let needs_repaint = repaint_after.is_zero();
+        let needs_update_textures = !textures_delta.is_empty();
+        let needs_repaint = repaint_after.is_zero() || needs_update_textures;
 
         // On post frame needs repaint is set to false
         // set it again if true after a egui output.
         if !self.needs_repaint {
             self.needs_repaint = needs_repaint;
         }
-
-        log::info!(
-            "# needs_repaint {} textures_delta: {:?}",
-            needs_repaint,
-            textures_delta.free
-        );
 
         self.platform_output = Some(platform_output);
 
@@ -70,7 +65,7 @@ impl EguiPlugin {
             shapes: RefCell::new(Some(shapes)),
             textures_delta,
             clear_color: None,
-            needs_repaint,
+            needs_repaint: needs_repaint,
         }
     }
 }
@@ -106,9 +101,7 @@ impl GfxRenderer for Output {
             "Missing EguiExtension. You may need to add 'EguiConfig' to notan.".to_string()
         })?;
 
-        log::info!("render...");
         if let Some(shapes) = self.shapes.borrow_mut().take() {
-            log::info!("-> shapes");
             if self.clear_color.is_some() {
                 let mut clear_renderer = device.create_renderer();
                 clear_renderer.begin(Some(ClearOptions {
