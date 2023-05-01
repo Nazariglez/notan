@@ -33,14 +33,8 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
 
     if output.needs_repaint() {
         gfx.render(&output);
-        // app.exit();
     }
-
-    // let mut draw = gfx.create_draw();
-    // draw.circle(20.0).position(100.0, 100.0);
-    // gfx.render(&draw);
 }
-
 // Initialize callback is called just once after setup and before the app's loop
 fn initialize(plugins: &mut Plugins) {
     plugins.egui(setup);
@@ -53,24 +47,24 @@ fn setup(ctx: &egui::Context) {
 
     // Install my own font (maybe supporting non-latin characters).
     // .ttf and .otf files supported.
-    // fonts.font_data.insert(
-    //     "my_font".to_owned(),
-    //     egui::FontData::from_static(include_bytes!("./assets/Ubuntu-B.ttf")),
-    // );
+    fonts.font_data.insert(
+        "my_font".to_owned(),
+        egui::FontData::from_static(include_bytes!("./assets/Ubuntu-B.ttf")),
+    );
 
-    // // Put my font first (highest priority) for proportional text:
-    // fonts
-    //     .families
-    //     .entry(egui::FontFamily::Proportional)
-    //     .or_default()
-    //     .insert(0, "my_font".to_owned());
+    // Put my font first (highest priority) for proportional text:
+    fonts
+        .families
+        .entry(egui::FontFamily::Proportional)
+        .or_default()
+        .insert(0, "my_font".to_owned());
 
-    // // Put my font as last fallback for monospace:
-    // fonts
-    //     .families
-    //     .entry(egui::FontFamily::Monospace)
-    //     .or_default()
-    //     .push("my_font".to_owned());
+    // Put my font as last fallback for monospace:
+    fonts
+        .families
+        .entry(egui::FontFamily::Monospace)
+        .or_default()
+        .push("my_font".to_owned());
 
     // Tell egui to use these fonts:
     ctx.set_fonts(fonts);
