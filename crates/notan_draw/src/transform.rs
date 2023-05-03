@@ -22,7 +22,7 @@ pub trait DrawTransform {
     /// Set the matrix position
     fn translate(&mut self, x: f32, y: f32) -> &mut Self {
         let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
-        let matrix = old * Mat3::from_translation(Vec2::new(x, y));
+        let matrix = Mat3::from_translation(Vec2::new(x, y)) * old;
         *self.matrix() = Some(matrix);
         self
     }
@@ -30,7 +30,7 @@ pub trait DrawTransform {
     /// Set the matrix scale
     fn scale(&mut self, x: f32, y: f32) -> &mut Self {
         let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
-        let matrix = old * Mat3::from_scale(Vec2::new(x, y));
+        let matrix = Mat3::from_scale(Vec2::new(x, y)) * old;
         *self.matrix() = Some(matrix);
         self
     }
@@ -38,7 +38,7 @@ pub trait DrawTransform {
     /// Set the matrix rotation using radians
     fn rotate(&mut self, angle: f32) -> &mut Self {
         let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
-        let matrix = old * Mat3::from_angle(angle);
+        let matrix = Mat3::from_angle(angle) * old;
         *self.matrix() = Some(matrix);
         self
     }
@@ -62,16 +62,18 @@ pub trait DrawTransform {
             Vec3::new(0.0, 0.0, 1.0),
         );
 
-        *self.matrix() = Some(old * new);
+        *self.matrix() = Some(new * old);
         self
     }
 
     /// Set the matrix rotation using radians from the point given
     fn rotate_from(&mut self, point: (f32, f32), angle: f32) -> &mut Self {
         let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
-        let translate = old * Mat3::from_translation(Vec2::new(point.0, point.1));
-        let rotate = translate * Mat3::from_angle(angle);
-        let matrix = rotate * Mat3::from_translation(Vec2::new(-point.0, -point.1));
+        let translate_to_origin = Mat3::from_translation(Vec2::new(-point.0, -point.1));
+        let rotate = Mat3::from_angle(angle);
+        let translate_back = Mat3::from_translation(Vec2::new(point.0, point.1));
+
+        let matrix = translate_back * rotate * translate_to_origin * old;
         *self.matrix() = Some(matrix);
         self
     }
@@ -85,9 +87,11 @@ pub trait DrawTransform {
     /// Set the matrix scale from the point given
     fn scale_from(&mut self, point: (f32, f32), scale: (f32, f32)) -> &mut Self {
         let old = self.matrix().unwrap_or_else(|| Mat3::IDENTITY);
-        let translate = old * Mat3::from_translation(Vec2::new(point.0, point.1));
-        let scale = translate * Mat3::from_scale(Vec2::new(scale.0, scale.1));
-        let matrix = scale * Mat3::from_translation(Vec2::new(-point.0, -point.1));
+        let translate_to_origin = Mat3::from_translation(Vec2::new(-point.0, -point.1));
+        let scale = Mat3::from_scale(Vec2::new(scale.0, scale.1));
+        let translate_back = Mat3::from_translation(Vec2::new(point.0, point.1));
+
+        let matrix = translate_back * scale * translate_to_origin * old;
         *self.matrix() = Some(matrix);
         self
     }
