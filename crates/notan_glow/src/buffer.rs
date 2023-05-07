@@ -29,13 +29,12 @@ pub(crate) struct InnerBuffer {
     #[cfg(target_arch = "wasm32")]
     global_ubo: Option<Vec<u8>>, //Hack, wasm doesn't use the offset for std140
 
-    pub block_binded: bool,
-
     gpu_buff_size: usize,
     draw_usage: u32,
     draw_target: u32,
     pub(crate) kind: Kind,
     last_pipeline: Option<u64>,
+    block_dirty: bool,
 
     #[cfg(debug_assertions)]
     pub(crate) initialized: bool,
@@ -73,13 +72,12 @@ impl InnerBuffer {
             #[cfg(target_arch = "wasm32")]
             global_ubo,
 
-            block_binded: false,
-
             gpu_buff_size: 0,
             draw_usage,
             draw_target,
             kind,
             last_pipeline: None,
+            block_dirty: true,
 
             #[cfg(debug_assertions)]
             initialized: false,
@@ -88,10 +86,10 @@ impl InnerBuffer {
 
     #[inline]
     pub fn bind(&mut self, gl: &Context, pipeline_id: Option<u64>, reset_attrs: bool) {
-        let pipeline_changed =
-            pipeline_id.is_some() && (pipeline_id != self.last_pipeline || reset_attrs);
-        if pipeline_changed {
+        let pip_changed = pipeline_changed(pipeline_id, self.last_pipeline) || reset_attrs;
+        if pip_changed {
             self.last_pipeline = pipeline_id;
+            self.block_dirty = true;
         };
 
         unsafe {
@@ -99,7 +97,7 @@ impl InnerBuffer {
 
             match &self.kind {
                 Kind::Vertex(attrs) => {
-                    if pipeline_changed {
+                    if pip_changed {
                         attrs.enable(gl);
                     }
                 }
@@ -143,9 +141,14 @@ impl InnerBuffer {
         }
     }
 
-    pub fn bind_ubo_block(&mut self, gl: &Context, pipeline: &InnerPipeline) {
-        self.block_binded = true;
+    pub fn bind_ubo_block(&mut self, gl: &Context, pipeline_id: u64, pipeline: &InnerPipeline) {
+        let pip_changed =
+            pipeline_changed(Some(pipeline_id), self.last_pipeline) || self.block_dirty;
+        if !pip_changed {
+            return;
+        }
 
+        self.block_dirty = false;
         if let Kind::Uniform(slot, name) = &self.kind {
             unsafe {
                 if let Some(index) = gl.get_uniform_block_index(pipeline.program, name) {
@@ -161,4 +164,8 @@ impl InnerBuffer {
             gl.delete_buffer(self.buffer);
         }
     }
+}
+
+fn pipeline_changed(pipeline_id: Option<u64>, last_pipeline: Option<u64>) -> bool {
+    pipeline_id.is_some() && pipeline_id != last_pipeline
 }

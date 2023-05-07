@@ -271,12 +271,11 @@ impl GlowBackend {
                     false
                 }
                 Kind::Uniform(_slot, _name) => {
-                    if !buffer.block_binded {
-                        buffer.bind_ubo_block(
-                            &self.gl,
-                            self.pipelines.get(&self.current_pipeline).as_ref().unwrap(),
-                        );
-                    }
+                    buffer.bind_ubo_block(
+                        &self.gl,
+                        self.current_pipeline,
+                        self.pipelines.get(&self.current_pipeline).as_ref().unwrap(),
+                    );
                     false
                 }
                 Kind::Vertex(attrs) => match self.pipelines.get_mut(&self.current_pipeline) {
