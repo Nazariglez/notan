@@ -316,7 +316,7 @@ pub fn read_spirv<R: io::Read + io::Seek>(mut x: R) -> io::Result<Vec<u32>> {
 
 #[cfg(feature = "naga")]
 pub(crate) fn source_from_naga(source: &str, typ: ShaderType) -> Result<TokenStream, String> {
-    println!("HERE");
+    println!("source from naga \n--------------\n\ntyp: {typ:?}\n\ns: {source}\nn");
     use naga::back::glsl::*;
     use naga::front::glsl::{Options, Parser, *};
     use naga::valid::{Capabilities, ValidationFlags, Validator};
@@ -324,12 +324,10 @@ pub(crate) fn source_from_naga(source: &str, typ: ShaderType) -> Result<TokenStr
     let stage = typ.into();
     let options = Options::from(stage);
     let mut parser = Parser::default();
-    println!("lol");
     let module = parser.parse(&options, source).map_err(|e| {
         let errors = e.iter().map(|e| e.to_string()).collect::<Vec<_>>();
         errors.join("\n ")
     })?;
-    println!("lol2");
 
     let info = Validator::new(ValidationFlags::all(), Capabilities::empty())
         .validate(&module)
@@ -350,7 +348,7 @@ pub(crate) fn source_from_naga(source: &str, typ: ShaderType) -> Result<TokenStr
 
     let options = naga::back::glsl::Options {
         version,
-        writer_flags: WriterFlags::all(),
+        writer_flags: WriterFlags::empty(),
         binding_map: Default::default(),
     };
 
@@ -373,6 +371,9 @@ pub(crate) fn source_from_naga(source: &str, typ: ShaderType) -> Result<TokenStr
     )
     .unwrap();
     writer.write().map_err(|e| e.to_string())?;
+    println!("\n\n--------------\nout:{buffer}\n\n");
+    // panic!();
+    dbg!("test");
     Ok(to_shader_source(buffer.into_bytes()))
 }
 

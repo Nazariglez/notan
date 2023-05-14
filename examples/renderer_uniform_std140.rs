@@ -17,6 +17,12 @@ const LIGHT_VERTEX_SHADER: ShaderSource = notan::vertex_shader! {
         mat4 projection;
     };
 
+    layout(set = 0, binding = 1) uniform Light {
+        vec3 lightPos;
+        vec3 lightColor;
+        vec3 objectColor;
+    };
+
     void main()
     {
         v_pos = vec3(model * vec4(a_pos, 1.0));

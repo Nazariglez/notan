@@ -300,44 +300,51 @@ fn create_pipeline(
         let count = gl.get_active_uniforms(program);
         (0..count)
             .filter_map(|index| match gl.get_active_uniform(program, index) {
-                Some(u) => match gl.get_uniform_location(program, &u.name) {
-                    Some(loc) => {
-                        let tex_loc = texture_locations.iter().find_map(|(tloc, id)| {
-                            if id == &u.name {
-                                Some(*tloc)
-                            } else {
-                                None
+                Some(u) => {
+                    println!("UNIFORM: {:?}", u.name);
+                    match gl.get_uniform_location(program, &u.name) {
+                        Some(loc) => {
+                            let tex_loc = texture_locations.iter().find_map(|(tloc, id)| {
+                                if id == &u.name {
+                                    Some(*tloc)
+                                } else {
+                                    None
+                                }
+                            });
+
+                            println!("loc: {loc:?} tex_loc:{tex_loc:?}");
+
+                            if let Some(tloc) = tex_loc {
+                                #[cfg(debug_assertions)]
+                                {
+                                    not_used_textures.remove(&u.name);
+                                }
+
+                                // register the texgture uniform loc under the new loc provided by the user
+                                #[cfg(target_arch = "wasm32")]
+                                texture_locations_map.insert(tloc, loc.clone());
+
+                                #[cfg(not(target_arch = "wasm32"))]
+                                texture_locations_map.insert(tloc, loc);
                             }
-                        });
 
-                        if let Some(tloc) = tex_loc {
-                            #[cfg(debug_assertions)]
-                            {
-                                not_used_textures.remove(&u.name);
+                            Some(loc)
+                        }
+                        _ => {
+                            // inform about uniforms outside of blocks that are missing
+                            if !u.name.contains("") {
+                                log::debug!("Cannot get uniform location for: {}", u.name);
                             }
-
-                            // register the texgture uniform loc under the new loc provided by the user
-                            #[cfg(target_arch = "wasm32")]
-                            texture_locations_map.insert(tloc, loc.clone());
-
-                            #[cfg(not(target_arch = "wasm32"))]
-                            texture_locations_map.insert(tloc, loc);
+                            None
                         }
-
-                        Some(loc)
-                    }
-                    _ => {
-                        // inform about uniforms outside of blocks that are missing
-                        if !u.name.contains("") {
-                            log::debug!("Cannot get uniform location for: {}", u.name);
-                        }
-                        None
                     }
                 },
                 _ => None,
             })
             .collect::<Vec<_>>()
     };
+
+    println!("{:?}", uniform_locations);
 
     #[cfg(debug_assertions)]
     {

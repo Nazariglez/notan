@@ -57,3 +57,4 @@ features = [
 audio = ["notan_app/audio", "notan_audio", "notan_oddio"]
 drop_files = ["web-sys/DragEvent", "web-sys/DataTransfer", "web-sys/FileList", "web-sys/File", "web-sys/DataTransferItemList", "web-sys/DataTransferItem"]
 clipboard = ["web-sys/Navigator", "web-sys/DataTransfer"]
+naga = ["notan_glow/naga"]
