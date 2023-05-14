@@ -1770,6 +1770,7 @@ dependencies = [
  "glsl-to-spirv",
  "naga",
  "num",
+ "proc-macro2",
  "quote",
  "shaderc",
  "spirv_cross",
