@@ -3,8 +3,9 @@ use notan_core::events::Event;
 
 pub use notan_core::keyboard::KeyCode;
 
-#[derive(Default)]
 /// Represent the keyboard data
+#[derive(Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Keyboard {
     /// pressed keys
     pub pressed: HashSet<KeyCode>,

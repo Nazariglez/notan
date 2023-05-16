@@ -26,8 +26,10 @@ pub struct Draw {
     pub(crate) pattern_pipeline: CustomPipeline,
     pub(crate) text_pipeline: CustomPipeline,
     pub(crate) text_batch_indices: Option<Vec<usize>>,
-    masking: bool,
+    pub(crate) masking: bool,
+    pub(crate) needs_to_clean_stencil: bool,
     pub(crate) glyphs_calculator: Calculator,
+    mask_batches: Option<Vec<Batch>>,
 }
 
 impl Clone for Draw {
@@ -49,8 +51,10 @@ impl Clone for Draw {
             pattern_pipeline: self.pattern_pipeline.clone(),
             text_pipeline: self.text_pipeline.clone(),
             masking: self.masking,
+            needs_to_clean_stencil: self.needs_to_clean_stencil,
             text_batch_indices: self.text_batch_indices.clone(),
             glyphs_calculator: Calculator::new(),
+            mask_batches: self.mask_batches.clone(),
         }
     }
 }
@@ -77,8 +81,10 @@ impl Draw {
             pattern_pipeline: Default::default(),
             text_pipeline: Default::default(),
             masking: false,
+            needs_to_clean_stencil: false,
             text_batch_indices: None,
             glyphs_calculator: Calculator::new(),
+            mask_batches: None,
         }
     }
 
@@ -87,43 +93,54 @@ impl Draw {
     pub fn matrix(&self) -> &Mat3 {
         self.transform.matrix()
     }
-    //
-    // pub fn round_pixels(&mut self, _round: bool) {
-    //     //TODO round pixels to draw "2d pixel games"
-    //     todo!("round pixels");
-    // }
+
+    fn process_mask_batches(&mut self) {
+        if let Some(mask_batches) = self.mask_batches.take() {
+            //Move the current batch to the queue
+            if let Some(b) = self.current_batch.take() {
+                self.batches.push(b);
+            }
+
+            self.batches.extend(mask_batches.iter().map(|batch| {
+                let mut b = batch.clone();
+                b.is_mask = true;
+                b
+            }));
+        }
+    }
 
     pub fn mask(&mut self, mask: Option<&Self>) {
         debug_assert!(!(self.masking && mask.is_some()), "Already using mask.");
 
         match mask {
-            Some(m) => {
-                self.masking = true;
+            Some(m) if !self.masking => {
+                let mut mask_batches = m.batches.clone();
+                if let Some(b) = m.current_batch.as_ref() {
+                    mask_batches.push(b.clone());
+                }
+
+                if !mask_batches.is_empty() {
+                    self.masking = true;
+                    self.mask_batches = Some(mask_batches);
+                }
+            }
+            None if self.masking => {
+                self.masking = false;
+                self.mask_batches = None;
 
                 //Move the current batch to the queue
                 if let Some(b) = self.current_batch.take() {
-                    self.batches.push(b);
-                }
-
-                //Reserve the space for the mask batches
-                // let new_capacity = self.batches.len() + m.batches.len() + 1;
-                // self.batches.reserve(new_capacity);
-                self.batches.extend(m.batches.iter().map(|batch| {
-                    let mut b = batch.clone();
-                    b.is_mask = true;
-                    b
-                }));
-
-                if let Some(mut b) = m.current_batch.clone() {
-                    b.is_mask = true;
                     self.batches.push(b);
                 }
             }
             _ => {
-                self.masking = false;
-                //Move the current batch to the queue
-                if let Some(b) = self.current_batch.take() {
-                    self.batches.push(b);
+                #[cfg(debug_assertions)]
+                {
+                    log::warn!(
+                        "Draw setting mask as: {:?} when the value is {:?} is a no-op",
+                        mask.is_some(),
+                        self.masking
+                    );
                 }
             }
         }
@@ -193,6 +210,11 @@ impl Draw {
         F1: Fn(&Batch, &I) -> bool,
         F2: Fn(&I) -> BatchType,
     {
+        if self.masking {
+            self.needs_to_clean_stencil = true;
+            self.process_mask_batches();
+        }
+
         let needs_new_batch = needs_new_batch(self, info, is_diff_type);
         if needs_new_batch {
             if let Some(old) = self.current_batch.take() {

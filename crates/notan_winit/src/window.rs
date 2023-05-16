@@ -18,54 +18,17 @@ pub struct WinitWindowBackend {
     high_dpi: bool,
     is_always_on_top: bool,
     mouse_passthrough: bool,
+    title: String,
+    use_touch_as_mouse: bool,
 }
 
 impl WindowBackend for WinitWindowBackend {
-    fn id(&self) -> u64 {
-        self.window().id().into()
+    fn capture_cursor(&self) -> bool {
+        self.captured
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {
-        self.window()
-            .set_inner_size(LogicalSize::new(width, height));
-    }
-
-    fn size(&self) -> (i32, i32) {
-        let inner = self.window().inner_size();
-        let logical = inner.to_logical::<f64>(self.scale_factor);
-        (logical.width as _, logical.height as _)
-    }
-
-    fn set_position(&mut self, x: i32, y: i32) {
-        self.window()
-            .set_outer_position(PhysicalPosition::new(x, y));
-    }
-
-    fn position(&self) -> (i32, i32) {
-        let position = self.window().outer_position().unwrap_or_default();
-        (position.x, position.y)
-    }
-
-    fn set_fullscreen(&mut self, enabled: bool) {
-        if enabled {
-            let monitor = self.window().current_monitor();
-            self.window().set_fullscreen(Some(Borderless(monitor)));
-        } else {
-            self.window().set_fullscreen(None);
-        }
-    }
-
-    fn is_fullscreen(&self) -> bool {
-        self.window().fullscreen().is_some()
-    }
-
-    fn set_always_on_top(&mut self, enabled: bool) {
-        self.window().set_always_on_top(enabled);
-        self.is_always_on_top = enabled;
-    }
-
-    fn is_always_on_top(&self) -> bool {
-        self.is_always_on_top
+    fn cursor(&self) -> CursorIcon {
+        self.cursor
     }
 
     fn dpi(&self) -> f64 {
@@ -76,15 +39,29 @@ impl WindowBackend for WinitWindowBackend {
         self.scale_factor
     }
 
-    fn set_lazy_loop(&mut self, lazy: bool) {
-        self.lazy = lazy;
-        if !self.lazy {
-            self.request_frame();
-        }
+    fn id(&self) -> u64 {
+        self.window().id().into()
+    }
+
+    fn is_always_on_top(&self) -> bool {
+        self.is_always_on_top
+    }
+
+    fn is_fullscreen(&self) -> bool {
+        self.window().fullscreen().is_some()
     }
 
     fn lazy_loop(&self) -> bool {
         self.lazy
+    }
+
+    fn mouse_passthrough(&mut self) -> bool {
+        self.mouse_passthrough
+    }
+
+    fn position(&self) -> (i32, i32) {
+        let position = self.window().outer_position().unwrap_or_default();
+        (position.x, position.y)
     }
 
     fn request_frame(&mut self) {
@@ -93,23 +70,19 @@ impl WindowBackend for WinitWindowBackend {
         }
     }
 
-    fn set_cursor(&mut self, cursor: CursorIcon) {
-        if cursor != self.cursor {
-            self.cursor = cursor;
-            match winit_cursor(cursor) {
-                None => {
-                    self.window().set_cursor_visible(false);
-                }
-                Some(icon) => {
-                    self.window().set_cursor_visible(true);
-                    self.window().set_cursor_icon(icon);
-                }
-            }
-        }
+    fn screen_size(&self) -> (i32, i32) {
+        self.window()
+            .current_monitor()
+            .map(|m| {
+                let logical = m.size().to_logical::<f64>(self.scale_factor);
+                (logical.width as _, logical.height as _)
+            })
+            .unwrap_or((0, 0))
     }
 
-    fn cursor(&self) -> CursorIcon {
-        self.cursor
+    fn set_always_on_top(&mut self, enabled: bool) {
+        self.window().set_always_on_top(enabled);
+        self.is_always_on_top = enabled;
     }
 
     fn set_capture_cursor(&mut self, capture: bool) {
@@ -134,8 +107,50 @@ impl WindowBackend for WinitWindowBackend {
         }
     }
 
-    fn capture_cursor(&self) -> bool {
-        self.captured
+    fn set_cursor(&mut self, cursor: CursorIcon) {
+        if cursor != self.cursor {
+            self.cursor = cursor;
+            match winit_cursor(cursor) {
+                None => {
+                    self.window().set_cursor_visible(false);
+                }
+                Some(icon) => {
+                    self.window().set_cursor_visible(true);
+                    self.window().set_cursor_icon(icon);
+                }
+            }
+        }
+    }
+
+    fn set_fullscreen(&mut self, enabled: bool) {
+        if enabled {
+            let monitor = self.window().current_monitor();
+            self.window().set_fullscreen(Some(Borderless(monitor)));
+        } else {
+            self.window().set_fullscreen(None);
+        }
+    }
+
+    fn set_lazy_loop(&mut self, lazy: bool) {
+        self.lazy = lazy;
+        if !self.lazy {
+            self.request_frame();
+        }
+    }
+
+    fn set_mouse_passthrough(&mut self, pass_through: bool) {
+        self.mouse_passthrough = pass_through;
+        self.gl_manager.set_cursor_hittest(!pass_through).unwrap();
+    }
+
+    fn set_position(&mut self, x: i32, y: i32) {
+        self.window()
+            .set_outer_position(PhysicalPosition::new(x, y));
+    }
+
+    fn set_size(&mut self, width: i32, height: i32) {
+        self.window()
+            .set_inner_size(LogicalSize::new(width, height));
     }
 
     fn set_visible(&mut self, visible: bool) {
@@ -145,35 +160,69 @@ impl WindowBackend for WinitWindowBackend {
         }
     }
 
+    fn size(&self) -> (i32, i32) {
+        let inner = self.window().inner_size();
+        let logical = inner.to_logical::<f64>(self.scale_factor);
+        (logical.width as _, logical.height as _)
+    }
+
     fn visible(&self) -> bool {
         self.visible
     }
 
-    fn set_mouse_passthrough(&mut self, pass_through: bool) {
-        self.mouse_passthrough = pass_through;
-        self.gl_manager.set_cursor_hittest(!pass_through).unwrap();
+    fn set_title(&mut self, title: &str) {
+        self.title = title.to_string();
+        self.window().set_title(&self.title);
     }
 
-    fn mouse_passthrough(&mut self) -> bool {
-        self.mouse_passthrough
+    fn title(&self) -> &str {
+        &self.title
+    }
+
+    fn set_touch_as_mouse(&mut self, enable: bool) {
+        self.use_touch_as_mouse = enable;
+    }
+
+    fn touch_as_mouse(&self) -> bool {
+        self.use_touch_as_mouse
     }
 }
 
-fn load_icon(path: &Option<PathBuf>) -> Option<Icon> {
-    match path {
-        Some(path) => {
-            let (icon_rgba, icon_width, icon_height) = {
-                let image = image::open(path)
-                    .expect("Failed to open icon path")
-                    .into_rgba8();
-                let (width, height) = image.dimensions();
-                let rgba = image.into_raw();
-                (rgba, width, height)
-            };
-            Some(Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon"))
+fn load_icon(path: &Option<PathBuf>, data: &Option<&'static [u8]>) -> Option<Icon> {
+    match (path, data) {
+        (Some(path), None) => Some(load_icon_from_path(path)), // Handle Path
+        (None, Some(data)) => Some(load_icon_from_data(data)), // Handle Data
+        (Some(_), Some(data)) => {
+            // Handle User Passing Both
+            log::warn!("Creating Icon from Data. You have set a path and data for your Icon, please choose only one!");
+            Some(load_icon_from_data(data))
         }
-        None => None,
+        (None, None) => None,
     }
+}
+
+fn load_icon_from_path(path: &PathBuf) -> Icon {
+    let (icon_rgba, icon_width, icon_height) = {
+        let image = image::open(path)
+            .expect("Failed to open icon path")
+            .into_rgba8();
+        let (width, height) = image.dimensions();
+        let rgba = image.into_raw();
+        (rgba, width, height)
+    };
+    Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon")
+}
+
+fn load_icon_from_data(data: &'static [u8]) -> Icon {
+    let icon_data = image::load_from_memory(data)
+        .expect("Failed to Create Icon from Data")
+        .into_rgba8();
+
+    let icon_width = icon_data.width();
+    let icon_height = icon_data.height();
+    let icon_rgba = icon_data.into_raw();
+
+    Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon")
 }
 
 impl WinitWindowBackend {
@@ -187,12 +236,18 @@ impl WinitWindowBackend {
             .with_always_on_top(config.always_on_top)
             .with_visible(config.visible)
             .with_decorations(config.decorations)
-            .with_window_icon(load_icon(&config.window_icon_path));
+            .with_window_icon(load_icon(
+                &config.window_icon_path,
+                &config.window_icon_data,
+            ));
 
         #[cfg(target_os = "windows")]
         {
             use winit::platform::windows::WindowBuilderExtWindows;
-            builder = builder.with_taskbar_icon(load_icon(&config.taskbar_icon_path));
+            builder = builder.with_taskbar_icon(load_icon(
+                &config.taskbar_icon_path,
+                &config.taskbar_icon_data,
+            ));
         }
 
         #[cfg(target_os = "macos")]
@@ -229,16 +284,27 @@ impl WinitWindowBackend {
             gl_manager.set_fullscreen(config.fullscreen);
         }
 
+        let WindowConfig {
+            lazy_loop,
+            visible,
+            high_dpi,
+            title,
+            mouse_passthrough,
+            ..
+        } = config;
+
         Ok(Self {
             gl_manager,
             scale_factor,
-            lazy: config.lazy_loop,
+            lazy: lazy_loop,
             cursor: CursorIcon::Default,
             captured: false,
-            visible: config.visible,
-            high_dpi: config.high_dpi,
+            visible,
+            high_dpi,
             is_always_on_top: false,
-            mouse_passthrough: config.mouse_passthrough,
+            mouse_passthrough,
+            title,
+            use_touch_as_mouse: false,
         })
     }
 

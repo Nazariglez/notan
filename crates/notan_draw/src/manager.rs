@@ -96,7 +96,7 @@ fn paint_batch(
         manager.drawing_mask = true;
     } else if !b.is_mask && manager.drawing_mask {
         manager.drawing_mask = false;
-        manager.renderer.begin(Some(&Default::default()));
+        manager.renderer.begin(None);
     }
 
     match &b.typ {
@@ -170,8 +170,10 @@ fn process_draw(
     manager.pattern_painter.clear();
     manager.text_painter.clear();
 
+    let stencil = draw.needs_to_clean_stencil.then_some(0x00);
     manager.renderer.begin(Some(&ClearOptions {
         color: draw.clear_color,
+        stencil,
         ..Default::default()
     }));
 

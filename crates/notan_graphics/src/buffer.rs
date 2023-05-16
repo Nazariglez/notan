@@ -247,16 +247,11 @@ impl VertexAttr {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy)]
 pub enum VertexStepMode {
+    #[default]
     Vertex,
     Instance,
-}
-
-impl Default for VertexStepMode {
-    fn default() -> Self {
-        VertexStepMode::Vertex
-    }
 }
 
 #[derive(Debug, Clone, Copy)]

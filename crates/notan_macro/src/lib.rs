@@ -67,7 +67,7 @@ pub fn state_derive(input: TokenStream) -> TokenStream {
 pub fn vertex_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
     let content = input.value();
-    let spirv = shaders::spirv_from(&content, shaders::ShaderType::Vertex).unwrap();
+    let spirv = shaders::spirv_from(&content, shaders::ShaderType::Vertex, None).unwrap();
 
     shaders::source_from_spirv(spirv).unwrap()
 }
@@ -85,7 +85,7 @@ pub fn include_vertex_shader(input: TokenStream) -> TokenStream {
 pub fn fragment_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
     let content = input.value();
-    let spirv = shaders::spirv_from(&content, shaders::ShaderType::Fragment).unwrap();
+    let spirv = shaders::spirv_from(&content, shaders::ShaderType::Fragment, None).unwrap();
 
     shaders::source_from_spirv(spirv).unwrap()
 }

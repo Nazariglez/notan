@@ -1,6 +1,30 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## v0.9.5 - 19/03/2023
+
+- Increased mouse wheel scroll speed on native platforms.
+- Added `WindowBackend::set_touch_as_mouse` and `touch_as_mouse` to enable/disable it at runtime.
+- Fix `Event::Exit` which is triggered now before the app is closed.
+- Add `WindowConfig::set_window_icon_data` and `set_taskbar_icon_data` to set them using bytes. Check `examples/window_icon_from_raw.rs` for more info.
+- Allow to load images without allocation limits, return an error if the image is bigger than the size supported by the GPU. 
+
+## v0.9.4 - 26/02/2023
+
+- Added `WindowBackend::set_title` and `WindowBackend::title` to change or get the title at any time.
+- Improved stencil clearing when setting a mask on the draw api at the end of the pass.
+- Fix panic using Draw API to draw text with `max_width` and `size` as 0. 
+- Fix `debug_assert` in `Device::inner_read_pixels`.
+- Added support for `include` directives using `shaderc`.
+- Added optional feature `serde` to serialize/deserialize some core types.
+
+## v0.9.3 - 12/02/2023
+
+- Added `WindowBackend::screen_size` to get the screen's resolution size.
+- Added `WindowBackend::container_size` to get the windows container size (screen on native, parent element on web).
+- Fix Draw2D masking issue about the stencil clearing.
+- New example `draw_mask_animated.rs`.
+
 ## v0.9.2 - 05/02/2023
 
 - Added `Fn` keys to `egui`.

@@ -5,6 +5,7 @@ pub use notan_core::mouse::MouseButton;
 use notan_math::{Mat3, Vec2};
 
 #[derive(Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// Represent the mouse data
 pub struct Mouse {
     /// x position
