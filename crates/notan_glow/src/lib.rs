@@ -427,9 +427,12 @@ impl DeviceBackend for GlowBackend {
     }
 
     fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> Result<u64, String> {
-        let mut inner_buffer =
-            InnerBuffer::new(&self.gl, Kind::Uniform(slot, name.to_string()), true)?;
+        let uniform = Kind::Uniform(slot, name.to_string());
+        let mut inner_buffer = InnerBuffer::new(&self.gl, uniform, true)?;
         inner_buffer.bind(&self.gl, Some(self.current_pipeline), false);
+        if let Some(pip) = self.pipelines.get(&self.current_pipeline) {
+            inner_buffer.initialize_ubo(&self.gl, slot, name, pip.program);
+        }
         self.buffer_count += 1;
         self.buffers.insert(self.buffer_count, inner_buffer);
         self.stats.buffer_creation += 1;

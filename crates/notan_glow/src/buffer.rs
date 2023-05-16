@@ -84,6 +84,24 @@ impl InnerBuffer {
         })
     }
 
+    pub fn initialize_ubo(&mut self, gl: &Context, slot: u32, name: &str, program: Program) {
+        #[cfg(feature = "naga")]
+        unsafe {
+            // naga replaces the name of the UBO
+            // here I am trying to set the right name to the match
+            // with what the user defines
+            if let Kind::Uniform(_, u_name) = &mut self.kind {
+                let count = gl.get_active_uniforms(program); // TODO: get_active_uniform_blocks??
+                for index in 0..count {
+                    let shader_u_name = gl.get_active_uniform_block_name(program, index);
+                    if shader_u_name.contains(&format!("{name}_block_")) {
+                        *u_name = shader_u_name;
+                    }
+                }
+            }
+        }
+    }
+
     #[inline]
     pub fn bind(&mut self, gl: &Context, pipeline_id: Option<u64>, reset_attrs: bool) {
         let pip_changed = pipeline_changed(pipeline_id, self.last_pipeline) || reset_attrs;

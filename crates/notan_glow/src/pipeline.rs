@@ -301,9 +301,8 @@ fn create_pipeline(
         (0..count)
             .filter_map(|index| match gl.get_active_uniform(program, index) {
                 Some(u) => {
-                    println!("UNIFORM: {:?}", u.name);
-
                     // texture names does not contains . (Locals.property vs u_texture)
+                    // this is used to match the name that naga set to the uniform textures
                     let is_tex_name = !u.name.contains(".");
 
                     match gl.get_uniform_location(program, &u.name) {
@@ -315,8 +314,6 @@ fn create_pipeline(
                                     None
                                 }
                             });
-
-                            println!("loc: {loc:?} tex_loc:{tex_loc:?}");
 
                             match tex_loc {
                                 Some(tloc) => {
@@ -334,6 +331,10 @@ fn create_pipeline(
                                 }
                                 None => {
                                     if is_tex_name {
+                                        #[cfg(target_arch = "wasm32")]
+                                        texture_locations_map.insert(index, loc.clone());
+
+                                        #[cfg(not(target_arch = "wasm32"))]
                                         texture_locations_map.insert(index, loc);
 
                                         #[cfg(debug_assertions)]
@@ -367,8 +368,6 @@ fn create_pipeline(
             })
             .collect::<Vec<_>>()
     };
-
-    println!("{:?}", uniform_locations);
 
     #[cfg(debug_assertions)]
     {

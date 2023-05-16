@@ -348,7 +348,6 @@ impl Device {
         name: &str,
         data: Option<Vec<u8>>,
     ) -> Result<Buffer, String> {
-        //debug_assert!(current_pipeline.is_some()) //pipeline should be already binded
         let id = self.backend.create_uniform_buffer(slot, name)?;
         let buffer = Buffer::new(
             id,

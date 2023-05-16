@@ -1505,6 +1505,7 @@ dependencies = [
 [[package]]
 name = "naga"
 version = "0.10.0"
+source = "git+https://github.com/Nazariglez/naga?branch=feat-combined-image-samplers#52335bb452346a38cb4031731898a581238c9bd0"
 dependencies = [
  "bit-set",
  "bitflags",
