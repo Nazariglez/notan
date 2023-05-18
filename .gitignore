@@ -29,3 +29,5 @@ pkg
 
 # allow static images
 !**/docs/examples/images/**/*.jpg
+
+.nix-cargo
