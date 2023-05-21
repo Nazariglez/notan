@@ -368,7 +368,7 @@ impl InnerBackend {
             self.sounds.remove(id);
         });
 
-        log::debug!(
+        log::trace!(
             "Audio resources cleaned: Sources({:?}) - Sounds({:?})",
             sources,
             sounds,
