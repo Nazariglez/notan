@@ -31,3 +31,4 @@ pkg
 !**/docs/examples/images/**/*.jpg
 
 .nix-cargo
+.direnv
