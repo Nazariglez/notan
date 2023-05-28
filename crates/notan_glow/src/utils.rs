@@ -31,11 +31,10 @@ fn create_webgl_context(
     antialias: bool,
     transparent: bool,
 ) -> Result<glow::Context, String> {
-    //TODO manage errors
     let gl = win
         .get_context_with_context_options("webgl", webgl_options(antialias, transparent).as_ref())
         .map_err(|e| format!("{e:?}"))?
-        .ok_or_else(|| "Cannot adquire the Webgl context. Is the canvas already instantiated?")?
+        .ok_or("Cannot adquire the Webgl context. Is the canvas already instantiated?")?
         .dyn_into::<web_sys::WebGlRenderingContext>()
         .map_err(|_| "Cannot adquire WebGL context.")?;
 
@@ -49,11 +48,10 @@ fn create_webgl2_context(
     antialias: bool,
     transparent: bool,
 ) -> Result<glow::Context, String> {
-    //TODO manage errors
     let gl = win
         .get_context_with_context_options("webgl2", webgl_options(antialias, transparent).as_ref())
         .map_err(|e| format!("{e:?}"))?
-        .ok_or_else(|| "Cannot adquire the Webgl2 context. Is the canvas already instantiated?")?
+        .ok_or("Cannot adquire the Webgl2 context. Is the canvas already instantiated?")?
         .dyn_into::<web_sys::WebGl2RenderingContext>()
         .map_err(|_| "Cannot adquire WebGL2 context.")?;
 

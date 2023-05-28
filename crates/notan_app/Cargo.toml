@@ -32,10 +32,10 @@ serde = { version = "1.0", optional = true, features = ["serde_derive"] }
 platter2 = "0.1.6"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = { version = "0.3.61", optional = true }
-wasm-bindgen-futures = { version = "0.4.34", optional = true }
+web-sys = { version = "0.3.63", optional = true }
+wasm-bindgen-futures = { version = "0.4.36", optional = true }
 futures-util = { version = "0.3.28", optional = true }
-js-sys = { version = "0.3.61", optional = true }
+js-sys = { version = "0.3.63", optional = true }
 platter2 = { version = "0.1.6", features = ["web-sys"] }
 
 [features]
