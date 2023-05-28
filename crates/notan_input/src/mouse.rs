@@ -20,6 +20,8 @@ pub struct Mouse {
     pub released: HashSet<MouseButton>,
     /// wheel delta
     pub wheel_delta: Vec2,
+    /// used internally to reset the wheel_delta
+    scrolling: bool,
 }
 
 impl Mouse {
@@ -111,10 +113,25 @@ impl Mouse {
         self.was_pressed(MouseButton::Right)
     }
 
+    #[inline(always)]
+    /// Returns true if the user is scrolling in this frame
+    pub fn is_scrolling(&self) -> bool {
+        self.scrolling
+    }
+
     #[inline]
     pub(crate) fn clear(&mut self) {
         self.pressed.clear();
         self.released.clear();
+
+        if !self.scrolling {
+            self.wheel_delta.x = 0.0;
+            self.wheel_delta.y = 0.0;
+        }
+
+        // we set it to false after the check to reset the wheel_delta to keep the value for at
+        // least one frame, and if the next frame we're not scrolling then we reset wheel_delta
+        self.scrolling = false;
     }
 
     #[inline]
@@ -141,16 +158,18 @@ impl Mouse {
                 self.x = *x as f32;
                 self.y = *y as f32;
 
-                if let Some(t) = self.down.get_mut(button) {
-                    *t += delta;
-                } else {
-                    self.down.insert(*button, 0.0);
-                    self.pressed.insert(*button);
+                match self.down.get_mut(button) {
+                    Some(t) => *t += delta,
+                    None => {
+                        self.down.insert(*button, 0.0);
+                        self.pressed.insert(*button);
+                    }
                 }
             }
             Event::MouseWheel { delta_x, delta_y } => {
                 self.wheel_delta.x = *delta_x;
                 self.wheel_delta.y = *delta_y;
+                self.scrolling = true;
             }
             _ => {}
         }
