@@ -18,7 +18,7 @@ pub fn notan_main(_attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn handle_main_func(input: ItemFn) -> TokenStream {
-    let ident = input.sig.ident.clone();
+    let ident = &input.sig.ident;
     let void_ret = input.sig.output == ReturnType::Default;
     let ret: proc_macro2::TokenStream = if void_ret { "()" } else { "Result<(), String>" }
         .parse()
