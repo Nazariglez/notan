@@ -1868,6 +1868,7 @@ dependencies = [
  "notan_math",
  "notan_utils",
  "parking_lot",
+ "web-sys",
 ]
 
 [[package]]
