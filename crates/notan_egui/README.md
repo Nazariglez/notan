@@ -1,9 +1,9 @@
 EGUI
 ===
 
-This is the implementation of [egui 0.20](https://github.com/emilk/egui) for notan.
+This is the implementation of [egui 0.22](https://github.com/emilk/egui) for notan.
 
-It should support all the features that __egui__ uses. Only `clipboard` remains unsupported for now.
+It should support all the features that __egui__ uses. 
 
 You can check some examples at `/examples` or check the demos online: 
 * [egui_basic](https://nazariglez.github.io/notan-web/examples/egui_basic.html)
