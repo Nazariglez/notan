@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use crate::gl_manager::GlManager;
+use notan_app::crevice::std140::Vec2;
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
 use winit::dpi::{LogicalPosition, LogicalSize, PhysicalPosition};
@@ -277,7 +278,16 @@ impl WinitWindowBackend {
         }
 
         if let Some((x, y)) = config.position {
-            builder = builder.with_position(LogicalPosition::new(x as f64, y as f64));
+            #[cfg(windows)]
+            {
+                // This is already done by the OS in Linux/MacOS
+                let clamped_position =
+                    clamp_window_to_sane_position(config.width, config.height, x, y, &event_loop);
+                builder = builder.with_position(LogicalPosition::new(
+                    clamped_position.0 as f64,
+                    clamped_position.1 as f64,
+                ));
+            }
         }
 
         let gl_manager = GlManager::new(builder, event_loop, &config)?;
@@ -375,4 +385,65 @@ fn winit_cursor(cursor: CursorIcon) -> Option<WCursorIcon> {
         CursorIcon::ResizeColumn => WCursorIcon::ColResize,
         CursorIcon::ResizeRow => WCursorIcon::RowResize,
     })
+}
+
+fn clamp_window_to_sane_position(
+    width: u32,
+    height: u32,
+    x: i32,
+    y: i32,
+    event_loop: &EventLoop<()>,
+) -> (i32, i32) {
+    let monitors = event_loop.available_monitors();
+    // default to primary monitor, in case the correct monitor was disconnected.
+    let mut active_monitor = if let Some(active_monitor) = event_loop
+        .primary_monitor()
+        .or_else(|| event_loop.available_monitors().next())
+    {
+        active_monitor
+    } else {
+        return (x, y); // no monitors 🤷
+    };
+
+    for monitor in monitors {
+        let monitor_x_range = (monitor.position().x - width as i32)
+            ..(monitor.position().x + monitor.size().width as i32);
+        let monitor_y_range = (monitor.position().y - height as i32)
+            ..(monitor.position().y + monitor.size().height as i32);
+
+        if monitor_x_range.contains(&x) && monitor_y_range.contains(&y) {
+            active_monitor = monitor;
+        }
+    }
+
+    let mut inner_size_pixels = Vec2 {
+        x: width as f32 * active_monitor.scale_factor() as f32,
+        y: height as f32 * active_monitor.scale_factor() as f32,
+    };
+
+    // Add size of title bar. This is 32 px by default in Win 10/11.
+    if cfg!(target_os = "windows") {
+        inner_size_pixels.y += 32.0 * active_monitor.scale_factor() as f32;
+    }
+
+    let monitor_position = Vec2 {
+        x: active_monitor.position().x as f32,
+        y: active_monitor.position().y as f32,
+    };
+
+    let monitor_size = active_monitor.size();
+
+    // To get the maximum position, we get the rightmost corner of the display, then subtract
+    // the size of the window to get the bottom right most value window.position can have.
+
+    let clamped_x = x.clamp(
+        monitor_position.x as i32,
+        monitor_position.x as i32 + monitor_size.width as i32 - inner_size_pixels.x as i32,
+    );
+    let clamped_y = y.clamp(
+        monitor_position.y as i32,
+        monitor_position.y as i32 + monitor_size.height as i32 - inner_size_pixels.y as i32,
+    );
+
+    (clamped_x, clamped_y)
 }
