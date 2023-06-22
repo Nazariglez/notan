@@ -27,6 +27,9 @@ pub struct WindowConfig {
     /// Maximum resizable window's size
     pub max_size: Option<(u32, u32)>,
 
+    /// Window's x/y start position
+    pub position: Option<(i32, i32)>,
+
     /// Start the window maximized
     /// `Web: The canvas will fill the size of the parent of the HtmlCanvasElement`
     pub maximized: bool,
@@ -92,6 +95,7 @@ impl Default for WindowConfig {
             fullscreen: false,
             min_size: None,
             max_size: None,
+            position: None,
             maximized: false,
             resizable: false,
             vsync: false,
@@ -152,6 +156,13 @@ impl WindowConfig {
     /// Sets the window's maximum size
     pub fn set_max_size(mut self, width: u32, height: u32) -> Self {
         self.max_size = Some((width, height));
+        self
+    }
+
+    /// Sets the window's x and y
+    pub fn set_position(mut self, x: u32, y: u32) -> Self {
+        self.x = x;
+        self.y = y;
         self
     }
 

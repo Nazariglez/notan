@@ -276,6 +276,10 @@ impl WinitWindowBackend {
             builder = builder.with_max_inner_size(LogicalSize::new(w, h));
         }
 
+        if let Some((x, y)) = config.position {
+            builder = builder.with_position(LogicalSize::new(x, y));
+        }
+
         let gl_manager = GlManager::new(builder, event_loop, &config)?;
 
         // Try setting vsync.
