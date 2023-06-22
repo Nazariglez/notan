@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::gl_manager::GlManager;
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
-use winit::dpi::{LogicalSize, PhysicalPosition};
+use winit::dpi::{LogicalPosition, LogicalSize, PhysicalPosition};
 use winit::event_loop::EventLoop;
 use winit::window::Fullscreen::Borderless;
 use winit::window::{
@@ -277,7 +277,7 @@ impl WinitWindowBackend {
         }
 
         if let Some((x, y)) = config.position {
-            builder = builder.with_position(LogicalSize::new(x, y));
+            builder = builder.with_position(LogicalPosition::new(x as f64, y as f64));
         }
 
         let gl_manager = GlManager::new(builder, event_loop, &config)?;
