@@ -160,9 +160,8 @@ impl WindowConfig {
     }
 
     /// Sets the window's x and y
-    pub fn set_position(mut self, x: u32, y: u32) -> Self {
-        self.x = x;
-        self.y = y;
+    pub fn set_position(mut self, x: i32, y: i32) -> Self {
+        self.position = Some((x, y));
         self
     }
 
