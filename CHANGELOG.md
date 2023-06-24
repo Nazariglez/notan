@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 ## UNRELEASED
-
+- Added `WindowConfig::set_position` to set x/y position before creating the window.
 - Changed `Renderer.begin` uses `Option<ClearOption>` instead of `Option<&ClearOption>`.
 - Changed sizes and positions for Window and Textures from `i32` to `u32`.
 - Added `AppTimer::elapsed` to return time since init as `Duration`.
