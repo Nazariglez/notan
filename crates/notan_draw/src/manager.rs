@@ -96,7 +96,7 @@ fn paint_batch(
         manager.drawing_mask = true;
     } else if !b.is_mask && manager.drawing_mask {
         manager.drawing_mask = false;
-        manager.renderer.begin(Some(&Default::default()));
+        manager.renderer.begin(None);
     }
 
     match &b.typ {
@@ -170,8 +170,10 @@ fn process_draw(
     manager.pattern_painter.clear();
     manager.text_painter.clear();
 
+    let stencil = draw.needs_to_clean_stencil.then_some(0x00);
     manager.renderer.begin(Some(&ClearOptions {
         color: draw.clear_color,
+        stencil,
         ..Default::default()
     }));
 
@@ -259,8 +261,9 @@ fn blended_pip(
     alpha_mode: Option<BlendMode>,
     is_rt: bool,
 ) -> Option<Pipeline> {
+    // commented the following code because blank frames were shown
     // drawing to a rt needs over mode
-    let alpha_mode = alpha_mode.or(if is_rt { Some(BlendMode::OVER) } else { None });
+    // let alpha_mode = alpha_mode.or(if is_rt { Some(BlendMode::OVER) } else { None });
     let new_cbm = pip.options.color_blend != blend_mode;
     let new_abm = pip.options.alpha_blend != alpha_mode;
     if new_cbm || new_abm {

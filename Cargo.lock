@@ -1062,6 +1062,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "12f597d56c1bd55a811a1be189459e8fad2bbc272616375602443bdfb37fa774"
 dependencies = [
  "bytemuck",
+ "serde",
 ]
 
 [[package]]
@@ -1230,6 +1231,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
  "ahash",
+ "serde",
 ]
 
 [[package]]
@@ -1720,7 +1722,7 @@ dependencies = [
 
 [[package]]
 name = "notan"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "bytemuck",
  "egui_demo_lib",
@@ -1744,7 +1746,7 @@ dependencies = [
 
 [[package]]
 name = "notan_app"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "bytemuck",
  "downcast-rs",
@@ -1763,20 +1765,21 @@ dependencies = [
  "notan_utils",
  "parking_lot",
  "platter2",
+ "serde",
  "wasm-bindgen-futures",
  "web-sys",
 ]
 
 [[package]]
 name = "notan_audio"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "parking_lot",
 ]
 
 [[package]]
 name = "notan_backend"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "notan_app",
  "notan_web",
@@ -1785,14 +1788,15 @@ dependencies = [
 
 [[package]]
 name = "notan_core"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
+ "serde",
  "web-sys",
 ]
 
 [[package]]
 name = "notan_draw"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "log",
  "lyon",
@@ -1808,7 +1812,7 @@ dependencies = [
 
 [[package]]
 name = "notan_egui"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "bytemuck",
  "egui",
@@ -1820,7 +1824,7 @@ dependencies = [
 
 [[package]]
 name = "notan_extra"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "notan_app",
  "spin_sleep",
@@ -1828,7 +1832,7 @@ dependencies = [
 
 [[package]]
 name = "notan_glow"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "bytemuck",
  "glow",
@@ -1843,7 +1847,7 @@ dependencies = [
 
 [[package]]
 name = "notan_glyph"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "bytemuck",
  "glyph_brush",
@@ -1855,7 +1859,7 @@ dependencies = [
 
 [[package]]
 name = "notan_graphics"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "bytemuck",
  "glsl-layout",
@@ -1864,21 +1868,23 @@ dependencies = [
  "notan_math",
  "notan_utils",
  "parking_lot",
+ "web-sys",
 ]
 
 [[package]]
 name = "notan_input"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "hashbrown 0.13.2",
  "log",
  "notan_core",
  "notan_math",
+ "serde",
 ]
 
 [[package]]
 name = "notan_log"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "console_log",
  "fern",
@@ -1891,7 +1897,7 @@ dependencies = [
 
 [[package]]
 name = "notan_macro"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "cfg_aliases",
  "glsl-to-spirv",
@@ -1905,14 +1911,15 @@ dependencies = [
 
 [[package]]
 name = "notan_math"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "glam",
+ "serde",
 ]
 
 [[package]]
 name = "notan_oddio"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "cpal",
  "hashbrown 0.13.2",
@@ -1924,7 +1931,7 @@ dependencies = [
 
 [[package]]
 name = "notan_random"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "getrandom",
  "rand",
@@ -1933,7 +1940,7 @@ dependencies = [
 
 [[package]]
 name = "notan_text"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "hashbrown 0.13.2",
  "lazy_static",
@@ -1947,7 +1954,7 @@ dependencies = [
 
 [[package]]
 name = "notan_utils"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "instant",
  "js-sys",
@@ -1959,7 +1966,7 @@ dependencies = [
 
 [[package]]
 name = "notan_web"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "console_error_panic_hook",
  "futures-util",
@@ -1978,7 +1985,7 @@ dependencies = [
 
 [[package]]
 name = "notan_winit"
-version = "0.9.2"
+version = "0.9.5"
 dependencies = [
  "arboard",
  "glutin",

@@ -16,6 +16,7 @@ use notan_audio::AudioBackend;
 
 #[derive(Default)]
 pub struct EmptyWindowBackend {
+    title: String,
     size: (i32, i32),
     position: (i32, i32),
     is_fullscreen: bool,
@@ -24,89 +25,110 @@ pub struct EmptyWindowBackend {
     captured: bool,
     visible: bool,
     mouse_passthrough: bool,
+    touch_as_mouse: bool,
 }
 
 impl WindowBackend for EmptyWindowBackend {
-    fn id(&self) -> u64 {
-        0
+    fn capture_cursor(&self) -> bool {
+        self.captured
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {
-        self.size = (width, height);
-    }
-
-    fn size(&self) -> (i32, i32) {
-        self.size
-    }
-
-    fn set_position(&mut self, x: i32, y: i32) {
-        self.position = (x, y);
-    }
-
-    fn position(&self) -> (i32, i32) {
-        self.position
-    }
-
-    fn set_fullscreen(&mut self, enabled: bool) {
-        self.is_fullscreen = enabled;
-    }
-
-    fn is_fullscreen(&self) -> bool {
-        self.is_fullscreen
-    }
-
-    fn set_always_on_top(&mut self, enabled: bool) {
-        self.is_always_on_top = enabled;
-    }
-
-    fn is_always_on_top(&self) -> bool {
-        self.is_always_on_top
+    fn cursor(&self) -> CursorIcon {
+        CursorIcon::Default
     }
 
     fn dpi(&self) -> f64 {
         1.0
     }
 
-    fn set_lazy_loop(&mut self, lazy: bool) {
-        self.lazy = lazy;
+    fn id(&self) -> u64 {
+        0
+    }
+
+    fn is_always_on_top(&self) -> bool {
+        self.is_always_on_top
+    }
+
+    fn is_fullscreen(&self) -> bool {
+        self.is_fullscreen
     }
 
     fn lazy_loop(&self) -> bool {
         self.lazy
     }
 
+    fn mouse_passthrough(&mut self) -> bool {
+        self.mouse_passthrough
+    }
+
+    fn position(&self) -> (i32, i32) {
+        self.position
+    }
+
     fn request_frame(&mut self) {
         // no-op
     }
 
-    fn set_cursor(&mut self, _cursor: CursorIcon) {}
+    fn screen_size(&self) -> (i32, i32) {
+        (0, 0)
+    }
 
-    fn cursor(&self) -> CursorIcon {
-        CursorIcon::Default
+    fn set_always_on_top(&mut self, enabled: bool) {
+        self.is_always_on_top = enabled;
     }
 
     fn set_capture_cursor(&mut self, capture: bool) {
         self.captured = capture;
     }
 
-    fn capture_cursor(&self) -> bool {
-        self.captured
+    fn set_cursor(&mut self, _cursor: CursorIcon) {}
+
+    fn set_fullscreen(&mut self, enabled: bool) {
+        self.is_fullscreen = enabled;
+    }
+
+    fn set_lazy_loop(&mut self, lazy: bool) {
+        self.lazy = lazy;
+    }
+
+    fn set_mouse_passthrough(&mut self, pass_through: bool) {
+        self.mouse_passthrough = pass_through;
+    }
+
+    fn set_position(&mut self, x: i32, y: i32) {
+        self.position = (x, y);
+    }
+
+    fn set_size(&mut self, width: i32, height: i32) {
+        self.size = (width, height);
     }
 
     fn set_visible(&mut self, visible: bool) {
         self.visible = visible;
     }
 
+    fn size(&self) -> (i32, i32) {
+        self.size
+    }
+
     fn visible(&self) -> bool {
         self.visible
     }
 
-    fn mouse_passthrough(&mut self) -> bool {
-        self.mouse_passthrough
+    fn set_title(&mut self, title: &str) {
+        self.title = title.to_string();
     }
 
-    fn set_mouse_passthrough(&mut self, pass_through: bool) {
-        self.mouse_passthrough = pass_through;
+    fn title(&self) -> &str {
+        &self.title
+    }
+
+    fn set_touch_as_mouse(&mut self, enable: bool) {
+        self.touch_as_mouse = enable;
+    }
+
+    fn touch_as_mouse(&self) -> bool {
+        self.touch_as_mouse
     }
 }
 

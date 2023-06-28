@@ -243,6 +243,8 @@ where
         #[cfg(not(feature = "audio"))]
         let mut app = App::new(Box::new(backend));
 
+        app.window().set_touch_as_mouse(use_touch_as_mouse);
+
         let (width, height) = app.window().size();
         let win_dpi = app.window().dpi();
         graphics.set_size(width, height);
@@ -254,7 +256,7 @@ where
             cb(&mut app, &mut assets, &mut graphics, &mut plugins);
         }
 
-        // add plguins
+        // add plugins
         plugin_callbacks.reverse();
         while let Some(cb) = plugin_callbacks.pop() {
             cb(&mut app, &mut assets, &mut graphics, &mut plugins);
@@ -305,6 +307,8 @@ where
             assets.tick((app, &mut graphics, &mut plugins, &mut state))?;
 
             let delta = app.timer.delta_f32();
+
+            let use_touch_as_mouse = app.window().touch_as_mouse();
 
             // Manage each event
             let mut events = app.backend.events_iter();
@@ -370,8 +374,13 @@ where
             #[cfg(feature = "audio")]
             app.audio.clean();
 
+            // dispatch Event::Exit before close the app
             if app.closed {
-                log::debug!("App Closed");
+                let evt = Event::Exit;
+                let _ = plugins.event(app, &mut assets, &evt)?;
+                if let Some(cb) = &event_callback {
+                    cb.exec(app, &mut assets, &mut plugins, state, evt);
+                }
             }
 
             // Using lazy loop we need to draw 2 frames at the beginning to avoid

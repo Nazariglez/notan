@@ -1,6 +1,6 @@
 [package]
 name = "notan_input"
-version = "0.9.2"
+version = "0.9.5"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -10,7 +10,11 @@ license = "MIT OR Apache-2.0"
 description = "Provides a set of API to manage user's input"
 
 [dependencies]
-notan_core = { path = "../notan_core", version = "0.9.2" }
-notan_math = { path = "../notan_math", version = "0.9.2" }
+notan_core = { path = "../notan_core", version = "0.9.5" }
+notan_math = { path = "../notan_math", version = "0.9.5" }
 hashbrown = "0.13.2"
 log = "0.4.17"
+serde = { version = "1", optional = true, features = ["serde_derive"] }
+
+[features]
+serde = ["dep:serde", "notan_core/serde", "notan_math/serde", "hashbrown/serde"]
