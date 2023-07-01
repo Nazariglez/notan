@@ -349,7 +349,7 @@ impl WindowBackend for WebWindowBackend {
     }
 
     // No operation, as unsupported in browser
-    fn set_cursor_position(&mut self, _x: u32, _y: u32) {}
+    fn set_cursor_position(&mut self, _x: f32, _y: f32) {}
 
     fn set_fullscreen(&mut self, enabled: bool) {
         *self.fullscreen_requested.borrow_mut() = Some(enabled);
