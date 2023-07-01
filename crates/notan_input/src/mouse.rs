@@ -24,6 +24,8 @@ pub struct Mouse {
     pub motion_delta: (f64, f64),
     /// used internally to reset the wheel_delta
     scrolling: bool,
+    /// used internally to reset the motion_delta
+    moving: bool,
 }
 
 impl Mouse {
@@ -131,9 +133,15 @@ impl Mouse {
             self.wheel_delta.y = 0.0;
         }
 
+        if !self.moving {
+            self.motion_delta.0 = 0.0;
+            self.motion_delta.1 = 0.0;
+        }
+
         // we set it to false after the check to reset the wheel_delta to keep the value for at
         // least one frame, and if the next frame we're not scrolling then we reset wheel_delta
         self.scrolling = false;
+        self.moving = false;
     }
 
     #[inline]
@@ -175,6 +183,7 @@ impl Mouse {
             },
             Event::MouseMotion { delta } => {
                 self.motion_delta = *delta;
+                self.moving = true;
             }
             _ => {}
         }
