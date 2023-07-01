@@ -82,6 +82,8 @@ impl WindowBackend for EmptyWindowBackend {
 
     fn set_cursor(&mut self, _cursor: CursorIcon) {}
 
+    fn set_cursor_position(&mut self, _x: u32, _y: u32) {}
+
     fn set_fullscreen(&mut self, enabled: bool) {
         self.is_fullscreen = enabled;
     }

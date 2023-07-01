@@ -118,7 +118,7 @@ pub trait WindowBackend {
     fn capture_cursor(&self) -> bool;
 
     /// Returns the container size. Meaning the screen size on native
-    /// and the canva's parent element size on `web`
+    /// and the canvas's parent element size on `web`
     fn container_size(&self) -> (i32, i32) {
         self.screen_size()
     }
@@ -146,7 +146,7 @@ pub trait WindowBackend {
     /// Returns true if the lazy mode is enabled
     fn lazy_loop(&self) -> bool;
 
-    // returns whether you can click through the window
+    /// Returns whether you can click through the window
     fn mouse_passthrough(&mut self) -> bool;
 
     /// Returns the window's position
@@ -167,13 +167,16 @@ pub trait WindowBackend {
     /// Sets the mouse cursor icon
     fn set_cursor(&mut self, cursor: CursorIcon);
 
+    /// Sets the mouse cursor position
+    fn set_cursor_position(&mut self, x: u32, y: u32);
+
     /// Enable or disable the fullscreen mode
     fn set_fullscreen(&mut self, enabled: bool);
 
     /// Enable or disable the lazy mode for the app's loop
     fn set_lazy_loop(&mut self, lazy: bool);
 
-    // sets whether you can click through the window
+    /// Sets whether you can click through the window
     fn set_mouse_passthrough(&mut self, pass_through: bool);
 
     /// Sets the window's position
