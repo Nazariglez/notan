@@ -40,7 +40,7 @@ pub enum Event {
     /// Mouse cursor has left the window's app
     MouseLeft { x: i32, y: i32 },
 
-    /// Mouse cursor has left the window's app
+    /// Mouse was moved with this delta
     MouseMotion { delta: (f64, f64) },
 
     /// Keyboard's key is down
