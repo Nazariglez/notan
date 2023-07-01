@@ -129,6 +129,12 @@ impl WindowBackend for WinitWindowBackend {
         }
     }
 
+    fn set_cursor_position(&mut self, x: u32, y: u32) {
+        if let Err(e) = self.window().set_cursor_position(PhysicalPosition::new(x, y)) {
+            log::error!("Error setting mouse cursor position to x: {0} y: {1} error: {2}", x, y, e);
+        }
+    }
+
     fn set_fullscreen(&mut self, enabled: bool) {
         if enabled {
             let monitor = self.window().current_monitor();
