@@ -285,6 +285,7 @@ impl Plugin for EguiPlugin {
                 });
                 is_touch_end = true;
             }
+            _ => {}
         }
 
         self.latest_evt_was_touch = is_touch_end;
