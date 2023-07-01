@@ -123,6 +123,12 @@ impl Mouse {
         self.scrolling
     }
 
+    #[inline(always)]
+    /// Returns true if the user is moving the mouse in this frame
+    pub fn is_moving(&self) -> bool {
+        self.moving
+    }
+
     #[inline]
     pub(crate) fn clear(&mut self) {
         self.pressed.clear();
