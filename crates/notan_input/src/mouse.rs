@@ -20,6 +20,8 @@ pub struct Mouse {
     pub released: HashSet<MouseButton>,
     /// wheel delta
     pub wheel_delta: Vec2,
+    /// motion delta
+    pub motion_delta: (f64, f64),
     /// used internally to reset the wheel_delta
     scrolling: bool,
 }
@@ -170,6 +172,9 @@ impl Mouse {
                 self.wheel_delta.x = *delta_x;
                 self.wheel_delta.y = *delta_y;
                 self.scrolling = true;
+            },
+            Event::MouseMotion { delta } => {
+                self.motion_delta = *delta;
             }
             _ => {}
         }

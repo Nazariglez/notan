@@ -168,7 +168,7 @@ pub trait WindowBackend {
     fn set_cursor(&mut self, cursor: CursorIcon);
 
     /// Sets the mouse cursor position
-    fn set_cursor_position(&mut self, x: u32, y: u32);
+    fn set_cursor_position(&mut self, x: f32, y: f32);
 
     /// Enable or disable the fullscreen mode
     fn set_fullscreen(&mut self, enabled: bool);
