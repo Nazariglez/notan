@@ -280,7 +280,7 @@ impl WinitWindowBackend {
         if let Some((x, y)) = config.position {
             let mut safe_x = x;
             let mut safe_y = y;
-            
+
             // This is already done by the OS in Linux/MacOS
             #[cfg(windows)]
             {
@@ -291,10 +291,7 @@ impl WinitWindowBackend {
                 safe_y = clamped_position.1;
             }
 
-            builder = builder.with_position(LogicalPosition::new(
-                safe_x as f64,
-                safe_y as f64,
-            ));
+            builder = builder.with_position(LogicalPosition::new(safe_x as f64, safe_y as f64));
         }
 
         let gl_manager = GlManager::new(builder, event_loop, &config)?;
