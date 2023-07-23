@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - App's state can use now lifetimes, ie: `State<'n>`.
 - Added `Clone` to `AssetsList`.
 - The `image` crate on `notan_graphics` is only used when `texture_to_file` is enabled.
+- Added `WindowBackend::set_cursor_position`, `Event::MouseMotion` and `Mouse::is_moving`.
 
 ## v0.9.5 - 19/03/2023
 
