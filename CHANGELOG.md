@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Added `Clone` to `AssetsList`.
 - The `image` crate on `notan_graphics` is only used when `texture_to_file` is enabled.
 - Added `WindowBackend::set_cursor_position`, `Event::MouseMotion` and `Mouse::is_moving`.
+- Added new example `window_initial_position.rs`.
 
 ## v0.9.5 - 19/03/2023
 
