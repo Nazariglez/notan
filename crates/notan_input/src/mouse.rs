@@ -186,7 +186,7 @@ impl Mouse {
                 self.wheel_delta.x = *delta_x;
                 self.wheel_delta.y = *delta_y;
                 self.scrolling = true;
-            },
+            }
             Event::MouseMotion { delta } => {
                 self.motion_delta = *delta;
                 self.moving = true;
