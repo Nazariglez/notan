@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use crate::gl_manager::GlManager;
-use notan_app::crevice::std140::Vec2;
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
 use winit::dpi::{LogicalPosition, LogicalSize, PhysicalPosition};
@@ -278,18 +277,17 @@ impl WinitWindowBackend {
         }
 
         if let Some((x, y)) = config.position {
-            let mut safe_x = x;
-            let mut safe_y = y;
+            let safe_x = x;
+            let safe_y = y;
 
             // This is already done by the OS in Linux/MacOS
             #[cfg(windows)]
-            {
+            let (safe_x, safe_y) = {
                 let clamped_position =
                     clamp_window_to_sane_position(config.width, config.height, x, y, &event_loop);
 
-                safe_x = clamped_position.0;
-                safe_y = clamped_position.1;
-            }
+                (clamped_position.0, clamped_position.1)
+            };
 
             builder = builder.with_position(LogicalPosition::new(safe_x as f64, safe_y as f64));
         }
@@ -391,6 +389,7 @@ fn winit_cursor(cursor: CursorIcon) -> Option<WCursorIcon> {
     })
 }
 
+#[cfg(windows)]
 fn clamp_window_to_sane_position(
     width: u32,
     height: u32,
@@ -420,20 +419,20 @@ fn clamp_window_to_sane_position(
         }
     }
 
-    let mut inner_size_pixels = Vec2 {
-        x: width as f32 * active_monitor.scale_factor() as f32,
-        y: height as f32 * active_monitor.scale_factor() as f32,
-    };
+    let mut inner_size_pixels = (
+        width as f32 * active_monitor.scale_factor() as f32,
+        height as f32 * active_monitor.scale_factor() as f32,
+    );
 
     // Add size of title bar. This is 32 px by default in Win 10/11.
     if cfg!(target_os = "windows") {
-        inner_size_pixels.y += 32.0 * active_monitor.scale_factor() as f32;
+        inner_size_pixels.1 += 32.0 * active_monitor.scale_factor() as f32;
     }
 
-    let monitor_position = Vec2 {
-        x: active_monitor.position().x as f32,
-        y: active_monitor.position().y as f32,
-    };
+    let monitor_position = (
+        active_monitor.position().x as f32,
+        active_monitor.position().y as f32,
+    );
 
     let monitor_size = active_monitor.size();
 
@@ -441,12 +440,12 @@ fn clamp_window_to_sane_position(
     // the size of the window to get the bottom right most value window.position can have.
 
     let clamped_x = x.clamp(
-        monitor_position.x as i32,
-        monitor_position.x as i32 + monitor_size.width as i32 - inner_size_pixels.x as i32,
+        monitor_position.0 as i32,
+        monitor_position.0 as i32 + monitor_size.width as i32 - inner_size_pixels.0 as i32,
     );
     let clamped_y = y.clamp(
-        monitor_position.y as i32,
-        monitor_position.y as i32 + monitor_size.height as i32 - inner_size_pixels.y as i32,
+        monitor_position.1 as i32,
+        monitor_position.1 as i32 + monitor_size.height as i32 - inner_size_pixels.1 as i32,
     );
 
     (clamped_x, clamped_y)

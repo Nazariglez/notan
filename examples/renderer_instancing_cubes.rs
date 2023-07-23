@@ -143,7 +143,6 @@ fn setup(gfx: &mut Graphics) -> State {
     // Generate 1 color per cube
     let mut rng = Random::default();
     let colors = (0..INSTANCES)
-        .into_iter()
         .flat_map(|_| {
             [
                 rng.gen_range(0.0..1.0),
