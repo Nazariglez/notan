@@ -132,7 +132,7 @@ impl WindowBackend for WinitWindowBackend {
     fn set_cursor_position(&mut self, x: f32, y: f32) {
         if let Err(e) = self
             .window()
-            .set_cursor_position(PhysicalPosition::new(x, y))
+            .set_cursor_position(LogicalPosition::new(x, y))
         {
             log::error!(
                 "Error setting mouse cursor position to x: {0} y: {1} error: {2}",
