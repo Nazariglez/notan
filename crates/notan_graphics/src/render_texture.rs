@@ -109,7 +109,7 @@ impl<'a> RenderTextureBuilder<'a> {
         self
     }
 
-    /// Generate the mipmaps
+    /// Toggle mipmap generation (with Linear filter if enabled)
     pub fn with_mipmaps(mut self, enable: bool) -> Self {
         if enable {
             self.info.mipmap_filter = Some(TextureFilter::Linear);
