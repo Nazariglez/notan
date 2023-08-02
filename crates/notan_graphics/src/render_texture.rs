@@ -109,6 +109,22 @@ impl<'a> RenderTextureBuilder<'a> {
         self
     }
 
+    /// Generate the mipmaps
+    pub fn with_mipmaps(mut self, enable: bool) -> Self {
+        if enable {
+            self.info.mipmap_filter = Some(TextureFilter::Linear);
+        } else {
+            self.info.mipmap_filter = None;
+        }
+        self
+    }
+
+    /// Set mipmap filtering function
+    pub fn with_mipmap_filter(mut self, filter: TextureFilter) -> Self {
+        self.info.mipmap_filter = Some(filter);
+        self
+    }
+
     pub fn build(self) -> Result<RenderTexture, String> {
         let Self { device, info } = self;
 
