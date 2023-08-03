@@ -45,7 +45,7 @@ pub struct GlowBackend {
     limits: Limits,
     stats: GpuStats,
     current_uniforms: Vec<UniformLocation>,
-    drawing_to_render_texture: bool,
+    target_render_texture: Option<u64>,
     render_texture_mipmaps: bool,
 }
 
@@ -121,7 +121,7 @@ impl GlowBackend {
             limits,
             stats,
             current_uniforms: vec![],
-            drawing_to_render_texture: false,
+            target_render_texture: None,
             render_texture_mipmaps: false,
         })
     }
@@ -149,7 +149,7 @@ impl GlowBackend {
         let (width, height, dpi) = match render_target {
             Some(rt) => {
                 rt.bind(&self.gl);
-                self.drawing_to_render_texture = true;
+                self.target_render_texture = Some(rt.texture_id);
                 self.render_texture_mipmaps = rt.use_mipmaps;
                 (rt.size.0, rt.size.1, 1.0)
             }
@@ -157,7 +157,6 @@ impl GlowBackend {
                 unsafe {
                     self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
                 }
-                self.drawing_to_render_texture = false;
                 self.render_texture_mipmaps = false;
                 (self.size.0, self.size.1, self.dpi)
             }
@@ -170,7 +169,7 @@ impl GlowBackend {
 
     #[inline]
     fn viewport(&mut self, mut x: f32, mut y: f32, width: f32, height: f32, dpi: f32) {
-        if !self.drawing_to_render_texture {
+        if self.target_render_texture.is_none() {
             y = (self.size.1 as f32 - (height + y)) * dpi;
             x *= dpi;
         }
@@ -203,8 +202,16 @@ impl GlowBackend {
     fn end(&mut self) {
         unsafe {
             // generate mipmap for the framebuffer texture if needed
-            if self.drawing_to_render_texture && self.render_texture_mipmaps {
-                self.gl.generate_mipmap(glow::TEXTURE_2D);
+            if self.render_texture_mipmaps {
+                if let Some(render_texture) = self
+                    .target_render_texture
+                    .and_then(|id| self.textures.get(&id))
+                {
+                    self.gl
+                        .bind_texture(glow::TEXTURE_2D, Some(render_texture.texture));
+                    self.gl.generate_mipmap(glow::TEXTURE_2D);
+                    self.gl.bind_texture(glow::TEXTURE_2D, None);
+                }
             }
             self.gl.disable(glow::SCISSOR_TEST);
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
@@ -215,7 +222,7 @@ impl GlowBackend {
         }
 
         self.using_indices = None;
-        self.drawing_to_render_texture = false;
+        self.target_render_texture = None;
         self.render_texture_mipmaps = false;
     }
 
@@ -529,7 +536,7 @@ impl DeviceBackend for GlowBackend {
             "Error creating render target: texture id '{texture_id}' not found.",
         ))?;
 
-        let inner_rt = InnerRenderTexture::new(&self.gl, texture, info)?;
+        let inner_rt = InnerRenderTexture::new(&self.gl, texture, texture_id, info)?;
         self.render_target_count += 1;
         self.render_targets
             .insert(self.render_target_count, inner_rt);
