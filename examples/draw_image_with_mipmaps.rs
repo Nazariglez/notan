@@ -188,32 +188,26 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
         // Copy the original texture content to the RenderTextures
         {
             let mut renderer = gfx.device.create_renderer();
-            renderer.begin(Some(ClearOptions::color(Color::TRANSPARENT)));
 
+            renderer.begin(Some(ClearOptions::color(Color::TRANSPARENT)));
             renderer.set_pipeline(&state.pipeline2);
             renderer.bind_texture_slot(0, 0, &state.texture1);
             renderer.bind_buffers(&[&state.vertex_buffer, &state.index_buffer]);
             renderer.draw(0, 6);
-
-            // Bind RT before the mipmap is generated
-            renderer.bind_texture_slot(0, 0, &state.render_texture1);
-
             renderer.end();
+
             gfx.render_to(&state.render_texture1, &renderer);
         }
         {
             let mut renderer = gfx.device.create_renderer();
-            renderer.begin(Some(ClearOptions::color(Color::TRANSPARENT)));
 
+            renderer.begin(Some(ClearOptions::color(Color::TRANSPARENT)));
             renderer.set_pipeline(&state.pipeline2);
             renderer.bind_texture_slot(0, 0, &state.texture1);
             renderer.bind_buffers(&[&state.vertex_buffer, &state.index_buffer]);
             renderer.draw(0, 6);
-
-            // Bind RT before the mipmap is generated
-            renderer.bind_texture_slot(0, 0, &state.render_texture2);
-
             renderer.end();
+
             gfx.render_to(&state.render_texture2, &renderer);
         }
 
