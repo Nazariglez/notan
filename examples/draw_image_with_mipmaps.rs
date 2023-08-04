@@ -1,6 +1,11 @@
 use notan::draw::*;
 use notan::prelude::*;
 
+const WINDOW_WIDTH: u32 = 800;
+const WINDOW_HEIGHT: u32 = 600;
+const CELL_WIDTH: f32 = (WINDOW_WIDTH as f32) / 2.0;
+const CELL_HEIGHT: f32 = (WINDOW_HEIGHT as f32) / 2.0;
+
 //language=glsl
 const FRAGMENT: ShaderSource = notan::fragment_shader! {
     r#"
@@ -41,7 +46,10 @@ struct State {
 
 #[notan_main]
 fn main() -> Result<(), String> {
+    let window_config = WindowConfig::new().set_size(WINDOW_WIDTH, WINDOW_HEIGHT);
+
     notan::init_with(init)
+        .add_config(window_config)
         .add_config(DrawConfig)
         .draw(draw)
         .build()
@@ -118,39 +126,38 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
         state.is_first_render = false;
     }
 
-    let mut draw = gfx.create_draw();
-    draw.clear(Color::GRAY);
-
+    // Update uniforms
     let time = app.timer.elapsed_f32();
     gfx.set_buffer_data(&state.uniforms, &[time]);
 
+    // Setup Draw
+    let mut draw = gfx.create_draw();
+    draw.clear(Color::GRAY);
     draw.image_pipeline()
         .pipeline(&state.pipeline)
         .uniform_buffer(&state.uniforms);
 
-    let width = 800.0 / 2.0;
-    let height = 600.0 / 2.0;
-    let scale = width / state.texture1.width();
-
-    let pics = [
+    let cells = [
         (&state.texture1, "Texture"),
         (&state.texture2, "Texture with mipmap"),
         (&state.render_texture1, "RenderTexture"),
         (&state.render_texture2, "RenderTexture with mipmap"),
     ];
+    let scale = CELL_WIDTH / state.texture1.width();
 
-    for (i, (tex, label)) in pics.iter().enumerate() {
+    // Render textures
+    for (i, (tex, label)) in cells.iter().enumerate() {
         let x = (i % 2) as f32;
         let y = (i / 2) as f32;
 
         draw.image(tex)
             .blend_mode(BlendMode::OVER)
             .scale(scale, scale)
-            .translate(x * width, y * height + 10.0);
+            .translate(x * CELL_WIDTH, y * CELL_HEIGHT + 10.0);
 
         draw.text(&state.font, label)
             .size(20.0)
-            .position(x * width + 10.0, y * height + 10.0)
+            .position(x * CELL_WIDTH + 10.0, y * CELL_HEIGHT + 10.0)
             .color(Color::WHITE);
     }
 
@@ -158,7 +165,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
     let lod = (time.sin() * 0.5 + 0.5) * 5.0;
     draw.text(&state.font, &format!("LOD: {:.1}", lod))
         .size(20.0)
-        .position(10.0, height * 2.0 - 30.0)
+        .position(10.0, WINDOW_HEIGHT as f32 - 30.0)
         .color(Color::WHITE);
 
     gfx.render(&draw);
