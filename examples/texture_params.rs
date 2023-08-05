@@ -1,3 +1,5 @@
+// This example shows how to use texture params and mipmaps.
+
 use notan::draw::*;
 use notan::prelude::*;
 
