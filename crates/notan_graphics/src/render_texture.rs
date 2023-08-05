@@ -109,6 +109,13 @@ impl<'a> RenderTextureBuilder<'a> {
         self
     }
 
+    /// Set the texture wrap modes (x -> s, y -> t)
+    pub fn with_wrap(mut self, x: TextureWrap, y: TextureWrap) -> Self {
+        self.info.wrap_x = x;
+        self.info.wrap_y = y;
+        self
+    }
+
     /// Toggle mipmap generation (with Linear filter if enabled)
     pub fn with_mipmaps(mut self, enable: bool) -> Self {
         if enable {
