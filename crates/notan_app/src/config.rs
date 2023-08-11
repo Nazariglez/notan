@@ -42,8 +42,8 @@ pub struct WindowConfig {
     /// `Web: no-op`
     pub vsync: bool,
 
-    /// Antialias nultisamples level
-    /// `Web: WebGL will use this as antialias = false if the value is 0 or true otherwise`
+    /// Sets multisampling
+    /// Setting to 0 disables multisampling
     pub multisampling: u8,
 
     /// Enable High DPI viewport and drawing if the device pixel ratio is higher than 1
@@ -183,7 +183,8 @@ impl WindowConfig {
         self
     }
 
-    /// Enabled multisampling aliasing (opengl)
+    /// Sets multisampling
+    /// Setting to 0 disables multisampling
     pub fn set_multisampling(mut self, samples: u8) -> Self {
         self.multisampling = samples;
         self

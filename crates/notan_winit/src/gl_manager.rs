@@ -48,32 +48,32 @@ impl GlManager {
             .with_window_builder(Some(builder))
             .build(event_loop, template, |configs| {
                 let mut support: Option<GlSupport> = None;
-                configs.into_iter().for_each(|new_conf| match &support {
-                    Some(GlSupport::Full(conf)) => {
-                        let is = check_support(needs_transparency, conf, &new_conf);
-                        if is.full_support && is.more_samples {
-                            support = Some(GlSupport::Full(new_conf));
+                configs.into_iter().for_each(|conf| match &support {
+                    Some(GlSupport::Full(_)) => {
+                        let is = check_support(config.multisampling, needs_transparency, &conf);
+                        if is.full_support && is.req_samples {
+                            support = Some(GlSupport::Full(conf));
                         }
                     }
-                    Some(GlSupport::Srgba(conf)) => {
-                        let is = check_support(needs_transparency, conf, &new_conf);
+                    Some(GlSupport::Srgba(_)) => {
+                        let is = check_support(config.multisampling, needs_transparency, &conf);
                         if is.full_support {
-                            support = Some(GlSupport::Full(new_conf));
-                        } else if is.srgb && is.more_samples {
-                            support = Some(GlSupport::Srgba(new_conf));
+                            support = Some(GlSupport::Full(conf));
+                        } else if is.srgb && is.req_samples {
+                            support = Some(GlSupport::Srgba(conf));
                         }
                     }
-                    Some(GlSupport::Any(conf)) => {
-                        let is = check_support(needs_transparency, conf, &new_conf);
+                    Some(GlSupport::Any(_)) => {
+                        let is = check_support(config.multisampling, needs_transparency, &conf);
                         if is.full_support {
-                            support = Some(GlSupport::Full(new_conf));
+                            support = Some(GlSupport::Full(conf));
                         } else if is.srgb {
-                            support = Some(GlSupport::Srgba(new_conf));
-                        } else if is.more_samples {
-                            support = Some(GlSupport::Any(new_conf));
+                            support = Some(GlSupport::Srgba(conf));
+                        } else if is.req_samples {
+                            support = Some(GlSupport::Any(conf));
                         }
                     }
-                    None => support = Some(GlSupport::Any(new_conf)),
+                    None => support = Some(GlSupport::Any(conf)),
                 });
 
                 match support {
@@ -199,19 +199,19 @@ impl GlManager {
 }
 
 struct InnerSupport {
-    more_samples: bool,
+    req_samples: bool,
     srgb: bool,
     full_support: bool,
 }
 
 fn check_support(
+    required_samples: u8,
     needs_transparency: bool,
-    current_conf: &GConfig,
-    new_conf: &GConfig,
+    conf: &GConfig,
 ) -> InnerSupport {
-    let more_samples = new_conf.num_samples() > current_conf.num_samples();
-    let srgb = new_conf.srgb_capable();
-    let supports_transparency = new_conf.supports_transparency().unwrap_or(false);
+    let req_samples = conf.num_samples() == required_samples;
+    let srgb = conf.srgb_capable();
+    let supports_transparency = conf.supports_transparency().unwrap_or(false);
     let transparency = if needs_transparency {
         supports_transparency
     } else {
@@ -220,7 +220,7 @@ fn check_support(
     let full_support = srgb && transparency;
 
     InnerSupport {
-        more_samples,
+        req_samples,
         srgb,
         full_support,
     }
