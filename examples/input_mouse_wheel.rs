@@ -13,6 +13,7 @@ struct State {
 fn main() -> Result<(), String> {
     notan::init_with(setup)
         .add_config(DrawConfig)
+        .update(update)
         .event(event)
         .draw(draw)
         .build()
@@ -38,6 +39,18 @@ fn event(state: &mut State, evt: Event) {
         }
         _ => {}
     }
+}
+
+fn update(app: &mut App, state: &mut State) {
+    //Alt way of getting mouse scrolling
+
+    // if app.mouse.is_scrolling() {
+    //     let delta_x = app.mouse.wheel_delta.x;
+    //     let delta_y = app.mouse.wheel_delta.y;
+    //
+    //     state.x = (state.x + delta_x).max(0.0).min(800.0);
+    //     state.y = (state.y + delta_y).max(0.0).min(600.0);
+    // }
 }
 
 fn draw(gfx: &mut Graphics, state: &mut State) {
