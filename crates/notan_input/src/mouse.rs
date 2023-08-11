@@ -152,6 +152,9 @@ impl Mouse {
 
     #[inline]
     pub(crate) fn process_events(&mut self, evt: &Event, delta: f32) {
+        self.wheel_delta.x = 0.0;
+        self.wheel_delta.y = 0.0;
+
         match evt {
             Event::MouseMove { x, y } => {
                 self.x = *x as f32;
