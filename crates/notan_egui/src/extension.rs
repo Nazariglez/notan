@@ -413,45 +413,21 @@ fn create_texture(
     width: u32,
     height: u32,
 ) -> Result<Texture, String> {
-    let texture_format = if cfg!(target_arch = "wasm32") {
-        TextureFormat::SRgba8
-    } else {
-        TextureFormat::Rgba32
-    };
-
-    let texture_filter = if cfg!(target_arch = "wasm32") {
-        TextureFilter::Linear
-    } else {
-        TextureFilter::Nearest
-    };
-
     device
         .create_texture()
         .from_bytes(data, width, height)
-        .with_format(texture_format)
-        .with_filter(texture_filter, texture_filter)
+        .with_format(TextureFormat::SRgba8)
+        .with_filter(TextureFilter::Linear, TextureFilter::Linear)
         .build()
 }
 
 #[inline]
 fn create_empty_texture(device: &mut Device, width: u32, height: u32) -> Result<Texture, String> {
-    let texture_format = if cfg!(target_arch = "wasm32") {
-        TextureFormat::SRgba8
-    } else {
-        TextureFormat::Rgba32
-    };
-
-    let texture_filter = if cfg!(target_arch = "wasm32") {
-        TextureFilter::Linear
-    } else {
-        TextureFilter::Nearest
-    };
-
     device
         .create_texture()
         .from_empty_buffer(width, height)
-        .with_format(texture_format)
-        .with_filter(texture_filter, texture_filter)
+        .with_format(TextureFormat::SRgba8)
+        .with_filter(TextureFilter::Linear, TextureFilter::Linear)
         .build()
 }
 
