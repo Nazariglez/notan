@@ -204,11 +204,7 @@ struct InnerSupport {
     full_support: bool,
 }
 
-fn check_support(
-    required_samples: u8,
-    needs_transparency: bool,
-    conf: &GConfig,
-) -> InnerSupport {
+fn check_support(required_samples: u8, needs_transparency: bool, conf: &GConfig) -> InnerSupport {
     let req_samples = conf.num_samples() == required_samples;
     let srgb = conf.srgb_capable();
     let supports_transparency = conf.supports_transparency().unwrap_or(false);
