@@ -33,6 +33,8 @@ All notable changes to this project will be documented in this file.
 - The `image` crate on `notan_graphics` is only used when `texture_to_file` is enabled.
 - Added `WindowBackend::set_cursor_position`, `Event::MouseMotion` and `Mouse::is_moving`.
 - Added new example `window_initial_position.rs`.
+- Added mipmap and texture wrapping settings to `RenderTextureBuilder`.
+- Added new example `texture_params`.
 
 ## v0.9.5 - 19/03/2023
 
