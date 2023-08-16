@@ -36,6 +36,10 @@ All notable changes to this project will be documented in this file.
 - Added mipmap and texture wrapping settings to `RenderTextureBuilder`.
 - Added new example `texture_params`.
 - Added new example `renderer_stencil`.
+- Fixed mouse wheel scroll being ignored when moving the mouse at same time
+- Added alt mouse wheel scrolling code to example
+- Fixed `set_multisamples`. It is no longer being ignored for winit backend
+- Fixed blurry text on egui when using on desktop
 
 ## v0.9.5 - 19/03/2023
 
