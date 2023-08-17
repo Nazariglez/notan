@@ -89,6 +89,23 @@ impl GlowBackend {
         Self::from(gl, "opengl_es")
     }
 
+    fn get_default_frame_buffer(gl: &Context) -> Option<Framebuffer>{
+        let mut default_gl_framebuffer: Option<Framebuffer> = None;
+        #[cfg(target_os = "ios")]
+        {
+            let default_gl_framebuffer_binding = unsafe {
+                gl.get_parameter_i32(glow::FRAMEBUFFER_BINDING) as u32
+            };
+            if default_gl_framebuffer_binding == 0 {
+                return None;
+            }
+            let non_zero_u32 = NonZeroU32::new(default_gl_framebuffer_binding).unwrap();
+            let framebuffer = NativeFramebuffer(non_zero_u32);
+            default_gl_framebuffer = Some(framebuffer);
+        }
+        return default_gl_framebuffer;
+    }
+
     fn from(gl: Context, api: &str) -> Result<Self, String> {
         log::info!("Using {} graphics api", api);
 
@@ -99,16 +116,7 @@ impl GlowBackend {
             }
         };
 
-        let mut default_gl_framebuffer: Option<Framebuffer> = None;
-        #[cfg(target_os = "ios")]
-        {
-            let default_gl_framebuffer_binding = unsafe {
-                gl.get_parameter_i32(glow::FRAMEBUFFER_BINDING) as u32
-            };
-            let non_zero_u32 = NonZeroU32::new(default_gl_framebuffer_binding).unwrap();
-            let framebuffer = NativeFramebuffer(non_zero_u32);
-            default_gl_framebuffer = Some(framebuffer);
-        }
+        let mut default_gl_framebuffer: Option<Framebuffer> = Self::get_default_frame_buffer(&gl);
         let stats = GpuStats::default();
 
         Ok(Self {
@@ -490,6 +498,13 @@ impl DeviceBackend for GlowBackend {
     }
 
     fn render(&mut self, commands: &[Commands], target: Option<u64>) {
+        #[cfg(target_os = "ios")]{
+            let value = Self::get_default_frame_buffer(&self.gl);
+            if value.is_some() {
+                self.default_gl_framebuffer = value;
+            }
+        }
+
         commands.iter().for_each(|cmd| {
             use Commands::*;
             // println!("Render cmd: {:?}", cmd);
