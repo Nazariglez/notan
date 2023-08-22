@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - Added new example `window_initial_position.rs`.
 - Added mipmap and texture wrapping settings to `RenderTextureBuilder`.
 - Added new example `texture_params`.
+- Added new example `renderer_stencil`.
 
 ## v0.9.5 - 19/03/2023
 
