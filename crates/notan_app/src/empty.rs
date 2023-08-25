@@ -20,6 +20,7 @@ pub struct EmptyWindowBackend {
     size: (u32, u32),
     position: (i32, i32),
     is_fullscreen: bool,
+    is_focused: bool,
     is_always_on_top: bool,
     lazy: bool,
     captured: bool,
@@ -52,6 +53,11 @@ impl WindowBackend for EmptyWindowBackend {
     fn is_fullscreen(&self) -> bool {
         self.is_fullscreen
     }
+
+    fn is_focused(&self) -> bool {
+        self.is_focused
+    }
+
     fn lazy_loop(&self) -> bool {
         self.lazy
     }

@@ -53,6 +53,10 @@ impl WindowBackend for WinitWindowBackend {
         self.window().fullscreen().is_some()
     }
 
+    fn is_focused(&self) -> bool {
+        self.window().has_focus()
+    }
+
     fn lazy_loop(&self) -> bool {
         self.lazy
     }

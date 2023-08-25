@@ -143,6 +143,9 @@ pub trait WindowBackend {
     /// Returns true if the window is in fullscreen mode
     fn is_fullscreen(&self) -> bool;
 
+    /// Returns true if the window has focus
+    fn is_focused(&self) -> bool;
+
     /// Returns true if the lazy mode is enabled
     fn lazy_loop(&self) -> bool;
 

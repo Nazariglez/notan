@@ -41,6 +41,8 @@ All notable changes to this project will be documented in this file.
 - Fixed `set_multisamples`. It is no longer being ignored for winit backend
 - Fixed blurry text on egui when using on desktop
 - Fixed mono channel audio playing in half of time set for the audio length. 
+- Added `is_focused()` for winit backend
+- Added `window_focus` example
 
 ## v0.9.5 - 19/03/2023
 
