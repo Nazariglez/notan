@@ -98,6 +98,8 @@ impl WebWindowBackend {
                 e.prevent_default();
             })?;
 
+        let _ = canvas.focus();
+
         let fullscreen_requested = Rc::new(RefCell::new(None));
         let fullscreen_last_size = Rc::new(RefCell::new(None));
         let fullscreen_callback_ref = None;
@@ -295,6 +297,19 @@ impl WindowBackend for WebWindowBackend {
 
     fn lazy_loop(&self) -> bool {
         *self.lazy.borrow()
+    }
+
+    fn is_focused(&self) -> bool {
+        self.document
+            .has_focus()
+            .ok()
+            .unwrap_or(false)
+            .then(|| {
+                self.document
+                    .active_element()
+                    .map_or(false, |el| el.id() == self.canvas.id())
+            })
+            .unwrap_or(false)
     }
 
     // No operation, as unsupported in browser

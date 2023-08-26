@@ -69,6 +69,14 @@ pub fn get_or_create_canvas(doc: &Document, canvas_id: &str) -> Result<HtmlCanva
         log::error!("Cannot set touch-action: none {e:?}");
     }
 
+    if let Err(e) = canvas_element.set_attribute("tabindex", "0") {
+        log::warn!("Cannot set tabindex to 0, this can lead to errors with focus/unfocus the canvas: {e:?}");
+    }
+
+    if let Err(e) = canvas_element.style().set_property("outline", "none") {
+        log::error!("Cannot set outline: none {e:?}");
+    }
+
     Ok(canvas_element)
 }
 
