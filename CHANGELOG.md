@@ -40,6 +40,7 @@ All notable changes to this project will be documented in this file.
 - Added alt mouse wheel scrolling code to example
 - Fixed `set_multisamples`. It is no longer being ignored for winit backend
 - Fixed blurry text on egui when using on desktop
+- Fixed mono channel audio playing in half of time set for the audio length. 
 
 ## v0.9.5 - 19/03/2023
 
