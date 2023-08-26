@@ -88,6 +88,7 @@ pub fn enable_mouse(
                 &mut last_x.borrow_mut(),
                 &mut last_y.borrow_mut(),
             );
+            let _ = canvas.focus();
             add_evt_down(Event::MouseDown { button, x, y });
         },
     )?);
