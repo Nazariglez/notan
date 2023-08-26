@@ -43,7 +43,13 @@ fn decode_bytes(bytes: Vec<u8>) -> Result<(Vec<f32>, u32), String> {
         .codec_params()
         .sample_rate
         .ok_or_else(|| "Cannot get sample rate".to_string())?;
-    let samples = get_samples(&mut decoder, &mut format, track_id)?;
+
+    let is_stereo = decoder
+        .codec_params()
+        .channels
+        .map_or(false, |ch| ch.count() == 2);
+
+    let samples = get_samples(&mut decoder, &mut format, track_id, is_stereo)?;
     Ok((samples, sample_rate))
 }
 
@@ -51,6 +57,7 @@ fn get_samples(
     decoder: &mut Box<dyn Decoder>,
     format: &mut Box<dyn FormatReader>,
     track_id: u32,
+    is_stereo: bool,
 ) -> Result<Vec<f32>, String> {
     let mut samples = vec![];
     loop {
@@ -76,7 +83,31 @@ fn get_samples(
         };
     }
 
+    // duplicate mono samples to make it stereo?
+    if !is_stereo {
+        mono_to_stereo(&mut samples);
+    }
+
     Ok(samples)
+}
+
+fn mono_to_stereo(samples: &mut Vec<f32>) {
+    let original_len = samples.len();
+    samples.resize(original_len * 2, 0.0);
+
+    let mut write_idx = samples.len() - 1;
+    let mut read_idx = original_len - 1;
+
+    while read_idx > 0 {
+        samples[write_idx] = samples[read_idx];
+        samples[write_idx - 1] = samples[read_idx];
+
+        write_idx -= 2;
+        read_idx -= 1;
+    }
+
+    samples[write_idx] = samples[read_idx];
+    samples[write_idx - 1] = samples[read_idx];
 }
 
 fn decode_packet(
