@@ -13,9 +13,9 @@ description = "Provides a web/wasm32 backend for Notan"
 
 [dependencies]
 log = "0.4.17"
-wasm-bindgen = "0.2.86"
+wasm-bindgen = "0.2.87"
 js-sys = "0.3.63"
-wasm-bindgen-futures = "0.4.36"
+wasm-bindgen-futures = "0.4.37"
 console_error_panic_hook = "0.1.7"
 futures-util = "0.3.28"
 notan_core = { path = "../notan_core", version = "0.10.0" }
