@@ -72,8 +72,8 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
         // Draw image with a custom blend mode
         draw.image(&state.texture)
-            .translate(xx, yy)
             .scale(scale, scale)
+            .translate(xx, yy)
             .blend_mode(*mode);
 
         // print names
