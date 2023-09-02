@@ -12,10 +12,10 @@ description = "Provides a default backend for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-notan_web = { path = "../notan_web", version = "0.10.0" }
+notan_web.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-notan_winit = { path = "../notan_winit", version = "0.10.0" }
+notan_winit.workspace = true
 
 [features]
 audio = ["notan_web/audio", "notan_winit/audio"]

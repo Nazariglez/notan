@@ -12,12 +12,14 @@ description = "Provides EGUI support for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4.17"
+notan_core.workspace = true
+notan_app.workspace = true
+notan_macro.workspace = true
+
+log.workspace = true
+bytemuck.workspace = true
+
 egui = { version = "0.22.0", features = ["bytemuck"] }
-bytemuck = "1.13.1"
-notan_core = { path = "../notan_core", version = "0.10.0" }
-notan_app = { path = "../notan_app", version = "0.10.0" }
-notan_macro = { path = "../notan_macro", version = "0.10.0" }
 
 [features]
 links = []

@@ -12,31 +12,33 @@ description = "Provides the core API for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4.17"
-hashbrown = "0.13.2"
-notan_core = { path = "../notan_core", version = "0.10.0" }
-notan_input = { path = "../notan_input", version = "0.10.0" }
-notan_math = { path = "../notan_math", version = "0.10.0" }
-notan_macro = { path = "../notan_macro", version = "0.10.0" }
-notan_graphics = { path = "../notan_graphics", version = "0.10.0" }
-notan_utils = { path = "../notan_utils", version = "0.10.0" }
-notan_audio = { path = "../notan_audio", version = "0.10.0", optional = true }
+notan_core.workspace = true
+notan_input.workspace = true
+notan_math.workspace = true
+notan_macro.workspace = true
+notan_graphics.workspace = true
+notan_utils.workspace = true
+notan_audio = { workspace = true, optional = true }
+
+log.workspace = true
+hashbrown.workspace = true
+parking_lot.workspace = true
+bytemuck.workspace = true
+serde = { workspace = true, optional = true }
+
 downcast-rs = "1.2.0"
 indexmap = "1.9.3"
 futures = "0.3.28"
-parking_lot = "0.12.1"
-bytemuck = "1.13.1"
-serde = { version = "1.0", optional = true, features = ["serde_derive"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 platter2 = "0.1.6"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = { version = "0.3.63", optional = true }
-wasm-bindgen-futures = { version = "0.4.37", optional = true }
-futures-util = { version = "0.3.28", optional = true }
-js-sys = { version = "0.3.63", optional = true }
 platter2 = { version = "0.1.6", features = ["web-sys"] }
+web-sys = { workspace = true, optional = true }
+wasm-bindgen-futures = { workspace = true, optional = true }
+futures-util = { workspace = true, optional = true }
+js-sys = { workspace = true, optional = true }
 
 [features]
 audio = ["notan_audio"]

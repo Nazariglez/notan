@@ -8,7 +8,7 @@ compile() {
   f=$1
   f=${f/\.\/examples\//""}
   f=${f/.rs/""}
-  ./scripts/web_example.sh $f --release --no-assets
+  ./scripts/web_example.sh $f --no-assets
 
   url="examples/${f}.html"
   image="examples/images/${f}.jpg"

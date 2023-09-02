@@ -18,7 +18,10 @@ features = ["default", "glyph", "egui", "text", "extra", "audio", "links", "drop
 [profile.release]
 lto = true
 
-[dependencies]
+[workspace]
+members = ["crates/*"]
+
+[workspace.dependencies]
 notan_core = { path = "crates/notan_core", version = "0.10.0" }
 notan_input = { path = "crates/notan_input", version = "0.10.0" }
 notan_app = { path = "crates/notan_app", version = "0.10.0" }
@@ -26,18 +29,51 @@ notan_macro = { path = "crates/notan_macro", version = "0.10.0" }
 notan_math = { path = "crates/notan_math", version = "0.10.0" }
 notan_graphics = { path = "crates/notan_graphics", version = "0.10.0" }
 notan_utils = { path = "crates/notan_utils", version = "0.10.0" }
-notan_log = { path = "crates/notan_log", version = "0.10.0", optional = true }
-notan_glyph = { path = "crates/notan_glyph", version = "0.10.0", optional = true }
-notan_draw = { path = "crates/notan_draw", version = "0.10.0", optional = true }
-notan_backend = { path = "crates/notan_backend", version = "0.10.0", optional = true }
-notan_egui = { path = "crates/notan_egui", version = "0.10.0", optional = true }
-notan_text = { path = "crates/notan_text", version = "0.10.0", optional = true }
-notan_audio = { path = "crates/notan_audio", version = "0.10.0", optional = true }
-notan_extra = { path = "crates/notan_extra", version = "0.10.0", optional = true }
-notan_random = { path = "crates/notan_random", version = "0.10.0", optional = true }
+notan_log = { path = "crates/notan_log", version = "0.10.0" }
+notan_glyph = { path = "crates/notan_glyph", version = "0.10.0" }
+notan_draw = { path = "crates/notan_draw", version = "0.10.0" }
+notan_backend = { path = "crates/notan_backend", version = "0.10.0" }
+notan_egui = { path = "crates/notan_egui", version = "0.10.0" }
+notan_text = { path = "crates/notan_text", version = "0.10.0" }
+notan_audio = { path = "crates/notan_audio", version = "0.10.0" }
+notan_extra = { path = "crates/notan_extra", version = "0.10.0" }
+notan_random = { path = "crates/notan_random", version = "0.10.0" }
+notan_winit = { path = "crates/notan_winit", version = "0.10.0" }
+notan_web = { path = "crates/notan_web", version = "0.10.0" }
+notan_glow = { path = "crates/notan_glow", version = "0.10.0" }
+notan_oddio = { path = "crates/notan_oddio", version = "0.10.0" }
 
-[workspace]
-members = ["crates/*"]
+log = "0.4.20"
+hashbrown = "0.14.0"
+parking_lot = "0.12.1"
+bytemuck = "1.13.1"
+serde = { version = "1.0", features = ["serde_derive"] }
+image = { version = "0.24.6", default-features = false, features = ["jpeg", "png", "ico"] }
+
+# wasm deps
+wasm-bindgen = "0.2.87"
+wasm-bindgen-futures = "0.4.37"
+futures-util = "0.3.28"
+web-sys = "0.3.64"
+js-sys = "0.3.64"
+
+[dependencies]
+notan_core.workspace = true
+notan_input.workspace = true
+notan_app.workspace = true
+notan_macro.workspace = true
+notan_math.workspace = true
+notan_graphics.workspace = true
+notan_utils.workspace = true
+notan_log = { workspace = true, optional = true }
+notan_glyph = { workspace = true, optional = true }
+notan_draw = { workspace = true, optional = true }
+notan_backend = { workspace = true, optional = true }
+notan_egui = { workspace = true, optional = true }
+notan_text = { workspace = true, optional = true }
+notan_audio = { workspace = true, optional = true }
+notan_extra = { workspace = true, optional = true }
+notan_random = { workspace = true, optional = true }
 
 [features]
 default = ["backend", "log", "draw", "random", "glsl-to-spirv"]

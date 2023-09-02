@@ -10,4 +10,4 @@ license = "MIT OR Apache-2.0"
 description = "Provides simple audio API for Notan"
 
 [dependencies]
-parking_lot = "0.12.1"
+parking_lot.workspace = true

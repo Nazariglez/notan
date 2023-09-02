@@ -10,11 +10,12 @@ license = "MIT OR Apache-2.0"
 description = "Provides a set of API to manage user's input"
 
 [dependencies]
-notan_core = { path = "../notan_core", version = "0.10.0" }
-notan_math = { path = "../notan_math", version = "0.10.0" }
-hashbrown = "0.13.2"
-log = "0.4.17"
-serde = { version = "1.0", optional = true, features = ["serde_derive"] }
+notan_core.workspace = true
+notan_math.workspace = true
+
+hashbrown.workspace = true
+log.workspace = true
+serde = { workspace = true, optional = true }
 
 [features]
 serde = ["dep:serde", "notan_core/serde", "notan_math/serde", "hashbrown/serde"]

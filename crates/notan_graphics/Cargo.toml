@@ -12,12 +12,14 @@ description = "Provides simple graphics API for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bytemuck = "1.13.1"
-parking_lot = "0.12.1"
-image = { version = "0.24.6", default-features = false, optional = true }
-notan_math = { path = "../notan_math", version = "0.10.0" }
-notan_macro = { path = "../notan_macro", version = "0.10.0" }
-notan_utils = { path = "../notan_utils", version = "0.10.0" }
+notan_math.workspace = true
+notan_macro.workspace = true
+notan_utils.workspace = true
+
+bytemuck.workspace = true
+parking_lot.workspace = true
+image = { workspace = true, optional = true }
+
 crevice_notan = { version = "0.13.0", features = ["glam"] }
 
 [features]

@@ -13,7 +13,7 @@ description = "Provides simple set of math's utils for Notan"
 
 [dependencies]
 glam = { version = "0.24.0", features = ["bytemuck"] }
-serde = { version = "1.0", optional = true, features = ["serde_derive"] }
+serde = { workspace = true, optional = true }
 
 [features]
 serde = ["dep:serde", "glam/serde"]

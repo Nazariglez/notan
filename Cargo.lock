@@ -36,6 +36,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "allocator-api2"
+version = "0.2.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0942ffc6dcaadf03badf6e6a2d0228460359d5e34b57ccdc720b7382dfbd5ec5"
+
+[[package]]
 name = "alsa"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1081,11 +1087,12 @@ checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
 name = "hashbrown"
-version = "0.13.2"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
+checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
 dependencies = [
  "ahash",
+ "allocator-api2",
  "serde",
 ]
 
@@ -1317,12 +1324,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.17"
+version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abb12e687cfb44aa40f41fc3978ef76448f9b6038cad6aef4259d3c095a2382e"
-dependencies = [
- "cfg-if",
-]
+checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "lyon"
@@ -1578,7 +1582,7 @@ dependencies = [
  "downcast-rs",
  "futures",
  "futures-util",
- "hashbrown 0.13.2",
+ "hashbrown 0.14.0",
  "indexmap",
  "js-sys",
  "log",
@@ -1661,7 +1665,7 @@ version = "0.10.0"
 dependencies = [
  "bytemuck",
  "glow",
- "hashbrown 0.13.2",
+ "hashbrown 0.14.0",
  "image",
  "js-sys",
  "log",
@@ -1700,7 +1704,7 @@ dependencies = [
 name = "notan_input"
 version = "0.10.0"
 dependencies = [
- "hashbrown 0.13.2",
+ "hashbrown 0.14.0",
  "log",
  "notan_core",
  "notan_math",
@@ -1747,7 +1751,7 @@ name = "notan_oddio"
 version = "0.10.0"
 dependencies = [
  "cpal",
- "hashbrown 0.13.2",
+ "hashbrown 0.14.0",
  "log",
  "notan_audio",
  "oddio",
@@ -1767,7 +1771,7 @@ dependencies = [
 name = "notan_text"
 version = "0.10.0"
 dependencies = [
- "hashbrown 0.13.2",
+ "hashbrown 0.14.0",
  "lazy_static",
  "log",
  "notan_app",
@@ -3051,9 +3055,9 @@ dependencies = [
 
 [[package]]
 name = "web-sys"
-version = "0.3.63"
+version = "0.3.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bdd9ef4e984da1187bf8110c5cf5b845fbc87a23602cdf912386a76fcd3a7c2"
+checksum = "9b85cbef8c220a6abc02aefd892dfc0fc23afb1c6a426316ec33253a3877249b"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
