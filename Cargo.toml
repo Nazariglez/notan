@@ -97,7 +97,7 @@ serde = ["notan_app/serde", "notan_math/serde", "notan_core/serde", "notan_input
 
 [dev-dependencies]
 egui_demo_lib = "0.22.0"
-bytemuck = "1.13.1"
+bytemuck = "1.14.0"
 
 [[example]]
 name = "app_drop_file"
