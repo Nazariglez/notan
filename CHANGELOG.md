@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## UNRELEASED
+## v0.10.0
 - Added `WindowConfig::set_position` to set x/y position before creating the window.
 - Changed `Renderer.begin` uses `Option<ClearOption>` instead of `Option<&ClearOption>`.
 - Changed sizes and positions for Window and Textures from `i32` to `u32`.
