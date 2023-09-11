@@ -2,8 +2,8 @@ use notan::draw::*;
 use notan::egui::{self, *};
 use notan::prelude::*;
 
-const WIDTH: i32 = 1200;
-const HEIGHT: i32 = 800;
+const WIDTH: u32 = 1200;
+const HEIGHT: u32 = 800;
 
 #[derive(AppState)]
 struct State {
@@ -33,11 +33,11 @@ impl Default for State {
 #[notan_main]
 fn main() -> Result<(), String> {
     let win_config = WindowConfig::new()
-        .size(WIDTH, HEIGHT)
-        .multisampling(8)
-        .lazy_loop(true)
-        .vsync(true)
-        .high_dpi(true);
+        .set_size(WIDTH, HEIGHT)
+        .set_multisampling(8)
+        .set_lazy_loop(true)
+        .set_vsync(true)
+        .set_high_dpi(true);
 
     notan::init_with(State::default)
         .add_config(win_config)
@@ -77,8 +77,8 @@ fn draw_shape(draw: &mut Draw, state: &mut State) {
     let center_y = (a.1 + b.1 + c.1) / 3.0;
 
     draw.triangle(a, b, c)
-        .translate(width * 0.5 - center_x, height * 0.5 - center_y)
         .rotate_degrees_from((center_x, center_y), state.rotation)
+        .translate(width * 0.5 - center_x, height * 0.5 - center_y)
         .skew(state.skew_x, state.skew_y)
         .color_vertex(state.color.0, state.color.1, state.color.2);
 }

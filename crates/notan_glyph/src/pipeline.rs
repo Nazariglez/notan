@@ -1,5 +1,6 @@
 use crate::instance::GlyphInstance;
 use notan_app::graphics::*;
+use notan_macro::*;
 use notan_math::Mat4;
 use notan_math::Rect;
 
@@ -10,7 +11,7 @@ pub trait GlyphPipeline {
         texture: &Texture,
         clear: Option<ClearOptions>,
         transform: Mat4,
-        size: (i32, i32),
+        size: (u32, u32),
         region: Option<Rect>,
     ) -> Renderer {
         let mut renderer = device.create_renderer();
@@ -34,7 +35,7 @@ pub trait GlyphPipeline {
         texture: &Texture,
         clear: Option<ClearOptions>,
         transform: Mat4,
-        size: (i32, i32),
+        size: (u32, u32),
         region: Option<Rect>,
     );
 
@@ -166,7 +167,7 @@ impl GlyphPipeline for DefaultGlyphPipeline {
         texture: &Texture,
         clear: Option<ClearOptions>,
         transform: Mat4,
-        size: (i32, i32),
+        size: (u32, u32),
         region: Option<Rect>,
     ) {
         if self.current_transform != transform {
@@ -180,7 +181,7 @@ impl GlyphPipeline for DefaultGlyphPipeline {
             renderer.set_scissors(region.x, region.y, region.width, region.height);
         }
 
-        renderer.begin(clear.as_ref());
+        renderer.begin(clear);
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_texture(0, texture);
         renderer.bind_buffers(&[&self.vbo, &self.ubo]);

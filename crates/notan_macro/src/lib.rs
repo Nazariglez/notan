@@ -1,10 +1,13 @@
 extern crate proc_macro;
 use proc_macro::*;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, LitStr};
+use syn::DeriveInput;
+#[cfg(shader_compilation)]
+use syn::{parse_macro_input, LitStr};
 use syn::{ItemFn, ReturnType};
 
 mod handlers;
+#[cfg(shader_compilation)]
 mod shaders;
 mod state;
 
@@ -15,7 +18,7 @@ pub fn notan_main(_attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn handle_main_func(input: ItemFn) -> TokenStream {
-    let ident = input.sig.ident.clone();
+    let ident = &input.sig.ident;
     let void_ret = input.sig.output == ReturnType::Default;
     let ret: proc_macro2::TokenStream = if void_ret { "()" } else { "Result<(), String>" }
         .parse()
@@ -63,6 +66,7 @@ pub fn state_derive(input: TokenStream) -> TokenStream {
     state::impl_state_derive(&ast)
 }
 
+#[cfg(shader_compilation)]
 #[proc_macro]
 pub fn vertex_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
@@ -72,6 +76,7 @@ pub fn vertex_shader(input: TokenStream) -> TokenStream {
     shaders::source_from_spirv(spirv).unwrap()
 }
 
+#[cfg(shader_compilation)]
 #[proc_macro]
 pub fn include_vertex_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
@@ -81,6 +86,7 @@ pub fn include_vertex_shader(input: TokenStream) -> TokenStream {
     shaders::source_from_spirv(spirv).unwrap()
 }
 
+#[cfg(shader_compilation)]
 #[proc_macro]
 pub fn fragment_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
@@ -90,6 +96,7 @@ pub fn fragment_shader(input: TokenStream) -> TokenStream {
     shaders::source_from_spirv(spirv).unwrap()
 }
 
+#[cfg(shader_compilation)]
 #[proc_macro]
 pub fn include_fragment_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
@@ -105,7 +112,7 @@ pub fn uniform(_metadata: TokenStream, input: TokenStream) -> TokenStream {
     let ident = derive.ident;
     let input: proc_macro2::TokenStream = input.into();
     let output = quote! {
-        #[derive(glsl_layout::Uniform)]
+        #[derive(::notan::graphics::crevice::std140::AsStd140)]
         #input
 
         impl ::notan::graphics::Uniform for #ident {}

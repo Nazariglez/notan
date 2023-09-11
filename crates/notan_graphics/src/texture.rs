@@ -18,26 +18,26 @@ pub trait TextureSource {
 
 #[derive(Debug)]
 pub struct TextureRead {
-    pub x_offset: i32,
-    pub y_offset: i32,
-    pub width: i32,
-    pub height: i32,
+    pub x_offset: u32,
+    pub y_offset: u32,
+    pub width: u32,
+    pub height: u32,
     pub format: TextureFormat,
 }
 
 #[derive(Debug, Clone)]
 pub struct TextureUpdate {
-    pub x_offset: i32,
-    pub y_offset: i32,
-    pub width: i32,
-    pub height: i32,
+    pub x_offset: u32,
+    pub y_offset: u32,
+    pub width: u32,
+    pub height: u32,
     pub format: TextureFormat,
 }
 
 #[derive(Debug, Clone)]
 pub struct TextureInfo {
-    pub width: i32,
-    pub height: i32,
+    pub width: u32,
+    pub height: u32,
     pub format: TextureFormat,
     pub min_filter: TextureFilter,
     pub mag_filter: TextureFilter,
@@ -87,7 +87,6 @@ impl TextureFormat {
     }
 }
 
-#[derive(Debug)]
 struct TextureIdRef {
     id: u64,
     drop_manager: Arc<DropManager>,
@@ -99,12 +98,18 @@ impl Drop for TextureIdRef {
     }
 }
 
+impl Debug for TextureIdRef {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "TextureIdRef({})", self.id)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Texture {
     id: u64,
     _id_ref: Arc<TextureIdRef>,
-    width: i32,
-    height: i32,
+    width: u32,
+    height: u32,
     format: TextureFormat,
     min_filter: TextureFilter,
     mag_filter: TextureFilter,
@@ -330,7 +335,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
     }
 
     /// Creates a Texture from a buffer of pixels
-    pub fn from_bytes(mut self, bytes: &'b [u8], width: i32, height: i32) -> Self {
+    pub fn from_bytes(mut self, bytes: &'b [u8], width: u32, height: u32) -> Self {
         self.source = None;
         self.kind = Some(TextureKind::Bytes(bytes));
         self.info.width = width;
@@ -339,14 +344,14 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
     }
 
     /// Creates a buffer for the size passed in and creates a Texture with it
-    pub fn from_empty_buffer(mut self, width: i32, height: i32) -> Self {
+    pub fn from_empty_buffer(mut self, width: u32, height: u32) -> Self {
         self.source = None;
         self.kind = Some(TextureKind::EmptyBuffer);
         self.with_size(width, height)
     }
 
     /// Set the size of the texture (ignored if used with `from_image`, image size will be used instead)
-    pub fn with_size(mut self, width: i32, height: i32) -> Self {
+    pub fn with_size(mut self, width: u32, height: u32) -> Self {
         self.info.width = width;
         self.info.height = height;
         self
@@ -384,7 +389,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
         self
     }
 
-    /// Generate the mipmaps
+    /// Toggle mipmap generation (with Linear filter if enabled)
     pub fn with_mipmaps(mut self, enable: bool) -> Self {
         if enable {
             self.info.mipmap_filter = Some(TextureFilter::Linear);
@@ -394,6 +399,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
         self
     }
 
+    /// Set mipmap filtering function
     pub fn with_mipmap_filter(mut self, filter: TextureFilter) -> Self {
         self.info.mipmap_filter = Some(filter);
         self
@@ -412,7 +418,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
                 source = Some(TextureSourceKind::Image(bytes.to_vec()));
             }
             Some(TextureKind::Bytes(bytes)) => {
-                let size = (info.width * info.height * (info.bytes_per_pixel() as i32)) as usize;
+                let size = (info.width * info.height * (info.bytes_per_pixel() as u32)) as usize;
                 if bytes.len() != size {
                     return Err(format!(
                         "Texture type {:?} with {} bytes, when it should be {} (width: {} * height: {} * bytes: {})",
@@ -428,7 +434,7 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
                 source = Some(TextureSourceKind::Bytes(bytes.to_vec()));
             }
             Some(TextureKind::EmptyBuffer) => {
-                let size = info.width * info.height * (info.bytes_per_pixel() as i32);
+                let size = info.width * info.height * (info.bytes_per_pixel() as u32);
                 source = Some(TextureSourceKind::Bytes(vec![0; size as _]));
             }
             None => {}
@@ -442,20 +448,20 @@ impl<'a, 'b> TextureBuilder<'a, 'b> {
 pub struct TextureReader<'a> {
     device: &'a mut Device,
     texture: &'a Texture,
-    x_offset: i32,
-    y_offset: i32,
-    width: i32,
-    height: i32,
+    x_offset: u32,
+    y_offset: u32,
+    width: u32,
+    height: u32,
     format: TextureFormat,
 }
 
 impl<'a> TextureReader<'a> {
     pub fn new(device: &'a mut Device, texture: &'a Texture) -> Self {
         let rect = *texture.frame();
-        let x_offset = rect.x as i32;
-        let y_offset = rect.y as i32;
-        let width = rect.width as i32;
-        let height = rect.height as i32;
+        let x_offset = rect.x as _;
+        let y_offset = rect.y as _;
+        let width = rect.width as _;
+        let height = rect.height as _;
         let format = texture.format;
         Self {
             device,
@@ -469,25 +475,25 @@ impl<'a> TextureReader<'a> {
     }
 
     /// Read pixels from the axis x offset
-    pub fn with_x_offset(mut self, offset: i32) -> Self {
+    pub fn with_x_offset(mut self, offset: u32) -> Self {
         self.x_offset = offset;
         self
     }
 
     /// Read pixels from the axis y offset
-    pub fn with_y_offset(mut self, offset: i32) -> Self {
+    pub fn with_y_offset(mut self, offset: u32) -> Self {
         self.y_offset = offset;
         self
     }
 
     /// Read pixels until this width from the x offset value
-    pub fn with_width(mut self, width: i32) -> Self {
+    pub fn with_width(mut self, width: u32) -> Self {
         self.width = width;
         self
     }
 
     /// Read pixels until this height from the y offset value
-    pub fn with_height(mut self, height: i32) -> Self {
+    pub fn with_height(mut self, height: u32) -> Self {
         self.height = height;
         self
     }
@@ -518,10 +524,10 @@ impl<'a> TextureReader<'a> {
 pub struct TextureUpdater<'a> {
     device: &'a mut Device,
     texture: &'a mut Texture,
-    x_offset: i32,
-    y_offset: i32,
-    width: i32,
-    height: i32,
+    x_offset: u32,
+    y_offset: u32,
+    width: u32,
+    height: u32,
     format: TextureFormat,
     source: Option<TextureUpdaterSourceKind<'a>>,
 }
@@ -547,25 +553,25 @@ impl<'a> TextureUpdater<'a> {
     }
 
     /// Update pixels from the axis x offset
-    pub fn with_x_offset(mut self, offset: i32) -> Self {
+    pub fn with_x_offset(mut self, offset: u32) -> Self {
         self.x_offset = offset;
         self
     }
 
     /// Update pixels from the axis y offset
-    pub fn with_y_offset(mut self, offset: i32) -> Self {
+    pub fn with_y_offset(mut self, offset: u32) -> Self {
         self.y_offset = offset;
         self
     }
 
     /// Update pixels until this width from the x offset value
-    pub fn with_width(mut self, width: i32) -> Self {
+    pub fn with_width(mut self, width: u32) -> Self {
         self.width = width;
         self
     }
 
     /// Update pixels until this height from the y offset value
-    pub fn with_height(mut self, height: i32) -> Self {
+    pub fn with_height(mut self, height: u32) -> Self {
         self.height = height;
         self
     }

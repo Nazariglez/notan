@@ -49,7 +49,8 @@ impl EguiPlugin {
             shapes,
         } = self.ctx.run(new_input, run_ui);
 
-        let needs_repaint = repaint_after.is_zero();
+        let needs_update_textures = !textures_delta.is_empty();
+        let needs_repaint = repaint_after.is_zero() || needs_update_textures;
 
         // On post frame needs repaint is set to false
         // set it again if true after a egui output.
@@ -103,7 +104,7 @@ impl GfxRenderer for Output {
         if let Some(shapes) = self.shapes.borrow_mut().take() {
             if self.clear_color.is_some() {
                 let mut clear_renderer = device.create_renderer();
-                clear_renderer.begin(Some(&ClearOptions {
+                clear_renderer.begin(Some(ClearOptions {
                     color: self.clear_color,
                     ..Default::default()
                 }));
@@ -202,6 +203,7 @@ impl Plugin for EguiPlugin {
                     self.add_event(egui::Event::Key {
                         key,
                         pressed: true,
+                        repeat: false,
                         modifiers,
                     })
                 }
@@ -212,6 +214,7 @@ impl Plugin for EguiPlugin {
                     self.add_event(egui::Event::Key {
                         key,
                         pressed: false,
+                        repeat: false,
                         modifiers,
                     })
                 }
@@ -282,6 +285,7 @@ impl Plugin for EguiPlugin {
                 });
                 is_touch_end = true;
             }
+            _ => {}
         }
 
         self.latest_evt_was_touch = is_touch_end;
@@ -291,7 +295,7 @@ impl Plugin for EguiPlugin {
 
     fn update(&mut self, app: &mut App, _assets: &mut Assets) -> Result<AppFlow, String> {
         self.raw_input.pixels_per_point = Some(app.window().dpi() as _);
-        self.raw_input.time = Some(app.timer.time_since_init() as _);
+        self.raw_input.time = Some(app.timer.elapsed_f32() as _);
         self.raw_input.predicted_dt = app.timer.delta_f32();
 
         let (w, h) = app.window().size();

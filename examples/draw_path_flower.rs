@@ -17,14 +17,14 @@ const PI: f32 = std::f32::consts::PI;
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init()
-        .add_config(WindowConfig::new().multisampling(8))
+        .add_config(WindowConfig::new().set_multisampling(8))
         .add_config(DrawConfig)
         .draw(draw)
         .build()
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics) {
-    let time = app.timer.time_since_init() * 1000.0;
+    let time = app.timer.elapsed_f32() * 1000.0;
 
     let mut draw = gfx.create_draw();
     draw.clear(Color::BLACK);

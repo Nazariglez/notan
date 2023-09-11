@@ -1,6 +1,6 @@
 use crate::buffer::*;
 use crate::commands::*;
-use crate::glsl_layout::{Std140, Uniform as UniformLayout};
+use crate::crevice::std140::{AsStd140, Std140};
 use crate::limits::Limits;
 use crate::pipeline::*;
 use crate::render_texture::*;
@@ -93,7 +93,7 @@ pub trait DeviceBackend {
     fn clean(&mut self, to_clean: &[ResourceId]);
 
     /// Sets the render size
-    fn set_size(&mut self, width: i32, height: i32);
+    fn set_size(&mut self, width: u32, height: u32);
 
     /// Sets the screen dpi
     fn set_dpi(&mut self, scale_factor: f64);
@@ -146,7 +146,7 @@ impl DropManager {
 }
 
 pub struct Device {
-    size: (i32, i32),
+    size: (u32, u32),
     dpi: f64,
     backend: Box<dyn DeviceBackend>, //TODO generic?
     drop_manager: Arc<DropManager>,
@@ -173,12 +173,12 @@ impl Device {
     }
 
     #[inline]
-    pub fn size(&self) -> (i32, i32) {
+    pub fn size(&self) -> (u32, u32) {
         self.size
     }
 
     #[inline]
-    pub fn set_size(&mut self, width: i32, height: i32) {
+    pub fn set_size(&mut self, width: u32, height: u32) {
         self.size = (width, height);
         self.backend.set_size(width, height);
     }
@@ -218,7 +218,7 @@ impl Device {
 
     /// Creates a render texture builder
     #[inline]
-    pub fn create_render_texture(&mut self, width: i32, height: i32) -> RenderTextureBuilder {
+    pub fn create_render_texture(&mut self, width: u32, height: u32) -> RenderTextureBuilder {
         RenderTextureBuilder::new(self, width, height)
     }
 
@@ -458,7 +458,7 @@ impl Device {
     }
 }
 
-pub trait Uniform: UniformLayout {}
+pub trait Uniform: AsStd140 {}
 pub trait BufferData {
     fn upload(&self, device: &mut Device, id: u64);
     fn save_as_bytes(&self, _data: &mut Vec<u8>) {}
@@ -519,11 +519,13 @@ where
     #[inline]
     fn upload(&self, device: &mut Device, id: u64) {
         // TODO check opengl version or driver if it uses std140 to layout or not
-        device.backend.set_buffer_data(id, self.std140().as_raw());
+        device
+            .backend
+            .set_buffer_data(id, self.as_std140().as_bytes());
     }
 
     fn save_as_bytes(&self, data: &mut Vec<u8>) {
-        data.extend_from_slice(self.std140().as_raw());
+        data.extend_from_slice(self.as_std140().as_bytes());
     }
 }
 

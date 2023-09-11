@@ -2,7 +2,7 @@ use notan::math::*;
 use notan::prelude::*;
 use std::ops::Rem;
 
-const TEXTURE_SIZE: IVec2 = IVec2::new(10, 10);
+const TEXTURE_SIZE: UVec2 = UVec2::new(10, 10);
 const TOTAL: usize = (TEXTURE_SIZE.x * TEXTURE_SIZE.y) as usize;
 
 //language=glsl
@@ -55,7 +55,7 @@ struct State {
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win_config = WindowConfig::new().size(400, 400).lazy_loop(true);
+    let win_config = WindowConfig::new().set_size(400, 400).set_lazy_loop(true);
 
     notan::init_with(setup)
         .add_config(win_config)
@@ -131,7 +131,7 @@ fn setup(gfx: &mut Graphics) -> State {
 fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut renderer = gfx.create_renderer();
 
-    renderer.begin(Some(&state.clear_options));
+    renderer.begin(Some(state.clear_options));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_texture(0, &state.texture);
     renderer.bind_buffers(&[&state.vertex_buffer, &state.index_buffer]);

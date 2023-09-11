@@ -27,8 +27,8 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
         let mut rect = draw.rect((0.0, 0.0), size);
 
         // set the rectangle's transformation
-        rect.translate(200.0, 150.0)
-            .rotate_from((size.0 * 0.5, size.1 * 0.5), state.rot);
+        rect.rotate_from((size.0 * 0.5, size.1 * 0.5), state.rot)
+            .translate(200.0, 150.0);
 
         // get the local position based on the current projection + matrix
         let local = rect.screen_to_local_position(app.mouse.x, app.mouse.y);

@@ -33,7 +33,7 @@ pub struct GlowBackend {
     texture_count: u64,
     pipeline_count: u64,
     render_target_count: u64,
-    size: (i32, i32),
+    size: (u32, u32),
     dpi: f32,
     pipelines: HashMap<u64, InnerPipeline>,
     buffers: HashMap<u64, InnerBuffer>,
@@ -45,8 +45,7 @@ pub struct GlowBackend {
     limits: Limits,
     stats: GpuStats,
     current_uniforms: Vec<UniformLocation>,
-    drawing_srgba: bool,
-    drawing_to_render_texture: bool,
+    target_render_texture: Option<u64>,
     render_texture_mipmaps: bool,
 }
 
@@ -86,7 +85,14 @@ impl GlowBackend {
     }
 
     fn from(gl: Context, api: &str) -> Result<Self, String> {
-        log::info!("Using {} graphics api", api);
+        unsafe {
+            let version = gl.get_parameter_string(glow::VERSION);
+            let renderer = gl.get_parameter_string(glow::RENDERER);
+            let vendor = gl.get_parameter_string(glow::VENDOR);
+            log::info!(
+                "OpenGL Info: \nVersion: {version}\nRenderer: {renderer}\nVendor: {vendor}\n---"
+            );
+        }
 
         let limits = unsafe {
             Limits {
@@ -115,8 +121,7 @@ impl GlowBackend {
             limits,
             stats,
             current_uniforms: vec![],
-            drawing_srgba: false,
-            drawing_to_render_texture: false,
+            target_render_texture: None,
             render_texture_mipmaps: false,
         })
     }
@@ -127,30 +132,6 @@ impl GlowBackend {
     fn clear(&mut self, color: &Option<Color>, depth: &Option<f32>, stencil: &Option<i32>) {
         clear(&self.gl, color, depth, stencil);
         self.stats.misc += 1;
-    }
-
-    #[inline]
-    fn enable_srgba(&mut self) {
-        if self.drawing_srgba {
-            return;
-        }
-
-        self.drawing_srgba = true;
-        unsafe {
-            self.gl.enable(glow::FRAMEBUFFER_SRGB);
-        }
-    }
-
-    #[inline]
-    fn disable_srgba(&mut self) {
-        if !self.drawing_srgba {
-            return;
-        }
-
-        self.drawing_srgba = false;
-        unsafe {
-            self.gl.disable(glow::FRAMEBUFFER_SRGB);
-        }
     }
 
     fn begin(
@@ -168,7 +149,7 @@ impl GlowBackend {
         let (width, height, dpi) = match render_target {
             Some(rt) => {
                 rt.bind(&self.gl);
-                self.drawing_to_render_texture = true;
+                self.target_render_texture = Some(rt.texture_id);
                 self.render_texture_mipmaps = rt.use_mipmaps;
                 (rt.size.0, rt.size.1, 1.0)
             }
@@ -176,7 +157,6 @@ impl GlowBackend {
                 unsafe {
                     self.gl.bind_framebuffer(glow::FRAMEBUFFER, None);
                 }
-                self.drawing_to_render_texture = false;
                 self.render_texture_mipmaps = false;
                 (self.size.0, self.size.1, self.dpi)
             }
@@ -189,7 +169,7 @@ impl GlowBackend {
 
     #[inline]
     fn viewport(&mut self, mut x: f32, mut y: f32, width: f32, height: f32, dpi: f32) {
-        if !self.drawing_to_render_texture {
+        if self.target_render_texture.is_none() {
             y = (self.size.1 as f32 - (height + y)) * dpi;
             x *= dpi;
         }
@@ -205,7 +185,7 @@ impl GlowBackend {
 
     #[inline]
     fn scissors(&mut self, x: f32, y: f32, width: f32, height: f32, dpi: f32) {
-        let canvas_height = ((self.size.1 - (height + y) as i32) as f32 * dpi) as i32;
+        let canvas_height = ((self.size.1 - (height + y) as u32) as f32 * dpi) as _;
         let x = x * dpi;
         let width = width * dpi;
         let height = height * dpi;
@@ -222,10 +202,17 @@ impl GlowBackend {
     fn end(&mut self) {
         unsafe {
             // generate mipmap for the framebuffer texture if needed
-            if self.drawing_to_render_texture && self.render_texture_mipmaps {
-                self.gl.generate_mipmap(glow::TEXTURE_2D);
+            if self.render_texture_mipmaps {
+                if let Some(render_texture) = self
+                    .target_render_texture
+                    .and_then(|id| self.textures.get(&id))
+                {
+                    self.gl
+                        .bind_texture(glow::TEXTURE_2D, Some(render_texture.texture));
+                    self.gl.generate_mipmap(glow::TEXTURE_2D);
+                    self.gl.bind_texture(glow::TEXTURE_2D, None);
+                }
             }
-            self.disable_srgba();
             self.gl.disable(glow::SCISSOR_TEST);
             self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
@@ -235,7 +222,7 @@ impl GlowBackend {
         }
 
         self.using_indices = None;
-        self.drawing_to_render_texture = false;
+        self.target_render_texture = None;
         self.render_texture_mipmaps = false;
     }
 
@@ -271,12 +258,11 @@ impl GlowBackend {
                     false
                 }
                 Kind::Uniform(_slot, _name) => {
-                    if !buffer.block_binded {
-                        buffer.bind_ubo_block(
-                            &self.gl,
-                            self.pipelines.get(&self.current_pipeline).as_ref().unwrap(),
-                        );
-                    }
+                    buffer.bind_ubo_block(
+                        &self.gl,
+                        self.current_pipeline,
+                        self.pipelines.get(&self.current_pipeline).as_ref().unwrap(),
+                    );
                     false
                 }
                 Kind::Vertex(attrs) => match self.pipelines.get_mut(&self.current_pipeline) {
@@ -291,7 +277,7 @@ impl GlowBackend {
 
     fn bind_texture(&mut self, id: u64, slot: u32, location: u32) {
         if let Some(pip) = self.pipelines.get(&self.current_pipeline) {
-            let is_srgba = if let Some(texture) = self.textures.get(&id) {
+            if let Some(texture) = self.textures.get(&id) {
                 #[cfg(debug_assertions)]
                 if !pip.texture_locations.contains_key(&location) {
                     log::warn!("Uniform location {} for texture {} should be declared when the pipeline is created.", location, id);
@@ -302,15 +288,6 @@ impl GlowBackend {
                     .get(&location)
                     .unwrap_or_else(|| self.get_texture_uniform_loc(&location));
                 texture.bind(&self.gl, slot, loc);
-                texture.is_srgba
-            } else {
-                false
-            };
-
-            if is_srgba {
-                self.enable_srgba();
-            } else {
-                self.disable_srgba();
             }
         }
     }
@@ -518,7 +495,7 @@ impl DeviceBackend for GlowBackend {
     }
 
     fn clean(&mut self, to_clean: &[ResourceId]) {
-        log::debug!("gpu resources to_clean {:?}", to_clean);
+        log::trace!("gpu resources to_clean {:?}", to_clean);
         to_clean.iter().for_each(|res| match &res {
             ResourceId::Pipeline(id) => self.clean_pipeline(*id),
             ResourceId::Buffer(id) => self.clean_buffer(*id),
@@ -527,7 +504,7 @@ impl DeviceBackend for GlowBackend {
         });
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {
+    fn set_size(&mut self, width: u32, height: u32) {
         self.size = (width, height);
     }
 
@@ -559,7 +536,7 @@ impl DeviceBackend for GlowBackend {
             "Error creating render target: texture id '{texture_id}' not found.",
         ))?;
 
-        let inner_rt = InnerRenderTexture::new(&self.gl, texture, info)?;
+        let inner_rt = InnerRenderTexture::new(&self.gl, texture, texture_id, info)?;
         self.render_target_count += 1;
         self.render_targets
             .insert(self.render_target_count, inner_rt);
@@ -592,10 +569,10 @@ impl DeviceBackend for GlowBackend {
                             self.gl.tex_sub_image_2d(
                                 glow::TEXTURE_2D,
                                 0,
-                                opts.x_offset,
-                                opts.y_offset,
-                                opts.width,
-                                opts.height,
+                                opts.x_offset as _,
+                                opts.y_offset as _,
+                                opts.width as _,
+                                opts.height as _,
                                 texture_format(&opts.format),
                                 texture_type(&opts.format),
                                 PixelUnpackData::Slice(bytes),
@@ -646,10 +623,10 @@ impl DeviceBackend for GlowBackend {
 
                 if can_read {
                     self.gl.read_pixels(
-                        opts.x_offset,
-                        opts.y_offset,
-                        opts.width,
-                        opts.height,
+                        opts.x_offset as _,
+                        opts.y_offset as _,
+                        opts.width as _,
+                        opts.height as _,
                         texture_format(&opts.format),
                         texture_type(&opts.format),
                         glow::PixelPackData::Slice(bytes),

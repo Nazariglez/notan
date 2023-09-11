@@ -1,6 +1,49 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## v0.10.0
+- Added `WindowConfig::set_position` to set x/y position before creating the window.
+- Changed `Renderer.begin` uses `Option<ClearOption>` instead of `Option<&ClearOption>`.
+- Changed sizes and positions for Window and Textures from `i32` to `u32`.
+- Added `AppTimer::elapsed` to return time since init as `Duration`.
+- Changed `AppTimer::time_since_init` to `AppTimer::elapsed_f32`.
+- Changed `WindowConfig` setter method to use the prefix `set_`. 
+- Removed deprecated `Mouse::local_position`.
+- Removed deprecated `mat3_screen_to_local`, `mat3_local_to_screen`, `mat3_local_to_local`.
+- Updated dependencies to latest versions. 
+- Enabled compilation with `--no-default-features` excluding shader compilation macros.
+- Deserializing `AtlasFrame` uses a default `pivot` if is empty.
+- Added `WindowConfig::set_window_icon_data`.
+- Added `WindowConfig::set_taskbar_icon_data`.
+- Added example `window_icon_from_raw.rs`.
+- Changed `glsl_layout` dependency for `crevice`.
+- Updated EGUI to `0.22`.
+- Fixed `egui` panic when custom font are set.  
+- Fixed slow scroll speed. 
+- Fixed `egui needs_repaint` not working right in some situations.
+- Fixed the order of the matrix multiplication for `Draw` methods.
+- Improved error messages when `WebGL` and `WebGL2` contexts cannot be adquired.
+- Fixed `Buffer` to allow reuse `Uniform Buffers` between pipelines.
+- Changed some noisy logs from `debug` to `trace`.
+- Added `Clone` to `Random`.
+- Reset values of `Mouse::wheel_delta` when the user stops scrolling.
+- Added `Mouse::is_scrolling`.
+- App's state can use now lifetimes, ie: `State<'n>`.
+- Added `Clone` to `AssetsList`.
+- The `image` crate on `notan_graphics` is only used when `texture_to_file` is enabled.
+- Added `WindowBackend::set_cursor_position`, `Event::MouseMotion` and `Mouse::is_moving`.
+- Added new example `window_initial_position.rs`.
+- Added mipmap and texture wrapping settings to `RenderTextureBuilder`.
+- Added new example `texture_params`.
+- Added new example `renderer_stencil`.
+- Fixed mouse wheel scroll being ignored when moving the mouse at same time
+- Added alt mouse wheel scrolling code to example
+- Fixed `set_multisamples`. It is no longer being ignored for winit backend
+- Fixed blurry text on egui when using on desktop
+- Fixed mono channel audio playing in half of time set for the audio length. 
+- Added `is_focused()` for winit backend
+- Added `window_focus` example
+
 ## v0.9.5 - 19/03/2023
 
 - Increased mouse wheel scroll speed on native platforms.

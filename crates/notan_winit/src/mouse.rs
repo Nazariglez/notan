@@ -3,7 +3,7 @@ use winit::dpi::LogicalPosition;
 use notan_core::events::Event;
 use notan_core::mouse::MouseButton;
 use winit::event::ElementState;
-use winit::event::{MouseButton as WMouseButton, MouseScrollDelta, WindowEvent};
+use winit::event::{DeviceEvent, MouseButton as WMouseButton, MouseScrollDelta, WindowEvent};
 
 pub fn process_events(
     event: &WindowEvent,
@@ -61,6 +61,14 @@ pub fn process_events(
             *my = position.y as _;
             Some(Event::MouseMove { x: *mx, y: *my })
         }
+
+        _ => None,
+    }
+}
+
+pub fn process_device_events(event: &DeviceEvent) -> Option<Event> {
+    match event {
+        DeviceEvent::MouseMotion { delta } => Some(Event::MouseMotion { delta: *delta }),
         _ => None,
     }
 }

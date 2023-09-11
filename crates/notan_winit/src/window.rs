@@ -3,10 +3,12 @@ use std::path::PathBuf;
 use crate::gl_manager::GlManager;
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
-use winit::dpi::{LogicalSize, PhysicalPosition};
+use winit::dpi::{LogicalPosition, LogicalSize, PhysicalPosition};
 use winit::event_loop::EventLoop;
 use winit::window::Fullscreen::Borderless;
-use winit::window::{CursorGrabMode, CursorIcon as WCursorIcon, Icon, Window, WindowBuilder};
+use winit::window::{
+    CursorGrabMode, CursorIcon as WCursorIcon, Icon, Window, WindowBuilder, WindowLevel,
+};
 
 pub struct WinitWindowBackend {
     pub(crate) gl_manager: GlManager,
@@ -51,6 +53,10 @@ impl WindowBackend for WinitWindowBackend {
         self.window().fullscreen().is_some()
     }
 
+    fn is_focused(&self) -> bool {
+        self.window().has_focus()
+    }
+
     fn lazy_loop(&self) -> bool {
         self.lazy
     }
@@ -81,7 +87,12 @@ impl WindowBackend for WinitWindowBackend {
     }
 
     fn set_always_on_top(&mut self, enabled: bool) {
-        self.window().set_always_on_top(enabled);
+        let level = if enabled {
+            WindowLevel::AlwaysOnTop
+        } else {
+            WindowLevel::Normal
+        };
+        self.window().set_window_level(level);
         self.is_always_on_top = enabled;
     }
 
@@ -122,6 +133,20 @@ impl WindowBackend for WinitWindowBackend {
         }
     }
 
+    fn set_cursor_position(&mut self, x: f32, y: f32) {
+        if let Err(e) = self
+            .window()
+            .set_cursor_position(LogicalPosition::new(x, y))
+        {
+            log::error!(
+                "Error setting mouse cursor position to x: {0} y: {1} error: {2}",
+                x,
+                y,
+                e
+            );
+        }
+    }
+
     fn set_fullscreen(&mut self, enabled: bool) {
         if enabled {
             let monitor = self.window().current_monitor();
@@ -148,7 +173,7 @@ impl WindowBackend for WinitWindowBackend {
             .set_outer_position(PhysicalPosition::new(x, y));
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {
+    fn set_size(&mut self, width: u32, height: u32) {
         self.window()
             .set_inner_size(LogicalSize::new(width, height));
     }
@@ -160,7 +185,7 @@ impl WindowBackend for WinitWindowBackend {
         }
     }
 
-    fn size(&self) -> (i32, i32) {
+    fn size(&self) -> (u32, u32) {
         let inner = self.window().inner_size();
         let logical = inner.to_logical::<f64>(self.scale_factor);
         (logical.width as _, logical.height as _)
@@ -227,13 +252,18 @@ fn load_icon_from_data(data: &'static [u8]) -> Icon {
 
 impl WinitWindowBackend {
     pub(crate) fn new(config: WindowConfig, event_loop: &EventLoop<()>) -> Result<Self, String> {
+        let level = if config.always_on_top {
+            WindowLevel::AlwaysOnTop
+        } else {
+            WindowLevel::Normal
+        };
         let mut builder = WindowBuilder::new()
             .with_title(&config.title)
             .with_inner_size(LogicalSize::new(config.width, config.height))
             .with_maximized(config.maximized)
             .with_resizable(config.resizable)
             .with_transparent(config.transparent)
-            .with_always_on_top(config.always_on_top)
+            .with_window_level(level)
             .with_visible(config.visible)
             .with_decorations(config.decorations)
             .with_window_icon(load_icon(
@@ -262,6 +292,22 @@ impl WinitWindowBackend {
 
         if let Some((w, h)) = config.max_size {
             builder = builder.with_max_inner_size(LogicalSize::new(w, h));
+        }
+
+        if let Some((x, y)) = config.position {
+            let safe_x = x;
+            let safe_y = y;
+
+            // This is already done by the OS in Linux/MacOS
+            #[cfg(windows)]
+            let (safe_x, safe_y) = {
+                let clamped_position =
+                    clamp_window_to_sane_position(config.width, config.height, x, y, &event_loop);
+
+                (clamped_position.0, clamped_position.1)
+            };
+
+            builder = builder.with_position(LogicalPosition::new(safe_x as f64, safe_y as f64));
         }
 
         let gl_manager = GlManager::new(builder, event_loop, &config)?;
@@ -359,4 +405,66 @@ fn winit_cursor(cursor: CursorIcon) -> Option<WCursorIcon> {
         CursorIcon::ResizeColumn => WCursorIcon::ColResize,
         CursorIcon::ResizeRow => WCursorIcon::RowResize,
     })
+}
+
+#[cfg(windows)]
+fn clamp_window_to_sane_position(
+    width: u32,
+    height: u32,
+    x: i32,
+    y: i32,
+    event_loop: &EventLoop<()>,
+) -> (i32, i32) {
+    let monitors = event_loop.available_monitors();
+    // default to primary monitor, in case the correct monitor was disconnected.
+    let mut active_monitor = if let Some(active_monitor) = event_loop
+        .primary_monitor()
+        .or_else(|| event_loop.available_monitors().next())
+    {
+        active_monitor
+    } else {
+        return (x, y); // no monitors 🤷
+    };
+
+    for monitor in monitors {
+        let monitor_x_range = (monitor.position().x - width as i32)
+            ..(monitor.position().x + monitor.size().width as i32);
+        let monitor_y_range = (monitor.position().y - height as i32)
+            ..(monitor.position().y + monitor.size().height as i32);
+
+        if monitor_x_range.contains(&x) && monitor_y_range.contains(&y) {
+            active_monitor = monitor;
+        }
+    }
+
+    let mut inner_size_pixels = (
+        width as f32 * active_monitor.scale_factor() as f32,
+        height as f32 * active_monitor.scale_factor() as f32,
+    );
+
+    // Add size of title bar. This is 32 px by default in Win 10/11.
+    if cfg!(target_os = "windows") {
+        inner_size_pixels.1 += 32.0 * active_monitor.scale_factor() as f32;
+    }
+
+    let monitor_position = (
+        active_monitor.position().x as f32,
+        active_monitor.position().y as f32,
+    );
+
+    let monitor_size = active_monitor.size();
+
+    // To get the maximum position, we get the rightmost corner of the display, then subtract
+    // the size of the window to get the bottom right most value window.position can have.
+
+    let clamped_x = x.clamp(
+        monitor_position.0 as i32,
+        monitor_position.0 as i32 + monitor_size.width as i32 - inner_size_pixels.0 as i32,
+    );
+    let clamped_y = y.clamp(
+        monitor_position.1 as i32,
+        monitor_position.1 as i32 + monitor_size.height as i32 - inner_size_pixels.1 as i32,
+    );
+
+    (clamped_x, clamped_y)
 }

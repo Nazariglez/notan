@@ -1,6 +1,6 @@
 [package]
 name = "notan_utils"
-version = "0.9.5"
+version = "0.10.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -13,12 +13,13 @@ description = "Provides a simple set of utils Notan"
 
 [dependencies]
 instant = { version = "0.1.12", features = ["wasm-bindgen"] }
-log = "0.4.17"
+log.workspace = true
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { version = "0.2.83", optional = true }
-js-sys = { version = "0.3.60", optional = true }
-web-sys = { version = "0.3.60", optional = true }
+wasm-bindgen = { workspace = true, optional = true }
+js-sys = { workspace = true, optional = true }
+web-sys = { workspace = true, optional = true }
+
 mime_guess = { version = "2.0.4", optional = true }
 
 [features]

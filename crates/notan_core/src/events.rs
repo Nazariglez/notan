@@ -17,7 +17,7 @@ pub enum Event {
     WindowMove { x: i32, y: i32 },
 
     /// Represents the current window's size after it was resized
-    WindowResize { width: i32, height: i32 },
+    WindowResize { width: u32, height: u32 },
 
     /// Represents a change on the screen aspect ration
     ScreenAspectChange { ratio: f64 },
@@ -39,6 +39,9 @@ pub enum Event {
 
     /// Mouse cursor has left the window's app
     MouseLeft { x: i32, y: i32 },
+
+    /// Mouse was moved with this delta
+    MouseMotion { delta: (f64, f64) },
 
     /// Keyboard's key is down
     KeyDown { key: KeyCode },

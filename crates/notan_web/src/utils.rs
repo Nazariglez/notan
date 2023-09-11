@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{Document, HtmlCanvasElement, Window};
 
-pub fn set_size_dpi(canvas: &HtmlCanvasElement, width: i32, height: i32) {
+pub fn set_size_dpi(canvas: &HtmlCanvasElement, width: u32, height: u32) {
     let auto_res = canvas
         .get_attribute("notan-auto-res")
         .unwrap_or_else(|| "false".to_string())
@@ -67,6 +67,14 @@ pub fn get_or_create_canvas(doc: &Document, canvas_id: &str) -> Result<HtmlCanva
 
     if let Err(e) = canvas_element.style().set_property("touch-action", "none") {
         log::error!("Cannot set touch-action: none {e:?}");
+    }
+
+    if let Err(e) = canvas_element.set_attribute("tabindex", "0") {
+        log::warn!("Cannot set tabindex to 0, this can lead to errors with focus/unfocus the canvas: {e:?}");
+    }
+
+    if let Err(e) = canvas_element.style().set_property("outline", "none") {
+        log::error!("Cannot set outline: none {e:?}");
     }
 
     Ok(canvas_element)
@@ -192,17 +200,17 @@ pub fn canvas_mouse_passthrough(canvas: &HtmlCanvasElement, passthrough: bool) {
     }
 }
 
-pub fn get_notan_size(canvas: &HtmlCanvasElement) -> (i32, i32) {
+pub fn get_notan_size(canvas: &HtmlCanvasElement) -> (u32, u32) {
     let width = canvas
         .get_attribute("notan-width")
         .unwrap_or_else(|| "0".to_string())
-        .parse::<i32>()
+        .parse::<u32>()
         .unwrap_or(0);
 
     let height = canvas
         .get_attribute("notan-height")
         .unwrap_or_else(|| "0".to_string())
-        .parse::<i32>()
+        .parse::<u32>()
         .unwrap_or(0);
 
     (width, height)

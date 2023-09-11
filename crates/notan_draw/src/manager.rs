@@ -46,7 +46,7 @@ impl DrawManager {
         self.renderer.commands()
     }
 
-    pub fn create_draw(&self, width: i32, height: i32) -> Draw {
+    pub fn create_draw(&self, width: u32, height: u32) -> Draw {
         Draw::new(width, height)
     }
 
@@ -171,7 +171,7 @@ fn process_draw(
     manager.text_painter.clear();
 
     let stencil = draw.needs_to_clean_stencil.then_some(0x00);
-    manager.renderer.begin(Some(&ClearOptions {
+    manager.renderer.begin(Some(ClearOptions {
         color: draw.clear_color,
         stencil,
         ..Default::default()

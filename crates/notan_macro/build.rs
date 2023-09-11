@@ -8,7 +8,8 @@ fn main() {
 
     // TODO: add naga once the PR lands
     cfg_aliases! {
-        use_glsl_to_spirv: { all(feature = "glsl_to_spirv", not(feature = "shaderc")) },
-        use_shaderc: { feature = "shaderc" }
+        use_glsl_to_spirv: { all(feature = "glsl-to-spirv", not(feature = "shaderc")) },
+        use_shaderc: { feature = "shaderc" },
+        shader_compilation: { any(use_glsl_to_spirv, use_shaderc) }
     }
 }

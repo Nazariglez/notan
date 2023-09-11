@@ -1,6 +1,6 @@
 [package]
 name = "notan_egui"
-version = "0.9.5"
+version = "0.10.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -12,13 +12,17 @@ description = "Provides EGUI support for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4.17"
-egui = { version = "0.20.1", features = ["bytemuck"] }
-bytemuck = "1.13.0"
-notan_core = { path = "../notan_core", version = "0.9.5" }
-notan_app = { path = "../notan_app", version = "0.9.5" }
-notan_macro = { path = "../notan_macro", version = "0.9.5" }
+notan_core.workspace = true
+notan_app.workspace = true
+notan_macro.workspace = true
+
+log.workspace = true
+bytemuck.workspace = true
+
+egui = { version = "0.22.0", features = ["bytemuck"] }
 
 [features]
 links = []
 drop_files = []
+glsl-to-spirv = ["notan_macro/glsl-to-spirv"]
+shaderc = ["notan_macro/shaderc"]

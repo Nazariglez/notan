@@ -143,7 +143,6 @@ fn setup(gfx: &mut Graphics) -> State {
     // Generate 1 color per cube
     let mut rng = Random::default();
     let colors = (0..INSTANCES)
-        .into_iter()
         .flat_map(|_| {
             [
                 rng.gen_range(0.0..1.0),
@@ -207,7 +206,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
 
     gfx.set_buffer_data(&state.ubo, &rotated_matrix(state.mvp, state.angle));
 
-    renderer.begin(Some(&state.clear_options));
+    renderer.begin(Some(state.clear_options));
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_buffers(&[&state.ubo, &state.pos_vbo, &state.color_vbo, &state.ebo]);
     renderer.draw_instanced(0, 36, INSTANCES as _);

@@ -249,7 +249,7 @@ fn setup(gfx: &mut Graphics) -> State {
 }
 
 fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
-    let time = app.timer.time_since_init();
+    let time = app.timer.elapsed_f32();
     gfx.set_buffer_data(&state.transform_ubo, &Transform::with_view(time));
     gfx.set_buffer_data(&state.light_ubo, &Light::with_time(time));
 
@@ -261,7 +261,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, state: &mut State) {
         stencil: None,
     };
 
-    renderer.begin(Some(&clear));
+    renderer.begin(Some(clear));
 
     renderer.set_pipeline(&state.pipeline);
     renderer.bind_buffers(&[&state.vbo, &state.transform_ubo, &state.light_ubo]);

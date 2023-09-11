@@ -86,6 +86,8 @@ impl InnerPipeline {
             set_color_mask(gl, options);
             set_culling(gl, options);
             set_blend_mode(gl, options);
+            #[cfg(not(target_arch = "wasm32"))]
+            set_srgb_space(gl, options);
         }
     }
 }
@@ -239,6 +241,18 @@ unsafe fn set_blend_mode(gl: &Context, options: &PipelineOptions) {
         }
         (None, None) => {
             gl.disable(glow::BLEND);
+        }
+    }
+}
+
+#[inline(always)]
+#[cfg(not(target_arch = "wasm32"))]
+fn set_srgb_space(gl: &Context, opts: &PipelineOptions) {
+    unsafe {
+        if opts.srgb_space {
+            gl.enable(glow::FRAMEBUFFER_SRGB);
+        } else {
+            gl.disable(glow::FRAMEBUFFER_SRGB);
         }
     }
 }

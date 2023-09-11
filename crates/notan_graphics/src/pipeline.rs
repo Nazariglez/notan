@@ -156,6 +156,12 @@ impl<'a, 'b> PipelineBuilder<'a, 'b> {
         self
     }
 
+    /// Enable the SRGB Color Space
+    pub fn with_srgb_space(mut self, srgb: bool) -> Self {
+        self.options.srgb_space = srgb;
+        self
+    }
+
     /// Build the pipeline with the data set on the builder
     pub fn build(self) -> Result<Pipeline, String> {
         match self.shaders {
@@ -351,6 +357,7 @@ pub struct PipelineOptions {
     pub depth_stencil: DepthStencil,
     pub color_mask: ColorMask,
     pub stencil: Option<StencilOptions>,
+    pub srgb_space: bool,
 }
 
 impl Default for PipelineOptions {
@@ -362,6 +369,7 @@ impl Default for PipelineOptions {
             alpha_blend: None,
             color_mask: Default::default(),
             stencil: None,
+            srgb_space: false,
         }
     }
 }

@@ -6,20 +6,17 @@ pub(crate) type TextureKey = <glow::Context as glow::HasContext>::Texture;
 
 pub(crate) struct InnerTexture {
     pub texture: TextureKey,
-    pub size: (i32, i32),
-    pub is_srgba: bool,
+    pub size: (u32, u32),
     pub use_mipmaps: bool,
 }
 
 impl InnerTexture {
     pub fn new(texture: TextureKey, info: &TextureInfo) -> Result<Self, String> {
         let size = (info.width, info.height);
-        let is_srgba = info.format == TextureFormat::SRgba8;
         let use_mipmaps = info.mipmap_filter.is_some();
         Ok(Self {
             texture,
             size,
-            is_srgba,
             use_mipmaps,
         })
     }
@@ -180,8 +177,8 @@ pub(crate) unsafe fn create_texture(
         glow::TEXTURE_2D,
         0,
         texture_internal_format(&info.format) as _,
-        info.width,
-        info.height,
+        info.width as _,
+        info.height as _,
         0,
         format,
         texture_type(&info.format),

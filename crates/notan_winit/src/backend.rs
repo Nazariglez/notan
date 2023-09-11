@@ -279,6 +279,11 @@ impl BackendSystem for WinitBackend {
                     WEvent::RedrawEventsCleared => {
                         request_redraw = false;
                     }
+                    WEvent::DeviceEvent { ref event, .. } => {
+                        if let Some(evt) = mouse::process_device_events(event) {
+                            add_event(b, &mut request_redraw, evt);
+                        }
+                    }
                     _ => {}
                 }
 

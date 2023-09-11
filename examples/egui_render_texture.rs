@@ -35,7 +35,7 @@ impl State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(State::new)
-        .add_config(WindowConfig::new().vsync(true).high_dpi(true))
+        .add_config(WindowConfig::new().set_vsync(true).set_high_dpi(true))
         .add_config(EguiConfig)
         .draw(draw)
         .build()
@@ -203,7 +203,7 @@ impl Cube {
         gfx.set_buffer_data(&self.uniform_buffer, &rotated_matrix(self.mvp, self.angle));
 
         let mut renderer = gfx.create_renderer();
-        renderer.begin(Some(&ClearOptions {
+        renderer.begin(Some(ClearOptions {
             color: Some(Color::new(0.1, 0.2, 0.3, 1.0)),
             depth: Some(1.0),
             ..Default::default()

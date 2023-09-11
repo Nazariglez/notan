@@ -6,6 +6,7 @@ use std::any::{Any, TypeId};
 
 use std::sync::Arc;
 
+#[derive(Clone)]
 pub struct AssetList {
     count: usize,
     load_tracker: HashMap<String, DoneSignal>,

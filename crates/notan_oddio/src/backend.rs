@@ -241,6 +241,7 @@ impl InnerBackend {
                 |err| {
                     log::error!("{:?}", err);
                 },
+                None,
             )
             .map_err(|e| format!("{e:?}"))?;
 
@@ -367,7 +368,7 @@ impl InnerBackend {
             self.sounds.remove(id);
         });
 
-        log::debug!(
+        log::trace!(
             "Audio resources cleaned: Sources({:?}) - Sounds({:?})",
             sources,
             sounds,

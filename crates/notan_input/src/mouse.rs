@@ -2,7 +2,7 @@ use hashbrown::{HashMap, HashSet};
 use notan_core::events::Event;
 
 pub use notan_core::mouse::MouseButton;
-use notan_math::{Mat3, Vec2};
+use notan_math::Vec2;
 
 #[derive(Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -20,6 +20,12 @@ pub struct Mouse {
     pub released: HashSet<MouseButton>,
     /// wheel delta
     pub wheel_delta: Vec2,
+    /// motion delta
+    pub motion_delta: (f64, f64),
+    /// used internally to reset the wheel_delta
+    scrolling: bool,
+    /// used internally to reset the motion_delta
+    moving: bool,
 }
 
 impl Mouse {
@@ -31,16 +37,6 @@ impl Mouse {
     /// Returns a tuple with the x and y position
     pub fn position(&self) -> (f32, f32) {
         (self.x, self.y)
-    }
-
-    #[inline]
-    #[doc(hidden)]
-    #[deprecated]
-    #[allow(deprecated)]
-    /// Returns a local position
-    pub fn local_position(&self, m: Mat3) -> (f32, f32) {
-        let pos = notan_math::mat3_screen_to_local(self.x, self.y, m);
-        (pos.x, pos.y)
     }
 
     #[inline]
@@ -121,17 +117,41 @@ impl Mouse {
         self.was_pressed(MouseButton::Right)
     }
 
+    #[inline(always)]
+    /// Returns true if the user is scrolling in this frame
+    pub fn is_scrolling(&self) -> bool {
+        self.scrolling
+    }
+
+    #[inline(always)]
+    /// Returns true if the user is moving the mouse in this frame
+    pub fn is_moving(&self) -> bool {
+        self.moving
+    }
+
     #[inline]
     pub(crate) fn clear(&mut self) {
         self.pressed.clear();
         self.released.clear();
+
+        if !self.scrolling {
+            self.wheel_delta.x = 0.0;
+            self.wheel_delta.y = 0.0;
+        }
+
+        if !self.moving {
+            self.motion_delta.0 = 0.0;
+            self.motion_delta.1 = 0.0;
+        }
+
+        // we set it to false after the check to reset the wheel_delta to keep the value for at
+        // least one frame, and if the next frame we're not scrolling then we reset wheel_delta
+        self.scrolling = false;
+        self.moving = false;
     }
 
     #[inline]
     pub(crate) fn process_events(&mut self, evt: &Event, delta: f32) {
-        self.wheel_delta.x = 0.0;
-        self.wheel_delta.y = 0.0;
-
         match evt {
             Event::MouseMove { x, y } => {
                 self.x = *x as f32;
@@ -151,16 +171,22 @@ impl Mouse {
                 self.x = *x as f32;
                 self.y = *y as f32;
 
-                if let Some(t) = self.down.get_mut(button) {
-                    *t += delta;
-                } else {
-                    self.down.insert(*button, 0.0);
-                    self.pressed.insert(*button);
+                match self.down.get_mut(button) {
+                    Some(t) => *t += delta,
+                    None => {
+                        self.down.insert(*button, 0.0);
+                        self.pressed.insert(*button);
+                    }
                 }
             }
             Event::MouseWheel { delta_x, delta_y } => {
                 self.wheel_delta.x = *delta_x;
                 self.wheel_delta.y = *delta_y;
+                self.scrolling = true;
+            }
+            Event::MouseMotion { delta } => {
+                self.motion_delta = *delta;
+                self.moving = true;
             }
             _ => {}
         }

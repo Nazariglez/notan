@@ -8,8 +8,8 @@ fn main() -> Result<(), String> {
 fn draw(app: &mut App, gfx: &mut Graphics) {
     // "Random" color bases on the app's time
     let color = Color::from_rgb(
-        app.timer.time_since_init().cos(),
-        app.timer.time_since_init().sin(),
+        app.timer.elapsed_f32().cos(),
+        app.timer.elapsed_f32().sin(),
         1.0,
     );
 
@@ -17,7 +17,7 @@ fn draw(app: &mut App, gfx: &mut Graphics) {
     let mut renderer = gfx.create_renderer();
 
     // begin a pass to clear the screen
-    renderer.begin(Some(&ClearOptions::color(color)));
+    renderer.begin(Some(ClearOptions::color(color)));
     renderer.end();
 
     // render to screen

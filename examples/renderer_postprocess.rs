@@ -10,7 +10,7 @@ struct State {
 #[notan_main]
 fn main() -> Result<(), String> {
     notan::init_with(setup)
-        .add_config(WindowConfig::default().vsync(true))
+        .add_config(WindowConfig::default().set_vsync(true))
         .draw(draw)
         .build()
 }
@@ -90,7 +90,7 @@ struct PostProcessTarget {
 }
 
 impl PostProcessTarget {
-    fn new(gfx: &mut Graphics, width: i32, height: i32) -> Self {
+    fn new(gfx: &mut Graphics, width: u32, height: u32) -> Self {
         let render_texture = gfx
             .create_render_texture(width, height)
             .with_depth()
@@ -165,7 +165,7 @@ impl PostProcessTarget {
 
         let mut renderer = gfx.create_renderer();
 
-        renderer.begin(Some(&ClearOptions::none()));
+        renderer.begin(Some(ClearOptions::none()));
         renderer.set_pipeline(&self.pipeline);
         renderer.bind_texture(0, &self.render_texture);
         renderer.bind_buffers(&[
@@ -327,7 +327,7 @@ impl Cube {
         gfx.set_buffer_data(&self.uniform_buffer, &rotated_matrix(self.mvp, self.angle));
 
         let mut renderer = gfx.create_renderer();
-        renderer.begin(Some(&ClearOptions {
+        renderer.begin(Some(ClearOptions {
             color: Some(Color::new(0.1, 0.2, 0.3, 1.0)),
             depth: Some(1.0),
             ..Default::default()

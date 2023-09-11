@@ -11,7 +11,7 @@ pub mod texture;
 
 pub mod prelude;
 
-pub use glsl_layout;
+pub use crevice_notan as crevice;
 
 #[cfg(feature = "texture_to_file")]
 mod to_file;
@@ -22,7 +22,3 @@ pub use render_texture::*;
 pub use renderer::*;
 pub use shader::*;
 pub use texture::*;
-
-pub use notan_macro::{
-    fragment_shader, include_fragment_shader, include_vertex_shader, vertex_shader,
-};

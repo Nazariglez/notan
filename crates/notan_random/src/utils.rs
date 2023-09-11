@@ -4,6 +4,7 @@ use rand_pcg::Pcg32;
 use std::ops::{Deref, DerefMut};
 
 /// Wrapper around a random generator based on Pcg32.
+#[derive(Clone)]
 pub struct Random {
     rng: Pcg32,
 }

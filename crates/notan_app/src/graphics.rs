@@ -79,7 +79,7 @@ impl Graphics {
 
     /// Creates a render texture builder
     #[inline]
-    pub fn create_render_texture(&mut self, width: i32, height: i32) -> RenderTextureBuilder {
+    pub fn create_render_texture(&mut self, width: u32, height: u32) -> RenderTextureBuilder {
         self.device.create_render_texture(width, height)
     }
 
@@ -151,13 +151,13 @@ impl Graphics {
 
     /// Returns the drawable size
     #[inline]
-    pub fn size(&self) -> (i32, i32) {
+    pub fn size(&self) -> (u32, u32) {
         self.device.size()
     }
 
     /// Sets the drawable size
     #[inline]
-    pub fn set_size(&mut self, width: i32, height: i32) {
+    pub fn set_size(&mut self, width: u32, height: u32) {
         self.device.set_size(width, height);
     }
 

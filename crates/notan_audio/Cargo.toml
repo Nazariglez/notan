@@ -1,6 +1,6 @@
 [package]
 name = "notan_audio"
-version = "0.9.5"
+version = "0.10.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -10,4 +10,4 @@ license = "MIT OR Apache-2.0"
 description = "Provides simple audio API for Notan"
 
 [dependencies]
-parking_lot = "0.12.1"
+parking_lot.workspace = true

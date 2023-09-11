@@ -1,6 +1,6 @@
 [package]
 name = "notan_core"
-version = "0.9.5"
+version = "0.10.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 edition = "2021"
 readme = "README.md"
@@ -10,10 +10,10 @@ license = "MIT OR Apache-2.0"
 description = "Basic types and structs used in Notan"
 
 [dependencies]
-serde = { version = "1", optional = true, features = ["serde_derive"] }
+serde = { workspace = true, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = { version = "0.3.60", optional = true }
+web-sys = { workspace = true, optional = true }
 
 [features]
 links = []

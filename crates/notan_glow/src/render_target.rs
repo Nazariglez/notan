@@ -6,12 +6,18 @@ use notan_graphics::prelude::*;
 pub(crate) struct InnerRenderTexture {
     fbo: Framebuffer,
     depth_texture: Option<TextureKey>,
-    pub size: (i32, i32),
+    pub size: (u32, u32),
     pub use_mipmaps: bool,
+    pub texture_id: u64,
 }
 
 impl InnerRenderTexture {
-    pub fn new(gl: &Context, texture: &InnerTexture, info: &TextureInfo) -> Result<Self, String> {
+    pub fn new(
+        gl: &Context,
+        texture: &InnerTexture,
+        texture_id: u64,
+        info: &TextureInfo,
+    ) -> Result<Self, String> {
         let use_mipmaps = texture.use_mipmaps;
         let width = info.width;
         let height = info.height;
@@ -28,6 +34,7 @@ impl InnerRenderTexture {
             depth_texture,
             size,
             use_mipmaps,
+            texture_id,
         })
     }
 
@@ -95,6 +102,6 @@ unsafe fn create_fbo(
 }
 
 struct DepthInfo {
-    width: i32,
-    height: i32,
+    width: u32,
+    height: u32,
 }

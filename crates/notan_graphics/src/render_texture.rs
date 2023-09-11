@@ -80,7 +80,7 @@ pub struct RenderTextureBuilder<'a> {
 }
 
 impl<'a> RenderTextureBuilder<'a> {
-    pub fn new(device: &'a mut Device, width: i32, height: i32) -> Self {
+    pub fn new(device: &'a mut Device, width: u32, height: u32) -> Self {
         let info = TextureInfo {
             width,
             height,
@@ -106,6 +106,29 @@ impl<'a> RenderTextureBuilder<'a> {
     pub fn with_filter(mut self, min: TextureFilter, mag: TextureFilter) -> Self {
         self.info.min_filter = min;
         self.info.mag_filter = mag;
+        self
+    }
+
+    /// Set the texture wrap modes (x -> s, y -> t)
+    pub fn with_wrap(mut self, x: TextureWrap, y: TextureWrap) -> Self {
+        self.info.wrap_x = x;
+        self.info.wrap_y = y;
+        self
+    }
+
+    /// Toggle mipmap generation (with Linear filter if enabled)
+    pub fn with_mipmaps(mut self, enable: bool) -> Self {
+        if enable {
+            self.info.mipmap_filter = Some(TextureFilter::Linear);
+        } else {
+            self.info.mipmap_filter = None;
+        }
+        self
+    }
+
+    /// Set mipmap filtering function
+    pub fn with_mipmap_filter(mut self, filter: TextureFilter) -> Self {
+        self.info.mipmap_filter = Some(filter);
         self
     }
 

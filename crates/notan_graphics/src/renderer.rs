@@ -7,13 +7,13 @@ use crate::texture::*;
 #[derive(Default, Clone)]
 pub struct Renderer {
     commands: Vec<Commands>,
-    size: (i32, i32),
+    size: (u32, u32),
     primitive: DrawPrimitive,
     slot_count: u32,
 }
 
 impl Renderer {
-    pub fn new(width: i32, height: i32) -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         Self {
             size: (width, height),
             commands: vec![Commands::Size { width, height }],
@@ -22,7 +22,7 @@ impl Renderer {
         }
     }
 
-    pub fn begin(&mut self, options: Option<&ClearOptions>) {
+    pub fn begin(&mut self, options: Option<ClearOptions>) {
         let (color, stencil, depth) = match options {
             Some(opts) => (opts.color, opts.stencil, opts.depth),
             _ => (None, None, None),
@@ -44,20 +44,20 @@ impl Renderer {
         self.unbind_textures();
     }
 
-    pub fn set_size(&mut self, width: i32, height: i32) {
+    pub fn set_size(&mut self, width: u32, height: u32) {
         self.size = (width, height);
         self.commands.push(Commands::Size { width, height });
     }
 
-    pub fn size(&self) -> (i32, i32) {
+    pub fn size(&self) -> (u32, u32) {
         self.size
     }
 
-    pub fn width(&self) -> i32 {
+    pub fn width(&self) -> u32 {
         self.size.0
     }
 
-    pub fn height(&self) -> i32 {
+    pub fn height(&self) -> u32 {
         self.size.1
     }
 

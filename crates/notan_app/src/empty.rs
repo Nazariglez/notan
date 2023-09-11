@@ -17,9 +17,10 @@ use notan_audio::AudioBackend;
 #[derive(Default)]
 pub struct EmptyWindowBackend {
     title: String,
-    size: (i32, i32),
+    size: (u32, u32),
     position: (i32, i32),
     is_fullscreen: bool,
+    is_focused: bool,
     is_always_on_top: bool,
     lazy: bool,
     captured: bool,
@@ -53,6 +54,10 @@ impl WindowBackend for EmptyWindowBackend {
         self.is_fullscreen
     }
 
+    fn is_focused(&self) -> bool {
+        self.is_focused
+    }
+
     fn lazy_loop(&self) -> bool {
         self.lazy
     }
@@ -83,6 +88,8 @@ impl WindowBackend for EmptyWindowBackend {
 
     fn set_cursor(&mut self, _cursor: CursorIcon) {}
 
+    fn set_cursor_position(&mut self, _x: f32, _y: f32) {}
+
     fn set_fullscreen(&mut self, enabled: bool) {
         self.is_fullscreen = enabled;
     }
@@ -99,7 +106,7 @@ impl WindowBackend for EmptyWindowBackend {
         self.position = (x, y);
     }
 
-    fn set_size(&mut self, width: i32, height: i32) {
+    fn set_size(&mut self, width: u32, height: u32) {
         self.size = (width, height);
     }
 
@@ -107,7 +114,7 @@ impl WindowBackend for EmptyWindowBackend {
         self.visible = visible;
     }
 
-    fn size(&self) -> (i32, i32) {
+    fn size(&self) -> (u32, u32) {
         self.size
     }
 
@@ -251,7 +258,7 @@ impl DeviceBackend for EmptyDeviceBackend {
         log::info!("{:?}", to_clean);
     }
 
-    fn set_size(&mut self, _width: i32, _height: i32) {}
+    fn set_size(&mut self, _width: u32, _height: u32) {}
 
     fn set_dpi(&mut self, _scale_factor: f64) {}
 

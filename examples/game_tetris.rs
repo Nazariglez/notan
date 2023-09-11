@@ -11,7 +11,9 @@ const ACCELERATION_BY_LINE: f32 = 0.02;
 
 #[notan_main]
 fn main() -> Result<(), String> {
-    let win_config = WindowConfig::new().size(500, TILE_SIZE * ROWS).vsync(true);
+    let win_config = WindowConfig::new()
+        .set_size(500, (TILE_SIZE * ROWS) as _)
+        .set_vsync(true);
 
     notan::init_with(State::new)
         .add_config(win_config)
@@ -457,7 +459,7 @@ fn index(x: i32, y: i32) -> usize {
 
 fn create_texture(gfx: &mut Graphics) -> Texture {
     let rt = gfx
-        .create_render_texture(TILE_SIZE, TILE_SIZE)
+        .create_render_texture(TILE_SIZE as _, TILE_SIZE as _)
         .build()
         .unwrap();
 

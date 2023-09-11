@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use crate::console_error::console_error;
 
 /// Configure the logs output
-/// Logs will show a timestamp using the UTC time with format [year]-[month]-[day] [hour]:[minutes]:[seconds]
+/// Logs will show a timestamp using the UTC time with format `[year]-[month]-[day] [hour]:[minutes]:[seconds]`
 #[derive(Clone)]
 pub struct LogConfig {
     level: log::LevelFilter,

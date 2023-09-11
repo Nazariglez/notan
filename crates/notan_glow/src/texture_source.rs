@@ -35,9 +35,7 @@ pub(crate) fn add_texture_from_image(
 }
 
 fn invalid_tex_size(max_size: u32, info: &TextureInfo) -> bool {
-    let w = info.width as u32;
-    let h = info.height as u32;
-    w > max_size || h > max_size
+    info.width > max_size || info.height > max_size
 }
 
 fn image_load_from_memory(buffer: &[u8]) -> Result<image::DynamicImage, String> {
@@ -95,7 +93,7 @@ pub(crate) fn add_texture_from_bytes(
 ) -> Result<(u64, TextureInfo), String> {
     #[cfg(debug_assertions)]
     {
-        let size = info.width * info.height * (info.bytes_per_pixel() as i32);
+        let size = info.width * info.height * (info.bytes_per_pixel() as u32);
         debug_assert_eq!(
             bytes.len(),
             size as usize,
