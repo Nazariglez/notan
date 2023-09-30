@@ -1,7 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## v0.10.0
+## UNRELEASED
+
+- Added traits `Serialize` and `Deserialize` to `Color` with the feature `serde` enabled.
+
+## v0.10.0 - 11/09/2023
+
 - Added `WindowConfig::set_position` to set x/y position before creating the window.
 - Changed `Renderer.begin` uses `Option<ClearOption>` instead of `Option<&ClearOption>`.
 - Changed sizes and positions for Window and Textures from `i32` to `u32`.
