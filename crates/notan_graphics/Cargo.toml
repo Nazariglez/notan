@@ -21,6 +21,7 @@ parking_lot.workspace = true
 image = { workspace = true, optional = true }
 
 crevice_notan = { version = "0.13.0", features = ["glam"] }
+serde = { workspace = true, optional = true }
 
 [features]
 texture_to_file = ["notan_utils/save_file", "image/png"]

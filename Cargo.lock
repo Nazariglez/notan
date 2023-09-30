@@ -1730,6 +1730,7 @@ dependencies = [
  "notan_math",
  "notan_utils",
  "parking_lot",
+ "serde",
 ]
 
 [[package]]
