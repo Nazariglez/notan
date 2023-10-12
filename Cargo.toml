@@ -96,7 +96,7 @@ shaderc = ["notan_macro/shaderc", "notan_glyph?/shaderc", "notan_draw?/shaderc",
 serde = ["notan_app/serde", "notan_math/serde", "notan_core/serde", "notan_input/serde", "notan_graphics/serde"]
 
 [dev-dependencies]
-egui_demo_lib = "0.22.0"
+egui_demo_lib = "0.23.0"
 bytemuck = "1.14.0"
 
 [[example]]

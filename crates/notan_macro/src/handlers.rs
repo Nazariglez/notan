@@ -124,7 +124,7 @@ fn enum_impl_generator(tokens: &Tokens, once: bool) -> String {
         .ret
         .as_ref()
         .map(|v| format!(" -> {v}"))
-        .unwrap_or_else(|| "".to_string());
+        .unwrap_or_default();
     let callback = enum_callback_generics(&combo(&tokens.params), &tokens.params);
 
     let reference = if once { "" } else { "&" };
@@ -171,7 +171,7 @@ fn trait_impl_generator(tokens: &Tokens, gen_type: GenericType, fn_literal: &str
         .ret
         .as_ref()
         .map(|v| format!(" -> {v}"))
-        .unwrap_or_else(|| "".to_string());
+        .unwrap_or_default();
 
     let s_type = match gen_type {
         GenericType::Plugin => "Plugin + 'static",
@@ -252,8 +252,7 @@ fn enum_generics(g: &[Vec<String>], r: Option<&String>, fn_literal: &str) -> Str
                 "_{}(Box<dyn {fn_literal}({}){}>)",
                 i,
                 gen,
-                r.map(|v| format!(" -> {v}"))
-                    .unwrap_or_else(|| "".to_string())
+                r.map(|v| format!(" -> {v}")).unwrap_or_default()
             )
         })
         .collect::<Vec<_>>()
