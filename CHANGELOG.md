@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## UNRELEASED
 
 - Added traits `Serialize` and `Deserialize` to `Color` with the feature `serde` enabled.
+- Updated EGUI to `0.23`.
 
 ## v0.10.0 - 11/09/2023
 
