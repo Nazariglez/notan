@@ -22,7 +22,7 @@ notan_text.workspace = true
 serde = { workspace = true, features = ["derive"] }
 
 lyon = "1.0.1"
-serde_json = "1.0.96"
+serde_json = "1.0.107"
 
 [features]
 glsl-to-spirv = ["notan_macro/glsl-to-spirv", "notan_glyph/glsl-to-spirv", "notan_text/glsl-to-spirv"]
