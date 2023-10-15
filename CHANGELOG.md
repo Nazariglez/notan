@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 - Added traits `Serialize` and `Deserialize` to `Color` with the feature `serde` enabled.
 - Updated EGUI to `0.23`.
+- Fixed an error acquiring the GL Context due required samples configuration.
 
 ## v0.10.0 - 11/09/2023
 
