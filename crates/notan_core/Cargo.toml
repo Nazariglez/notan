@@ -1,12 +1,12 @@
 [package]
 name = "notan_core"
-version = "0.10.0"
-authors = ["Nazarí González <nazari.nz@gmail.com>"]
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
 readme = "README.md"
-homepage = "https://github.com/Nazariglez/notan"
-repository = "https://github.com/Nazariglez/notan"
-license = "MIT OR Apache-2.0"
 description = "Basic types and structs used in Notan"
 
 [dependencies]

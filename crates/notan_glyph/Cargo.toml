@@ -1,11 +1,12 @@
 [package]
 name = "notan_glyph"
-version = "0.10.0"
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
 readme = "README.md"
-homepage = "https://github.com/Nazariglez/notan"
-repository = "https://github.com/Nazariglez/notan"
-license = "MIT OR Apache-2.0"
 description = "Provides glyph's support for Notan"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
