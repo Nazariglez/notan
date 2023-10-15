@@ -255,14 +255,14 @@ impl Plugin for EguiPlugin {
                 id: egui::TouchId(*id),
                 phase: egui::TouchPhase::Start,
                 pos: (*x, *y).into(),
-                force: 0.0,
+                force: Some(0.0),
             }),
             Event::TouchMove { id, x, y } => self.add_event(egui::Event::Touch {
                 device_id: egui::TouchDeviceId(0),
                 id: egui::TouchId(*id),
                 phase: egui::TouchPhase::Move,
                 pos: (*x, *y).into(),
-                force: 0.0,
+                force: Some(0.0),
             }),
             Event::TouchEnd { id, x, y } => {
                 self.add_event(egui::Event::Touch {
@@ -270,7 +270,7 @@ impl Plugin for EguiPlugin {
                     id: egui::TouchId(*id),
                     phase: egui::TouchPhase::End,
                     pos: (*x, *y).into(),
-                    force: 0.0,
+                    force: Some(0.0),
                 });
 
                 is_touch_end = true;
@@ -281,7 +281,7 @@ impl Plugin for EguiPlugin {
                     id: egui::TouchId(*id),
                     phase: egui::TouchPhase::Cancel,
                     pos: (*x, *y).into(),
-                    force: 0.0,
+                    force: Some(0.0),
                 });
                 is_touch_end = true;
             }
