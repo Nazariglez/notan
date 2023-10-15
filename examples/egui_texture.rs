@@ -3,8 +3,7 @@ use notan::prelude::*;
 
 #[derive(AppState)]
 struct State {
-    tex_id: egui::TextureId,
-    img_size: egui::Vec2,
+    sized_texture: egui::SizedTexture,
 }
 
 impl State {
@@ -16,10 +15,9 @@ impl State {
             .build()
             .unwrap();
 
-        let img_size: egui::Vec2 = texture.size().into();
-        let tex_id = gfx.egui_register_texture(&texture);
+        let sized_texture = gfx.egui_register_texture(&texture);
 
-        Self { img_size, tex_id }
+        Self { sized_texture }
     }
 }
 
@@ -34,7 +32,7 @@ fn main() -> Result<(), String> {
 fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     let mut output = plugins.egui(|ctx| {
         egui::Window::new("Notan Texture").show(ctx, |ui| {
-            ui.image(state.tex_id, state.img_size);
+            ui.image(state.sized_texture);
         });
     });
 

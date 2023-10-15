@@ -6,8 +6,7 @@ use notan::prelude::*;
 struct State {
     cube: Cube,
     render_texture: RenderTexture,
-    tex_id: egui::TextureId,
-    img_size: egui::Vec2,
+    sized_texture: SizedTexture,
 }
 
 impl State {
@@ -20,14 +19,12 @@ impl State {
             .build()
             .unwrap();
 
-        let img_size = render_texture.size().into();
-        let tex_id = gfx.egui_register_texture(&render_texture);
+        let sized_texture = gfx.egui_register_texture(&render_texture);
 
         Self {
-            img_size,
-            tex_id,
             cube,
             render_texture,
+            sized_texture,
         }
     }
 }
@@ -47,7 +44,7 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut St
 
     let mut output = plugins.egui(|ctx| {
         egui::Window::new("Notan Render Texture").show(ctx, |ui| {
-            ui.image(state.tex_id, state.img_size);
+            ui.image(state.sized_texture);
         });
     });
     output.clear_color(Color::BLACK);
