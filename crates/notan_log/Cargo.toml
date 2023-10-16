@@ -19,7 +19,7 @@ log.workspace = true
 fern = { version = "0.6.2", features = ["colored"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-time = { version = "0.3.21", features = ["formatting", "local-offset"] }
+time = { version = "0.3.30", features = ["formatting", "local-offset"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen.workspace = true
