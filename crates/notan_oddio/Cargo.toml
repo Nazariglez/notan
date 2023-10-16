@@ -16,5 +16,5 @@ log.workspace = true
 hashbrown.workspace = true
 
 cpal = { version = "0.15.2", features = ["wasm-bindgen"] }
-oddio = "0.7.1"
+oddio = "0.6.2"
 symphonia = { version = "0.5.3", features = ["mp3"] }

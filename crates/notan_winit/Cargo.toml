@@ -25,7 +25,7 @@ log.workspace = true
 glutin = "0.30.10"
 glutin-winit = "0.3.0"
 winit = "0.28.6"
-raw-window-handle = "0.6.0"
+raw-window-handle = "0.5.2"
 arboard = { version = "3.2.1", optional = true, default-features = false }
 webbrowser = { version = "0.8.12", optional = true }
 mime_guess = { version = "2.0.4", optional = true }
