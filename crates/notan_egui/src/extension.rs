@@ -3,6 +3,7 @@
 use crate::epaint::Primitive;
 use crate::plugin::Output;
 use crate::TextureId;
+use egui::load::SizedTexture;
 use egui::{PaintCallbackInfo, Rect};
 use notan_app::{
     BlendFactor, BlendMode, Buffer, CullMode, Device, Graphics, Pipeline, RenderTexture,
@@ -149,14 +150,15 @@ impl EguiExtension {
         })
     }
 
-    pub fn add_texture(&mut self, texture: &Texture) -> egui::TextureId {
+    pub fn add_texture(&mut self, texture: &Texture) -> SizedTexture {
         let id = egui::TextureId::User(texture.id());
+        let size: egui::Vec2 = texture.size().into();
         self.textures.insert(id, texture.clone());
-        id
+        SizedTexture { id, size }
     }
 
-    pub fn remove_texture(&mut self, id: egui::TextureId) {
-        self.free_texture(id);
+    pub fn remove_texture(&mut self, id: impl Into<TextureId>) {
+        self.free_texture(id.into());
     }
 
     fn set_texture(
@@ -388,18 +390,18 @@ impl EguiExtension {
 }
 
 pub trait EguiRegisterTexture {
-    fn egui_register_texture(&mut self, texture: &Texture) -> egui::TextureId;
-    fn egui_remove_texture(&mut self, id: egui::TextureId);
+    fn egui_register_texture(&mut self, texture: &Texture) -> egui::load::SizedTexture;
+    fn egui_remove_texture(&mut self, id: impl Into<egui::TextureId>);
 }
 
 impl EguiRegisterTexture for Graphics {
-    fn egui_register_texture(&mut self, texture: &Texture) -> TextureId {
+    fn egui_register_texture(&mut self, texture: &Texture) -> SizedTexture {
         self.extension_mut::<Output, EguiExtension>()
             .unwrap()
             .add_texture(texture)
     }
 
-    fn egui_remove_texture(&mut self, id: TextureId) {
+    fn egui_remove_texture(&mut self, id: impl Into<TextureId>) {
         self.extension_mut::<Output, EguiExtension>()
             .unwrap()
             .remove_texture(id);

@@ -1,12 +1,12 @@
 [package]
 name = "notan_glow"
-version = "0.10.0"
-authors = ["Nazarí González <nazari.nz@gmail.com>"]
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
 readme = "README.md"
-homepage = "https://github.com/Nazariglez/notan"
-repository = "https://github.com/Nazariglez/notan"
-license = "MIT OR Apache-2.0"
 description = "Provides support for OpenGL, OpenGL ES and WebGL for Notan"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -19,7 +19,7 @@ bytemuck.workspace = true
 hashbrown.workspace = true
 image.workspace = true
 
-glow = "0.12.1"
+glow = "0.12.3"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen.workspace = true

@@ -1,5 +1,6 @@
 /// Represents a visual color
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Color {
     /// Red value
     pub r: f32,
