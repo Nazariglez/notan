@@ -24,3 +24,4 @@ pub use patterns::*;
 pub use shapes::*;
 pub use texts::*;
 pub use transform::*;
+pub use builder::*;
