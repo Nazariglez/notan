@@ -4,6 +4,7 @@ mod geometry;
 mod line;
 mod painter;
 mod path;
+mod point;
 mod polygon;
 mod rect;
 mod star;
@@ -18,12 +19,14 @@ pub use line::Line;
 pub use painter::create_shape_pipeline;
 pub(crate) use painter::*;
 pub use path::Path;
+pub use point::{Point, XAlignment, YAlignment};
 pub use polygon::Polygon;
 pub use rect::Rectangle;
 pub use star::Star;
 pub use triangle::Triangle;
 
 pub trait DrawShapes {
+    fn point(&mut self, x: f32, y: f32) -> DrawBuilder<Point>;
     fn line(&mut self, p1: (f32, f32), p2: (f32, f32)) -> DrawBuilder<Line>;
     fn triangle(&mut self, a: (f32, f32), b: (f32, f32), c: (f32, f32)) -> DrawBuilder<Triangle>;
     fn path(&mut self) -> DrawBuilder<Path>;
@@ -35,6 +38,10 @@ pub trait DrawShapes {
 }
 
 impl DrawShapes for Draw {
+    fn point(&mut self, x: f32, y: f32) -> DrawBuilder<Point> {
+        DrawBuilder::new(self, Point::new(x, y))
+    }
+
     fn line(&mut self, p1: (f32, f32), p2: (f32, f32)) -> DrawBuilder<Line> {
         DrawBuilder::new(self, Line::new(p1, p2))
     }
