@@ -200,6 +200,10 @@ name = "draw_pattern"
 required-features = ["draw"]
 
 [[example]]
+name = "draw_points"
+required-features = ["draw"]
+
+[[example]]
 name = "draw_projection"
 required-features = ["draw"]
 
