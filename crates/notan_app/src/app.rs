@@ -1,4 +1,4 @@
-use crate::timer::AppTimer;
+pub use crate::timer::AppTimer;
 use crate::{Backend, WindowBackend};
 
 #[cfg(feature = "audio")]
