@@ -14,6 +14,7 @@ mod transform;
 mod atlas;
 
 pub use atlas::*;
+pub use builder::*;
 pub use config::*;
 pub use custom_pipeline::*;
 pub use draw::*;
