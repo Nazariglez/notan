@@ -341,8 +341,12 @@ fn create_pipeline(
 
     #[cfg(debug_assertions)]
     {
-        for name in not_used_textures.iter() {
-            panic!("Wrong texture location id: {name}");
+        let unused = not_used_textures
+            .iter()
+            .map(|name| format!("Wrong texture location id: {name}"))
+            .collect::<Vec<_>>();
+        if !unused.is_empty() {
+            panic!("{}", unused.join("\n"));
         }
     }
 
