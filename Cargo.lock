@@ -20,9 +20,9 @@ checksum = "c71b1793ee61086797f5c80b6efa2b8ffa6d5dd703f118545808a7f2e27f7046"
 
 [[package]]
 name = "accesskit"
-version = "0.12.1"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca8410747ed85a17c4a1e9ed3f5a74d3e7bdcc876cf9a18ff40ae21d645997b2"
+checksum = "76eb1adf08c5bcaa8490b9851fd53cca27fa9880076f178ea9d29f05196728a8"
 dependencies = [
  "enumn",
  "serde",
@@ -36,9 +36,9 @@ checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
 name = "ahash"
-version = "0.8.6"
+version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91429305e9f0a25f6205c5b8e0d2db09e0708a7a6df0f42212bb56c32c8ac97a"
+checksum = "42cd52102d3df161c77a887b608d7a4897d7cc112886a9537b738a887a03aaff"
 dependencies = [
  "cfg-if",
  "once_cell",
@@ -614,11 +614,32 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
 name = "ecolor"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfdf4e52dbbb615cfd30cf5a5265335c217b5fd8d669593cea74a517d9c605af"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "ecolor"
 version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03cfe80b1890e1a8cdbffc6044d6872e814aaf6011835a2a5e2db0e5c5c4ef4e"
 dependencies = [
  "bytemuck",
+]
+
+[[package]]
+name = "egui"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8bd69fed5fcf4fbb8225b24e80ea6193b61e17a625db105ef0c4d71dde6eb8b7"
+dependencies = [
+ "accesskit",
+ "ahash",
+ "epaint 0.23.0",
+ "nohash-hasher",
  "serde",
 ]
 
@@ -628,20 +649,18 @@ version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "180f595432a5b615fc6b74afef3955249b86cfea72607b40740a4cd60d5297d0"
 dependencies = [
- "accesskit",
  "ahash",
- "epaint",
+ "epaint 0.26.2",
  "nohash-hasher",
- "serde",
 ]
 
 [[package]]
 name = "egui_demo_lib"
-version = "0.26.2"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a05f3c8969d21e6a173820ee966387809fe55a14c901ccb35f7975e68b932e5"
+checksum = "157bdb4408d324d9035c1b5cc517c6c4f0b8067195a931402a282c464f366cd7"
 dependencies = [
- "egui",
+ "egui 0.23.0",
  "egui_extras",
  "egui_plot",
  "log",
@@ -650,24 +669,24 @@ dependencies = [
 
 [[package]]
 name = "egui_extras"
-version = "0.26.2"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f4a6962241a76da5be5e64e41b851ee1c95fda11f76635522a3c82b119b5475"
+checksum = "68ffe3fe5c00295f91c2a61a74ee271c32f74049c94ba0b1cea8f26eb478bc07"
 dependencies = [
- "egui",
+ "egui 0.23.0",
  "enum-map",
  "log",
- "mime_guess2",
+ "mime_guess",
  "serde",
 ]
 
 [[package]]
 name = "egui_plot"
-version = "0.26.2"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "803bfcb1ad294dd7f106e26ac9199730d16051496ddb66b10fdb6529eb43df58"
+checksum = "c7f33a00fe8eb1ba56535b3dbacdecc7a1365a328908a97c5f3c81bb466be72b"
 dependencies = [
- "egui",
+ "egui 0.23.0",
 ]
 
 [[package]]
@@ -678,12 +697,20 @@ checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
 
 [[package]]
 name = "emath"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ef2b29de53074e575c18b694167ccbe6e5191f7b25fe65175a0d905a32eeec0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "emath"
 version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6916301ecf80448f786cdf3eb51d9dbdd831538732229d49119e2d4312eaaf09"
 dependencies = [
  "bytemuck",
- "serde",
 ]
 
 [[package]]
@@ -729,6 +756,21 @@ dependencies = [
 
 [[package]]
 name = "epaint"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58067b840d009143934d91d8dcb8ded054d8301d7c11a517ace0a99bb1e1595e"
+dependencies = [
+ "ab_glyph",
+ "ahash",
+ "ecolor 0.23.0",
+ "emath 0.23.0",
+ "nohash-hasher",
+ "parking_lot",
+ "serde",
+]
+
+[[package]]
+name = "epaint"
 version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77b9fdf617dd7f58b0c8e6e9e4a1281f730cde0831d40547da446b2bb76a47af"
@@ -736,11 +778,10 @@ dependencies = [
  "ab_glyph",
  "ahash",
  "bytemuck",
- "ecolor",
- "emath",
+ "ecolor 0.26.2",
+ "emath 0.26.2",
  "nohash-hasher",
  "parking_lot",
- "serde",
 ]
 
 [[package]]
@@ -1499,16 +1540,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mime_guess2"
-version = "2.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25a3333bb1609500601edc766a39b4c1772874a4ce26022f4d866854dc020c41"
-dependencies = [
- "mime",
- "unicase",
-]
-
-[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1614,7 +1645,7 @@ dependencies = [
 
 [[package]]
 name = "notan"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "bytemuck",
  "egui_demo_lib",
@@ -1638,7 +1669,7 @@ dependencies = [
 
 [[package]]
 name = "notan_app"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "bytemuck",
  "downcast-rs",
@@ -1664,14 +1695,14 @@ dependencies = [
 
 [[package]]
 name = "notan_audio"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "parking_lot",
 ]
 
 [[package]]
 name = "notan_backend"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "notan_web",
  "notan_winit",
@@ -1679,7 +1710,7 @@ dependencies = [
 
 [[package]]
 name = "notan_core"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "serde",
  "web-sys",
@@ -1687,7 +1718,7 @@ dependencies = [
 
 [[package]]
 name = "notan_draw"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "log",
  "lyon",
@@ -1703,10 +1734,10 @@ dependencies = [
 
 [[package]]
 name = "notan_egui"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "bytemuck",
- "egui",
+ "egui 0.26.2",
  "log",
  "notan_app",
  "notan_core",
@@ -1715,7 +1746,7 @@ dependencies = [
 
 [[package]]
 name = "notan_extra"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "notan_app",
  "spin_sleep",
@@ -1723,7 +1754,7 @@ dependencies = [
 
 [[package]]
 name = "notan_glow"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "bytemuck",
  "glow",
@@ -1738,7 +1769,7 @@ dependencies = [
 
 [[package]]
 name = "notan_glyph"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "bytemuck",
  "glyph_brush",
@@ -1751,7 +1782,7 @@ dependencies = [
 
 [[package]]
 name = "notan_graphics"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "bytemuck",
  "crevice_notan",
@@ -1766,7 +1797,7 @@ dependencies = [
 
 [[package]]
 name = "notan_input"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "hashbrown",
  "log",
@@ -1777,7 +1808,7 @@ dependencies = [
 
 [[package]]
 name = "notan_log"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "console_log",
  "fern",
@@ -1790,7 +1821,7 @@ dependencies = [
 
 [[package]]
 name = "notan_macro"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "cfg_aliases",
  "glsl-to-spirv",
@@ -1804,7 +1835,7 @@ dependencies = [
 
 [[package]]
 name = "notan_math"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "glam",
  "serde",
@@ -1812,7 +1843,7 @@ dependencies = [
 
 [[package]]
 name = "notan_oddio"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "cpal",
  "hashbrown",
@@ -1824,7 +1855,7 @@ dependencies = [
 
 [[package]]
 name = "notan_random"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "getrandom",
  "rand",
@@ -1833,7 +1864,7 @@ dependencies = [
 
 [[package]]
 name = "notan_text"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "hashbrown",
  "lazy_static",
@@ -1847,7 +1878,7 @@ dependencies = [
 
 [[package]]
 name = "notan_utils"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "instant",
  "js-sys",
@@ -1859,7 +1890,7 @@ dependencies = [
 
 [[package]]
 name = "notan_web"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "console_error_panic_hook",
  "futures-util",
@@ -1878,7 +1909,7 @@ dependencies = [
 
 [[package]]
 name = "notan_winit"
-version = "0.12.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "arboard",
  "glutin",
