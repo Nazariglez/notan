@@ -16,7 +16,7 @@ description = "A simple portable multimedia layer to create apps or games easily
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.11.0"
+version = "1.0.0-alpha.0"
 authors = ["Nazarí González <nazari.nz@gmail.com>"]
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/Nazariglez/notan"
@@ -24,26 +24,26 @@ repository = "https://github.com/Nazariglez/notan"
 edition = "2021"
 
 [workspace.dependencies]
-notan_core = { path = "crates/notan_core", version = "0.11.0" }
-notan_input = { path = "crates/notan_input", version = "0.11.0" }
-notan_app = { path = "crates/notan_app", version = "0.11.0" }
-notan_macro = { path = "crates/notan_macro", version = "0.11.0" }
-notan_math = { path = "crates/notan_math", version = "0.11.0" }
-notan_graphics = { path = "crates/notan_graphics", version = "0.11.0" }
-notan_utils = { path = "crates/notan_utils", version = "0.11.0" }
-notan_log = { path = "crates/notan_log", version = "0.11.0" }
-notan_glyph = { path = "crates/notan_glyph", version = "0.11.0" }
-notan_draw = { path = "crates/notan_draw", version = "0.11.0" }
-notan_backend = { path = "crates/notan_backend", version = "0.11.0" }
-notan_egui = { path = "crates/notan_egui", version = "0.11.0" }
-notan_text = { path = "crates/notan_text", version = "0.11.0" }
-notan_audio = { path = "crates/notan_audio", version = "0.11.0" }
-notan_extra = { path = "crates/notan_extra", version = "0.11.0" }
-notan_random = { path = "crates/notan_random", version = "0.11.0" }
-notan_winit = { path = "crates/notan_winit", version = "0.11.0" }
-notan_web = { path = "crates/notan_web", version = "0.11.0" }
-notan_glow = { path = "crates/notan_glow", version = "0.11.0" }
-notan_oddio = { path = "crates/notan_oddio", version = "0.11.0" }
+notan_core = { path = "crates/notan_core" }
+notan_input = { path = "crates/notan_input" }
+notan_app = { path = "crates/notan_app" }
+notan_macro = { path = "crates/notan_macro" }
+notan_math = { path = "crates/notan_math" }
+notan_graphics = { path = "crates/notan_graphics" }
+notan_utils = { path = "crates/notan_utils" }
+notan_log = { path = "crates/notan_log" }
+notan_glyph = { path = "crates/notan_glyph" }
+notan_draw = { path = "crates/notan_draw" }
+notan_backend = { path = "crates/notan_backend" }
+notan_egui = { path = "crates/notan_egui" }
+notan_text = { path = "crates/notan_text" }
+notan_audio = { path = "crates/notan_audio" }
+notan_extra = { path = "crates/notan_extra" }
+notan_random = { path = "crates/notan_random" }
+notan_winit = { path = "crates/notan_winit" }
+notan_web = { path = "crates/notan_web" }
+notan_glow = { path = "crates/notan_glow" }
+notan_oddio = { path = "crates/notan_oddio" }
 
 log = "0.4.20"
 hashbrown = "0.14.1"
