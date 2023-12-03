@@ -13,9 +13,10 @@ readme = "README.md"
 description = "A simple portable multimedia layer to create apps or games easily"
 
 [workspace]
+# TODO set back to "crates/*" after cleanup
 members = [
-    "crates/*",
-    "xtask"
+    "crates/sys",
+        "xtask"
 ]
 
 [workspace.package]
@@ -27,81 +28,83 @@ repository = "https://github.com/Nazariglez/notan"
 edition = "2021"
 
 [workspace.dependencies]
-notan_core = { path = "crates/notan_core" }
-notan_input = { path = "crates/notan_input" }
-notan_app = { path = "crates/notan_app" }
-notan_macro = { path = "crates/notan_macro" }
-notan_math = { path = "crates/notan_math" }
-notan_graphics = { path = "crates/notan_graphics" }
-notan_utils = { path = "crates/notan_utils" }
-notan_log = { path = "crates/notan_log" }
-notan_glyph = { path = "crates/notan_glyph" }
-notan_draw = { path = "crates/notan_draw" }
-notan_backend = { path = "crates/notan_backend" }
-notan_egui = { path = "crates/notan_egui" }
-notan_text = { path = "crates/notan_text" }
-notan_audio = { path = "crates/notan_audio" }
-notan_extra = { path = "crates/notan_extra" }
-notan_random = { path = "crates/notan_random" }
-notan_winit = { path = "crates/notan_winit" }
-notan_web = { path = "crates/notan_web" }
-notan_glow = { path = "crates/notan_glow" }
-notan_oddio = { path = "crates/notan_oddio" }
+notan_sys = { path = "crates/sys" }
+#notan_core = { path = "crates/notan_core" }
+#notan_input = { path = "crates/notan_input" }
+#notan_app = { path = "crates/notan_app" }
+#notan_macro = { path = "crates/notan_macro" }
+#notan_math = { path = "crates/notan_math" }
+#notan_graphics = { path = "crates/notan_graphics" }
+#notan_utils = { path = "crates/notan_utils" }
+#notan_log = { path = "crates/notan_log" }
+#notan_glyph = { path = "crates/notan_glyph" }
+#notan_draw = { path = "crates/notan_draw" }
+#notan_backend = { path = "crates/notan_backend" }
+#notan_egui = { path = "crates/notan_egui" }
+#notan_text = { path = "crates/notan_text" }
+#notan_audio = { path = "crates/notan_audio" }
+#notan_extra = { path = "crates/notan_extra" }
+#notan_random = { path = "crates/notan_random" }
+#notan_winit = { path = "crates/notan_winit" }
+#notan_web = { path = "crates/notan_web" }
+#notan_glow = { path = "crates/notan_glow" }
+#notan_oddio = { path = "crates/notan_oddio" }
 
 log = "0.4.20"
-hashbrown = "0.14.1"
+hashbrown = "0.14.3"
 parking_lot = "0.12.1"
 bytemuck = "1.14.0"
 serde = { version = "1.0", features = ["serde_derive"] }
 image = { version = "0.24.7", default-features = false, features = ["jpeg", "png", "ico"] }
 
 # wasm deps
-wasm-bindgen = "0.2.87"
-wasm-bindgen-futures = "0.4.37"
-futures-util = "0.3.28"
-web-sys = "0.3.64"
-js-sys = "0.3.64"
+wasm-bindgen = "0.2.89"
+wasm-bindgen-futures = "0.4.39"
+futures-util = "0.3.29"
+web-sys = "0.3.66"
+js-sys = "0.3.65"
 
 [dependencies]
-notan_core.workspace = true
-notan_input.workspace = true
-notan_app.workspace = true
-notan_macro.workspace = true
-notan_math.workspace = true
-notan_graphics.workspace = true
-notan_utils.workspace = true
-notan_log = { workspace = true, optional = true }
-notan_glyph = { workspace = true, optional = true }
-notan_draw = { workspace = true, optional = true }
-notan_backend = { workspace = true, optional = true }
-notan_egui = { workspace = true, optional = true }
-notan_text = { workspace = true, optional = true }
-notan_audio = { workspace = true, optional = true }
-notan_extra = { workspace = true, optional = true }
-notan_random = { workspace = true, optional = true }
+notan_sys.workspace = true
+#notan_core.workspace = true
+#notan_input.workspace = true
+#notan_app.workspace = true
+#notan_macro.workspace = true
+#notan_math.workspace = true
+#notan_graphics.workspace = true
+#notan_utils.workspace = true
+#notan_log = { workspace = true, optional = true }
+#notan_glyph = { workspace = true, optional = true }
+#notan_draw = { workspace = true, optional = true }
+#notan_backend = { workspace = true, optional = true }
+#notan_egui = { workspace = true, optional = true }
+#notan_text = { workspace = true, optional = true }
+#notan_audio = { workspace = true, optional = true }
+#notan_extra = { workspace = true, optional = true }
+#notan_random = { workspace = true, optional = true }
 
 [features]
-default = ["backend", "log", "draw", "random", "glsl-to-spirv"]
-backend = ["notan_backend"]
-log = ["notan_log"]
-glyph = ["notan_glyph"]
-draw = ["notan_draw"]
-egui = ["notan_egui"]
-text = ["notan_text"]
-extra = ["notan_extra"]
-audio = ["notan_audio", "notan_app/audio", "notan_backend?/audio"]
-links = ["notan_app/links", "notan_backend?/links", "notan_egui?/links"]
-drop_files = ["notan_app/drop_files", "notan_backend?/drop_files", "notan_egui?/drop_files"]
-clipboard = ["notan_app/clipboard", "notan_backend?/clipboard"]
-save_file = ["notan_utils/save_file"]
-texture_to_file = ["notan_graphics/texture_to_file"]
-random = ["notan_random"]
-glsl-to-spirv = ["notan_macro/glsl-to-spirv", "notan_glyph?/glsl-to-spirv", "notan_draw?/glsl-to-spirv", "notan_egui?/glsl-to-spirv", "notan_text?/glsl-to-spirv"]
-shaderc = ["notan_macro/shaderc", "notan_glyph?/shaderc", "notan_draw?/shaderc", "notan_egui?/shaderc", "notan_text?/shaderc"]
-serde = ["notan_app/serde", "notan_math/serde", "notan_core/serde", "notan_input/serde", "notan_graphics/serde"]
+#default = ["backend", "log", "draw", "random", "glsl-to-spirv"]
+#backend = ["notan_backend"]
+#log = ["notan_log"]
+#glyph = ["notan_glyph"]
+#draw = ["notan_draw"]
+#egui = ["notan_egui"]
+#text = ["notan_text"]
+#extra = ["notan_extra"]
+#audio = ["notan_audio", "notan_app/audio", "notan_backend?/audio"]
+#links = ["notan_app/links", "notan_backend?/links", "notan_egui?/links"]
+#drop_files = ["notan_app/drop_files", "notan_backend?/drop_files", "notan_egui?/drop_files"]
+#clipboard = ["notan_app/clipboard", "notan_backend?/clipboard"]
+#save_file = ["notan_utils/save_file"]
+#texture_to_file = ["notan_graphics/texture_to_file"]
+#random = ["notan_random"]
+#glsl-to-spirv = ["notan_macro/glsl-to-spirv", "notan_glyph?/glsl-to-spirv", "notan_draw?/glsl-to-spirv", "notan_egui?/glsl-to-spirv", "notan_text?/glsl-to-spirv"]
+#shaderc = ["notan_macro/shaderc", "notan_glyph?/shaderc", "notan_draw?/shaderc", "notan_egui?/shaderc", "notan_text?/shaderc"]
+#serde = ["notan_app/serde", "notan_math/serde", "notan_core/serde", "notan_input/serde", "notan_graphics/serde"]
 
-[package.metadata.docs.rs]
-features = ["default", "glyph", "egui", "text", "extra", "audio", "links", "drop_files", "clipboard", "save_file", "texture_to_file"]
+#[package.metadata.docs.rs]
+#features = ["default", "glyph", "egui", "text", "extra", "audio", "links", "drop_files", "clipboard", "save_file", "texture_to_file"]
 
 [profile.release]
 lto = true
@@ -110,246 +113,3 @@ lto = true
 egui_demo_lib = "0.27.2"
 bytemuck = "1.14.0"
 
-[[example]]
-name = "app_drop_file"
-required-features = ["draw", "drop_files"]
-
-[[example]]
-name = "app_open_links"
-required-features = ["links"]
-
-[[example]]
-name = "assets_custom_loader"
-required-features = ["draw"]
-
-[[example]]
-name = "assets_list"
-required-features = ["draw"]
-
-[[example]]
-name = "assets_load_texture"
-required-features = ["draw"]
-
-[[example]]
-name = "assets_try_unwrap"
-required-features = ["draw"]
-
-[[example]]
-name = "audio_basic"
-required-features = ["log", "egui", "audio"]
-
-[[example]]
-name = "draw_animation_grid"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_animation_list"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_arcs"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_atlas"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_blend_mode"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_blend_mode_object"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_bunnymark"
-required-features = ["draw", "random"]
-
-[[example]]
-name = "draw_image"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_image_crop"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_image_shader"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_mask"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_mask_texture"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_nine_slice"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_path"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_path_flower"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_pattern"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_points"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_projection"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_rect"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_shapes"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_shapes_shader"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_text"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_text_bounds"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_transform"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_transform_local"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_transform_stack"
-required-features = ["draw"]
-
-[[example]]
-name = "draw_triangle"
-required-features = ["draw"]
-
-[[example]]
-name = "egui_basic"
-required-features = ["egui"]
-
-[[example]]
-name = "egui_demo"
-required-features = ["egui", "links"]
-
-[[example]]
-name = "egui_paint"
-required-features = ["egui"]
-
-[[example]]
-name = "egui_render_texture"
-required-features = ["egui"]
-
-[[example]]
-name = "egui_shape_widget"
-required-features = ["draw", "egui"]
-
-[[example]]
-name = "egui_texture"
-required-features = ["egui"]
-
-[[example]]
-name = "game_15_puzzle"
-required-features = ["draw", "random"]
-
-[[example]]
-name = "game_of_life"
-required-features = ["draw", "random"]
-
-[[example]]
-name = "game_pong"
-required-features = ["draw", "random"]
-
-[[example]]
-name = "game_snake"
-required-features = ["draw", "random"]
-
-[[example]]
-name = "game_tetris"
-required-features = ["draw", "random"]
-
-[[example]]
-name = "glyph_hello_raw"
-required-features = ["glyph"]
-
-[[example]]
-name = "graphics_update_texture"
-required-features = ["draw"]
-
-[[example]]
-name = "input_keyboard"
-required-features = ["draw"]
-
-[[example]]
-name = "input_keyboard_char"
-required-features = ["draw"]
-
-[[example]]
-name = "input_mouse"
-required-features = ["draw"]
-
-[[example]]
-name = "input_mouse_events"
-required-features = ["draw"]
-
-[[example]]
-name = "input_mouse_local_position"
-required-features = ["draw"]
-
-[[example]]
-name = "input_mouse_wheel"
-required-features = ["draw"]
-
-[[example]]
-name = "input_touches"
-required-features = ["draw"]
-
-[[example]]
-name = "log_basic"
-required-features = ["log"]
-
-[[example]]
-name = "renderer_instancing_cubes"
-required-features = ["random"]
-
-[[example]]
-name = "text_bounds"
-required-features = ["text"]
-
-[[example]]
-name = "text_hello"
-required-features = ["text"]
-
-[[example]]
-name = "texture_to_file"
-required-features = ["draw", "texture_to_file"]
-
-[[example]]
-name = "window_fullscreen"
-required-features = ["draw"]
-
-[[example]]
-name = "window_transparent"
-required-features = ["draw"]
