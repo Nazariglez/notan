@@ -10,9 +10,9 @@ pub fn init() -> core::AppBuilder<()> {
 }
 
 pub fn init_with<S, T, H>(handler: H) -> core::AppBuilder<S>
-    where
-        S: core::AppState + 'static,
-        H: core::handlers::SetupHandler<S, T> + 'static,
+where
+    S: core::AppState + 'static,
+    H: core::handlers::SetupHandler<S, T> + 'static,
 {
     // simple_logger::SimpleLogger::new()
     //     .without_timestamps()

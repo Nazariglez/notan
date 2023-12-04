@@ -1,11 +1,7 @@
-// pub mod events;
-// pub mod keyboard;
-// pub mod mouse;
-
 mod builder;
 mod config;
-mod events;
-mod handlers;
+pub mod events;
+pub mod handlers;
 mod keyboard;
 mod mouse;
 mod plugin;
@@ -15,3 +11,7 @@ mod storage;
 mod sys;
 mod utils;
 mod window;
+
+pub use builder::AppBuilder;
+pub use plugin::Plugin;
+pub use state::AppState;
