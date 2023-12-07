@@ -35,13 +35,6 @@ impl<S: AppState> AppBuilder<S> {
     where
         H: SetupHandler<S, T> + 'static,
     {
-        #[cfg(feature = "puffin")]
-        {
-            let server_addr = format!("0.0.0.0:{}", puffin_http::DEFAULT_PORT);
-            eprintln!("Serving profiling at {server_addr}");
-
-            let _puffin_server = puffin_http::Server::new(&server_addr).unwrap();
-        }
         let plugins = Plugins::new();
         let runner = Box::new(default_runner);
         let setup_handler: Box<SetupHandlerFn<S>> = Box::new(|plugins| handler.call(plugins));
@@ -163,4 +156,109 @@ impl<S: AppState> AppBuilder<S> {
 
         Ok(())
     }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::state::AppState;
+    use crate::storage::FromStorage;
+
+    // helper to set states
+    macro_rules! app_state {
+        ($struct_name:ident) => {
+            impl AppState for $struct_name {}
+            impl FromStorage<$struct_name> for $struct_name {
+                fn from_storage<'state>(
+                    storage: &'state mut Storage<$struct_name>,
+                ) -> &'state mut Self {
+                    &mut storage.state
+                }
+            }
+        };
+    }
+
+    #[test]
+    fn empty_state_default_to_void() {
+        let res = AppBuilder::init()
+            .with_runner(|app| {
+                assert_eq!(app.storage.state, ());
+                Ok(())
+            })
+            .build();
+
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn custom_state() {
+        #[derive(Debug, Eq, PartialEq)]
+        struct MyState(u64);
+        app_state!(MyState);
+
+        let res = AppBuilder::init_with(|| Ok(MyState(9999)))
+            .with_runner(|app| {
+                assert_eq!(app.storage.state, MyState(9999));
+                Ok(())
+            })
+            .build();
+
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn once_event_executed_once() {
+        #[derive(Debug)]
+        struct MyEvent;
+
+        #[derive(Debug)]
+        struct MyCount(usize);
+        app_state!(MyCount);
+
+        let res = AppBuilder::init_with(|| Ok(MyCount(0)))
+            .once(|_: &MyEvent, count: &mut MyCount| count.0 += 1)
+            .with_runner(|mut app| {
+                app.init();
+
+                for _ in 0..10 {
+                    app.event(MyEvent);
+                }
+
+                assert_eq!(app.storage.state.0, 1);
+                Ok(())
+            })
+            .build();
+
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn on_event_executed_repeat() {
+        #[derive(Debug)]
+        struct MyEvent;
+
+        #[derive(Debug)]
+        struct MyCount(usize);
+        app_state!(MyCount);
+
+        const COUNT: usize = 10;
+
+        let res = AppBuilder::init_with(|| Ok(MyCount(0)))
+            .on(|_: &MyEvent, count: &mut MyCount| count.0 += 1)
+            .with_runner(|mut app| {
+                app.init();
+
+                for _ in 0..COUNT {
+                    app.event(MyEvent);
+                }
+
+                assert_eq!(app.storage.state.0, COUNT);
+                Ok(())
+            })
+            .build();
+
+        assert!(res.is_ok());
+    }
+
+    // TODO config and plugin
 }
