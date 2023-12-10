@@ -291,12 +291,20 @@ impl Device {
         options: PipelineOptions,
     ) -> Result<Pipeline, String> {
         let api = self.backend.api_name();
-        let vertex = vertex_source
-            .get_source(api)
-            .ok_or(format!("Vertex shader for api '{api}' not available."))?;
-        let fragment = fragment_source
-            .get_source(api)
-            .ok_or(format!("Fragment shader for api '{api}' not available."))?;
+        let vertex = match vertex_source.get_source(api) {
+            Some(v) => v,
+            None => {
+                log::warn!("Vertex shader for api '{api}' not available.");
+                &[]
+            }
+        };
+        let fragment = match fragment_source.get_source(api) {
+            Some(f) => f,
+            None => {
+                log::warn!("Fragment shader for api '{api}' not available.");
+                &[]
+            }
+        };
         self.inner_create_pipeline_from_raw(
             vertex,
             fragment,

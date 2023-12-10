@@ -16,6 +16,7 @@ notan_math.workspace = true
 notan_macro.workspace = true
 notan_utils.workspace = true
 
+log.workspace = true
 bytemuck.workspace = true
 parking_lot.workspace = true
 image = { workspace = true, optional = true }

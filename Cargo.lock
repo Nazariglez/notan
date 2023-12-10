@@ -1745,6 +1745,7 @@ dependencies = [
  "bytemuck",
  "crevice_notan",
  "image",
+ "log",
  "notan_macro",
  "notan_math",
  "notan_utils",
