@@ -44,13 +44,14 @@ impl EguiPlugin {
 
         let egui::FullOutput {
             platform_output,
-            repaint_after,
             textures_delta,
             shapes,
+            pixels_per_point,
+            viewport_output,
         } = self.ctx.run(new_input, run_ui);
 
         let needs_update_textures = !textures_delta.is_empty();
-        let needs_repaint = repaint_after.is_zero() || needs_update_textures;
+        let needs_repaint = viewport_output.values().any(|output| output.repaint_delay.is_zero()) || needs_update_textures;
 
         // On post frame needs repaint is set to false
         // set it again if true after a egui output.
@@ -62,7 +63,7 @@ impl EguiPlugin {
 
         Output {
             ctx: self.ctx.clone(),
-            shapes: RefCell::new(Some(shapes)),
+            shapes: RefCell::new(Some((shapes, pixels_per_point))),
             textures_delta,
             clear_color: None,
             needs_repaint,
@@ -72,7 +73,7 @@ impl EguiPlugin {
 
 pub struct Output {
     ctx: egui::Context,
-    shapes: RefCell<Option<Vec<egui::epaint::ClippedShape>>>,
+    shapes: RefCell<Option<(Vec<egui::epaint::ClippedShape>, f32)>>,
     textures_delta: egui::TexturesDelta,
     clear_color: Option<Color>,
     needs_repaint: bool,
@@ -101,7 +102,7 @@ impl GfxRenderer for Output {
             "Missing EguiExtension. You may need to add 'EguiConfig' to notan.".to_string()
         })?;
 
-        if let Some(shapes) = self.shapes.borrow_mut().take() {
+        if let Some((shapes, pixels_per_point)) = self.shapes.borrow_mut().take() {
             if self.clear_color.is_some() {
                 let mut clear_renderer = device.create_renderer();
                 clear_renderer.begin(Some(ClearOptions {
@@ -116,7 +117,7 @@ impl GfxRenderer for Output {
                 }
             }
 
-            let meshes = self.ctx.tessellate(shapes);
+            let meshes = self.ctx.tessellate(shapes, pixels_per_point);
             ext.paint_and_update_textures(device, meshes, &self.textures_delta, target)?;
         }
 
@@ -294,7 +295,6 @@ impl Plugin for EguiPlugin {
     }
 
     fn update(&mut self, app: &mut App, _assets: &mut Assets) -> Result<AppFlow, String> {
-        self.raw_input.pixels_per_point = Some(app.window().dpi() as _);
         self.raw_input.time = Some(app.timer.elapsed_f32() as _);
         self.raw_input.predicted_dt = app.timer.delta_f32();
 
