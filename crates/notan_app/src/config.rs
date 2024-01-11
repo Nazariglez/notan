@@ -70,8 +70,9 @@ pub struct WindowConfig {
     // Whether mouse events will pass through the window, useful for overlays
     pub mouse_passthrough: bool,
 
-    /// Use or create the canvas with this id. Only Web.
-    pub canvas_id: String,
+    /// App ID
+    /// On Web use or create the canvas with this id.
+    pub app_id: String,
 
     /// Optinal Window icon filepath
     pub window_icon_path: Option<PathBuf>,
@@ -107,7 +108,7 @@ impl Default for WindowConfig {
             decorations: true,
             visible: true,
             mouse_passthrough: false,
-            canvas_id: String::from("notan_canvas"),
+            app_id: String::from("notan_app"),
             window_icon_path: None,
             window_icon_data: None,
             taskbar_icon_path: None,
@@ -226,9 +227,10 @@ impl WindowConfig {
         self
     }
 
-    /// Use or create the canvas with this id. Only Web.
-    pub fn set_canvas_id(mut self, canvas_id: &str) -> Self {
-        self.canvas_id = canvas_id.to_string();
+    /// Set the App ID
+    /// On web it will use or create the canvas with this id.
+    pub fn set_app_id(mut self, app_id: &str) -> Self {
+        self.app_id = app_id.to_string();
         self
     }
 
