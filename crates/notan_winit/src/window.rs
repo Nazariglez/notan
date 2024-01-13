@@ -286,6 +286,18 @@ impl WinitWindowBackend {
             builder = builder.with_disallow_hidpi(!config.high_dpi);
         }
 
+        #[cfg(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ))]
+        {
+            use winit::platform::wayland::WindowBuilderExtWayland;
+            builder = builder.with_name(config.app_id.clone(), config.app_id.clone());
+        }
+
         if let Some((w, h)) = config.min_size {
             builder = builder.with_min_inner_size(LogicalSize::new(w, h));
         }
