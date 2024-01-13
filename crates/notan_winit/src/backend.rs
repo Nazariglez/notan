@@ -120,10 +120,16 @@ impl BackendSystem for WinitBackend {
                 let b = backend(&mut app.backend);
 
                 // Await for the next event to run the loop again
-                let is_lazy = b.window.as_ref().map_or(false, |w| w.lazy);
-                if is_lazy {
-                    *control_flow = ControlFlow::Wait;
-                }
+                let is_lazy = b
+                    .window
+                    .as_ref()
+                    .map_or(false, |w| w.lazy && !w.frame_requested);
+
+                *control_flow = if is_lazy {
+                    ControlFlow::Wait
+                } else {
+                    ControlFlow::Poll
+                };
 
                 match event {
                     WEvent::WindowEvent { ref event, .. } => {
@@ -278,6 +284,9 @@ impl BackendSystem for WinitBackend {
                     }
                     WEvent::RedrawEventsCleared => {
                         request_redraw = false;
+                        if let Some(w) = &mut b.window {
+                            w.frame_requested = false;
+                        }
                     }
                     WEvent::DeviceEvent { ref event, .. } => {
                         if let Some(evt) = mouse::process_device_events(event) {
