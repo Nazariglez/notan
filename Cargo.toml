@@ -15,7 +15,8 @@ description = "A simple portable multimedia layer to create apps or games easily
 [workspace]
 # TODO set back to "crates/*" after cleanup
 members = [
-    "crates/sys"
+    "crates/notan_core",
+    "crates/notan_macro2",
 ]
 
 [workspace.package]
@@ -27,8 +28,8 @@ repository = "https://github.com/Nazariglez/notan"
 edition = "2021"
 
 [workspace.dependencies]
-notan_sys = { path = "crates/sys" }
-#notan_core = { path = "crates/notan_core" }
+notan_core = { path = "crates/notan_core" }
+notan_macro2 = { path = "crates/notan_macro2" }
 #notan_input = { path = "crates/notan_input" }
 #notan_app = { path = "crates/notan_app" }
 #notan_macro = { path = "crates/notan_macro" }
@@ -53,6 +54,9 @@ log = "0.4.20"
 hashbrown = "0.14.3"
 parking_lot = "0.12.1"
 bytemuck = "1.14.0"
+anymap = "0.12.1"
+arrayvec = "0.7.4"
+raw-window-handle = "0.6.0"
 serde = { version = "1.0", features = ["serde_derive"] }
 image = { version = "0.24.7", default-features = false, features = ["jpeg", "png", "ico"] }
 
@@ -64,8 +68,8 @@ web-sys = "0.3.66"
 js-sys = "0.3.65"
 
 [dependencies]
-notan_sys.workspace = true
-#notan_core.workspace = true
+notan_core.workspace = true
+notan_macro2.workspace = true
 #notan_input.workspace = true
 #notan_app.workspace = true
 #notan_macro.workspace = true

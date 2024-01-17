@@ -10,12 +10,26 @@ readme = "README.md"
 description = "Basic types and structs used in Notan"
 
 [dependencies]
+paste = "1.0.14"
+indexmap = "2.1.0"
+
+anymap.workspace = true
+raw-window-handle.workspace = true
+log.workspace = true
+
+arrayvec = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { workspace = true, optional = true }
 
 [features]
+# Avoid using a vector per event listener, instead uses an Array limited to 32 by default. The number can be changed
+# passing `NOTAN_LIMIT_EVENTS_TO=N` with the desired size as compilation variable.
+limited_events = ["arrayvec"]
+# Allow to open links
 links = []
+# Allow to load dropped files
 drop_files = ["web-sys", "web-sys/File"]
+# Allow to use native clipboard if available
 clipboard = []
