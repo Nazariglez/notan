@@ -7,7 +7,7 @@ mod mouse;
 mod plugin;
 mod runner;
 mod state;
-mod storage;
+pub mod storage;
 mod sys;
 mod utils;
 mod window;

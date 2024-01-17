@@ -1,3 +1,5 @@
+pub use crate::macros::AppState;
+
 // TODO prelude
 // pub use crate::core::prelude::*;
 

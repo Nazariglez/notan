@@ -75,6 +75,7 @@ version = "1.0.0-alpha.0"
 dependencies = [
  "bytemuck",
  "notan_core",
+ "notan_macro2",
 ]
 
 [[package]]
@@ -89,6 +90,15 @@ dependencies = [
  "raw-window-handle",
  "serde",
  "web-sys",
+]
+
+[[package]]
+name = "notan_macro2"
+version = "1.0.0-alpha.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

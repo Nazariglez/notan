@@ -16,7 +16,7 @@ impl<S: AppState + 'static> Storage<S> {
     }
 }
 
-pub struct Plugins {
+pub(crate) struct Plugins {
     map: AnyMap,
 }
 
