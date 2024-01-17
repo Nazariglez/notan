@@ -1,3 +1,27 @@
+use crate::core;
+
+pub fn init() -> core::AppBuilder<()> {
+    // simple_logger::SimpleLogger::new()
+    //     .without_timestamps()
+    //     .with_level(log::LevelFilter::Debug)
+    //     .init()
+    //     .unwrap();
+    core::AppBuilder::init()
+}
+
+pub fn init_with<S, T, H>(handler: H) -> core::AppBuilder<S>
+where
+    S: core::AppState + 'static,
+    H: core::handlers::SetupHandler<S, T> + 'static,
+{
+    // simple_logger::SimpleLogger::new()
+    //     .without_timestamps()
+    //     .with_level(log::LevelFilter::Debug)
+    //     .init()
+    //     .unwrap();
+    core::AppBuilder::init_with(handler)
+}
+
 // use crate::app::{AppBuilder, BackendSystem, SetupHandler};
 //
 // #[cfg(not(feature = "backend"))]

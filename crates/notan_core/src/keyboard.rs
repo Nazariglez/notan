@@ -1,3 +1,16 @@
+use crate::window::WindowId;
+
+#[derive(Copy, Clone, Debug)]
+pub struct KeyboardEvent {
+    pub window_id: WindowId,
+    pub action: KeyboardAction,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum KeyboardAction {
+    Pressed { key: KeyCode },
+    Released { key: KeyCode },
+}
 /// KeyCode represents the symbolic name of the keyboard keys pressed
 /// This enum code comes from `winit` just adding the Unknown key for non-compatible keys between platforms
 #[derive(Debug, Hash, Ord, PartialOrd, PartialEq, Eq, Clone, Copy)]
