@@ -10,8 +10,9 @@ mod state;
 pub mod storage;
 mod sys;
 mod utils;
-mod window;
+pub mod window;
 
 pub use builder::AppBuilder;
 pub use plugin::Plugin;
 pub use state::AppState;
+pub use sys::System;
