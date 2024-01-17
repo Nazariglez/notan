@@ -18,8 +18,8 @@ members = [
     "crates/notan_core",
     "crates/notan_macro2",
     "crates/notan_app2",
+    "crates/notan_gfx",
     "xtask",
-    "crates/notan_gfx"
 ]
 
 [workspace.package]
