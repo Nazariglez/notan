@@ -1,6 +1,6 @@
 use super::window::Window;
-use notan_core::window::{CursorIcon, NotanApp, WindowAttributes, WindowId};
 use hashbrown::HashMap;
+use notan_core::window::{CursorIcon, NotanApp, WindowAttributes, WindowId};
 
 #[derive(Default)]
 pub struct Manager {

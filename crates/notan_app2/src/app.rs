@@ -1,7 +1,7 @@
 use crate::{Manager, PlatformConfig, Window};
-use gk_sys::window::{GKApp, WindowAttributes, WindowId};
-use gk_sys::Plugin;
 use hashbrown::hash_map::{Values, ValuesMut};
+use notan_core::window::{NotanApp, WindowAttributes, WindowId};
+use notan_core::Plugin;
 
 pub struct App {
     pub manager: Manager,

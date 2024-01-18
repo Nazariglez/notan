@@ -1,7 +1,7 @@
 use crate::{runner, App};
 use notan_core::events;
 use notan_core::window::{NotanWindow, WindowAction, WindowAttributes, WindowEvent};
-use notan_core::{AppBuilder, BuildConfig, AppState};
+use notan_core::{AppBuilder, AppState, BuildConfig};
 
 pub struct PlatformConfig {
     main_window: Option<WindowAttributes>,
@@ -41,7 +41,7 @@ impl<S: AppState> BuildConfig<S> for PlatformConfig {
 
         // Call request_draw on each frame
         let builder = if self.auto_redraw {
-            builder.on(|_: &event::UpdateEvent, platform: &mut App| {
+            builder.on(|_: &events::UpdateEvent, platform: &mut App| {
                 platform.windows_mut().for_each(|win| win.request_redraw())
             })
         } else {

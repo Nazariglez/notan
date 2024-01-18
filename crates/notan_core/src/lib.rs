@@ -13,6 +13,7 @@ mod utils;
 pub mod window;
 
 pub use builder::AppBuilder;
+pub use config::BuildConfig;
 pub use plugin::Plugin;
 pub use state::AppState;
 pub use sys::System;
