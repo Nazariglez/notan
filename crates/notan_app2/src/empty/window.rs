@@ -1,7 +1,5 @@
 use notan_core::window::{CursorIcon, NotanApp, NotanWindow, WindowId};
-use raw_window_handle::{
-    HasRawDisplayHandle, HasRawWindowHandle, RawDisplayHandle, RawWindowHandle,
-};
+use raw_window_handle::{DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle};
 
 pub struct Window {
     pub(crate) id: WindowId,
@@ -29,15 +27,15 @@ impl Default for Window {
     }
 }
 
-unsafe impl HasRawWindowHandle for Window {
-    fn raw_window_handle(&self) -> RawWindowHandle {
-        unreachable!("Empty platform should not try to get RawWindowHandle")
+impl HasWindowHandle for Window {
+    fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
+        unreachable!("Empty platform should not try to get RawWindowHandle");
     }
 }
 
-unsafe impl HasRawDisplayHandle for Window {
-    fn raw_display_handle(&self) -> RawDisplayHandle {
-        unreachable!("Empty platform should not try to get HasRawDisplayHandle")
+impl HasDisplayHandle for Window {
+    fn display_handle(&self) -> Result<DisplayHandle<'_>, HandleError> {
+        unreachable!("Empty platform should not try to get HasRawDisplayHandle");
     }
 }
 

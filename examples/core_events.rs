@@ -1,5 +1,6 @@
 use notan::core::events::*;
 use notan::prelude::*;
+use notan::app::App;
 
 #[derive(AppState)]
 struct State {}
