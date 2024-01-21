@@ -248,7 +248,7 @@ pub fn runner<S: AppState + 'static>(mut sys: System<S>) -> Result<(), String> {
                         WWindowEvent::Touch(_) => {}
                         WWindowEvent::ScaleFactorChanged {
                             scale_factor,
-                            new_inner_size,
+                            inner_size_writer,
                         } => {
                             let size = new_inner_size.to_logical::<u32>(scale_factor);
                             inner_window_list.set_size(&id, size.into(), scale_factor);

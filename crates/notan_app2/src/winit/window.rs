@@ -120,7 +120,8 @@ impl NotanWindow for Window {
     }
 
     fn set_size(&mut self, width: u32, height: u32) {
-        self.raw.set_inner_size(LogicalSize::new(width, height));
+        let _ = self.raw.request_inner_size(LogicalSize::new(width, height));
+        // TODO it worth to log the result here?
     }
 
     fn scale(&self) -> f64 {
