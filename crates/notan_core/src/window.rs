@@ -1,4 +1,4 @@
-use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
+use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 
 #[derive(Copy, Clone, Hash, Debug, Eq, PartialEq)]
 pub struct WindowId(u64);
@@ -106,7 +106,7 @@ pub trait NotanApp<W: NotanWindow> {
     fn exit(&mut self);
 }
 
-pub trait NotanWindow: HasRawWindowHandle + HasRawDisplayHandle {
+pub trait NotanWindow: HasWindowHandle + HasDisplayHandle {
     fn id(&self) -> WindowId;
     fn physical_size(&self) -> (u32, u32);
     fn size(&self) -> (u32, u32);
