@@ -1,5 +1,7 @@
 use notan_core::window::{CursorIcon, NotanApp, NotanWindow, WindowId};
-use raw_window_handle::{DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle};
+use raw_window_handle::{
+    DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle,
+};
 
 pub struct Window {
     pub(crate) id: WindowId,

@@ -60,14 +60,15 @@ anymap = "0.12.1"
 arrayvec = "0.7.4"
 raw-window-handle = "0.6.0"
 serde = { version = "1.0", features = ["serde_derive"] }
-image = { version = "0.24.7", default-features = false, features = ["jpeg", "png", "ico"] }
+image = { version = "0.24.8", default-features = false, features = ["jpeg", "png", "ico"] }
 
 # wasm deps
-wasm-bindgen = "0.2.89"
-wasm-bindgen-futures = "0.4.39"
-futures-util = "0.3.29"
-web-sys = "0.3.66"
-js-sys = "0.3.65"
+wasm-bindgen = "0.2.90"
+wasm-bindgen-futures = "0.4.40"
+futures-util = "0.3.30"
+web-sys = "0.3.67"
+js-sys = "0.3.67"
+cfg_aliases = "0.2.0"
 
 [dependencies]
 notan_core.workspace = true
@@ -90,6 +91,14 @@ notan_app2.workspace = true
 #notan_random = { workspace = true, optional = true }
 
 [features]
+default = ["limited_core_events"]
+# uses winit as backend
+winit = ["notan_app2/winit"]
+# allow to serialize and deserialize internal types with serde
+serde = ["notan_core/serde", "notan_app2/serde"]
+# use arrayvec instead of vec when possible
+limited_core_events = ["notan_core/limited_events"]
+
 #default = ["backend", "log", "draw", "random", "glsl-to-spirv"]
 #backend = ["notan_backend"]
 #log = ["notan_log"]
@@ -117,5 +126,5 @@ lto = true
 
 [dev-dependencies]
 #egui_demo_lib = "0.23.0"
-bytemuck = "1.14.0"
+bytemuck.workspace = true
 
