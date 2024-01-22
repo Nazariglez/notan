@@ -1,7 +1,7 @@
 use super::event_loop::EventLoopPtr;
 use super::window::Window;
 use hashbrown::HashMap;
-use notan_core::window::{NotanApp, NotanWindow, WindowAttributes, WindowId};
+use notan_core::window::{NotanApp, NotanWindow, WindowConfig, WindowId};
 use notan_core::Plugin;
 pub use winit::event_loop::EventLoopWindowTarget;
 
@@ -22,7 +22,7 @@ impl NotanApp<Window> for Manager {
         })
     }
 
-    fn create(&mut self, attrs: WindowAttributes) -> Result<WindowId, String> {
+    fn create(&mut self, attrs: WindowConfig) -> Result<WindowId, String> {
         // SAFETY: if it's `Some` means that we're inside the event's loop and this is available
         let event_loop = self.event_loop.inner();
         match event_loop {

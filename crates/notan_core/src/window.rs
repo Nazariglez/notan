@@ -16,7 +16,7 @@ impl From<WindowId> for u64 {
 }
 
 #[derive(Debug, Clone)]
-pub struct WindowAttributes {
+pub struct WindowConfig {
     pub size: Option<(u32, u32)>,
     pub min_size: Option<(u32, u32)>,
     pub max_size: Option<(u32, u32)>,
@@ -29,7 +29,7 @@ pub struct WindowAttributes {
     pub transparent: bool,
 }
 
-impl WindowAttributes {
+impl WindowConfig {
     pub fn with_size(mut self, width: u32, height: u32) -> Self {
         self.size = Some((width, height));
         self
@@ -81,7 +81,7 @@ impl WindowAttributes {
     }
 }
 
-impl Default for WindowAttributes {
+impl Default for WindowConfig {
     fn default() -> Self {
         Self {
             size: Some((800, 600)),
@@ -102,7 +102,7 @@ pub trait NotanApp<W: NotanWindow> {
     fn new() -> Result<Self, String>
     where
         Self: Sized;
-    fn create(&mut self, attrs: WindowAttributes) -> Result<WindowId, String>;
+    fn create(&mut self, attrs: WindowConfig) -> Result<WindowId, String>;
     fn window(&mut self, id: WindowId) -> Option<&mut W>;
     fn close(&mut self, id: WindowId) -> bool;
     fn exit(&mut self);

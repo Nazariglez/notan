@@ -1,5 +1,5 @@
 use super::utils::{cursor_id, win_id};
-use notan_core::window::{CursorIcon, NotanWindow, WindowAttributes, WindowId};
+use notan_core::window::{CursorIcon, NotanWindow, WindowConfig, WindowId};
 use raw_window_handle::{
     DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, RawDisplayHandle,
     RawWindowHandle, WindowHandle,
@@ -21,9 +21,9 @@ pub struct Window {
 impl Window {
     pub(crate) fn new(
         event_loop: &EventLoopWindowTarget<()>,
-        attrs: WindowAttributes,
+        attrs: WindowConfig,
     ) -> Result<Self, String> {
-        let WindowAttributes {
+        let WindowConfig {
             size,
             min_size,
             max_size,
