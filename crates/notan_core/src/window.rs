@@ -89,7 +89,7 @@ impl Default for WindowAttributes {
             max_size: None,
             position: None,
             resizable: false,
-            title: "GameKit Window".to_string(),
+            title: "Notan Window".to_string(),
             fullscreen: false,
             maximized: false,
             visible: true,
@@ -99,7 +99,9 @@ impl Default for WindowAttributes {
 }
 
 pub trait NotanApp<W: NotanWindow> {
-    fn new() -> Self;
+    fn new() -> Result<Self, String>
+    where
+        Self: Sized;
     fn create(&mut self, attrs: WindowAttributes) -> Result<WindowId, String>;
     fn window(&mut self, id: WindowId) -> Option<&mut W>;
     fn close(&mut self, id: WindowId) -> bool;

@@ -8,8 +8,10 @@ pub(crate) enum EventLoopPtr {
 }
 
 impl EventLoopPtr {
-    pub fn new() -> Self {
-        Self::Main(EventLoop::new())
+    pub fn new() -> Result<Self, String> {
+        let event_loop = EventLoop::new().map_err(|err| err.to_string())?;
+
+        Ok(Self::Main(event_loop))
     }
 
     pub fn take(&mut self) -> Option<EventLoop<()>> {
