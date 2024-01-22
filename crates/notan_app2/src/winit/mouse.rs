@@ -1,3 +1,4 @@
+use notan_core::mouse::MouseButton::{Back, Forward};
 use notan_core::mouse::{MouseAction, MouseButton, MouseEvent};
 use notan_core::window::WindowId;
 use winit::event::{ElementState, MouseButton as WMouseButton, MouseScrollDelta};
@@ -113,6 +114,8 @@ fn button_id(btn: WMouseButton) -> MouseButton {
         WMouseButton::Left => MouseButton::Left,
         WMouseButton::Right => MouseButton::Right,
         WMouseButton::Middle => MouseButton::Middle,
+        WMouseButton::Back => Back,
+        WMouseButton::Forward => Forward,
         WMouseButton::Other(n) => MouseButton::Other(n as _),
     }
 }

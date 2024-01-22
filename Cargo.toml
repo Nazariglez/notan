@@ -92,7 +92,7 @@ notan_app2.workspace = true
 #notan_random = { workspace = true, optional = true }
 
 [features]
-default = ["limited_core_events"]
+default = ["limited_core_events", "winit"]
 # uses winit as backend
 winit = ["notan_app2/winit"]
 # allow to serialize and deserialize internal types with serde
