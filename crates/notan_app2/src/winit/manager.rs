@@ -13,19 +13,13 @@ pub struct Manager {
 
 impl Plugin for Manager {}
 
-impl Default for Manager {
-    fn default() -> Self {
-        Self {
-            windows: HashMap::default(),
-            event_loop: EventLoopPtr::new(),
-            request_exit: false,
-        }
-    }
-}
-
 impl NotanApp<Window> for Manager {
-    fn new() -> Self {
-        Default::default()
+    fn new() -> Result<Self, String> {
+        Ok(Self {
+            windows: HashMap::default(),
+            event_loop: EventLoopPtr::new()?,
+            request_exit: false,
+        })
     }
 
     fn create(&mut self, attrs: WindowAttributes) -> Result<WindowId, String> {

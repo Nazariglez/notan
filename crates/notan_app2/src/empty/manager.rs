@@ -9,8 +9,8 @@ pub struct Manager {
 }
 
 impl NotanApp<Window> for Manager {
-    fn new() -> Self {
-        Default::default()
+    fn new() -> Result<Self, String> {
+        Ok(Default::default())
     }
 
     fn create(&mut self, attrs: WindowAttributes) -> Result<WindowId, String> {

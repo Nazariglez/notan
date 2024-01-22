@@ -10,12 +10,12 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
-        Self {
-            manager: Manager::new(),
+    pub fn new() -> Result<Self, String> {
+        Ok(Self {
+            manager: Manager::new()?,
             main_window: None,
             window_ids: vec![],
-        }
+        })
     }
 
     pub fn config() -> PlatformConfig {

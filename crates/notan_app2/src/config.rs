@@ -31,7 +31,7 @@ impl PlatformConfig {
 
 impl<S: AppState> BuildConfig<S> for PlatformConfig {
     fn apply(&mut self, builder: AppBuilder<S>) -> Result<AppBuilder<S>, String> {
-        let mut platform = App::new();
+        let mut platform = App::new()?;
 
         // Initialize main windows if is not windowless mode
         if let Some(attrs) = self.main_window.take() {
