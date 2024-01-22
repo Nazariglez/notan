@@ -1,10 +1,10 @@
 use crate::{runner, App};
 use notan_core::events;
-use notan_core::window::{NotanWindow, WindowAction, WindowAttributes, WindowEvent};
+use notan_core::window::{NotanWindow, WindowAction, WindowConfig, WindowEvent};
 use notan_core::{AppBuilder, AppState, BuildConfig};
 
 pub struct AppConfig {
-    main_window: Option<WindowAttributes>,
+    main_window: Option<WindowConfig>,
     auto_redraw: bool,
 }
 
@@ -23,7 +23,7 @@ impl AppConfig {
         self
     }
 
-    pub fn with_window(mut self, attrs: WindowAttributes) -> Self {
+    pub fn with_window(mut self, attrs: WindowConfig) -> Self {
         self.main_window = Some(attrs);
         self
     }

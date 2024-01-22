@@ -1,6 +1,6 @@
 use crate::{AppConfig, Manager, Window};
 use hashbrown::hash_map::{Values, ValuesMut};
-use notan_core::window::{NotanApp, WindowAttributes, WindowId};
+use notan_core::window::{NotanApp, WindowConfig, WindowId};
 use notan_core::Plugin;
 
 pub struct App {
@@ -22,7 +22,7 @@ impl App {
         AppConfig::default()
     }
 
-    pub fn create_window(&mut self, attrs: WindowAttributes) -> Result<WindowId, String> {
+    pub fn create_window(&mut self, attrs: WindowConfig) -> Result<WindowId, String> {
         let id = self.manager.create(attrs)?;
         self.window_ids.push(id);
 
