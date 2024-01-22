@@ -3,12 +3,12 @@ use notan_core::events;
 use notan_core::window::{NotanWindow, WindowAction, WindowAttributes, WindowEvent};
 use notan_core::{AppBuilder, AppState, BuildConfig};
 
-pub struct PlatformConfig {
+pub struct AppConfig {
     main_window: Option<WindowAttributes>,
     auto_redraw: bool,
 }
 
-impl Default for PlatformConfig {
+impl Default for AppConfig {
     fn default() -> Self {
         Self {
             main_window: Some(Default::default()),
@@ -17,7 +17,7 @@ impl Default for PlatformConfig {
     }
 }
 
-impl PlatformConfig {
+impl AppConfig {
     pub fn with_windowless(mut self) -> Self {
         self.main_window = None;
         self
@@ -29,36 +29,36 @@ impl PlatformConfig {
     }
 }
 
-impl<S: AppState> BuildConfig<S> for PlatformConfig {
+impl<S: AppState> BuildConfig<S> for AppConfig {
     fn apply(&mut self, builder: AppBuilder<S>) -> Result<AppBuilder<S>, String> {
-        let mut platform = App::new()?;
+        let mut app = App::new()?;
 
         // Initialize main windows if is not windowless mode
         if let Some(attrs) = self.main_window.take() {
-            let id = platform.create_window(attrs)?;
+            let id = app.create_window(attrs)?;
             log::info!("Window '{:?}' created.", id);
         }
 
         // Call request_draw on each frame
         let builder = if self.auto_redraw {
-            builder.on(|_: &events::UpdateEvent, platform: &mut App| {
-                platform.windows_mut().for_each(|win| win.request_redraw())
+            builder.on(|_: &events::UpdateEvent, app: &mut App| {
+                app.windows_mut().for_each(|win| win.request_redraw())
             })
         } else {
             builder
         };
 
         // Read windows event to set main window and close app when all windows are closed
-        let builder = builder.on(|evt: &WindowEvent, platform: &mut App| match evt.action {
+        let builder = builder.on(|evt: &WindowEvent, app: &mut App| match evt.action {
             WindowAction::Close => {
-                if platform.window_ids().is_empty() {
-                    platform.exit();
+                if app.window_ids().is_empty() {
+                    app.exit();
                 }
             }
             _ => {}
         });
 
         // let's add the windows plugin
-        Ok(builder.add_plugin(platform).with_runner(runner))
+        Ok(builder.add_plugin(app).with_runner(runner))
     }
 }

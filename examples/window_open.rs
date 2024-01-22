@@ -1,6 +1,5 @@
-use notan::prelude::*;
+use notan::app::App;
 
-#[notan_main]
 fn main() -> Result<(), String> {
-    notan::init().build()
+    notan::init().add_config(App::config())?.build()
 }
