@@ -1,4 +1,4 @@
-use crate::{Manager, PlatformConfig, Window};
+use crate::{AppConfig, Manager, Window};
 use hashbrown::hash_map::{Values, ValuesMut};
 use notan_core::window::{NotanApp, WindowAttributes, WindowId};
 use notan_core::Plugin;
@@ -18,8 +18,8 @@ impl App {
         })
     }
 
-    pub fn config() -> PlatformConfig {
-        PlatformConfig::default()
+    pub fn config() -> AppConfig {
+        AppConfig::default()
     }
 
     pub fn create_window(&mut self, attrs: WindowAttributes) -> Result<WindowId, String> {
