@@ -1,6 +1,6 @@
 use super::window::Window;
 use hashbrown::HashMap;
-use notan_core::window::{CursorIcon, NotanApp, WindowAttributes, WindowId};
+use notan_core::window::{CursorIcon, NotanApp, WindowConfig, WindowId};
 
 #[derive(Default)]
 pub struct Manager {
@@ -13,7 +13,7 @@ impl NotanApp<Window> for Manager {
         Ok(Default::default())
     }
 
-    fn create(&mut self, attrs: WindowAttributes) -> Result<WindowId, String> {
+    fn create(&mut self, attrs: WindowConfig) -> Result<WindowId, String> {
         let count = self.windows.len();
         let id: WindowId = (count as u64).into();
         let win = Window {
