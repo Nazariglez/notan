@@ -17,7 +17,7 @@ impl InnerWindowList {
             let (size, scale_factor) = sys
                 .get_mut_plugin::<App>()
                 .map(|app| {
-                    app.window(id)
+                    app.window_by_id(id)
                         .map_or(((0, 0), 1.0), |win| (win.size(), win.scale()))
                 })
                 .unwrap_or(((0, 0), 1.0));
@@ -140,7 +140,7 @@ pub fn runner<S: AppState + 'static>(mut sys: System<S>) -> Result<(), String> {
                 Event::WindowEvent { window_id, event } => {
                     let windows = sys.get_mut_plugin::<App>().unwrap();
                     let id = win_id(window_id);
-                    if let Some(win) = windows.window(id) {
+                    if let Some(win) = windows.window_by_id(id) {
                         let scale_factor = win.scale();
                         inner_window_list.init_window(id, &mut sys);
 
