@@ -1,7 +1,9 @@
-use notan::prelude::*;
+use notan::app::App;
+use notan::core::window::WindowConfig;
 
-#[notan_main]
 fn main() -> Result<(), String> {
-    let win = WindowConfig::default().set_position(100, 100);
-    notan::init().add_config(win).build()
+    let win = WindowConfig::default().with_position(100, 200);
+    notan::init()
+        .add_config(App::config().with_window(win))?
+        .build()
 }
