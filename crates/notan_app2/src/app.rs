@@ -34,12 +34,12 @@ impl App {
         Ok(id)
     }
 
-    pub fn window(&mut self, id: WindowId) -> Option<&mut Window> {
+    pub fn window_by_id(&mut self, id: WindowId) -> Option<&mut Window> {
         self.manager.window(id)
     }
 
-    pub fn main_window(&mut self) -> Option<&mut Window> {
-        self.main_window.and_then(|id| self.window(id))
+    pub fn window(&mut self) -> Option<&mut Window> {
+        self.main_window.and_then(|id| self.window_by_id(id))
     }
 
     pub fn set_main_window(&mut self, win_id: WindowId) {
