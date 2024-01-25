@@ -2,10 +2,10 @@ use super::utils::win_id;
 use crate::winit::{keyboard, mouse};
 use crate::App;
 use hashbrown::HashMap;
-use notan_core::events::DrawEvent;
+use notan_core::events::{DrawEvent, UpdateEvent};
 use notan_core::window::{NotanWindow, WindowAction, WindowEvent, WindowId};
 use notan_core::{AppState, System};
-use winit::event::{Event, WindowEvent as WWindowEvent};
+use winit::event::{Event, StartCause, WindowEvent as WWindowEvent};
 use winit::event_loop::ControlFlow;
 
 #[derive(Default)]
@@ -100,6 +100,8 @@ pub fn runner<S: AppState + 'static>(mut sys: System<S>) -> Result<(), String> {
 
             event_loop.set_control_flow(ControlFlow::Poll);
 
+            println!(" --> {:?}", evt);
+
             match evt {
                 // -- App life cycle events
                 Event::Resumed => {
@@ -109,42 +111,45 @@ pub fn runner<S: AppState + 'static>(mut sys: System<S>) -> Result<(), String> {
                         sys.init();
                     }
                 }
-                Event::NewEvents(_) => {
-                    sys.frame_start();
+                Event::NewEvents(t) => {
+                    match t {
+                        StartCause::Init => {}
+                        _ => {
+                            sys.frame_start();
+                            sys.update();
+                        }
+                    }
                 }
-                /*Event::RedrawEventsCleared => {
+                Event::AboutToWait => {
                     sys.frame_end();
                 }
-                Event::MainEventsCleared => {
-                    sys.update();
-                }
-                Event::RedrawRequested(id) => {
-                    let id = win_id(id);
-
-                    // Sometimes this event comes before any WindowEvent
-                    // Initializing windows here too we avoid a first blank frame
-                    inner_window_list.init_window(id, &mut sys);
-                    let (width, height, scale_factor) = inner_window_list.size(&id);
-
-                    sys.event(DrawEvent {
-                        window_id: id,
-                        width,
-                        height,
-                        scale_factor,
-                    });
-                }
-                Event::LoopDestroyed => {
+                Event::LoopExiting => {
                     sys.close();
-                }*/
+                }
                 // -- Windowing events
                 Event::WindowEvent { window_id, event } => {
                     let windows = sys.get_mut_plugin::<App>().unwrap();
                     let id = win_id(window_id);
                     if let Some(win) = windows.window_by_id(id) {
+                        win.request_redraw();
                         let scale_factor = win.scale();
                         inner_window_list.init_window(id, &mut sys);
 
                         match event {
+                            WWindowEvent::RedrawRequested => {
+                                // Sometimes this event comes before any WindowEvent
+                                // Initializing windows here too we avoid a first blank frame
+                                inner_window_list.init_window(id, &mut sys);
+                                let (width, height, scale_factor) = inner_window_list.size(&id);
+
+                                sys.event(DrawEvent {
+                                    window_id: id,
+                                    width,
+                                    height,
+                                    scale_factor,
+                                });
+                            }
+
                             // keyboard events
                             WWindowEvent::KeyboardInput { event, .. } => {
                                 let evt = keyboard::process(id, event);
@@ -274,6 +279,7 @@ pub fn runner<S: AppState + 'static>(mut sys: System<S>) -> Result<(), String> {
             let manager = &mut sys.get_mut_plugin::<App>().unwrap().manager;
             manager.event_loop.unset();
             if manager.request_exit {
+                println!("EXIT?");
                 event_loop.exit();
             }
         })

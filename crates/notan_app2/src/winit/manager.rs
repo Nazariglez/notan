@@ -45,6 +45,7 @@ impl NotanApp<Window> for Manager {
     }
 
     fn exit(&mut self) {
+        println!("exit");
         self.request_exit = true;
     }
 }

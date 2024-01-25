@@ -90,6 +90,7 @@ impl<S: AppState> System<S> {
 
     /// Execute any listener set for the event passed in
     pub fn event<E: Send + Sync + std::fmt::Debug + 'static>(&mut self, evt: E) {
+        println!("> Set EVENT {:?}", evt);
         if !self.initialized {
             return;
         }
