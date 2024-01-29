@@ -121,9 +121,6 @@ impl BackendSystem for WinitBackend {
 
                 // Await for the next event to run the loop again
                 let is_lazy = b.window.as_ref().map_or(false, |w| w.lazy);
-                if is_lazy {
-                    *control_flow = ControlFlow::Wait;
-                }
 
                 match event {
                     WEvent::WindowEvent { ref event, .. } => {
@@ -259,6 +256,11 @@ impl BackendSystem for WinitBackend {
                         }
                     }
                     WEvent::RedrawRequested(_) => {
+                        request_redraw = false;
+                        if let Some(w) = &mut b.window {
+                            w.frame_requested = false;
+                        }
+
                         match cb(&mut app, &mut state) {
                             Ok(FrameState::End) => {
                                 backend(&mut app.backend)
@@ -277,7 +279,11 @@ impl BackendSystem for WinitBackend {
                         }
                     }
                     WEvent::RedrawEventsCleared => {
-                        request_redraw = false;
+                        if let Some(w) = &mut b.window {
+                            if w.frame_requested {
+                                request_redraw = true;
+                            }
+                        }
                     }
                     WEvent::DeviceEvent { ref event, .. } => {
                         if let Some(evt) = mouse::process_device_events(event) {
@@ -287,13 +293,24 @@ impl BackendSystem for WinitBackend {
                     _ => {}
                 }
 
-                let b = backend(&mut app.backend);
 
-                // Close the loop if the user want to exit
-                let exit_requested = b.exit_requested;
-                if exit_requested {
-                    *control_flow = ControlFlow::Exit;
-                }
+                *control_flow = {
+                    let b = backend(&mut app.backend);
+                    let exit_requested = b.exit_requested;
+                    if exit_requested {
+                        // Close the loop if the user want to exit
+                        ControlFlow::Exit
+                    } else if request_redraw {
+                        // If something needs to be drawn keep polling events
+                        ControlFlow::Poll
+                    } else if is_lazy {
+                        // If is in lazy mode and nothing needs to be drawn just wait
+                        ControlFlow::Wait
+                    } else {
+                        // by default keep polling events
+                        ControlFlow::Poll
+                    }
+                };
             });
         }))
     }
