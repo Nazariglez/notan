@@ -22,7 +22,7 @@ pub struct WinitWindowBackend {
     mouse_passthrough: bool,
     title: String,
     use_touch_as_mouse: bool,
-    pub(crate) frame_requested: bool
+    pub(crate) frame_requested: bool,
 }
 
 impl WindowBackend for WinitWindowBackend {
@@ -309,14 +309,14 @@ impl WinitWindowBackend {
         }
 
         if let Some((x, y)) = config.position {
-            let safe_x = x;
-            let safe_y = y;
+            #[cfg(not(windows))]
+            let (safe_x, safe_y) = (x, y);
 
             // This is already done by the OS in Linux/MacOS
             #[cfg(windows)]
             let (safe_x, safe_y) = {
                 let clamped_position =
-                    clamp_window_to_sane_position(config.width, config.height, x, y, &event_loop);
+                    clamp_window_to_sane_position(config.width, config.height, x, y, event_loop);
 
                 (clamped_position.0, clamped_position.1)
             };
