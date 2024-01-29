@@ -22,6 +22,7 @@ pub struct WinitWindowBackend {
     mouse_passthrough: bool,
     title: String,
     use_touch_as_mouse: bool,
+    pub(crate) frame_requested: bool
 }
 
 impl WindowBackend for WinitWindowBackend {
@@ -73,6 +74,7 @@ impl WindowBackend for WinitWindowBackend {
     fn request_frame(&mut self) {
         if self.lazy {
             self.window().request_redraw();
+            self.frame_requested = true;
         }
     }
 
@@ -363,6 +365,7 @@ impl WinitWindowBackend {
             mouse_passthrough,
             title,
             use_touch_as_mouse: false,
+            frame_requested: false,
         })
     }
 
