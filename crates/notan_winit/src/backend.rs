@@ -293,7 +293,6 @@ impl BackendSystem for WinitBackend {
                     _ => {}
                 }
 
-
                 *control_flow = {
                     let b = backend(&mut app.backend);
                     let exit_requested = b.exit_requested;
