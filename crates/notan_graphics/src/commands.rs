@@ -32,6 +32,11 @@ pub enum Commands {
         slot: u32,
         location: u32,
     },
+    BindTexture_ {
+        id: u32,
+        slot: u32,
+        location: u32,
+    },
     Scissors {
         x: f32,
         y: f32,

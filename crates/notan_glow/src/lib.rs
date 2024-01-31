@@ -26,6 +26,7 @@ use crate::texture::{texture_format, texture_type, TextureKey};
 use crate::texture_source::{add_empty_texture, add_texture_from_bytes, add_texture_from_image};
 use crate::to_glow::ToGlow;
 use buffer::InnerBuffer;
+use notan_graphics::ResourceId::Texture;
 use pipeline::{InnerPipeline, VertexAttributes};
 use render_target::InnerRenderTexture;
 use texture::InnerTexture;
@@ -66,13 +67,13 @@ impl GlowBackend {
     }
 
     #[cfg(all(
-        not(target_arch = "wasm32"),
-        not(target_os = "ios"),
-        not(target_os = "android")
+    not(target_arch = "wasm32"),
+    not(target_os = "ios"),
+    not(target_os = "android")
     ))]
     pub fn new<F>(loader_function: F) -> Result<Self, String>
-    where
-        F: FnMut(&str) -> *const std::os::raw::c_void,
+        where
+            F: FnMut(&str) -> *const std::os::raw::c_void,
     {
         let gl = unsafe { Context::from_loader_function(loader_function) };
 
@@ -81,15 +82,15 @@ impl GlowBackend {
 
     #[cfg(any(target_os = "ios", target_os = "android"))]
     pub fn new<F>(mut loader_function: F) -> Result<Self, String>
-    where
-        F: FnMut(&str) -> *const std::os::raw::c_void,
+        where
+            F: FnMut(&str) -> *const std::os::raw::c_void,
     {
         let gl = unsafe { Context::from_loader_function(loader_function) };
 
         Self::from(gl, "opengl_es")
     }
 
-    fn get_default_frame_buffer(gl: &Context) -> Option<Framebuffer>{
+    fn get_default_frame_buffer(gl: &Context) -> Option<Framebuffer> {
         let mut default_gl_framebuffer: Option<Framebuffer> = None;
         #[cfg(target_os = "ios")]
         {
@@ -327,6 +328,7 @@ impl GlowBackend {
                 texture.bind(&self.gl, slot, loc);
                 texture.is_srgba
             } else {
+                log::debug!("NOTAN_GLOW::NO_TEXTURE_FOUND");
                 false
             };
 
@@ -335,6 +337,37 @@ impl GlowBackend {
             } else {
                 self.disable_srgba();
             }
+        }
+    }
+
+    fn bind_texture_by_id(&mut self, id: u32, slot: u32, location: u32) {
+        if let Some(pip) = self.pipelines.get(&self.current_pipeline) {
+
+            let loc = pip
+                .texture_locations
+                .get(&location)
+                .unwrap_or_else(|| self.get_texture_uniform_loc(&location));
+            // texture.bind(&self.gl, slot, loc);
+            InnerTexture::bind_(&self.gl, slot, loc, id);
+
+            // let is_srgba = if let Some(texture) = self.textures.get(&id) {
+            //     #[cfg(debug_assertions)]
+            //     if !pip.texture_locations.contains_key(&location) {
+            //         log::warn!("Uniform location {} for texture {} should be declared when the pipeline is created.", location, id);
+            //     }
+            //
+            //
+            //     texture.is_srgba
+            // } else {
+            //     log::debug!("NOTAN_GLOW::NO_TEXTURE_FOUND");
+            //     false
+            // };
+            //
+            // if is_srgba {
+            //     self.enable_srgba();
+            // } else {
+                self.disable_srgba();
+            // }
         }
     }
 
@@ -530,6 +563,7 @@ impl DeviceBackend for GlowBackend {
                     length,
                 } => self.draw_instanced(primitive, *offset, *count, *length),
                 BindTexture { id, slot, location } => self.bind_texture(*id, *slot, *location),
+                BindTexture_ {  id, slot, location} => self.bind_texture_by_id(*id, *slot, *location),
                 Size { width, height } => self.set_size(*width, *height),
                 Viewport {
                     x,
@@ -543,6 +577,7 @@ impl DeviceBackend for GlowBackend {
                     width,
                     height,
                 } => self.scissors(*x, *y, *width, *height, self.dpi),
+
             }
         });
     }

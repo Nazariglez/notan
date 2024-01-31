@@ -1,3 +1,4 @@
+use std::num::NonZeroU32;
 use crate::to_glow::*;
 use glow::*;
 use notan_graphics::prelude::*;
@@ -28,6 +29,16 @@ impl InnerTexture {
         unsafe {
             gl.active_texture(gl_slot(slot).unwrap());
             gl.bind_texture(glow::TEXTURE_2D, Some(self.texture));
+            gl.uniform_1_i32(Some(location), slot as _);
+        }
+    }
+
+    pub fn bind_(gl: &Context, slot: u32, location: &UniformLocation, texture_id: u32) {
+        unsafe {
+            log::debug!("INSIDE_bind_: {}", texture_id);
+            gl.active_texture(gl_slot(slot).unwrap());
+            // gl.bind_texture(glow::TEXTURE_2D, Some(self.texture));
+            gl.bind_texture(glow::TEXTURE_2D, Some(NativeTexture(NonZeroU32::new(texture_id).expect("Failed to create NonZeroU32"))));
             gl.uniform_1_i32(Some(location), slot as _);
         }
     }
