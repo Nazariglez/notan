@@ -112,15 +112,13 @@ pub fn runner<S: AppState + 'static>(mut sys: System<S>) -> Result<(), String> {
                         sys.init();
                     }
                 }
-                Event::NewEvents(t) => {
-                    match t {
-                        StartCause::Init => {}
-                        _ => {
-                            sys.frame_start();
-                            updated = false;
-                        }
+                Event::NewEvents(t) => match t {
+                    StartCause::Init => {}
+                    _ => {
+                        sys.frame_start();
+                        updated = false;
                     }
-                }
+                },
                 Event::AboutToWait => {
                     sys.frame_end();
                 }
