@@ -1,11 +1,10 @@
-use std::ptr::write;
 use notan::app::App;
 use notan::core::events::UpdateEvent;
 use notan::prelude::*;
+use std::ptr::write;
 
 #[derive(AppState)]
 struct State(usize);
-
 
 fn main() -> Result<(), String> {
     notan::init_with(|| Ok(State(0)))
