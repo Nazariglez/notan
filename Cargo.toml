@@ -18,7 +18,7 @@ members = [
     "crates/notan_core",
     "crates/notan_macro2",
     "crates/notan_app2"
-]
+, "crates/notan_gfx"]
 
 [workspace.package]
 version = "1.0.0-alpha.0"
@@ -32,6 +32,7 @@ edition = "2021"
 notan_core = { path = "crates/notan_core" }
 notan_macro2 = { path = "crates/notan_macro2" }
 notan_app2 = { path = "crates/notan_app2" }
+notan_gfx = { path = "crates/notan_gfx" }
 #notan_input = { path = "crates/notan_input" }
 #notan_app = { path = "crates/notan_app" }
 #notan_macro = { path = "crates/notan_macro" }
@@ -59,6 +60,7 @@ bytemuck = "1.14.0"
 anymap = "0.12.1"
 arrayvec = "0.7.4"
 raw-window-handle = "0.6.0"
+bitflags = "2.4.2"
 serde = { version = "1.0", features = ["serde_derive"] }
 image = { version = "0.24.8", default-features = false, features = ["jpeg", "png", "ico"] }
 
@@ -74,6 +76,7 @@ cfg_aliases = "0.2.0"
 notan_core.workspace = true
 notan_macro2.workspace = true
 notan_app2.workspace = true
+notan_gfx = { workspace = true, optional = true }
 #notan_input.workspace = true
 #notan_app.workspace = true
 #notan_macro.workspace = true
@@ -91,9 +94,13 @@ notan_app2.workspace = true
 #notan_random = { workspace = true, optional = true }
 
 [features]
-default = ["limited_core_events", "winit"]
+default = ["limited_core_events", "winit", "gfx", "wgpu"]
 # uses winit as backend
 winit = ["notan_app2/winit"]
+# enabled gfx module
+gfx = ["notan_gfx"]
+# uses wgpu as renderer
+wgpu = ["notan_gfx?/wgpu"]
 # allow to serialize and deserialize internal types with serde
 serde = ["notan_core/serde", "notan_app2/serde"]
 # use arrayvec instead of vec when possible
