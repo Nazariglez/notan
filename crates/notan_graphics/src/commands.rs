@@ -32,7 +32,7 @@ pub enum Commands {
         slot: u32,
         location: u32,
     },
-    BindTexture_ {
+    BindTextureById {
         id: u32,
         slot: u32,
         location: u32,

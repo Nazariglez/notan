@@ -347,8 +347,7 @@ impl GlowBackend {
                 .texture_locations
                 .get(&location)
                 .unwrap_or_else(|| self.get_texture_uniform_loc(&location));
-            // texture.bind(&self.gl, slot, loc);
-            InnerTexture::bind_(&self.gl, slot, loc, id);
+            InnerTexture::bind_by_texture_id(&self.gl, slot, loc, id);
 
             // let is_srgba = if let Some(texture) = self.textures.get(&id) {
             //     #[cfg(debug_assertions)]
@@ -366,7 +365,7 @@ impl GlowBackend {
             // if is_srgba {
             //     self.enable_srgba();
             // } else {
-                self.disable_srgba();
+            //     self.disable_srgba();
             // }
         }
     }
@@ -563,7 +562,7 @@ impl DeviceBackend for GlowBackend {
                     length,
                 } => self.draw_instanced(primitive, *offset, *count, *length),
                 BindTexture { id, slot, location } => self.bind_texture(*id, *slot, *location),
-                BindTexture_ {  id, slot, location} => self.bind_texture_by_id(*id, *slot, *location),
+                BindTextureById {  id, slot, location} => self.bind_texture_by_id(*id, *slot, *location),
                 Size { width, height } => self.set_size(*width, *height),
                 Viewport {
                     x,

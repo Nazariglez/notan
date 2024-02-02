@@ -126,7 +126,7 @@ impl Renderer {
     }
 
     pub fn bind_texture_slot_with_id(&mut self, slot: u32, location: u32, id: u32) {
-        self.commands.push(Commands::BindTexture_ {
+        self.commands.push(Commands::BindTextureById {
             slot,
             location,
             id,
