@@ -17,8 +17,9 @@ description = "A simple portable multimedia layer to create apps or games easily
 members = [
     "crates/notan_core",
     "crates/notan_macro2",
-    "crates/notan_app2"
-, "crates/notan_gfx"]
+    "crates/notan_app2",
+    "crates/notan_gfx"
+]
 
 [workspace.package]
 version = "1.0.0-alpha.0"
