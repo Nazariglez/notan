@@ -87,6 +87,7 @@ pub fn runner<S: AppState + 'static>(mut sys: System<S>) -> Result<(), String> {
         .ok_or("Something went wrong acquiring the Winit's EventLoop.")?;
 
     let mut initialized_app = false;
+    let mut updated = false;
 
     // track some inner data
     let mut inner_window_list = InnerWindowList::default();
@@ -100,7 +101,7 @@ pub fn runner<S: AppState + 'static>(mut sys: System<S>) -> Result<(), String> {
 
             event_loop.set_control_flow(ControlFlow::Poll);
 
-            println!(" --> {:?}", evt);
+            // println!(" --> {:?}", evt);
 
             match evt {
                 // -- App life cycle events
@@ -116,7 +117,7 @@ pub fn runner<S: AppState + 'static>(mut sys: System<S>) -> Result<(), String> {
                         StartCause::Init => {}
                         _ => {
                             sys.frame_start();
-                            sys.update();
+                            updated = false;
                         }
                     }
                 }
@@ -137,6 +138,14 @@ pub fn runner<S: AppState + 'static>(mut sys: System<S>) -> Result<(), String> {
 
                         match event {
                             WWindowEvent::RedrawRequested => {
+                                // Call update once per frame before draw
+                                // We need to use a flag to avoid call update more than one time
+                                // in a multi-window application
+                                if !updated {
+                                    updated = true;
+                                    sys.update();
+                                }
+
                                 // Sometimes this event comes before any WindowEvent
                                 // Initializing windows here too we avoid a first blank frame
                                 inner_window_list.init_window(id, &mut sys);
