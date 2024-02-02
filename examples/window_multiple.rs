@@ -12,7 +12,7 @@ fn main() -> Result<(), String> {
 
 fn open_windows(_: &InitEvent, app: &mut App) {
     (0..3).for_each(|n| {
-        app.create_window(
+        let _ = app.create_window(
             WindowConfig::default()
                 .with_title(&format!("Window {}", n))
                 .with_size(300 + n * 230, 300 + n * 200)
