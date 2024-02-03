@@ -31,7 +31,7 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::sync::Arc;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
-use wgpu::{Queue, TextureDimension};
+use wgpu::{Queue, StoreOp, TextureDimension};
 
 pub struct Device {
     next_resource_id: u64,
@@ -502,7 +502,7 @@ impl
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Load,
-                            store: true,
+                            store: StoreOp::Store,
                         },
                     },
                     |color| wgpu::RenderPassColorAttachment {
@@ -512,7 +512,7 @@ impl
                             load: rp.clear_options.color.map_or(wgpu::LoadOp::Load, |color| {
                                 wgpu::LoadOp::Clear(wgpu_color(color))
                             }),
-                            store: true,
+                            store: StoreOp::Store,
                         },
                     },
                 ));
@@ -523,7 +523,7 @@ impl
                             .clear_options
                             .depth
                             .map_or(wgpu::LoadOp::Load, wgpu::LoadOp::Clear),
-                        store: true,
+                        store: StoreOp::Store,
                     })
                 } else {
                     None
@@ -535,7 +535,7 @@ impl
                             .clear_options
                             .stencil
                             .map_or(wgpu::LoadOp::Load, |stencil| wgpu::LoadOp::Clear(stencil)),
-                        store: true,
+                        store: StoreOp::Store,
                     })
                 } else {
                     None
@@ -554,6 +554,8 @@ impl
                     } else {
                         None
                     },
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
                 });
 
                 if let Some(pip) = rp.pipeline {
@@ -635,7 +637,7 @@ impl
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Load,
-                            store: true,
+                            store: StoreOp::Store,
                         },
                     },
                     |color| wgpu::RenderPassColorAttachment {
@@ -645,7 +647,7 @@ impl
                             load: rp.clear_options.color.map_or(wgpu::LoadOp::Load, |color| {
                                 wgpu::LoadOp::Clear(wgpu_color(color))
                             }),
-                            store: true,
+                            store: StoreOp::Store,
                         },
                     },
                 ));
@@ -656,7 +658,7 @@ impl
                             .clear_options
                             .depth
                             .map_or(wgpu::LoadOp::Load, wgpu::LoadOp::Clear),
-                        store: true,
+                        store: StoreOp::Store,
                     })
                 } else {
                     None
@@ -668,7 +670,7 @@ impl
                             .clear_options
                             .stencil
                             .map_or(wgpu::LoadOp::Load, |stencil| wgpu::LoadOp::Clear(stencil)),
-                        store: true,
+                        store: StoreOp::Store,
                     })
                 } else {
                     None
@@ -690,6 +692,8 @@ impl
                     label: None,
                     color_attachments: &[color],
                     depth_stencil_attachment,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
                 });
 
                 if let Some(pip) = rp.pipeline {
