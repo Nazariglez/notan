@@ -14,7 +14,7 @@ use notan_core::Plugin;
 use image::EncodableLayout;
 
 pub struct Gfx {
-    pub(crate) raw: Device,
+    pub(crate) raw: Device<'static>,
 }
 
 impl Plugin for Gfx {}

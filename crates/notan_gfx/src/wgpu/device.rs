@@ -33,17 +33,17 @@ use std::sync::Arc;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{Queue, StoreOp, TextureDimension};
 
-pub struct Device {
+pub struct Device<'device> {
     next_resource_id: u64,
     attrs: GfxAttributes,
     ctx: Context,
     depth_format: TextureFormat,
-    pub(crate) surfaces: HashMap<WindowId, Surface>,
+    pub(crate) surfaces: HashMap<WindowId, Surface<'device>>,
 }
 
-impl Plugin for Device {}
+impl<'device> Plugin for Device<'device> {}
 
-impl
+impl<'device>
     NotanDevice<
         DrawFrame,
         RenderPipeline,
@@ -53,7 +53,7 @@ impl
         BindGroup,
         BindGroupLayoutRef,
         RenderTexture,
-    > for Device
+    > for Device<'device>
 {
     fn new(attrs: GfxAttributes) -> Result<Self, String> {
         let context = Context::new(attrs)?;
@@ -83,7 +83,7 @@ impl
             });
         Ok(DrawFrame {
             window_id,
-            surface: surface.clone(),
+            // surface: surface.clone(),
             frame,
             view,
             encoder: RefCell::new(encoder),
@@ -111,7 +111,7 @@ impl
         Ok(())
     }
 
-    fn init_surface<W: NotanWindow>(&mut self, window: &W) -> Result<(), String> {
+    fn init_surface<W: NotanWindow>(&mut self, window: &'device W) -> Result<(), String> {
         if self.surfaces.contains_key(&window.id()) {
             return Ok(());
         }
@@ -546,11 +546,12 @@ impl
                     label: None,
                     color_attachments: &[color],
                     depth_stencil_attachment: if depth.is_some() || stencil.is_some() {
-                        Some(wgpu::RenderPassDepthStencilAttachment {
-                            view: &frame.surface.depth_texture.view,
-                            depth_ops: depth,
-                            stencil_ops: stencil,
-                        })
+                        // Some(wgpu::RenderPassDepthStencilAttachment {
+                        //     view: &frame.surface.depth_texture.view,
+                        //     depth_ops: depth,
+                        //     stencil_ops: stencil,
+                        // })
+                        None // TODO
                     } else {
                         None
                     },

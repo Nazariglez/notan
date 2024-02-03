@@ -8,17 +8,17 @@ use wgpu::{
 };
 
 #[derive(Clone)]
-pub(crate) struct Surface {
-    pub surface: Arc<RawSurface<'static>>,
+pub(crate) struct Surface<'device> {
+    pub surface: Arc<RawSurface<'device>>,
     pub config: SurfaceConfiguration,
     pub capabilities: Arc<SurfaceCapabilities>,
     pub depth_texture: Texture,
 }
 
-impl Surface {
+impl<'device> Surface<'device> {
     pub fn new<W: NotanWindow>(
         ctx: &mut Context,
-        window: &W,
+        window: &'device W,
         attrs: GfxAttributes,
         depth_texture: Texture,
     ) -> Result<Self, String> {
