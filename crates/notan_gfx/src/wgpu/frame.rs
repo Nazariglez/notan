@@ -10,7 +10,7 @@ use wgpu::{CommandEncoder, SurfaceTexture, TextureView};
 
 pub struct DrawFrame {
     pub(crate) window_id: WindowId,
-    pub(crate) surface: Surface,
+    // pub(crate) surface: Surface,
     pub(crate) frame: SurfaceTexture,
     pub(crate) view: TextureView,
     pub(crate) encoder: RefCell<CommandEncoder>,
