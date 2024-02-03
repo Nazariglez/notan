@@ -10,6 +10,7 @@ use crate::{BindGroupDescriptor, DrawFrame, NotanBindGroup, NotanBindGroupLayout
 use notan_core::window::{NotanWindow, WindowId};
 
 pub trait NotanDevice<
+    'device,
     DF: NotanDrawFrame,
     RP: NotanRenderPipeline,
     B: NotanBuffer,
@@ -25,7 +26,7 @@ pub trait NotanDevice<
         Self: Sized;
     fn create_frame(&mut self, window_id: WindowId) -> Result<DF, String>;
     fn present(&mut self, frame: DF) -> Result<(), String>;
-    fn init_surface<W: NotanWindow>(&mut self, win: &W) -> Result<(), String>;
+    fn init_surface<W: NotanWindow>(&mut self, win: &'device W) -> Result<(), String>;
     fn create_render_pipeline(&mut self, desc: RenderPipelineDescriptor) -> Result<RP, String>;
     fn create_buffer(&mut self, desc: BufferDescriptor) -> Result<B, String>;
     fn create_render_texture(&mut self, desc: RenderTextureDescriptor) -> Result<RT, String>;
