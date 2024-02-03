@@ -45,6 +45,7 @@ impl<'device> Plugin for Device<'device> {}
 
 impl<'device>
     NotanDevice<
+        'device,
         DrawFrame,
         RenderPipeline,
         Buffer,
