@@ -108,7 +108,7 @@ pub trait NotanApp<W: NotanWindow> {
     fn exit(&mut self);
 }
 
-pub trait NotanWindow: HasWindowHandle + HasDisplayHandle {
+pub trait NotanWindow: HasWindowHandle + HasDisplayHandle + std::marker::Sync {
     fn id(&self) -> WindowId;
     fn physical_size(&self) -> (u32, u32);
     fn size(&self) -> (u32, u32);

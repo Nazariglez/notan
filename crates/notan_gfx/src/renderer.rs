@@ -4,7 +4,7 @@ use crate::consts::{
 };
 use crate::{BindGroup, Buffer, ClearOptions, RenderPipeline};
 use arrayvec::ArrayVec;
-use notan_core::event::DrawEvent;
+use notan_core::events::DrawEvent;
 use std::ops::Range;
 
 // TODO gfx works with RenderPass, then we have Render2D, and Render3D
