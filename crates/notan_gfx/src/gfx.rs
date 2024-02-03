@@ -36,7 +36,7 @@ where
         self.raw.create_frame(window_id)
     }
 
-    pub fn init_surface<W: NotanWindow>(&mut self, win: &W) -> Result<(), String> {
+    pub fn init_surface<W: NotanWindow>(&mut self, win: &'static W) -> Result<(), String> {
         self.raw.init_surface(win)
     }
 
