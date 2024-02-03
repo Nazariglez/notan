@@ -41,7 +41,7 @@ impl Context {
 
 async fn generate_inner(
     instance: &Instance,
-    _surface: Option<&RawSurface>, // TODO why this is here?
+    _surface: Option<&RawSurface<'_>>, // TODO why this is here?
 ) -> Result<(Adapter, Device, Queue), String> {
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
@@ -63,8 +63,8 @@ async fn generate_inner(
         .request_device(
             &wgpu::DeviceDescriptor {
                 label: None,
-                features: wgpu::Features::default(),
-                limits,
+                required_features: wgpu::Features::default(),
+                required_limits: limits,
             },
             None,
         )

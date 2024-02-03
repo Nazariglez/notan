@@ -9,7 +9,7 @@ use wgpu::{
 
 #[derive(Clone)]
 pub(crate) struct Surface {
-    pub surface: Arc<RawSurface>,
+    pub surface: Arc<RawSurface<'static>>,
     pub config: SurfaceConfiguration,
     pub capabilities: Arc<SurfaceCapabilities>,
     pub depth_texture: Texture,
@@ -45,6 +45,7 @@ impl Surface {
             } else {
                 wgpu::PresentMode::AutoNoVsync
             },
+            desired_maximum_frame_latency: 2,
             alpha_mode: capabilities.alpha_modes[0],
             view_formats: vec![],
         };

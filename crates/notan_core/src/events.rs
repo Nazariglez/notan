@@ -32,7 +32,7 @@ impl EventListener {
 
 /// A list of events pushed by plugins to be processed
 #[derive(Default)]
-pub(crate) struct EventQueue<S: AppState + 'static> {
+pub struct EventQueue<S: AppState + 'static> {
     pub(crate) events: VecDeque<Box<dyn FnOnce(&mut System<S>)>>,
 }
 
