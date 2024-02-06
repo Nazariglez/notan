@@ -2,7 +2,7 @@ use crate::gfx::Gfx;
 use crate::GfxAttributes;
 use notan_app2::App;
 use notan_core::window::{WindowAction, WindowEvent};
-use notan_core::{AppBuilder, BuildConfig, AppState};
+use notan_core::{AppBuilder, AppState, BuildConfig};
 
 #[derive(Default)]
 pub struct GfxConfig {
