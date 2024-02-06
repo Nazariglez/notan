@@ -8,22 +8,27 @@ use wgpu::{
 };
 
 #[derive(Clone)]
-pub(crate) struct Surface<'device> {
-    pub surface: Arc<RawSurface<'device>>,
+pub(crate) struct Surface {
+    pub surface: Arc<RawSurface<'static>>,
     pub config: SurfaceConfiguration,
     pub capabilities: Arc<SurfaceCapabilities>,
     pub depth_texture: Texture,
 }
 
-impl<'device> Surface<'device> {
+impl Surface {
     pub fn new<W: NotanWindow>(
         ctx: &mut Context,
-        window: &'device W,
+        window: &W,
         attrs: GfxAttributes,
         depth_texture: Texture,
     ) -> Result<Self, String> {
         log::trace!("Creating a new Surface for Window {:?}", window.id());
-        let surface = unsafe { ctx.instance.create_surface(window) }.map_err(|e| e.to_string())?;
+        let surface = unsafe {
+            ctx.instance.create_surface_unsafe(
+                wgpu::SurfaceTargetUnsafe::from_window(window)
+                    .map_err(|e| e.to_string())?
+            )
+        }.map_err(|e| e.to_string())?;
 
         if !ctx.is_surface_compatible(&surface) {
             log::trace!(
