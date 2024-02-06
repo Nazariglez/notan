@@ -14,7 +14,7 @@ use notan_core::Plugin;
 use image::EncodableLayout;
 
 pub struct Gfx {
-    pub(crate) raw: Device<'static>,
+    pub(crate) raw: Device,
 }
 
 impl Plugin for Gfx {}
@@ -36,7 +36,7 @@ where
         self.raw.create_frame(window_id)
     }
 
-    pub fn init_surface<W: NotanWindow>(&mut self, win: &'static W) -> Result<(), String> {
+    pub fn init_surface<W: NotanWindow>(&mut self, win: &W) -> Result<(), String> {
         self.raw.init_surface(win)
     }
 
