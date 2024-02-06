@@ -24,9 +24,9 @@ use crate::{
     MAX_BINDING_ENTRIES,
 };
 use arrayvec::ArrayVec;
+use hashbrown::HashMap;
 use notan_core::window::{NotanWindow, WindowId};
 use notan_core::Plugin;
-use hashbrown::HashMap;
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::sync::Arc;
