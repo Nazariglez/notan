@@ -4,14 +4,14 @@ use crate::renderer::Renderer;
 use crate::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutId,
     BindGroupLayoutRef, BlendMode, Buffer, BufferDescriptor, BufferUsage, ColorMask, CompareMode,
-    CullMode, DepthStencil, Device, DrawFrame, NotanBuffer, GfxAttributes, GfxConfig, IndexFormat,
+    CullMode, DepthStencil, Device, DrawFrame, GfxAttributes, GfxConfig, IndexFormat, NotanBuffer,
     Primitive, RenderPipeline, RenderTexture, Sampler, SamplerDescriptor, Stencil, Texture,
     TextureData, TextureDescriptor, TextureFilter, TextureFormat, TextureWrap, VertexLayout,
 };
 use crate::{NotanDevice, RenderPipelineDescriptor};
+use image::EncodableLayout;
 use notan_core::window::{NotanWindow, WindowId};
 use notan_core::Plugin;
-use image::EncodableLayout;
 
 pub struct Gfx {
     pub(crate) raw: Device,
