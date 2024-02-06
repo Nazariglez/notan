@@ -33,19 +33,18 @@ use std::sync::Arc;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{Queue, StoreOp, TextureDimension};
 
-pub struct Device<'device> {
+pub struct Device {
     next_resource_id: u64,
     attrs: GfxAttributes,
     ctx: Context,
     depth_format: TextureFormat,
-    pub(crate) surfaces: HashMap<WindowId, Surface<'device>>,
+    pub(crate) surfaces: HashMap<WindowId, Surface>,
 }
 
-impl<'device> Plugin for Device<'device> {}
+impl Plugin for Device {}
 
-impl<'device>
+impl
     NotanDevice<
-        'device,
         DrawFrame,
         RenderPipeline,
         Buffer,
@@ -54,7 +53,7 @@ impl<'device>
         BindGroup,
         BindGroupLayoutRef,
         RenderTexture,
-    > for Device<'device>
+    > for Device
 {
     fn new(attrs: GfxAttributes) -> Result<Self, String> {
         let context = Context::new(attrs)?;
@@ -112,7 +111,7 @@ impl<'device>
         Ok(())
     }
 
-    fn init_surface<W: NotanWindow>(&mut self, window: &'device W) -> Result<(), String> {
+    fn init_surface<W: NotanWindow>(&mut self, window: &W) -> Result<(), String> {
         if self.surfaces.contains_key(&window.id()) {
             return Ok(());
         }
