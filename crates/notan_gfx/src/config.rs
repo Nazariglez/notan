@@ -26,9 +26,9 @@ impl<S: AppState + 'static> BuildConfig<S> for GfxConfig {
         let builder = builder.on(on_window_event);
 
         let attrs = self.attrs;
-        builder.add_plugin_with(move |platform: &mut App| {
+        builder.add_plugin_with(move |app: &mut App| {
             let mut gfx = Gfx::new(attrs)?;
-            if let Some(win) = platform.window() {
+            if let Some(win) = app.window() {
                 gfx.init_surface(win)?;
             }
 
@@ -37,11 +37,11 @@ impl<S: AppState + 'static> BuildConfig<S> for GfxConfig {
     }
 }
 
-fn on_window_event(evt: &WindowEvent, gfx: &mut Gfx, platform: &mut App) {
+fn on_window_event(evt: &WindowEvent, gfx: &mut Gfx, app: &mut App) {
     match evt.action {
         // when a new window is created let's initialize the surface for it
         WindowAction::Init => {
-            gfx.init_surface(platform.window_by_id(evt.id).unwrap()).unwrap();
+            gfx.init_surface(app.window_by_id(evt.id).unwrap()).unwrap();
         }
         WindowAction::Moved { .. } => {}
         WindowAction::Resized {
