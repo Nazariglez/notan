@@ -5,7 +5,9 @@ use crate::pipeline::{NotanRenderPipeline, RenderPipelineDescriptor};
 use crate::render_target::RenderTarget;
 use crate::render_texture::{NotanRenderTexture, RenderTextureDescriptor};
 use crate::renderer::Renderer;
-use crate::texture::{NotanSampler, NotanTexture, SamplerDescriptor, TextureData, TextureDescriptor};
+use crate::texture::{
+    NotanSampler, NotanTexture, SamplerDescriptor, TextureData, TextureDescriptor,
+};
 use crate::{BindGroupDescriptor, DrawFrame, NotanBindGroup, NotanBindGroupLayoutRef};
 use notan_core::window::{NotanWindow, WindowId};
 
