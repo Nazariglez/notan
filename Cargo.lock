@@ -1027,6 +1027,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "notan_draw2"
+version = "1.0.0-alpha.0"
+
+[[package]]
 name = "notan_gfx"
 version = "1.0.0-alpha.0"
 dependencies = [

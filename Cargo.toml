@@ -19,7 +19,7 @@ members = [
     "crates/notan_macro2",
     "crates/notan_app2",
     "crates/notan_gfx"
-]
+, "crates/notan_draw2"]
 
 [workspace.package]
 version = "1.0.0-alpha.0"
