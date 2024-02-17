@@ -206,6 +206,7 @@ impl Plugin for EguiPlugin {
                 if let Some(key) = to_egui_key(key) {
                     self.add_event(egui::Event::Key {
                         key,
+                        physical_key: None,
                         pressed: true,
                         repeat: false,
                         modifiers,
@@ -217,6 +218,7 @@ impl Plugin for EguiPlugin {
                 if let Some(key) = to_egui_key(key) {
                     self.add_event(egui::Event::Key {
                         key,
+                        physical_key: None,
                         pressed: false,
                         repeat: false,
                         modifiers,
