@@ -31,6 +31,22 @@ pub(crate) fn to_egui_key(key: &KeyCode) -> Option<egui::Key> {
         KeyCode::PageUp => egui::Key::PageUp,
         KeyCode::PageDown => egui::Key::PageDown,
 
+        KeyCode::Copy => egui::Key::Copy,
+        KeyCode::Cut => egui::Key::Cut,
+        KeyCode::Paste => egui::Key::Paste,
+
+        KeyCode::Colon => egui::Key::Colon,
+        KeyCode::Comma => egui::Key::Comma,
+        KeyCode::Backslash => egui::Key::Backslash,
+        KeyCode::LBracket => egui::Key::OpenBracket,
+        KeyCode::RBracket => egui::Key::CloseBracket,
+        KeyCode::Grave => egui::Key::Backtick,
+        KeyCode::Minus => egui::Key::Minus,
+        KeyCode::Period => egui::Key::Period,
+        KeyCode::Plus => egui::Key::Plus,
+        KeyCode::Equals => egui::Key::Equals,
+        KeyCode::Semicolon => egui::Key::Semicolon,
+
         KeyCode::Key0 => egui::Key::Num0,
         KeyCode::Key1 => egui::Key::Num1,
         KeyCode::Key2 => egui::Key::Num2,
