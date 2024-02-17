@@ -51,7 +51,10 @@ impl EguiPlugin {
         } = self.ctx.run(new_input, run_ui);
 
         let needs_update_textures = !textures_delta.is_empty();
-        let needs_repaint = viewport_output.values().any(|output| output.repaint_delay.is_zero()) || needs_update_textures;
+        let needs_repaint = viewport_output
+            .values()
+            .any(|output| output.repaint_delay.is_zero())
+            || needs_update_textures;
 
         // On post frame needs repaint is set to false
         // set it again if true after a egui output.

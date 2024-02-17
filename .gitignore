@@ -29,3 +29,6 @@ pkg
 
 # allow static images
 !**/docs/examples/images/**/*.jpg
+
+# discard test examples
+examples/test_*.rs
