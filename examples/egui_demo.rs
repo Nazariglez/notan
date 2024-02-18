@@ -26,8 +26,5 @@ fn main() -> Result<(), String> {
 fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     let mut output = plugins.egui(|ctx| state.demo.ui(ctx));
     output.clear_color(Color::BLACK);
-
-    if output.needs_repaint() {
-        gfx.render(&output);
-    }
+    gfx.render(&output);
 }

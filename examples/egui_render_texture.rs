@@ -31,8 +31,13 @@ impl State {
 
 #[notan_main]
 fn main() -> Result<(), String> {
+    let win = WindowConfig::default()
+        .set_lazy_loop(true)
+        .set_vsync(true)
+        .set_high_dpi(true);
+
     notan::init_with(State::new)
-        .add_config(WindowConfig::new().set_vsync(true).set_high_dpi(true))
+        .add_config(win)
         .add_config(EguiConfig)
         .draw(draw)
         .build()
@@ -47,9 +52,8 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut St
             ui.image(state.sized_texture);
         });
     });
-    output.clear_color(Color::BLACK);
 
-    // output.needs_repaint is not checked because our render texture needs to be always draw
+    output.clear_color(Color::BLACK);
     gfx.render(&output);
 }
 

@@ -34,8 +34,5 @@ fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
     });
 
     output.clear_color(Color::BLACK);
-
-    if output.needs_repaint() {
-        gfx.render(&output);
-    }
+    gfx.render(&output);
 }

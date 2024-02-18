@@ -53,16 +53,14 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
         draw_egui_widget(ctx, state);
     });
 
-    if output.needs_repaint() {
-        // Draw shape
-        let mut draw = gfx.create_draw();
-        draw.clear(state.clear_color);
-        draw_shape(&mut draw, state);
-        gfx.render(&draw);
+    // Draw shape
+    let mut draw = gfx.create_draw();
+    draw.clear(state.clear_color);
+    draw_shape(&mut draw, state);
+    gfx.render(&draw);
 
-        // Draw the context to the screen or to a RenderTexture
-        gfx.render(&output);
-    }
+    // Draw the context to the screen or to a RenderTexture
+    gfx.render(&output);
 }
 
 // Draw a Triangle using the properties set on the state
