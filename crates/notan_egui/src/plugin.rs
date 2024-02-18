@@ -69,7 +69,6 @@ impl EguiPlugin {
             shapes: RefCell::new(Some((shapes, pixels_per_point))),
             textures_delta,
             clear_color: None,
-            needs_repaint,
         }
     }
 }
@@ -79,16 +78,11 @@ pub struct Output {
     shapes: RefCell<Option<(Vec<egui::epaint::ClippedShape>, f32)>>,
     textures_delta: egui::TexturesDelta,
     clear_color: Option<Color>,
-    needs_repaint: bool,
 }
 
 impl Output {
     pub fn clear_color(&mut self, color: Color) {
         self.clear_color = Some(color);
-    }
-
-    pub fn needs_repaint(&self) -> bool {
-        self.needs_repaint
     }
 }
 

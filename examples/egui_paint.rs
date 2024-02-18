@@ -58,7 +58,6 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins, state: &mut State) {
     });
 
     output.clear_color(Color::BLACK);
-
     gfx.render(&output);
 }
 

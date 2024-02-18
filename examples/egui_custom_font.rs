@@ -25,10 +25,7 @@ fn draw(gfx: &mut Graphics, plugins: &mut Plugins) {
     });
 
     output.clear_color(Color::BLACK);
-
-    if output.needs_repaint() {
-        gfx.render(&output);
-    }
+    gfx.render(&output);
 }
 
 // Initialize callback is called just once after setup and before the app's loop
