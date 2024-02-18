@@ -1,9 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## UNRELEASED
+## v0.12.0 - 19/02/2024
 
-- Updated EGUI to `0.24`.
+- Updated EGUI to `0.26`.
+- Removed `egui::plugin::Output.needs_repaint()`, now is only used internally and not exposed to users.
+- Exposed `notan::draw::DrawBuilder` allowing custom builders.
+- Exposed `notan::app::AppTimer`.
+- Added `draw.point` allowing to draw points. Check `examples/draw_point.rs`.
+- Allow to compile the crate without a backend selected.
+- Changed `WindowConfig::set_canvas_id` to `WindowConfig::set_app_id` and is not available for wayland too.
+- Fixed `app.request_frame()` when using lazy lopps on Window OS.
 
 ## v0.11.0 - 18/10/2023
 
