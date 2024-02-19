@@ -177,6 +177,10 @@ impl GlowBackend {
         }
     }
 
+    pub fn get_gl_texture_id(&self, id: u64) -> Option<u32> {
+        self.textures.get(&id).map(|t| u32::from(t.texture.0.get()))
+    }
+
     fn begin(
         &mut self,
         target: Option<u64>,

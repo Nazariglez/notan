@@ -101,7 +101,7 @@ impl Drop for TextureIdRef {
 
 #[derive(Debug, Clone)]
 pub struct Texture {
-    id: u64,
+    pub id: u64,
     _id_ref: Arc<TextureIdRef>,
     width: i32,
     height: i32,
