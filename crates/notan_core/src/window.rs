@@ -1,6 +1,7 @@
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 
 #[derive(Copy, Clone, Hash, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WindowId(u64);
 
 impl From<u64> for WindowId {
