@@ -1,3 +1,4 @@
+use notan::app::App;
 use notan::core::events::*;
 use notan::prelude::*;
 
@@ -6,6 +7,7 @@ struct State {}
 
 fn main() -> Result<(), String> {
     notan::init_with(|| Ok(State {}))
+        .add_config(App::config())?
         .once(on_init)
         .on(on_start_frame)
         .on(on_update)

@@ -1,4 +1,4 @@
-use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
+use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 
 #[derive(Copy, Clone, Hash, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -17,7 +17,7 @@ impl From<WindowId> for u64 {
 }
 
 #[derive(Debug, Clone)]
-pub struct WindowAttributes {
+pub struct WindowConfig {
     pub size: Option<(u32, u32)>,
     pub min_size: Option<(u32, u32)>,
     pub max_size: Option<(u32, u32)>,
@@ -30,7 +30,7 @@ pub struct WindowAttributes {
     pub transparent: bool,
 }
 
-impl WindowAttributes {
+impl WindowConfig {
     pub fn with_size(mut self, width: u32, height: u32) -> Self {
         self.size = Some((width, height));
         self
@@ -82,7 +82,7 @@ impl WindowAttributes {
     }
 }
 
-impl Default for WindowAttributes {
+impl Default for WindowConfig {
     fn default() -> Self {
         Self {
             size: Some((800, 600)),
@@ -90,7 +90,7 @@ impl Default for WindowAttributes {
             max_size: None,
             position: None,
             resizable: false,
-            title: "GameKit Window".to_string(),
+            title: "Notan Window".to_string(),
             fullscreen: false,
             maximized: false,
             visible: true,
@@ -100,14 +100,16 @@ impl Default for WindowAttributes {
 }
 
 pub trait NotanApp<W: NotanWindow> {
-    fn new() -> Self;
-    fn create(&mut self, attrs: WindowAttributes) -> Result<WindowId, String>;
+    fn new() -> Result<Self, String>
+    where
+        Self: Sized;
+    fn create(&mut self, attrs: WindowConfig) -> Result<WindowId, String>;
     fn window(&mut self, id: WindowId) -> Option<&mut W>;
     fn close(&mut self, id: WindowId) -> bool;
     fn exit(&mut self);
 }
 
-pub trait NotanWindow: HasRawWindowHandle + HasRawDisplayHandle {
+pub trait NotanWindow: HasWindowHandle + HasDisplayHandle + std::marker::Sync {
     fn id(&self) -> WindowId;
     fn physical_size(&self) -> (u32, u32);
     fn size(&self) -> (u32, u32);
