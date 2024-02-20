@@ -1,22 +1,23 @@
-use crate::DrawExtension;
-use notan_app::{AppBuilder, AppState, BackendSystem, BuildConfig, Graphics};
-use notan_text::*;
+use crate::draw2d::Draw2D;
+use notan_app2::App;
+use notan_core::{AppBuilder, AppState, BuildConfig};
+use notan_gfx::Gfx;
 
-pub struct DrawConfig;
-impl<S, B> BuildConfig<S, B> for DrawConfig
-where
-    S: AppState + 'static,
-    B: BackendSystem,
-{
-    fn apply(&self, builder: AppBuilder<S, B>) -> AppBuilder<S, B> {
-        builder.add_graphic_ext(|gfx: &mut Graphics| {
-            // Add text extension if necessary
-            if gfx.extension::<Text, TextExtension>().is_none() {
-                let text_ext = TextExtension::new(gfx).unwrap();
-                gfx.add_extension(text_ext);
-            }
+// TODO text with subpixel, custom shaders, etc...
+#[derive(Default)]
+pub struct DrawConfig {}
 
-            DrawExtension::new(gfx).unwrap()
+impl DrawConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl<S: AppState + 'static> BuildConfig<S> for DrawConfig {
+    fn apply(&mut self, builder: AppBuilder<S>) -> Result<AppBuilder<S>, String> {
+        builder.add_plugin_with(move |app: &mut App, gfx: &mut Gfx| {
+            let draw = Draw2D::new(gfx)?;
+            Ok(draw)
         })
     }
 }

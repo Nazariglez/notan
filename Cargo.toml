@@ -33,17 +33,17 @@ edition = "2021"
 [workspace.dependencies]
 notan_core = { path = "crates/notan_core" }
 notan_macro2 = { path = "crates/notan_macro2" }
+notan_math = { path = "crates/notan_math" }
 notan_app2 = { path = "crates/notan_app2" }
 notan_gfx = { path = "crates/notan_gfx" }
+notan_draw = { path = "crates/notan_draw" }
 #notan_input = { path = "crates/notan_input" }
 #notan_app = { path = "crates/notan_app" }
 #notan_macro = { path = "crates/notan_macro" }
-#notan_math = { path = "crates/notan_math" }
 #notan_graphics = { path = "crates/notan_graphics" }
 #notan_utils = { path = "crates/notan_utils" }
 #notan_log = { path = "crates/notan_log" }
 #notan_glyph = { path = "crates/notan_glyph" }
-#notan_draw = { path = "crates/notan_draw" }
 #notan_backend = { path = "crates/notan_backend" }
 #notan_egui = { path = "crates/notan_egui" }
 #notan_text = { path = "crates/notan_text" }
@@ -78,16 +78,16 @@ cfg_aliases = "0.2.0"
 notan_core.workspace = true
 notan_macro2.workspace = true
 notan_app2.workspace = true
+notan_math.workspace = true
 notan_gfx = { workspace = true, optional = true }
+notan_draw = { workspace = true, optional = true }
 #notan_input.workspace = true
 #notan_app.workspace = true
 #notan_macro.workspace = true
-#notan_math.workspace = true
 #notan_graphics.workspace = true
 #notan_utils.workspace = true
 #notan_log = { workspace = true, optional = true }
 #notan_glyph = { workspace = true, optional = true }
-#notan_draw = { workspace = true, optional = true }
 #notan_backend = { workspace = true, optional = true }
 #notan_egui = { workspace = true, optional = true }
 #notan_text = { workspace = true, optional = true }
@@ -107,6 +107,8 @@ wgpu = ["notan_gfx?/wgpu"]
 serde = ["notan_core/serde", "notan_app2/serde"]
 # use arrayvec instead of vec when possible
 limited_core_events = ["notan_core/limited_events"]
+#enabled draw2d features
+draw2d = ["notan_draw", "gfx"]
 
 #default = ["backend", "log", "draw", "random", "glsl-to-spirv"]
 #backend = ["notan_backend"]
