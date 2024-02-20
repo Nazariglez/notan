@@ -13,17 +13,9 @@ description = "Provides a simple 2D API for Notan"
 
 [dependencies]
 log.workspace = true
-notan_app.workspace = true
-notan_graphics.workspace = true
-notan_macro.workspace = true
 notan_math.workspace = true
-notan_glyph.workspace = true
-notan_text.workspace = true
-serde = { workspace = true, features = ["derive"] }
+notan_core.workspace = true
+notan_app2.workspace = true
+notan_gfx.workspace = true
 
 lyon = "1.0.1"
-serde_json = "1.0.107"
-
-[features]
-glsl-to-spirv = ["notan_macro/glsl-to-spirv", "notan_glyph/glsl-to-spirv", "notan_text/glsl-to-spirv"]
-shaderc = ["notan_macro/shaderc", "notan_glyph/shaderc", "notan_text/shaderc"]
