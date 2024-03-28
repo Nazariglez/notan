@@ -1,8 +1,8 @@
-use std::{fs};
+use std::fs;
 use std::path::PathBuf;
 
 use crate::cli::{Example, TargetType};
-use crate::{cargo_build, copy_assets, DynError, project_root};
+use crate::{cargo_build, copy_assets, project_root, DynError};
 
 impl Example {
     pub(crate) fn run_msvc(self) -> Result<(), DynError> {
@@ -14,7 +14,6 @@ impl Example {
         if !status.success() {
             Err("Command 'cargo build' failed")?;
         }
-
 
         let name_str = self.name.as_str();
         let executable = format!("{name_str}.exe");

@@ -1,9 +1,9 @@
-use std::{env, fs};
 use std::path::PathBuf;
 use std::process::Command;
+use std::{env, fs};
 
-use crate::cli::{Docs};
-use crate::{DynError, project_root};
+use crate::cli::Docs;
+use crate::{project_root, DynError};
 
 impl Docs {
     pub(crate) fn run(self) -> Result<(), DynError> {

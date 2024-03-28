@@ -1,8 +1,8 @@
-use std::{fs};
+use std::fs;
 use std::path::PathBuf;
 
 use crate::cli::{Examples, TargetType};
-use crate::{DynError};
+use crate::DynError;
 
 impl Examples {
     pub(crate) fn run(self) -> Result<(), DynError> {
@@ -14,8 +14,7 @@ impl Examples {
         Ok(())
     }
 
-    pub(crate) fn list_files(self, path: &str) -> Result<impl Iterator<Item = PathBuf>, DynError>
-    {
+    pub(crate) fn list_files(self, path: &str) -> Result<impl Iterator<Item = PathBuf>, DynError> {
         let entries = fs::read_dir(path)?;
         let dir_entries: Vec<_> = entries
             .filter_map(Result::ok)
