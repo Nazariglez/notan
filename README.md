@@ -6,22 +6,21 @@
 <br />
 <br />
 
-<a href="https://gfycat.com/horriblefearlessinvisiblerail">
-  <img src="https://thumbs.gfycat.com/HorribleFearlessInvisiblerail-small.gif" height="150px">
+<a href="https://giphy.com/gifs/LvPqA4mRfjemAOrRNz">
+  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHVvMDJ4b21vaHdpd3k0aDc4MzZtZnl4eDZ5NDVzMnNuNTEycHF1NCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/LvPqA4mRfjemAOrRNz/giphy.gif" height="150px">
 </a>
-<a href="https://gfycat.com/gregariousgreedycrocodile">
-  <img src="https://thumbs.gfycat.com/GregariousGreedyCrocodile-small.gif" height="150px">
+<a href="https://giphy.com/gifs/HB5c3gYSdqGdywEi5C">
+  <img src="https://media.giphy.com/media/HB5c3gYSdqGdywEi5C/giphy.gif" height="150px">
 </a>
-<a href="https://gfycat.com/wealthyseparatefoxhound">
-  <img src="https://thumbs.gfycat.com/WealthySeparateFoxhound-small.gif" height="150px">
+<a href="https://giphy.com/gifs/iFjqxAWZRQkOuA6Xk0">
+  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGEweXhvMHZoY3NsMWEweGpvcHN0eDdibmM3c2JzcHEyYmhrM2EzcyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/iFjqxAWZRQkOuA6Xk0/giphy.gif" height="150px">
 </a>
-<a href="https://gfycat.com/illfatedmisguidedlice">
-  <img src="https://thumbs.gfycat.com/IllfatedMisguidedLice-small.gif" height="150px">
+<a href="https://giphy.com/gifs/uZvbmYdbknganNfijt">
+  <img src="https://media.giphy.com/media/uZvbmYdbknganNfijt/giphy.gif" height="150px">
 </a>
 
 </div>
 
-<br />
 
 __Notan__ is a simple and portable layer, designed to make your own multimedia apps on top of it
 without worrying too much about platform-specific code.
