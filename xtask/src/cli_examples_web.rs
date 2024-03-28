@@ -2,8 +2,8 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 
 use crate::cli::{Example, Examples};
-use crate::{copy_assets, DynError, project_root};
 use crate::cli_example_web::docs_web_dir;
+use crate::{copy_assets, project_root, DynError};
 
 impl Examples {
     pub(crate) fn run_web(self) -> Result<(), DynError> {
@@ -11,7 +11,10 @@ impl Examples {
 
         let mut doc_body = String::from("<ul>\n");
 
-        let examples_path = project_root().join("examples").to_string_lossy().into_owned();
+        let examples_path = project_root()
+            .join("examples")
+            .to_string_lossy()
+            .into_owned();
 
         let target = self.target;
         let release = self.release;
