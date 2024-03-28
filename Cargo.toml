@@ -13,7 +13,10 @@ readme = "README.md"
 description = "A simple portable multimedia layer to create apps or games easily"
 
 [workspace]
-members = ["crates/*"]
+members = [
+    "crates/*",
+    "xtask"
+]
 
 [workspace.package]
 version = "0.12.1"
