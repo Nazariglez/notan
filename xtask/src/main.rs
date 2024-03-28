@@ -8,15 +8,15 @@ mod cli_examples;
 mod cli_examples_msvc;
 mod cli_examples_web;
 
+use crate::cli::TargetType;
+use cli::{Cli, CliCmd};
+use flate2::write::GzEncoder;
+use flate2::Compression;
 use std::env;
 use std::fs::File;
-use std::io::{BufReader, copy, Error};
+use std::io::{copy, BufReader, Error};
 use std::path::PathBuf;
 use std::process::{Command, ExitStatus};
-use flate2::Compression;
-use flate2::write::GzEncoder;
-use cli::{Cli, CliCmd};
-use crate::cli::TargetType;
 
 type DynError = Box<dyn std::error::Error>;
 
@@ -41,8 +41,7 @@ fn try_main() -> Result<(), DynError> {
 
 fn project_root() -> PathBuf {
     let dir =
-        env::var("CARGO_MANIFEST_DIR")
-            .unwrap_or_else(|_| env!("CARGO_MANIFEST_DIR").to_owned());
+        env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| env!("CARGO_MANIFEST_DIR").to_owned());
 
     PathBuf::from(dir).parent().unwrap().to_owned()
 }
@@ -66,33 +65,55 @@ fn cargo_build(target: TargetType, profile: &str, name: &str) -> Result<ExitStat
     let cargo = env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
 
     // We want this to be configurable?
-    let features = "glyph,egui,text,extra,audio,links,drop_files,clipboard,save_file,texture_to_file";
+    let features =
+        "glyph,egui,text,extra,audio,links,drop_files,clipboard,save_file,texture_to_file";
     let features_arg = format!("--features={features}");
 
     match target {
         TargetType::Msvc => Command::new(cargo)
             .current_dir(project_root())
-            .args(&["build", "--target", "x86_64-pc-windows-msvc", "--profile", profile, "--example", name, features_arg.as_str()])
+            .args(&[
+                "build",
+                "--target",
+                "x86_64-pc-windows-msvc",
+                "--profile",
+                profile,
+                "--example",
+                name,
+                features_arg.as_str(),
+            ])
             .status(),
 
         TargetType::Web => Command::new(cargo)
             .current_dir(project_root())
             .env("RUSTFLAGS", "--cfg=web_sys_unstable_apis")
-            .args(&["build", "--target", "wasm32-unknown-unknown", "--profile", profile, "--example", name, features_arg.as_str()])
-            .status()
+            .args(&[
+                "build",
+                "--target",
+                "wasm32-unknown-unknown",
+                "--profile",
+                profile,
+                "--example",
+                name,
+                features_arg.as_str(),
+            ])
+            .status(),
     }
 }
 
 fn wasm_bindgen(input: &str, output: &str, debug: bool) -> Result<ExitStatus, Error> {
     Command::new("wasm-bindgen")
         .current_dir(project_root())
-        .args(&[
-            [input, "--out-dir", output, "--no-modules", "--browser"].as_slice(),
-            match debug {
-                true => &["--keep-debug", "--debug"].as_slice(),
-                false => &[].as_slice(),
-            }
-        ].concat())
+        .args(
+            &[
+                [input, "--out-dir", output, "--no-modules", "--browser"].as_slice(),
+                match debug {
+                    true => &["--keep-debug", "--debug"].as_slice(),
+                    false => &[].as_slice(),
+                },
+            ]
+            .concat(),
+        )
         .status()
 }
 

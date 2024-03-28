@@ -1,5 +1,5 @@
 use crate::cli::{Example, TargetType};
-use crate::{DynError};
+use crate::DynError;
 
 impl Example {
     pub(crate) fn run(self) -> Result<(), DynError> {

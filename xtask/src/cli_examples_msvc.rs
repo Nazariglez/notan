@@ -1,12 +1,15 @@
 use crate::cli::{Example, Examples};
-use crate::{copy_assets, DynError, project_root};
 use crate::cli_example_msvc::docs_msvc_dir;
+use crate::{copy_assets, project_root, DynError};
 
 impl Examples {
     pub(crate) fn run_msvc(self) -> Result<(), DynError> {
         copy_assets(docs_msvc_dir(self.release).join("assets"));
 
-        let examples_path = project_root().join("examples").to_string_lossy().into_owned();
+        let examples_path = project_root()
+            .join("examples")
+            .to_string_lossy()
+            .into_owned();
 
         let target = self.target;
         let release = self.release;
