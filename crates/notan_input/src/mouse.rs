@@ -129,6 +129,13 @@ impl Mouse {
         self.moving
     }
 
+    /// Cleans the state of a button (useful for stop propagation)
+    pub fn clean_button_state(&mut self, btn: MouseButton) {
+        self.pressed.remove(&btn);
+        self.down.remove(&btn);
+        self.released.remove(&btn);
+    }
+
     #[inline]
     pub(crate) fn clear(&mut self) {
         self.pressed.clear();
