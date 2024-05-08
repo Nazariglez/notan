@@ -35,7 +35,7 @@ notan_log = { path = "crates/notan_log", version = "0.12.0" }
 notan_glyph = { path = "crates/notan_glyph", version = "0.12.0" }
 notan_draw = { path = "crates/notan_draw", version = "0.12.0" }
 notan_backend = { path = "crates/notan_backend", version = "0.12.0" }
-notan_egui = { path = "crates/notan_egui", version = "0.12.0" }
+notan_egui = { path = "crates/notan_egui", version = "0.12.1" }
 notan_text = { path = "crates/notan_text", version = "0.12.0" }
 notan_audio = { path = "crates/notan_audio", version = "0.12.0" }
 notan_extra = { path = "crates/notan_extra", version = "0.12.0" }

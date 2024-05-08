@@ -1,7 +1,7 @@
 EGUI
 ===
 
-This is the implementation of [egui 0.22](https://github.com/emilk/egui) for notan.
+This is the implementation of [egui 0.27.2](https://github.com/emilk/egui) for notan.
 
 It should support all the features that __egui__ uses. 
 
