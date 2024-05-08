@@ -1,6 +1,6 @@
 [package]
 name = "notan_egui"
-version.workspace = true
+version = "0.12.1"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
@@ -19,7 +19,7 @@ notan_macro.workspace = true
 log.workspace = true
 bytemuck.workspace = true
 
-egui = { version = "0.26.2", features = ["bytemuck"] }
+egui = { version = "0.27.2", features = ["bytemuck"] }
 
 [features]
 links = []
