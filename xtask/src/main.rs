@@ -55,9 +55,7 @@ fn copy_assets(to: PathBuf) {
         .overwrite(true)
         .copy_inside(true);
 
-    let mut paths = Vec::new();
-    paths.push(assets_dir().as_path().to_owned());
-
+    let paths = vec![assets_dir().as_path().to_owned()];
     let _ = fs_extra::copy_items(&paths, to, &options);
 }
 
@@ -72,7 +70,7 @@ fn cargo_build(target: TargetType, profile: &str, name: &str) -> Result<ExitStat
     match target {
         TargetType::Msvc => Command::new(cargo)
             .current_dir(project_root())
-            .args(&[
+            .args([
                 "build",
                 "--target",
                 "x86_64-pc-windows-msvc",
@@ -87,7 +85,7 @@ fn cargo_build(target: TargetType, profile: &str, name: &str) -> Result<ExitStat
         TargetType::Web => Command::new(cargo)
             .current_dir(project_root())
             .env("RUSTFLAGS", "--cfg=web_sys_unstable_apis")
-            .args(&[
+            .args([
                 "build",
                 "--target",
                 "wasm32-unknown-unknown",
@@ -108,8 +106,8 @@ fn wasm_bindgen(input: &str, output: &str, debug: bool) -> Result<ExitStatus, Er
             &[
                 [input, "--out-dir", output, "--no-modules", "--browser"].as_slice(),
                 match debug {
-                    true => &["--keep-debug", "--debug"].as_slice(),
-                    false => &[].as_slice(),
+                    true => ["--keep-debug", "--debug"].as_slice(),
+                    false => [].as_slice(),
                 },
             ]
             .concat(),
@@ -120,7 +118,7 @@ fn wasm_bindgen(input: &str, output: &str, debug: bool) -> Result<ExitStatus, Er
 fn wasm_opt(input: &str, output: &str) -> Result<ExitStatus, Error> {
     Command::new("wasm-opt")
         .current_dir(project_root())
-        .args(&["-O", "-o", input, output])
+        .args(["-O", "-o", input, output])
         .status()
 }
 
