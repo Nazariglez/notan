@@ -18,7 +18,7 @@ impl Example {
         let name_str = self.name.as_str();
         let executable = format!("{name_str}.exe");
 
-        let _ = fs::create_dir_all(&docs_msvc_dir(self.release))?;
+        fs::create_dir_all(docs_msvc_dir(self.release))?;
         let _ = fs::copy(
             dist_msvc_dir(self.release).join(executable.as_str()),
             docs_msvc_dir(self.release).join(executable.as_str()),

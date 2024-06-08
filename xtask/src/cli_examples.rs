@@ -24,7 +24,7 @@ impl Examples {
                 let is_hidden = entry
                     .file_name()
                     .to_str()
-                    .map(|name| name.starts_with("."))
+                    .map(|name| name.starts_with('.'))
                     .unwrap_or_default();
                 let is_valid = is_file && !is_hidden;
                 if is_valid {
@@ -33,7 +33,6 @@ impl Examples {
                     None
                 }
             })
-            .into_iter()
             .map(|entry| entry.path())
             .collect();
 
