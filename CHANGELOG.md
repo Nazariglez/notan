@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## v0.12.1 - 08/06/2024
+
+- Updated EGUI to `0.27`.
+- The readme has gifs again.
+- Added `app.mouse.clean_button_state` to clean the state of a button.
+- Added `xtask` to run project's script like building the examples for web.
+- Fixed an issue with EGUI that makes text looks blurry.
+
 ## v0.12.0 - 19/02/2024
 
 - Updated EGUI to `0.26`.
