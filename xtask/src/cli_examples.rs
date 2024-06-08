@@ -20,7 +20,14 @@ impl Examples {
             .filter_map(Result::ok)
             .filter_map(|entry| {
                 let metadata = entry.metadata().ok()?;
-                if metadata.is_file() {
+                let is_file = metadata.is_file();
+                let is_hidden = entry
+                    .file_name()
+                    .to_str()
+                    .map(|name| name.starts_with("."))
+                    .unwrap_or_default();
+                let is_valid = is_file && !is_hidden;
+                if is_valid {
                     Some(entry)
                 } else {
                     None
