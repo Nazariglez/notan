@@ -1,0 +1,18 @@
+[package]
+name = "notan_macro2"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+readme = "README.md"
+description = "Provides a set of utils as macros for Notan"
+
+[dependencies]
+syn = { version = "2.0.17", features = ["full", "extra-traits"] }
+proc-macro2 = "1.0.59"
+quote = "1.0.28"
+
+[lib]
+proc-macro = true
