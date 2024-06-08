@@ -18,6 +18,7 @@ pub struct EguiPlugin {
     platform_output: Option<egui::PlatformOutput>,
     latest_evt_was_touch: bool,
     needs_repaint: bool,
+    pixels_per_point: f32,
 }
 
 #[allow(clippy::derivable_impls)]
@@ -29,6 +30,7 @@ impl Default for EguiPlugin {
             platform_output: Default::default(),
             latest_evt_was_touch: Default::default(),
             needs_repaint: Default::default(),
+            pixels_per_point: Default::default(),
         }
     }
 }
@@ -294,6 +296,12 @@ impl Plugin for EguiPlugin {
     }
 
     fn update(&mut self, app: &mut App, _assets: &mut Assets) -> Result<AppFlow, String> {
+        let dpi = app.window().dpi() as f32;
+        if dpi != self.pixels_per_point {
+            self.pixels_per_point = dpi;
+            self.ctx.set_pixels_per_point(self.pixels_per_point);
+        }
+
         self.raw_input.time = Some(app.timer.elapsed_f32() as _);
         self.raw_input.predicted_dt = app.timer.delta_f32();
 
