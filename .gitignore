@@ -32,3 +32,5 @@ pkg
 
 # discard test examples
 examples/test_*.rs
+
+.DS_Store
