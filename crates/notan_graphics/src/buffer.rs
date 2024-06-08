@@ -92,7 +92,7 @@ impl<'a> VertexBufferBuilder<'a> {
     }
 
     pub fn with_info(mut self, info: &VertexInfo) -> Self {
-        self.vertex_attrs = info.attrs.clone();
+        self.vertex_attrs.clone_from(&info.attrs);
         self.vertex_step_mode = info.step_mode;
         self
     }
