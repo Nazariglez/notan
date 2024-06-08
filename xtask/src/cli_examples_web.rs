@@ -7,7 +7,7 @@ use crate::{copy_assets, project_root, DynError};
 
 impl Examples {
     pub(crate) fn run_web(self) -> Result<(), DynError> {
-        copy_assets(docs_web_dir(self.release, "assets"));
+        copy_assets(docs_web_dir("assets"));
 
         let mut doc_body = String::from("<ul>\n");
 
@@ -55,7 +55,7 @@ impl Examples {
             output_lines.push(line);
         }
 
-        let mut file_out = File::create(docs_web_dir(release, "").join("index.html"))?;
+        let mut file_out = File::create(docs_web_dir("../").join("index.html"))?;
 
         for line in &output_lines {
             writeln!(file_out, "{}", line)?;
