@@ -23,9 +23,7 @@ impl Example {
             .join(wasm.as_str())
             .to_string_lossy()
             .into_owned();
-        let output = docs_web_dir(self.release, name_str)
-            .to_string_lossy()
-            .into_owned();
+        let output = docs_web_dir(name_str).to_string_lossy().into_owned();
 
         let status = wasm_bindgen(input.as_str(), output.as_str(), !self.release)?;
         if !status.success() {
@@ -34,7 +32,7 @@ impl Example {
 
         if self.release {
             let wasm_file = format!("{name_str}_bg.wasm");
-            let inout = docs_web_dir(self.release, name_str)
+            let inout = docs_web_dir(name_str)
                 .join(wasm_file.as_str())
                 .to_string_lossy()
                 .into_owned();
@@ -46,16 +44,16 @@ impl Example {
 
             if self.gzip {
                 let wasm_gz = format!("{wasm_file}.gz");
-                let wasm_gz_output = docs_web_dir(self.release, name_str)
+                let wasm_gz_output = docs_web_dir(name_str)
                     .join(wasm_gz)
                     .to_string_lossy()
                     .into_owned();
 
-                let js_gz_input = docs_web_dir(self.release, name_str)
+                let js_gz_input = docs_web_dir(name_str)
                     .join(format!("{name_str}.js"))
                     .to_string_lossy()
                     .into_owned();
-                let js_gz_output = docs_web_dir(self.release, name_str)
+                let js_gz_output = docs_web_dir(name_str)
                     .join(format!("{name_str}.js.gz"))
                     .to_string_lossy()
                     .into_owned();
@@ -78,30 +76,22 @@ impl Example {
             output_lines.push(line);
         }
 
-        let mut file_out =
-            File::create(docs_web_dir(self.release, "").join(example_file.as_str()))?;
+        let mut file_out = File::create(docs_web_dir("").join(example_file.as_str()))?;
 
         for line in &output_lines {
             writeln!(file_out, "{}", line)?;
         }
 
         if !self.no_assets {
-            copy_assets(docs_web_dir(self.release, ""))
+            copy_assets(docs_web_dir(""))
         }
 
         Ok(())
     }
 }
 
-pub fn docs_web_dir(release: bool, name: &str) -> PathBuf {
-    project_root()
-        .join("docs/web_examples/")
-        .join(match release {
-            true => "release",
-            false => "debug",
-        })
-        .join("examples")
-        .join(name)
+pub fn docs_web_dir(name: &str) -> PathBuf {
+    project_root().join("docs").join("examples").join(name)
 }
 
 fn dist_web_dir(release: bool) -> PathBuf {
