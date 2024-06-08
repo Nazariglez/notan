@@ -104,6 +104,7 @@ pub trait NotanApp<W: NotanWindow> {
     where
         Self: Sized;
     fn create(&mut self, attrs: WindowConfig) -> Result<WindowId, String>;
+    fn window(&mut self, id: WindowId) -> Option<&mut W>;
     fn close(&mut self, id: WindowId) -> bool;
     fn exit(&mut self);
 }
