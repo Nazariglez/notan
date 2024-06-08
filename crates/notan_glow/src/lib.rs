@@ -237,7 +237,7 @@ impl GlowBackend {
             pip.bind(&self.gl, options);
             self.using_indices = None;
             self.current_pipeline = id;
-            self.current_uniforms = pip.uniform_locations.clone();
+            self.current_uniforms.clone_from(&pip.uniform_locations);
         }
     }
 
