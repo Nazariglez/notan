@@ -1,6 +1,6 @@
 [package]
 name = "notan_egui"
-version = "0.12.1"
+version.workspace = true
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
