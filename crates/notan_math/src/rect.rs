@@ -31,4 +31,8 @@ impl Rect {
     pub fn center_y(&self) -> f32 {
         self.y + self.height * 0.5
     }
+
+    pub fn contains(&self, x: f32, y: f32) -> bool {
+        x >= self.min_x() && x <= self.max_x() && y >= self.min_y() && y <= self.max_y()
+    }
 }
