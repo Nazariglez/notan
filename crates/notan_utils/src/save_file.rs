@@ -1,5 +1,3 @@
-#![cfg(feature = "save_file")]
-
 use std::path::Path;
 
 #[cfg(not(target_arch = "wasm32"))]

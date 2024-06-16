@@ -1,4 +1,3 @@
-#![cfg(feature = "texture_to_file")]
 use crate::Device;
 use crate::Texture;
 use image::ColorType;

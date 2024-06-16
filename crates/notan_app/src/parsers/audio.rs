@@ -1,5 +1,3 @@
-#![cfg(feature = "audio")]
-
 use crate::assets::AssetLoader;
 use crate::App;
 use notan_audio::AudioSource;
