@@ -129,7 +129,7 @@ fn process_glyphs(
 ) {
     if let Some(indices) = &draw.text_batch_indices {
         let batch_len = draw.batches.len();
-        let mut last_index = std::usize::MAX;
+        let mut last_index = usize::MAX;
         indices.iter().for_each(|i| {
             let n = *i;
             if n == last_index {
