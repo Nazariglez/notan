@@ -1,5 +1,3 @@
-#![cfg(target_arch = "wasm32")]
-
 use hashbrown::HashMap;
 use notan_audio::AudioBackend;
 use oddio::Frames;
