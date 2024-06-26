@@ -1,6 +1,7 @@
 mod calculator;
 mod config;
 
+use hashbrown::HashMap;
 use lazy_static::lazy_static;
 use notan_app::{ExtContainer, GfxExtension, GfxRenderer, Graphics};
 use notan_glyph::ab_glyph::FontArc;
@@ -12,7 +13,6 @@ use notan_graphics::color::Color;
 use notan_graphics::pipeline::ClearOptions;
 use notan_graphics::{Device, RenderTexture, Renderer, Texture};
 use std::any::TypeId;
-use std::collections::HashMap;
 use std::ops::DerefMut;
 
 pub use calculator::Calculator;

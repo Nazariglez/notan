@@ -14,7 +14,6 @@ description = "Provides the core API for Notan"
 [dependencies]
 notan_core.workspace = true
 notan_input.workspace = true
-notan_math.workspace = true
 notan_macro.workspace = true
 notan_graphics.workspace = true
 notan_utils.workspace = true
@@ -23,7 +22,6 @@ notan_audio = { workspace = true, optional = true }
 log.workspace = true
 hashbrown.workspace = true
 parking_lot.workspace = true
-bytemuck.workspace = true
 serde = { workspace = true, optional = true }
 
 downcast-rs = "1.2.0"

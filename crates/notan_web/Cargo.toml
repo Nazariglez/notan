@@ -23,7 +23,6 @@ log.workspace = true
 wasm-bindgen.workspace = true
 js-sys.workspace = true
 wasm-bindgen-futures.workspace = true
-futures-util.workspace = true
 
 console_error_panic_hook = "0.1.7"
 

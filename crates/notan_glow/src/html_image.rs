@@ -1,5 +1,3 @@
-#![cfg(target_arch = "wasm32")]
-
 use crate::texture::{
     post_create_texture, pre_create_texture, texture_format, texture_internal_format, texture_type,
     TexInfo, TextureKey,

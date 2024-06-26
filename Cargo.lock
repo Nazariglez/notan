@@ -1646,7 +1646,6 @@ dependencies = [
 name = "notan_app"
 version = "0.12.1"
 dependencies = [
- "bytemuck",
  "downcast-rs",
  "futures",
  "futures-util",
@@ -1659,7 +1658,6 @@ dependencies = [
  "notan_graphics",
  "notan_input",
  "notan_macro",
- "notan_math",
  "notan_utils",
  "parking_lot",
  "platter2",
@@ -1763,7 +1761,6 @@ dependencies = [
  "crevice_notan",
  "image",
  "log",
- "notan_macro",
  "notan_math",
  "notan_utils",
  "parking_lot",
@@ -1868,7 +1865,6 @@ name = "notan_web"
 version = "0.12.1"
 dependencies = [
  "console_error_panic_hook",
- "futures-util",
  "js-sys",
  "log",
  "notan_app",

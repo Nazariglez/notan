@@ -13,7 +13,6 @@ description = "Provides simple graphics API for Notan"
 
 [dependencies]
 notan_math.workspace = true
-notan_macro.workspace = true
 notan_utils.workspace = true
 
 log.workspace = true
