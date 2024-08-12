@@ -238,8 +238,6 @@ impl Plugins {
 #[allow(unused_variables)]
 /// A plugin allow the user to extend or alter the application
 pub trait Plugin
-where
-    Self: Send + Sync,
 {
     /// Executed before the application loop
     fn init(
