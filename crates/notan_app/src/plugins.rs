@@ -237,8 +237,7 @@ impl Plugins {
 
 #[allow(unused_variables)]
 /// A plugin allow the user to extend or alter the application
-pub trait Plugin
-{
+pub trait Plugin {
     /// Executed before the application loop
     fn init(
         &mut self,
