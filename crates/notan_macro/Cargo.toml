@@ -21,7 +21,7 @@ proc-macro2 = "1.0.69"
 spirv_cross = { version = "0.23.1", features = ["glsl"] }
 
 [build-dependencies]
-cfg_aliases = "0.1.1"
+cfg_aliases = "0.2.1"
 
 [features]
 glsl-to-spirv = ["dep:glsl-to-spirv"]
