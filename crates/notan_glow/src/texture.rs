@@ -203,6 +203,7 @@ pub(crate) fn texture_type(tf: &TextureFormat) -> u32 {
 
 pub(crate) fn texture_format(tf: &TextureFormat) -> u32 {
     match tf {
+        TextureFormat::Rgb24 => glow::RGB,
         TextureFormat::Rgba32 => glow::RGBA,
         TextureFormat::Rgba32Float => RGBA,
         TextureFormat::R8 => glow::RED,
