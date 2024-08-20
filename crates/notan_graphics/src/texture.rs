@@ -81,6 +81,7 @@ impl TextureFormat {
             R8 => 1,
             R8Uint => 1,
             R16Uint => 2,
+            Rgb24 => 3,
             Rgba32Float => 4 * 4,
             _ => 4,
         }
@@ -249,6 +250,7 @@ impl AsRef<Texture> for Texture {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TextureFormat {
     SRgba8,
+    Rgb24,
     Rgba32,
     R8,
     R8Uint,
