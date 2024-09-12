@@ -3,6 +3,7 @@ use crate::{
     App, Backend, BackendSystem, CursorIcon, EventIterator, FrameState, InitializeFn, WindowBackend,
 };
 use notan_graphics::prelude::*;
+use raw_window_handle::RawWindowHandle;
 use std::any::Any;
 
 #[cfg(feature = "audio")]
@@ -136,6 +137,10 @@ impl WindowBackend for EmptyWindowBackend {
 
     fn touch_as_mouse(&self) -> bool {
         self.touch_as_mouse
+    }
+
+    fn raw_window_handle(&self) -> Option<RawWindowHandle> {
+        None
     }
 }
 

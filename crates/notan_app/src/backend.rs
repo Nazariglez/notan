@@ -4,6 +4,7 @@ use downcast_rs::{impl_downcast, Downcast};
 use futures::prelude::*;
 use futures::Future;
 use notan_graphics::DeviceBackend;
+use raw_window_handle::RawWindowHandle;
 
 #[cfg(feature = "audio")]
 use notan_audio::AudioBackend;
@@ -213,4 +214,6 @@ pub trait WindowBackend {
 
     /// Returns if touch as mouse is enabled
     fn touch_as_mouse(&self) -> bool;
+
+    fn raw_window_handle(&self) -> Option<RawWindowHandle>;
 }

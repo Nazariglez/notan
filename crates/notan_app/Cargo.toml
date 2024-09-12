@@ -27,6 +27,7 @@ serde = { workspace = true, optional = true }
 downcast-rs = "1.2.0"
 indexmap = "2.0.2"
 futures = "0.3.28"
+raw-window-handle = "0.5.2"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 platter2 = "0.1.6"

@@ -79,6 +79,12 @@ notan_text = { workspace = true, optional = true }
 notan_audio = { workspace = true, optional = true }
 notan_extra = { workspace = true, optional = true }
 notan_random = { workspace = true, optional = true }
+raw-window-handle = "0.5.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.26.0"
+objc = "0.2.7"
+
 
 [features]
 default = ["backend", "log", "draw", "random", "glsl-to-spirv"]
@@ -329,6 +335,10 @@ required-features = ["draw"]
 [[example]]
 name = "log_basic"
 required-features = ["log"]
+
+[[example]]
+name = "raw_window_handle"
+required-features = ["draw"]
 
 [[example]]
 name = "renderer_instancing_cubes"

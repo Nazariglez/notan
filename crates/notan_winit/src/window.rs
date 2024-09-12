@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use crate::gl_manager::GlManager;
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
+use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
 use winit::dpi::{LogicalPosition, LogicalSize, PhysicalPosition};
 use winit::event_loop::EventLoop;
 use winit::window::Fullscreen::Borderless;
@@ -26,6 +27,11 @@ pub struct WinitWindowBackend {
 }
 
 impl WindowBackend for WinitWindowBackend {
+
+    fn raw_window_handle(&self) -> Option<RawWindowHandle> {
+        Some(self.window().raw_window_handle())
+    }
+
     fn capture_cursor(&self) -> bool {
         self.captured
     }
