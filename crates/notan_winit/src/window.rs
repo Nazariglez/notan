@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use crate::gl_manager::GlManager;
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
+use raw_window_handle::HasRawWindowHandle;
 use winit::dpi::{LogicalPosition, LogicalSize, PhysicalPosition};
 use winit::event_loop::EventLoop;
 use winit::window::Fullscreen::Borderless;
@@ -342,6 +343,29 @@ impl WinitWindowBackend {
         let scale_factor = gl_manager.scale_factor();
         if config.fullscreen {
             gl_manager.set_fullscreen(config.fullscreen);
+        }
+
+        if config.transparent {
+            #[cfg(target_os = "macos")]
+            unsafe {
+              use cocoa::appkit::NSWindow;
+              use cocoa::base::NO;
+              use objc::runtime::Object;
+              use objc::{msg_send, sel, sel_impl};
+              use raw_window_handle::{AppKitWindowHandle, RawWindowHandle};
+
+              match gl_manager.window.raw_window_handle() {
+                RawWindowHandle::AppKit(AppKitWindowHandle { ns_view, .. }) => {
+                  // I told you it was unsafe.
+                  let ns_view: *mut Object = ns_view as *mut Object;
+                  let ns_window: *mut Object = msg_send![ns_view, window];
+
+                  // NOTE: remove shadow to stop artifacts in transparent window
+                  ns_window.setHasShadow_(NO);
+                }
+                _ => (),
+              }
+            }
         }
 
         let WindowConfig {
