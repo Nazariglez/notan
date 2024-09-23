@@ -190,10 +190,12 @@ impl Plugin for EguiPlugin {
                 if modifiers.ctrl || modifiers.command {
                     let factor = (delta_y / 200.0).exp();
                     self.add_event(egui::Event::Zoom(factor));
-                } else if cfg!(target_os = "macos") && modifiers.shift {
-                    self.add_event(egui::Event::Scroll(egui::vec2(delta_x + delta_y, 0.0)));
                 } else {
-                    self.add_event(egui::Event::Scroll(egui::vec2(*delta_x, *delta_y)));
+                    self.add_event(egui::Event::MouseWheel {
+                        unit: egui::MouseWheelUnit::Point,
+                        delta: egui::vec2(*delta_x, *delta_y),
+                        modifiers,
+                    });
                 }
             }
             Event::MouseEnter { .. } => {}
