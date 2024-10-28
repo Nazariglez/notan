@@ -261,7 +261,7 @@ fn set_srgb_space(gl: &Context, opts: &PipelineOptions) {
 #[inline(always)]
 fn set_point_size_available(gl: &Context, opts: &PipelineOptions) {
     unsafe {
-        if opts.point_size_enabled {
+        if opts.point_size_available {
             gl.enable(glow::VERTEX_PROGRAM_POINT_SIZE);
         } else {
             gl.disable(glow::VERTEX_PROGRAM_POINT_SIZE);
