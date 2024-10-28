@@ -88,6 +88,7 @@ impl InnerPipeline {
             set_blend_mode(gl, options);
             #[cfg(not(target_arch = "wasm32"))]
             set_srgb_space(gl, options);
+            set_point_size_available(gl, options);
         }
     }
 }
@@ -253,6 +254,17 @@ fn set_srgb_space(gl: &Context, opts: &PipelineOptions) {
             gl.enable(glow::FRAMEBUFFER_SRGB);
         } else {
             gl.disable(glow::FRAMEBUFFER_SRGB);
+        }
+    }
+}
+
+#[inline(always)]
+fn set_point_size_available(gl: &Context, opts: &PipelineOptions) {
+    unsafe {
+        if opts.point_size {
+            gl.enable(glow::VERTEX_PROGRAM_POINT_SIZE);
+        } else {
+            gl.disable(glow::VERTEX_PROGRAM_POINT_SIZE);
         }
     }
 }
