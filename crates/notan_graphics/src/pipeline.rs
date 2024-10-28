@@ -164,7 +164,7 @@ impl<'a, 'b> PipelineBuilder<'a, 'b> {
 
     /// Enable the availability of gl_PointSize in the vertex shader
     pub fn with_point_size_available(mut self, enabled: bool) -> Self {
-        self.options.point_size = enabled;
+        self.options.point_size_enabled = enabled;
         self
     }
 
@@ -364,7 +364,7 @@ pub struct PipelineOptions {
     pub color_mask: ColorMask,
     pub stencil: Option<StencilOptions>,
     pub srgb_space: bool,
-    pub point_size: bool,
+    pub point_size_enabled: bool,
 }
 
 impl Default for PipelineOptions {
@@ -377,7 +377,7 @@ impl Default for PipelineOptions {
             color_mask: Default::default(),
             stencil: None,
             srgb_space: false,
-            point_size: false,
+            point_size_enabled: false,
         }
     }
 }
