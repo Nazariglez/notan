@@ -377,7 +377,7 @@ impl Default for PipelineOptions {
             color_mask: Default::default(),
             stencil: None,
             srgb_space: false,
-            point_size_available: false,
+            point_size_available: true,
         }
     }
 }
