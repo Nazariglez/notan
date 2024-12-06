@@ -319,7 +319,7 @@ impl Draw {
             if let BatchType::Text { texts } = &mut b.typ {
                 let global_matrix = *self.transform.matrix();
                 let matrix = match *info.transform() {
-                    Some(m) => *m * global_matrix,
+                    Some(m) => global_matrix * *m,
                     _ => global_matrix,
                 };
 
