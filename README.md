@@ -215,7 +215,7 @@ Here is a simple `index.html` file as an example:
         </style>
     </head>
     <body>
-        <canvas id="notan_canvas"></canvas>
+        <canvas id="notan_app"></canvas>
     </body>
 </html>
 ```
