@@ -47,7 +47,7 @@ fn decode_bytes(bytes: Vec<u8>) -> Result<(Vec<f32>, u32), String> {
     let is_stereo = decoder
         .codec_params()
         .channels
-        .map_or(false, |ch| ch.count() == 2);
+        .is_some_and(|ch| ch.count() == 2);
 
     let samples = get_samples(&mut decoder, &mut format, track_id, is_stereo)?;
     Ok((samples, sample_rate))

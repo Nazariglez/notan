@@ -307,7 +307,7 @@ impl WindowBackend for WebWindowBackend {
             .then(|| {
                 self.document
                     .active_element()
-                    .map_or(false, |el| el.id() == self.canvas.id())
+                    .is_some_and(|el| el.id() == self.canvas.id())
             })
             .unwrap_or(false)
     }

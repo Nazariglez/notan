@@ -59,7 +59,7 @@ where
     }
 }
 
-impl<'a, T> DrawBuilder<'a, T>
+impl<T> DrawBuilder<'_, T>
 where
     T: DrawProcess + DrawTransform,
 {

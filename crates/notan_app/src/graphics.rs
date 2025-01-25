@@ -103,13 +103,13 @@ impl Graphics {
 
     /// Update the texture data
     #[inline]
-    pub fn update_texture<'a>(&'a mut self, texture: &'a mut Texture) -> TextureUpdater {
+    pub fn update_texture<'a>(&'a mut self, texture: &'a mut Texture) -> TextureUpdater<'a> {
         self.device.update_texture(texture)
     }
 
     /// Read pixels from a texture
     #[inline]
-    pub fn read_pixels<'a>(&'a mut self, texture: &'a Texture) -> TextureReader {
+    pub fn read_pixels<'a>(&'a mut self, texture: &'a Texture) -> TextureReader<'a> {
         self.device.read_pixels(texture)
     }
 
