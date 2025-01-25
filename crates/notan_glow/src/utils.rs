@@ -17,12 +17,12 @@ pub(crate) fn create_gl_context(
 
 #[cfg(target_arch = "wasm32")]
 fn webgl_options(antialias: bool, transparent: bool) -> web_sys::WebGlContextAttributes {
-    let mut opts = web_sys::WebGlContextAttributes::new();
-    opts.stencil(true);
-    opts.premultiplied_alpha(false);
-    opts.alpha(transparent);
-    opts.antialias(antialias);
-    opts.power_preference(web_sys::WebGlPowerPreference::HighPerformance);
+    let opts = web_sys::WebGlContextAttributes::new();
+    opts.set_stencil(true);
+    opts.set_premultiplied_alpha(false);
+    opts.set_alpha(transparent);
+    opts.set_antialias(antialias);
+    opts.set_power_preference(web_sys::WebGlPowerPreference::HighPerformance);
     opts
 }
 

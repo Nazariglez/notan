@@ -52,15 +52,14 @@ pub fn enable_clipboard(win: &mut WebWindowBackend) -> Result<(), String> {
 
 pub fn set_clipboard_text(text: &str) {
     if let Some(window) = web_sys::window() {
-        if let Some(clipboard) = window.navigator().clipboard() {
-            let promise = clipboard.write_text(text);
-            let future = wasm_bindgen_futures::JsFuture::from(promise);
-            let future = async move {
-                if let Err(err) = future.await {
-                    log::error!("failed to set text on clipboard: {:?}", err);
-                }
-            };
-            wasm_bindgen_futures::spawn_local(future);
-        }
+        let clipboard = window.navigator().clipboard();
+        let promise = clipboard.write_text(text);
+        let future = wasm_bindgen_futures::JsFuture::from(promise);
+        let future = async move {
+            if let Err(err) = future.await {
+                log::error!("failed to set text on clipboard: {:?}", err);
+            }
+        };
+        wasm_bindgen_futures::spawn_local(future);
     }
 }

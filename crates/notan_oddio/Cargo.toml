@@ -15,6 +15,6 @@ notan_audio.workspace = true
 log.workspace = true
 hashbrown.workspace = true
 
-cpal = { version = "0.15.2", features = ["wasm-bindgen"] }
+cpal = { version = "0.15.3", features = ["wasm-bindgen"] }
 oddio = "0.6.2"
-symphonia = { version = "0.5.3", features = ["mp3"] }
+symphonia = { version = "0.5.4", features = ["mp3"] }

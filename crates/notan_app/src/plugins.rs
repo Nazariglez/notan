@@ -136,7 +136,7 @@ impl Plugins {
 
     /// Remove the plugin of the type passed
     pub fn remove<T: Plugin + 'static>(&mut self) {
-        self.map.remove(&TypeId::of::<T>());
+        self.map.shift_remove(&TypeId::of::<T>());
     }
 
     /// Returns the plugin of the type passed
