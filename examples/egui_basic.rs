@@ -17,7 +17,6 @@ fn main() -> Result<(), String> {
 
 fn draw(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins) {
     let mut output = plugins.egui(|ctx| {
-        // ctx.set_zoom_factor(10.0);
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
             ui.heading("Egui Plugin Example");
 
