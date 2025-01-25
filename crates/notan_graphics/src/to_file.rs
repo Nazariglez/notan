@@ -35,7 +35,7 @@ pub(crate) fn save_to_png_file<P: AsRef<std::path::Path>>(
     let mut data = vec![];
     let encoder = image::codecs::png::PngEncoder::new(&mut data);
     encoder
-        .write_image(&bytes, width as _, height as _, typ)
+        .write_image(&bytes, width as _, height as _, typ.into())
         .map_err(|e| e.to_string())?;
 
     save_file(p, &data)

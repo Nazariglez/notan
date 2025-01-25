@@ -12,7 +12,7 @@ description = "Provides simple set of math's utils for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-glam = { version = "0.24.2", features = ["bytemuck"] }
+glam = { version = "0.29", features = ["bytemuck"] }
 serde = { workspace = true, optional = true }
 
 [features]

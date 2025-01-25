@@ -40,7 +40,7 @@ fn invalid_tex_size(max_size: u32, info: &TextureInfo) -> bool {
 
 fn image_load_from_memory(buffer: &[u8]) -> Result<image::DynamicImage, String> {
     let format = image::guess_format(buffer).map_err(|e| e.to_string())?;
-    let mut reader = image::io::Reader::with_format(std::io::Cursor::new(buffer), format);
+    let mut reader = image::ImageReader::with_format(std::io::Cursor::new(buffer), format);
     // TODO allow to pass the limit from a config by the user
     reader.no_limits();
     reader.decode().map_err(|e| e.to_string())

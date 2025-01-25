@@ -20,7 +20,7 @@ bytemuck.workspace = true
 parking_lot.workspace = true
 image = { workspace = true, optional = true }
 
-crevice_notan = { version = "0.13.0", features = ["glam"] }
+crevice_notan = { version = "0.14.1" }
 serde = { workspace = true, optional = true }
 
 [features]

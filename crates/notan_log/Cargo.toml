@@ -16,7 +16,7 @@ notan_app.workspace = true
 
 log.workspace = true
 
-fern = { version = "0.6.2", features = ["colored"] }
+fern = { version = "0.7.1", features = ["colored"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 time = { version = "0.3.37", features = ["formatting", "local-offset"] }
