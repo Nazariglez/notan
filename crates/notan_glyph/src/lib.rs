@@ -214,7 +214,7 @@ impl<F: Font + Sync, H: BuildHasher> GlyphBrush<F, H> {
         &'a mut self,
         device: &'a mut Device,
         pipeline: &'a mut dyn GlyphPipeline,
-    ) -> RenderQueueBuilder<F, H> {
+    ) -> RenderQueueBuilder<'a, F, H> {
         RenderQueueBuilder::new(self, device, pipeline)
     }
 

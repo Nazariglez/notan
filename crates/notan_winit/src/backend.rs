@@ -120,7 +120,7 @@ impl BackendSystem for WinitBackend {
                 let b = backend(&mut app.backend);
 
                 // Await for the next event to run the loop again
-                let is_lazy = b.window.as_ref().map_or(false, |w| w.lazy);
+                let is_lazy = b.window.as_ref().is_some_and(|w| w.lazy);
 
                 match event {
                     WEvent::WindowEvent { ref event, .. } => {
