@@ -22,6 +22,7 @@ fn webgl_options(antialias: bool, transparent: bool) -> web_sys::WebGlContextAtt
     opts.premultiplied_alpha(false);
     opts.alpha(transparent);
     opts.antialias(antialias);
+    opts.power_preference(web_sys::WebGlPowerPreference::HighPerformance);
     opts
 }
 

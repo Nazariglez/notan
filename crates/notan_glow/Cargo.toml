@@ -24,4 +24,4 @@ glow = "0.12.3"
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen.workspace = true
 js-sys.workspace = true
-web-sys = { workspace = true, features = ["Window", "WebGlContextAttributes","HtmlCanvasElement","HtmlImageElement"] }
+web-sys = { workspace = true, features = ["Window", "WebGlContextAttributes", "WebGlPowerPreference", "HtmlCanvasElement","HtmlImageElement"] }

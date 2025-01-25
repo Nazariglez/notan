@@ -52,6 +52,8 @@ impl EguiPlugin {
             viewport_output,
         } = self.ctx.run(new_input, run_ui);
 
+        println!("pixels per point {pixels_per_point}");
+
         let needs_update_textures = !textures_delta.is_empty();
         let needs_repaint = viewport_output
             .values()
