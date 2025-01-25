@@ -24,7 +24,7 @@ hashbrown.workspace = true
 parking_lot.workspace = true
 serde = { workspace = true, optional = true }
 
-downcast-rs = "1.2.1"
+downcast-rs = "2.0.1"
 indexmap = "2.7.1"
 futures = "0.3.31"
 

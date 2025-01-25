@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## v0.13.0 - UNRELEASED
+
 ## v0.12.1 - 08/06/2024
 
 - Updated EGUI to `0.27`.
