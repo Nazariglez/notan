@@ -15,5 +15,5 @@ description = "Provides extra features or plugins for Notan"
 notan_app.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-spin_sleep = "1.1.1"
+spin_sleep = "1.3.0"
 

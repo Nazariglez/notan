@@ -21,7 +21,7 @@ log.workspace = true
 parking_lot.workspace = true
 hashbrown.workspace = true
 
-lazy_static = "1.4.0"
+lazy_static = "1.5.0"
 
 [features]
 glsl-to-spirv = ["notan_glyph/glsl-to-spirv"]

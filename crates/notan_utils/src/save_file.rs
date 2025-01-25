@@ -26,11 +26,11 @@ pub fn save_file<P: AsRef<Path>>(path: P, bytes: &[u8]) -> Result<(), String> {
     let array = Array::new();
     array.push(&u8_buff.buffer());
 
-    let blob = web_sys::Blob::new_with_u8_array_sequence_and_options(
-        &array,
-        web_sys::BlobPropertyBag::new().type_(&mime),
-    )
-    .map_err(|_| "Cannot create a blob from file".to_string())?;
+    let blob_property = web_sys::BlobPropertyBag::new();
+    blob_property.set_type(&mime);
+
+    let blob = web_sys::Blob::new_with_u8_array_sequence_and_options(&array, &blob_property)
+        .map_err(|_| "Cannot create a blob from file".to_string())?;
 
     let url = web_sys::Url::create_object_url_with_blob(&blob)
         .map_err(|_| "Cannot create a blob from file".to_string())?;
