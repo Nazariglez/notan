@@ -182,7 +182,7 @@ pub(crate) unsafe fn create_texture(
         0,
         format,
         texture_type(&info.format),
-        data,
+        PixelUnpackData::Slice(data),
     );
 
     post_create_texture(gl, info);

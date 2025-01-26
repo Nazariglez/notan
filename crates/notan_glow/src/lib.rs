@@ -575,7 +575,7 @@ impl DeviceBackend for GlowBackend {
                                 opts.height as _,
                                 texture_format(&opts.format),
                                 texture_type(&opts.format),
-                                PixelUnpackData::Slice(bytes),
+                                PixelUnpackData::Slice(Some(bytes)),
                             );
                         }
                         TextureUpdaterSourceKind::Raw(source) => source.update(self, opts)?,
@@ -629,7 +629,7 @@ impl DeviceBackend for GlowBackend {
                         opts.height as _,
                         texture_format(&opts.format),
                         texture_type(&opts.format),
-                        glow::PixelPackData::Slice(bytes),
+                        glow::PixelPackData::Slice(Some(bytes)),
                     );
 
                     clean();
