@@ -19,7 +19,7 @@ bytemuck.workspace = true
 hashbrown.workspace = true
 image.workspace = true
 
-glow = "0.12.3"
+glow = "0.16.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen.workspace = true
