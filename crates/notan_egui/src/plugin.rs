@@ -41,7 +41,7 @@ impl EguiPlugin {
         self.raw_input.events.push(evt);
     }
 
-    pub fn run(&mut self, run_ui: impl FnOnce(&egui::Context)) -> Output {
+    pub fn run(&mut self, run_ui: impl FnMut(&egui::Context)) -> Output {
         let new_input = self.raw_input.take();
 
         let egui::FullOutput {
@@ -417,11 +417,11 @@ fn is_printable(chr: char, modifiers: &egui::Modifiers) -> bool {
 }
 
 pub trait EguiPluginSugar {
-    fn egui(&mut self, run_ui: impl FnOnce(&egui::Context)) -> Output;
+    fn egui(&mut self, run_ui: impl FnMut(&egui::Context)) -> Output;
 }
 
 impl EguiPluginSugar for Plugins {
-    fn egui(&mut self, run_ui: impl FnOnce(&Context)) -> Output {
+    fn egui(&mut self, run_ui: impl FnMut(&Context)) -> Output {
         let mut ext = self.get_mut::<EguiPlugin>().unwrap();
         ext.run(run_ui)
     }
