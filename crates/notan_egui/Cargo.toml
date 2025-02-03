@@ -19,7 +19,7 @@ notan_macro.workspace = true
 log.workspace = true
 bytemuck.workspace = true
 
-egui = { version = "0.28.1", features = ["bytemuck"] }
+egui = { version = "0.29.1", features = ["bytemuck"] }
 
 [features]
 links = []

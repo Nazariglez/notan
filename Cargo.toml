@@ -107,7 +107,7 @@ features = ["default", "glyph", "egui", "text", "extra", "audio", "links", "drop
 lto = true
 
 [dev-dependencies]
-egui_demo_lib = "0.28.1"
+egui_demo_lib = "0.29.1"
 bytemuck = "1.21.0"
 
 [[example]]
