@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use notan::egui::{self, *};
 use notan::prelude::*;
 
@@ -42,7 +44,7 @@ fn setup(ctx: &egui::Context) {
     // .ttf and .otf files supported.
     fonts.font_data.insert(
         "my_font".to_owned(),
-        egui::FontData::from_static(include_bytes!("./assets/Ubuntu-B.ttf")),
+        Arc::new(egui::FontData::from_static(include_bytes!("./assets/Ubuntu-B.ttf"))),
     );
 
     // Put my font first (highest priority) for proportional text:
