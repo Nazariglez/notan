@@ -52,8 +52,6 @@ impl EguiPlugin {
             viewport_output,
         } = self.ctx.run(new_input, run_ui);
 
-        println!("pixels per point {pixels_per_point}");
-
         let needs_update_textures = !textures_delta.is_empty();
         let needs_repaint = viewport_output
             .values()
@@ -326,9 +324,7 @@ impl Plugin for EguiPlugin {
         if let Some(platform_output) = self.platform_output.take() {
             let egui::PlatformOutput {
                 cursor_icon,
-                open_url,
-
-                copied_text,
+                commands,
                 ..
             } = platform_output;
 
@@ -340,21 +336,24 @@ impl Plugin for EguiPlugin {
                 }
             }
 
-            #[cfg(not(feature = "links"))]
-            let _ = open_url;
-
-            #[cfg(feature = "links")]
-            if let Some(OpenUrl { url, new_tab }) = open_url {
-                if new_tab {
-                    app.open_link_new_tab(&url);
-                } else {
-                    app.open_link(&url);
+            commands.iter().for_each(|cmd| match cmd {
+                egui::OutputCommand::CopyText(copied_text) => {
+                    if !copied_text.is_empty() {
+                        app.backend.set_clipboard_text(copied_text);
+                    }
                 }
-            }
 
-            if !copied_text.is_empty() {
-                app.backend.set_clipboard_text(&copied_text);
-            }
+                #[cfg(feature = "links")]
+                egui::OutputCommand::OpenUrl(OpenUrl { url, new_tab }) => {
+                    if *new_tab {
+                        app.open_link_new_tab(url);
+                    } else {
+                        app.open_link(url);
+                    }
+                }
+
+                _ => {}
+            });
         }
 
         self.needs_repaint = false;
