@@ -264,12 +264,13 @@ impl EguiExtension {
         meshes: Vec<egui::ClippedPrimitive>,
         textures_delta: &egui::TexturesDelta,
         target: Option<&RenderTexture>,
+        zoom_factor: f32,
     ) -> Result<(), String> {
         for (id, image_delta) in &textures_delta.set {
             self.set_texture(device, *id, image_delta)?;
         }
 
-        self.paint_primitives(device, meshes, target)?;
+        self.paint_primitives(device, meshes, target, zoom_factor)?;
 
         for &id in &textures_delta.free {
             self.free_texture(id);
@@ -283,6 +284,7 @@ impl EguiExtension {
         device: &mut Device,
         meshes: Vec<egui::ClippedPrimitive>,
         target: Option<&RenderTexture>,
+        zoom_factor: f32,
     ) -> Result<(), String> {
         let (width, height) = target.map_or(device.size(), |rt| {
             (rt.base_width() as _, rt.base_height() as _)
@@ -295,7 +297,13 @@ impl EguiExtension {
         {
             match primitive {
                 Primitive::Mesh(mesh) => {
-                    self.paint_mesh(device, *clip_rect, mesh, target)?;
+                    self.paint_mesh(
+                        device,
+                        zoom_factor * (*clip_rect),
+                        mesh,
+                        target,
+                        zoom_factor,
+                    )?;
                 }
                 Primitive::Callback(callback) => {
                     let rect = Rect {
@@ -305,8 +313,8 @@ impl EguiExtension {
 
                     if callback.rect.is_positive() {
                         let info = egui::PaintCallbackInfo {
-                            viewport: callback.rect,
-                            clip_rect: rect,
+                            viewport: zoom_factor * callback.rect,
+                            clip_rect: zoom_factor * rect,
                             pixels_per_point: device.dpi() as _,
                             screen_size_px: [width as _, height as _],
                         };
@@ -331,6 +339,7 @@ impl EguiExtension {
         clip_rect: egui::Rect,
         primitive: &egui::Mesh,
         target: Option<&RenderTexture>,
+        zoom_factor: f32,
     ) -> Result<(), String> {
         let (width_in_pixels, height_in_pixels) = target.map_or(device.size(), |rt| {
             (rt.base_width() as _, rt.base_height() as _)
@@ -344,7 +353,11 @@ impl EguiExtension {
         let is_srgb_texture = matches!(texture.format(), TextureFormat::SRgba8);
         let srgb_enabled = cfg!(target_arch = "wasm32") && is_srgb_texture;
         let srgb_as_float = if srgb_enabled { 1.0 } else { 0.0 };
-        let uniforms: [f32; 3] = [width_in_pixels as _, height_in_pixels as _, srgb_as_float];
+        let uniforms: [f32; 3] = [
+            (width_in_pixels as f32) / zoom_factor,
+            (height_in_pixels as f32) / zoom_factor,
+            srgb_as_float,
+        ];
         device.set_buffer_data(&self.ubo, &uniforms);
 
         let vertices: &[f32] = bytemuck::cast_slice(&primitive.vertices);
