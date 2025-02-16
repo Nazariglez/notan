@@ -117,7 +117,13 @@ impl GfxRenderer for Output {
             }
 
             let meshes = self.ctx.tessellate(shapes, pixels_per_point);
-            ext.paint_and_update_textures(device, meshes, &self.textures_delta, target)?;
+            ext.paint_and_update_textures(
+                device,
+                meshes,
+                &self.textures_delta,
+                target,
+                self.ctx.zoom_factor(),
+            )?;
         }
 
         Ok(())
@@ -299,10 +305,7 @@ impl Plugin for EguiPlugin {
 
     fn update(&mut self, app: &mut App, _assets: &mut Assets) -> Result<AppFlow, String> {
         let dpi = app.window().dpi() as f32;
-        if dpi != self.pixels_per_point {
-            self.pixels_per_point = dpi;
-            self.ctx.set_pixels_per_point(self.pixels_per_point);
-        }
+        self.pixels_per_point = dpi * self.ctx.zoom_factor();
 
         self.raw_input.time = Some(app.timer.elapsed_f32() as _);
         self.raw_input.predicted_dt = app.timer.delta_f32();
@@ -310,7 +313,7 @@ impl Plugin for EguiPlugin {
         let (w, h) = app.window().size();
         self.raw_input.screen_rect = Some(egui::Rect {
             min: egui::pos2(0.0, 0.0),
-            max: egui::pos2(w as _, h as _),
+            max: egui::pos2(w as _, h as _) / self.ctx.zoom_factor(),
         });
         Ok(AppFlow::Next)
     }
