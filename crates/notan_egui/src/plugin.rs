@@ -24,8 +24,12 @@ pub struct EguiPlugin {
 #[allow(clippy::derivable_impls)]
 impl Default for EguiPlugin {
     fn default() -> Self {
+        let ctx: egui::Context = Default::default();
+        if cfg!(target_arch = "wasm32") {
+            ctx.options_mut(|opt| opt.zoom_with_keyboard = false);
+        }
         Self {
-            ctx: Default::default(),
+            ctx,
             raw_input: Default::default(),
             platform_output: Default::default(),
             latest_evt_was_touch: Default::default(),
@@ -306,6 +310,13 @@ impl Plugin for EguiPlugin {
     fn update(&mut self, app: &mut App, _assets: &mut Assets) -> Result<AppFlow, String> {
         let dpi = app.window().dpi() as f32;
         self.pixels_per_point = dpi * self.ctx.zoom_factor();
+        if let Some(viewport) = self
+            .raw_input
+            .viewports
+            .get_mut(&self.raw_input.viewport_id)
+        {
+            viewport.native_pixels_per_point = Some(dpi);
+        }
 
         self.raw_input.time = Some(app.timer.elapsed_f32() as _);
         self.raw_input.predicted_dt = app.timer.delta_f32();
