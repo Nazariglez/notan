@@ -209,8 +209,8 @@ Here is a simple `index.html` file as an example:
 
             body {
                 display: flex;
-                align-items: center;
-                justify-content: center;
+                align-items: safe center;
+                justify-content: safe center;
             }
         </style>
     </head>
