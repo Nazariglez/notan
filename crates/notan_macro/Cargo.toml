@@ -12,7 +12,7 @@ description = "Provides a set of utils as macros for Notan"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-syn = { version = "2.0.96", features = ["full", "extra-traits"] }
+syn = { version = "2.0.98", features = ["full", "extra-traits"] }
 quote = "1.0.38"
 num = "0.4.3"
 glsl-to-spirv = { version = "0.1.7", optional = true }
