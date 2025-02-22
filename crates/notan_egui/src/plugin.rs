@@ -134,6 +134,16 @@ impl GfxRenderer for Output {
     }
 }
 
+impl EguiPlugin {
+    fn egui_mouse_pos(&self, app: &App) -> egui::Pos2 {
+        self.egui_pos(app.mouse.x, app.mouse.y)
+    }
+
+    fn egui_pos(&self, x: f32, y: f32) -> egui::Pos2 {
+        egui::Pos2::new(x, y) / self.ctx.zoom_factor()
+    }
+}
+
 impl Plugin for EguiPlugin {
     fn event(
         &mut self,
@@ -168,14 +178,13 @@ impl Plugin for EguiPlugin {
             Event::ScreenAspectChange { .. } => {
                 self.ctx.request_repaint();
             }
-            Event::MouseMove { .. } => self.add_event(egui::Event::PointerMoved(egui::Pos2::new(
-                app.mouse.x,
-                app.mouse.y,
-            ))),
+            Event::MouseMove { .. } => {
+                self.add_event(egui::Event::PointerMoved(self.egui_mouse_pos(&app)))
+            }
             Event::MouseDown { button, .. } => {
                 if let Some(btn) = to_egui_pointer(button) {
                     self.add_event(egui::Event::PointerButton {
-                        pos: egui::Pos2::new(app.mouse.x, app.mouse.y),
+                        pos: self.egui_mouse_pos(&app),
                         button: btn,
                         pressed: true,
                         modifiers,
@@ -185,7 +194,7 @@ impl Plugin for EguiPlugin {
             Event::MouseUp { button, .. } => {
                 if let Some(btn) = to_egui_pointer(button) {
                     self.add_event(egui::Event::PointerButton {
-                        pos: egui::Pos2::new(app.mouse.x, app.mouse.y),
+                        pos: self.egui_mouse_pos(&app),
                         button: btn,
                         pressed: false,
                         modifiers,
@@ -203,7 +212,7 @@ impl Plugin for EguiPlugin {
                 } else {
                     self.add_event(egui::Event::MouseWheel {
                         unit: egui::MouseWheelUnit::Point,
-                        delta: egui::vec2(*delta_x, *delta_y),
+                        delta: self.egui_pos(*delta_x, *delta_y).to_vec2(),
                         modifiers,
                     });
                 }
@@ -268,14 +277,14 @@ impl Plugin for EguiPlugin {
                 device_id: egui::TouchDeviceId(0),
                 id: egui::TouchId(*id),
                 phase: egui::TouchPhase::Start,
-                pos: (*x, *y).into(),
+                pos: self.egui_pos(*x, *y),
                 force: Some(0.0),
             }),
             Event::TouchMove { id, x, y } => self.add_event(egui::Event::Touch {
                 device_id: egui::TouchDeviceId(0),
                 id: egui::TouchId(*id),
                 phase: egui::TouchPhase::Move,
-                pos: (*x, *y).into(),
+                pos: self.egui_pos(*x, *y),
                 force: Some(0.0),
             }),
             Event::TouchEnd { id, x, y } => {
@@ -283,7 +292,7 @@ impl Plugin for EguiPlugin {
                     device_id: egui::TouchDeviceId(0),
                     id: egui::TouchId(*id),
                     phase: egui::TouchPhase::End,
-                    pos: (*x, *y).into(),
+                    pos: self.egui_pos(*x, *y),
                     force: Some(0.0),
                 });
 
@@ -294,7 +303,7 @@ impl Plugin for EguiPlugin {
                     device_id: egui::TouchDeviceId(0),
                     id: egui::TouchId(*id),
                     phase: egui::TouchPhase::Cancel,
-                    pos: (*x, *y).into(),
+                    pos: self.egui_pos(*x, *y),
                     force: Some(0.0),
                 });
                 is_touch_end = true;
