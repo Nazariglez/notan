@@ -47,7 +47,8 @@ impl InnerBuffer {
 
         #[cfg(target_arch = "wasm32")]
         let global_ubo = if matches!(kind, Kind::Uniform(_, _)) {
-            let max = unsafe { gl.get_parameter_i32(glow::MAX_UNIFORM_BLOCK_SIZE) } as usize;
+            let max = (unsafe { gl.get_parameter_i32(glow::MAX_UNIFORM_BLOCK_SIZE) } as usize)
+                .min(1 << 16);
 
             Some(vec![0; max])
         } else {
