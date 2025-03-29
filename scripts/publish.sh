@@ -3,11 +3,11 @@
 # if crate A depends on crate B, B must come before A in this list
 crates=(
   notan_core
+  notan_math
   notan_input
   notan_audio
   notan_random
   notan_utils
-  notan_math
   notan_macro
   notan_graphics
   notan_app
