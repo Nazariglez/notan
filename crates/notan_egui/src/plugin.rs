@@ -179,12 +179,12 @@ impl Plugin for EguiPlugin {
                 self.ctx.request_repaint();
             }
             Event::MouseMove { .. } => {
-                self.add_event(egui::Event::PointerMoved(self.egui_mouse_pos(&app)))
+                self.add_event(egui::Event::PointerMoved(self.egui_mouse_pos(app)))
             }
             Event::MouseDown { button, .. } => {
                 if let Some(btn) = to_egui_pointer(button) {
                     self.add_event(egui::Event::PointerButton {
-                        pos: self.egui_mouse_pos(&app),
+                        pos: self.egui_mouse_pos(app),
                         button: btn,
                         pressed: true,
                         modifiers,
@@ -194,7 +194,7 @@ impl Plugin for EguiPlugin {
             Event::MouseUp { button, .. } => {
                 if let Some(btn) = to_egui_pointer(button) {
                     self.add_event(egui::Event::PointerButton {
-                        pos: self.egui_mouse_pos(&app),
+                        pos: self.egui_mouse_pos(app),
                         button: btn,
                         pressed: false,
                         modifiers,
