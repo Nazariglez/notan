@@ -26,7 +26,7 @@ fn mouse_button_to_nae(btn: i16) -> MouseButton {
         0 => MouseButton::Left,
         1 => MouseButton::Middle,
         2 => MouseButton::Right,
-        n => MouseButton::Other(n as u8),
+        n => MouseButton::Other(n as u16),
     }
 }
 

@@ -251,6 +251,10 @@ name = "egui_basic"
 required-features = ["egui"]
 
 [[example]]
+name = "egui_custom_font"
+required-features = ["egui"]
+
+[[example]]
 name = "egui_demo"
 required-features = ["egui", "links"]
 

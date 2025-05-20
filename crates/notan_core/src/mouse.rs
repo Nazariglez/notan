@@ -5,5 +5,7 @@ pub enum MouseButton {
     Left,
     Right,
     Middle,
-    Other(u8),
+    Back,
+    Forward,
+    Other(u16),
 }

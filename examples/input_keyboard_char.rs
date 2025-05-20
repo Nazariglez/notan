@@ -31,7 +31,7 @@ fn setup(gfx: &mut Graphics) -> State {
 
 fn event(state: &mut State, event: Event) {
     match event {
-        Event::ReceivedCharacter(c) if c != '\u{7f}' => {
+        Event::ReceivedCharacter(c) if c != '\u{7f}' && c != '\u{8}' => {
             state.msg.push(c);
         }
         _ => {}
@@ -39,7 +39,7 @@ fn event(state: &mut State, event: Event) {
 }
 
 fn update(app: &mut App, state: &mut State) {
-    if app.keyboard.was_pressed(KeyCode::Back) && !state.msg.is_empty() {
+    if app.keyboard.was_pressed(KeyCode::Backspace) && !state.msg.is_empty() {
         state.msg.pop();
     }
 }

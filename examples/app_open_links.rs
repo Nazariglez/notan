@@ -23,9 +23,9 @@ fn setup(gfx: &mut Graphics) -> State {
 }
 
 fn update(app: &mut App) {
-    if app.keyboard.was_pressed(KeyCode::N) {
+    if app.keyboard.was_pressed(KeyCode::KeyN) {
         app.open_link("https://github.com/Nazariglez/notan");
-    } else if app.keyboard.was_pressed(KeyCode::R) {
+    } else if app.keyboard.was_pressed(KeyCode::KeyR) {
         app.open_link("https://www.rust-lang.org");
     }
 }
