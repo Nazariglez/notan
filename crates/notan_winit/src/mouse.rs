@@ -78,6 +78,8 @@ fn mouse_button_to_nae(btn: &WMouseButton) -> MouseButton {
         WMouseButton::Left => MouseButton::Left,
         WMouseButton::Right => MouseButton::Right,
         WMouseButton::Middle => MouseButton::Middle,
-        WMouseButton::Other(n) => MouseButton::Other(*n as _),
+        WMouseButton::Back => MouseButton::Back,
+        WMouseButton::Forward => MouseButton::Forward,
+        WMouseButton::Other(n) => MouseButton::Other(*n),
     }
 }

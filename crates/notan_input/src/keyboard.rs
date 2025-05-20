@@ -46,25 +46,25 @@ impl Keyboard {
     #[inline]
     /// returns true if any control key is down
     pub fn ctrl(&self) -> bool {
-        self.is_down(KeyCode::RControl) || self.is_down(KeyCode::LControl)
+        self.is_down(KeyCode::ControlRight) || self.is_down(KeyCode::ControlLeft)
     }
 
     #[inline]
     /// returns true if any alt key is down
     pub fn alt(&self) -> bool {
-        self.is_down(KeyCode::RAlt) || self.is_down(KeyCode::LAlt)
+        self.is_down(KeyCode::AltRight) || self.is_down(KeyCode::AltLeft)
     }
 
     #[inline]
     /// returns true if any shift key is down
     pub fn shift(&self) -> bool {
-        self.is_down(KeyCode::RShift) || self.is_down(KeyCode::LShift)
+        self.is_down(KeyCode::ShiftRight) || self.is_down(KeyCode::ShiftLeft)
     }
 
     #[inline]
     /// returns true if any logo (win or command) key is down
     pub fn logo(&self) -> bool {
-        self.is_down(KeyCode::RWin) || self.is_down(KeyCode::LWin)
+        self.is_down(KeyCode::SuperRight) || self.is_down(KeyCode::SuperLeft)
     }
 
     pub(crate) fn clear(&mut self) {

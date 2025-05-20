@@ -221,10 +221,10 @@ fn xy(index: usize) -> (usize, usize) {
 }
 
 fn change_direction(keyboard: &Keyboard, state: &mut State) {
-    let up = keyboard.was_pressed(KeyCode::W) || keyboard.was_pressed(KeyCode::Up);
-    let down = keyboard.was_pressed(KeyCode::S) || keyboard.was_pressed(KeyCode::Down);
-    let left = keyboard.was_pressed(KeyCode::A) || keyboard.was_pressed(KeyCode::Left);
-    let right = keyboard.was_pressed(KeyCode::D) || keyboard.was_pressed(KeyCode::Right);
+    let up = keyboard.was_pressed(KeyCode::KeyW) || keyboard.was_pressed(KeyCode::ArrowUp);
+    let down = keyboard.was_pressed(KeyCode::KeyS) || keyboard.was_pressed(KeyCode::ArrowDown);
+    let left = keyboard.was_pressed(KeyCode::KeyA) || keyboard.was_pressed(KeyCode::ArrowLeft);
+    let right = keyboard.was_pressed(KeyCode::KeyD) || keyboard.was_pressed(KeyCode::ArrowRight);
 
     if up && state.dir != Direction::Down {
         state.dir = Direction::Up;

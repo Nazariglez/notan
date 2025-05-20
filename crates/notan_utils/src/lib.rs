@@ -4,4 +4,4 @@ mod save_file;
 #[cfg(feature = "save_file")]
 pub use save_file::*;
 
-pub use instant::{Duration, Instant};
+pub use web_time::{Duration, Instant};

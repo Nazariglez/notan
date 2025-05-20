@@ -26,10 +26,13 @@ fn main() -> Result<(), String> {
 fn update(app: &mut App, state: &mut State) {
     state.time += app.timer.delta_f32();
 
-    let down = app.keyboard.was_pressed(KeyCode::Down) || app.keyboard.was_pressed(KeyCode::S);
-    let up = app.keyboard.was_pressed(KeyCode::Up) || app.keyboard.was_pressed(KeyCode::W);
-    let left = app.keyboard.was_pressed(KeyCode::Left) || app.keyboard.was_pressed(KeyCode::A);
-    let right = app.keyboard.was_pressed(KeyCode::Right) || app.keyboard.was_pressed(KeyCode::D);
+    let down =
+        app.keyboard.was_pressed(KeyCode::ArrowDown) || app.keyboard.was_pressed(KeyCode::KeyS);
+    let up = app.keyboard.was_pressed(KeyCode::ArrowUp) || app.keyboard.was_pressed(KeyCode::KeyW);
+    let left =
+        app.keyboard.was_pressed(KeyCode::ArrowLeft) || app.keyboard.was_pressed(KeyCode::KeyA);
+    let right =
+        app.keyboard.was_pressed(KeyCode::ArrowRight) || app.keyboard.was_pressed(KeyCode::KeyD);
 
     if down {
         state.move_to(MoveTo::Down);

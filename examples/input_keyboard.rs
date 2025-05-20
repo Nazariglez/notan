@@ -36,19 +36,19 @@ fn setup(gfx: &mut Graphics) -> State {
 fn update(app: &mut App, state: &mut State) {
     state.last_key = app.keyboard.last_key_released();
 
-    if app.keyboard.is_down(KeyCode::W) {
+    if app.keyboard.is_down(KeyCode::KeyW) {
         state.y -= MOVE_SPEED * app.timer.delta_f32();
     }
 
-    if app.keyboard.is_down(KeyCode::A) {
+    if app.keyboard.is_down(KeyCode::KeyA) {
         state.x -= MOVE_SPEED * app.timer.delta_f32();
     }
 
-    if app.keyboard.is_down(KeyCode::S) {
+    if app.keyboard.is_down(KeyCode::KeyS) {
         state.y += MOVE_SPEED * app.timer.delta_f32();
     }
 
-    if app.keyboard.is_down(KeyCode::D) {
+    if app.keyboard.is_down(KeyCode::KeyD) {
         state.x += MOVE_SPEED * app.timer.delta_f32();
     }
 }

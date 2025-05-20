@@ -6,9 +6,7 @@ use notan_app::{CursorIcon, WindowBackend};
 use winit::dpi::{LogicalPosition, LogicalSize, PhysicalPosition};
 use winit::event_loop::EventLoop;
 use winit::window::Fullscreen::Borderless;
-use winit::window::{
-    CursorGrabMode, CursorIcon as WCursorIcon, Icon, Window, WindowBuilder, WindowLevel,
-};
+use winit::window::{CursorGrabMode, CursorIcon as WCursorIcon, Icon, Window, WindowLevel};
 
 pub struct WinitWindowBackend {
     pub(crate) gl_manager: GlManager,
@@ -129,7 +127,7 @@ impl WindowBackend for WinitWindowBackend {
                 }
                 Some(icon) => {
                     self.window().set_cursor_visible(true);
-                    self.window().set_cursor_icon(icon);
+                    self.window().set_cursor(icon);
                 }
             }
         }
@@ -176,8 +174,9 @@ impl WindowBackend for WinitWindowBackend {
     }
 
     fn set_size(&mut self, width: u32, height: u32) {
-        self.window()
-            .set_inner_size(LogicalSize::new(width, height));
+        let _ = self
+            .window()
+            .request_inner_size(LogicalSize::new(width, height));
     }
 
     fn set_visible(&mut self, visible: bool) {
@@ -259,7 +258,7 @@ impl WinitWindowBackend {
         } else {
             WindowLevel::Normal
         };
-        let mut builder = WindowBuilder::new()
+        let mut builder = Window::default_attributes()
             .with_title(&config.title)
             .with_inner_size(LogicalSize::new(config.width, config.height))
             .with_maximized(config.maximized)
@@ -296,7 +295,7 @@ impl WinitWindowBackend {
             target_os = "openbsd"
         ))]
         {
-            use winit::platform::wayland::WindowBuilderExtWayland;
+            use winit::platform::wayland::WindowAttributesExtWayland;
             builder = builder.with_name(config.app_id.clone(), config.app_id.clone());
         }
 
@@ -388,7 +387,7 @@ fn winit_cursor(cursor: CursorIcon) -> Option<WCursorIcon> {
         CursorIcon::Default => WCursorIcon::Default,
         CursorIcon::ContextMenu => WCursorIcon::ContextMenu,
         CursorIcon::Help => WCursorIcon::Help,
-        CursorIcon::PointingHand => WCursorIcon::Hand,
+        CursorIcon::PointingHand => WCursorIcon::Pointer,
         CursorIcon::Progress => WCursorIcon::Progress,
         CursorIcon::Wait => WCursorIcon::Wait,
         CursorIcon::Cell => WCursorIcon::Cell,

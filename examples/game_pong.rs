@@ -33,17 +33,17 @@ fn update(app: &mut App, state: &mut State) {
     }
 
     //Move paddle1 with W S
-    if app.keyboard.is_down(KeyCode::W) {
+    if app.keyboard.is_down(KeyCode::KeyW) {
         state.paddle_1.y = (state.paddle_1.y - PADDLE_SPEED * app.timer.delta_f32()).max(WALL_SIZE);
-    } else if app.keyboard.is_down(KeyCode::S) {
+    } else if app.keyboard.is_down(KeyCode::KeyS) {
         state.paddle_1.y = (state.paddle_1.y + PADDLE_SPEED * app.timer.delta_f32())
             .min(HEIGHT as f32 - WALL_SIZE - PADDLE_HEIGHT);
     }
 
     //Move paddle2 with arrows UP DOWN
-    if app.keyboard.is_down(KeyCode::Up) {
+    if app.keyboard.is_down(KeyCode::ArrowUp) {
         state.paddle_2.y = (state.paddle_2.y - PADDLE_SPEED * app.timer.delta_f32()).max(WALL_SIZE);
-    } else if app.keyboard.is_down(KeyCode::Down) {
+    } else if app.keyboard.is_down(KeyCode::ArrowDown) {
         state.paddle_2.y = (state.paddle_2.y + PADDLE_SPEED * app.timer.delta_f32())
             .min(HEIGHT as f32 - WALL_SIZE - PADDLE_HEIGHT);
     }

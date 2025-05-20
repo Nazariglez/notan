@@ -1,18 +1,18 @@
 use glutin::config::Config as GConfig;
 use glutin::config::{ConfigTemplateBuilder, GlConfig};
 use glutin::context::{
-    ContextApi, ContextAttributesBuilder, GlProfile, NotCurrentGlContextSurfaceAccessor,
-    PossiblyCurrentContext, Version,
+    ContextApi, ContextAttributesBuilder, GlProfile, PossiblyCurrentContext, Version,
 };
 use glutin::display::{Display, GetGlDisplay, GlDisplay};
+use glutin::prelude::NotCurrentGlContext;
 use glutin::surface::{GlSurface, Surface, SurfaceAttributesBuilder, SwapInterval, WindowSurface};
 use glutin_winit::DisplayBuilder;
 use notan_app::WindowConfig;
-use raw_window_handle::HasRawWindowHandle;
+use raw_window_handle::HasWindowHandle;
 use std::num::NonZeroU32;
 use winit::event_loop::EventLoop;
 use winit::window::Fullscreen::Borderless;
-use winit::window::{Window, WindowBuilder};
+use winit::window::{Window, WindowAttributes};
 
 enum GlSupport {
     Full(GConfig),
@@ -29,7 +29,7 @@ pub(crate) struct GlManager {
 
 impl GlManager {
     pub fn new(
-        builder: WindowBuilder,
+        builder: WindowAttributes,
         event_loop: &EventLoop<()>,
         config: &WindowConfig,
     ) -> Result<Self, String> {
@@ -45,7 +45,7 @@ impl GlManager {
 
         let needs_transparency = config.transparent;
         let (window, gl_config) = DisplayBuilder::new()
-            .with_window_builder(Some(builder))
+            .with_window_attributes(Some(builder))
             .build(event_loop, template, |configs| {
                 let mut support: Option<GlSupport> = None;
                 configs.into_iter().for_each(|conf| match &support {
@@ -93,7 +93,11 @@ impl GlManager {
                 format!("{err}: {e}")
             })?;
 
-        let raw_window_handle = window.as_ref().map(|window| window.raw_window_handle());
+        let raw_window_handle = window
+            .as_ref()
+            .map(|window| window.window_handle().map_err(|e| e.to_string()))
+            .transpose()?
+            .map(|handle| handle.as_raw());
         let display = gl_config.display();
 
         let context_attributes = ContextAttributesBuilder::new()
@@ -115,7 +119,7 @@ impl GlManager {
         let window =
             window.ok_or_else(|| "Cannot create a Window for the GL Context.".to_string())?;
         let (width, height): (u32, u32) = window.inner_size().into();
-        let raw_window_handle = window.raw_window_handle();
+        let raw_window_handle = window.window_handle().map_err(|e| e.to_string())?.as_raw();
         let attrs = SurfaceAttributesBuilder::<WindowSurface>::new()
             .with_srgb(Some(true))
             .build(
