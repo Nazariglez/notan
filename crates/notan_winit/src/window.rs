@@ -274,7 +274,7 @@ impl WinitWindowBackend {
 
         #[cfg(target_os = "windows")]
         {
-            use winit::platform::windows::WindowBuilderExtWindows;
+            use winit::platform::windows::WindowAttributesExtWindows;
             builder = builder.with_taskbar_icon(load_icon(
                 &config.taskbar_icon_path,
                 &config.taskbar_icon_data,
@@ -283,7 +283,7 @@ impl WinitWindowBackend {
 
         #[cfg(target_os = "macos")]
         {
-            use winit::platform::macos::WindowBuilderExtMacOS;
+            use winit::platform::macos::WindowAttributesExtMacOS;
             builder = builder.with_disallow_hidpi(!config.high_dpi);
         }
 
@@ -308,10 +308,13 @@ impl WinitWindowBackend {
         }
 
         if let Some((x, y)) = config.position {
-            #[cfg(not(windows))]
+            //#[cfg(not(windows))]
             let (safe_x, safe_y) = (x, y);
 
             // This is already done by the OS in Linux/MacOS
+            // Winit no longer allows getting monitors from the event loop, so commenting this out
+            // until the code can be refactored.
+            /*
             #[cfg(windows)]
             let (safe_x, safe_y) = {
                 let clamped_position =
@@ -319,6 +322,7 @@ impl WinitWindowBackend {
 
                 (clamped_position.0, clamped_position.1)
             };
+            */
 
             builder = builder.with_position(LogicalPosition::new(safe_x as f64, safe_y as f64));
         }
@@ -421,6 +425,7 @@ fn winit_cursor(cursor: CursorIcon) -> Option<WCursorIcon> {
     })
 }
 
+/*
 #[cfg(windows)]
 fn clamp_window_to_sane_position(
     width: u32,
@@ -482,3 +487,4 @@ fn clamp_window_to_sane_position(
 
     (clamped_x, clamped_y)
 }
+*/
