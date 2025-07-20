@@ -280,7 +280,7 @@ impl GlowBackend {
             if let Some(texture) = self.textures.get(&id) {
                 #[cfg(debug_assertions)]
                 if !pip.texture_locations.contains_key(&location) {
-                    log::warn!("Uniform location {} for texture {} should be declared when the pipeline is created.", location, id);
+                    log::warn!("Uniform location {location} for texture {id} should be declared when the pipeline is created.");
                 }
 
                 let loc = pip
@@ -495,7 +495,7 @@ impl DeviceBackend for GlowBackend {
     }
 
     fn clean(&mut self, to_clean: &[ResourceId]) {
-        log::trace!("gpu resources to_clean {:?}", to_clean);
+        log::trace!("gpu resources to_clean {to_clean:?}");
         to_clean.iter().for_each(|res| match &res {
             ResourceId::Pipeline(id) => self.clean_pipeline(*id),
             ResourceId::Buffer(id) => self.clean_buffer(*id),

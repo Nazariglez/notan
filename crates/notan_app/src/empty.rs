@@ -181,7 +181,7 @@ impl BackendRunner for DefaultRunner {
         let mut runner = app_loader.load()?;
         while !runner.app().closed {
             if let Err(e) = runner.run() {
-                log::error!("{}", e);
+                log::error!("{e}");
             }
         }
         Ok(())
@@ -255,11 +255,11 @@ impl DeviceBackend for EmptyDeviceBackend {
     fn set_buffer_data(&mut self, _id: u64, _data: &[u8]) {}
 
     fn render(&mut self, commands: &[Commands], _target: Option<u64>) {
-        commands.iter().for_each(|cmd| log::info!("{:?}", cmd));
+        commands.iter().for_each(|cmd| log::info!("{cmd:?}"));
     }
 
     fn clean(&mut self, to_clean: &[ResourceId]) {
-        log::info!("{:?}", to_clean);
+        log::info!("{to_clean:?}");
     }
 
     fn set_size(&mut self, _width: u32, _height: u32) {}

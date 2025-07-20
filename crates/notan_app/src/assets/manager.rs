@@ -44,10 +44,7 @@ impl Assets {
                 let loader = match self.loaders.get(ext) {
                     Some(loader) => loader,
                     None => {
-                        log::warn!(
-                            "Not found a loader for '{}', loading as bytes (Vec<u8>)",
-                            id
-                        );
+                        log::warn!("Not found a loader for '{id}', loading as bytes (Vec<u8>)");
                         &self.byte_loader
                     }
                 };
@@ -64,7 +61,7 @@ impl Assets {
 
     pub fn add_loader(&mut self, loader: AssetLoader) {
         if let Err(e) = loader.apply(self) {
-            log::error!("{}", e);
+            log::error!("{e}");
         }
     }
 
@@ -77,10 +74,7 @@ impl Assets {
         let loader = match self.loaders.get(ext) {
             Some(loader) => loader,
             None => {
-                log::warn!(
-                    "Not found a loader for '{}', loading as bytes (Vec<u8>)",
-                    id
-                );
+                log::warn!("Not found a loader for '{id}', loading as bytes (Vec<u8>)");
                 &self.byte_loader
             }
         };

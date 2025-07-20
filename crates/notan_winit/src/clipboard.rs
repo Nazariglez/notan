@@ -34,7 +34,7 @@ pub fn process_events(event: &WindowEvent, keyboard: &Keyboard) -> Option<Event>
 pub fn set_clipboard_text(text: &str) {
     if let Some(mut clipboard) = init_arboard() {
         if let Err(err) = clipboard.set_text(text) {
-            log::error!("failed to set_text on clipboard: {}", err);
+            log::error!("failed to set_text on clipboard: {err}");
         }
     }
 }
@@ -44,7 +44,7 @@ fn get_clipboard_text() -> Option<String> {
         return match clipboard.get_text() {
             Ok(text) => Some(text),
             Err(err) => {
-                log::error!("failed to get_text from clipboard: {}", err);
+                log::error!("failed to get_text from clipboard: {err}");
                 None
             }
         };
@@ -83,7 +83,7 @@ fn init_arboard() -> Option<arboard::Clipboard> {
     match arboard::Clipboard::new() {
         Ok(clipboard) => Some(clipboard),
         Err(err) => {
-            log::error!("failed to initialize clipboard: {}", err);
+            log::error!("failed to initialize clipboard: {err}");
             None
         }
     }
