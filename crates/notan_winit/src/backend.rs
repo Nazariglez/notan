@@ -1,8 +1,8 @@
 use crate::window::WinitWindowBackend;
 use crate::{keyboard, mouse, touch};
-use notan_app::{FrameState, WindowConfig};
+use notan_app::{AppLoader, AppRunner, BackendRunner, FrameState, WindowConfig};
 use winit::application::ApplicationHandler;
-use winit::event_loop::ControlFlow;
+use winit::event_loop::{ActiveEventLoop, ControlFlow};
 
 #[cfg(feature = "clipboard")]
 use crate::clipboard;
@@ -10,9 +10,7 @@ use crate::clipboard;
 #[cfg(feature = "drop_files")]
 use notan_app::DroppedFile;
 
-use notan_app::{
-    App, Backend, BackendSystem, DeviceBackend, Event, EventIterator, InitializeFn, WindowBackend,
-};
+use notan_app::{Backend, BackendSystem, DeviceBackend, Event, EventIterator, WindowBackend};
 #[cfg(feature = "audio")]
 use notan_audio::AudioBackend;
 #[cfg(feature = "audio")]
@@ -93,38 +91,64 @@ impl Backend for WinitBackend {
     }
 }
 
-struct AppHandler<R, S>
-where
-    R: FnMut(&mut App, &mut S) -> Result<FrameState, String> + 'static,
-    S: 'static,
-{
-    app: App,
-    dpi_scale: f64,
-    mouse_x: i32,
-    mouse_y: i32,
-    request_redraw: bool,
-    state: S,
-    cb: R,
-}
 fn add_event(b: &mut WinitBackend, request_redraw: &mut bool, evt: Event) {
     b.events.push(evt);
     *request_redraw = true;
 }
 
-impl<R, S> ApplicationHandler for AppHandler<R, S>
-where
-    R: FnMut(&mut App, &mut S) -> Result<FrameState, String> + 'static,
-    S: 'static,
-{
-    fn resumed(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {}
+struct LoadState {
+    app_loader: Box<dyn AppLoader>,
+    window_config: WindowConfig,
+}
 
+struct RunState {
+    app_runner: Box<dyn AppRunner>,
+    dpi_scale: f64,
+    mouse_x: i32,
+    mouse_y: i32,
+    request_redraw: bool,
+}
+
+enum AppHandler {
+    Load(LoadState),
+    Run(RunState),
+    LoadFailed,
+}
+
+impl LoadState {
+    fn load(mut self, event_loop: &ActiveEventLoop) -> Result<RunState, String> {
+        let backend: &mut WinitBackend = self.app_loader.backend().downcast_mut().unwrap();
+        let win = WinitWindowBackend::new(self.window_config, event_loop)?;
+        backend.window = Some(win);
+        let mut app_runner = self.app_loader.load()?;
+        let backend: &mut WinitBackend = app_runner.app_mut().backend().unwrap();
+        let dpi_scale = backend
+            .window
+            .as_mut()
+            .unwrap()
+            .window()
+            .current_monitor()
+            .as_ref()
+            .map_or(1.0, |m| m.scale_factor());
+        Ok(RunState {
+            app_runner,
+            dpi_scale,
+            mouse_x: 0,
+            mouse_y: 0,
+            request_redraw: false,
+        })
+    }
+}
+
+impl RunState {
     fn window_event(
         &mut self,
         event_loop: &winit::event_loop::ActiveEventLoop,
         _window_id: winit::window::WindowId,
         event: WindowEvent,
     ) {
-        let b = backend(&mut self.app.backend);
+        let app = self.app_runner.app_mut();
+        let b = backend(&mut app.backend);
 
         // Await for the next event to run the loop again
         let is_lazy = b.window.as_ref().is_some_and(|w| w.lazy);
@@ -146,7 +170,7 @@ where
         }
 
         #[cfg(feature = "clipboard")]
-        if let Some(evt) = clipboard::process_events(&event, &self.app.keyboard) {
+        if let Some(evt) = clipboard::process_events(&event, &app.keyboard) {
             add_event(b, &mut self.request_redraw, evt);
         }
 
@@ -155,7 +179,7 @@ where
                 println!("{t:?}");
             }
             WindowEvent::CloseRequested => {
-                self.app.exit();
+                self.app_runner.app_mut().exit();
             }
             WindowEvent::Resized(size) => {
                 if let Some(win) = &mut b.window {
@@ -242,9 +266,9 @@ where
                     w.frame_requested = false;
                 }
 
-                match (self.cb)(&mut self.app, &mut self.state) {
+                match self.app_runner.run() {
                     Ok(FrameState::End) => {
-                        backend(&mut self.app.backend)
+                        backend(&mut self.app_runner.app_mut().backend)
                             .window
                             .as_mut()
                             .unwrap()
@@ -263,7 +287,7 @@ where
             _ => {}
         }
 
-        if backend(&mut self.app.backend).exit_requested {
+        if backend(&mut self.app_runner.app_mut().backend).exit_requested {
             event_loop.exit();
             return;
         }
@@ -289,13 +313,13 @@ where
         event: winit::event::DeviceEvent,
     ) {
         if let Some(evt) = mouse::process_device_events(&event) {
-            let b = backend(&mut self.app.backend);
+            let b = backend(&mut self.app_runner.app_mut().backend);
             add_event(b, &mut self.request_redraw, evt);
         }
     }
 
     fn about_to_wait(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {
-        let b = backend(&mut self.app.backend);
+        let b = backend(&mut self.app_runner.app_mut().backend);
         let is_lazy = b.window.as_ref().is_some_and(|w| w.lazy);
         let needs_redraw =
             !is_lazy || self.request_redraw || b.window.as_ref().is_some_and(|w| w.frame_requested);
@@ -307,33 +331,72 @@ where
     }
 }
 
-impl BackendSystem for WinitBackend {
-    fn initialize<S, R>(&mut self, window: WindowConfig) -> Result<Box<InitializeFn<S, R>>, String>
-    where
-        S: 'static,
-        R: FnMut(&mut App, &mut S) -> Result<FrameState, String> + 'static,
-    {
-        let event_loop = EventLoop::new().map_err(|e| e.to_string())?;
-        let win = WinitWindowBackend::new(window, &event_loop)?;
-        let dpi_scale = win
-            .window()
-            .current_monitor()
-            .as_ref()
-            .map_or(1.0, |m| m.scale_factor());
-        self.window = Some(win);
+impl ApplicationHandler for AppHandler {
+    fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        if matches!(self, AppHandler::Load(_)) {
+            let ldr = core::mem::replace(self, AppHandler::LoadFailed);
+            match ldr {
+                AppHandler::Load(loader) => match loader.load(event_loop) {
+                    Ok(runner) => *self = AppHandler::Run(runner),
+                    Err(e) => {
+                        log::error!("Failed to initialize app: {e}");
+                        event_loop.exit();
+                    }
+                },
+                _ => unreachable!(),
+            }
+        }
+    }
 
-        Ok(Box::new(move |app: App, state: S, cb: R| {
-            let mut handler = AppHandler {
-                app,
-                dpi_scale,
-                mouse_x: 0,
-                mouse_y: 0,
-                request_redraw: false,
-                state,
-                cb,
-            };
-            event_loop.run_app(&mut handler).map_err(|e| e.to_string())
-        }))
+    fn window_event(
+        &mut self,
+        event_loop: &winit::event_loop::ActiveEventLoop,
+        window_id: winit::window::WindowId,
+        event: WindowEvent,
+    ) {
+        if let AppHandler::Run(st) = self {
+            st.window_event(event_loop, window_id, event)
+        }
+    }
+
+    fn device_event(
+        &mut self,
+        event_loop: &winit::event_loop::ActiveEventLoop,
+        device_id: winit::event::DeviceId,
+        event: winit::event::DeviceEvent,
+    ) {
+        if let AppHandler::Run(st) = self {
+            st.device_event(event_loop, device_id, event)
+        }
+    }
+
+    fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        if let AppHandler::Run(st) = self {
+            st.about_to_wait(event_loop)
+        }
+    }
+}
+
+struct WinitRunner;
+
+impl BackendRunner for WinitRunner {
+    fn run(
+        &mut self,
+        app_loader: Box<dyn AppLoader>,
+        window_config: WindowConfig,
+    ) -> Result<(), String> {
+        let event_loop = EventLoop::new().map_err(|e| e.to_string())?;
+        let mut handler = AppHandler::Load(LoadState {
+            app_loader,
+            window_config,
+        });
+        event_loop.run_app(&mut handler).map_err(|e| e.to_string())
+    }
+}
+
+impl BackendSystem for WinitBackend {
+    fn runner(&self) -> Box<dyn BackendRunner> {
+        Box::new(WinitRunner)
     }
 
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend> {

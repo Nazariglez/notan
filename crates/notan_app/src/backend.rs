@@ -49,14 +49,26 @@ pub enum FrameState {
     Skip,
 }
 
+pub trait AppRunner {
+    fn run(&mut self) -> Result<FrameState, String>;
+    fn app(&self) -> &App;
+    fn app_mut(&mut self) -> &mut App;
+}
+
+pub trait AppLoader {
+    fn load(self: Box<Self>) -> Result<Box<dyn AppRunner>, String>;
+    fn backend(&mut self) -> &mut dyn Backend;
+}
+
+/// A closure that initializes and runs the app
+pub trait BackendRunner {
+    fn run(&mut self, app_loader: Box<dyn AppLoader>, config: WindowConfig) -> Result<(), String>;
+}
+
 /// Backend initialization run
 pub trait BackendSystem: Backend {
-    /// Returns a closure where the backend is initialized and the application loops is managed
-    fn initialize<S, R>(&mut self, window: WindowConfig) -> Result<Box<InitializeFn<S, R>>, String>
-    where
-        Self: Backend,
-        S: 'static,
-        R: FnMut(&mut App, &mut S) -> Result<FrameState, String> + 'static;
+    /// Returns a closure that initializes and runs the app
+    fn runner(&self) -> Box<dyn BackendRunner>;
 
     /// Returns a function that load files
     fn get_file_loader(&self) -> LoadFileFn {

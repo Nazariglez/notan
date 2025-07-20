@@ -1,7 +1,5 @@
 use crate::config::WindowConfig;
-use crate::{
-    App, Backend, BackendSystem, CursorIcon, EventIterator, FrameState, InitializeFn, WindowBackend,
-};
+use crate::{Backend, BackendRunner, BackendSystem, CursorIcon, EventIterator, WindowBackend};
 use notan_graphics::prelude::*;
 use std::any::Any;
 
@@ -172,21 +170,27 @@ impl Backend for EmptyBackend {
     }
 }
 
-impl BackendSystem for EmptyBackend {
-    fn initialize<S, R>(&mut self, _config: WindowConfig) -> Result<Box<InitializeFn<S, R>>, String>
-    where
-        S: 'static,
-        R: FnMut(&mut App, &mut S) -> Result<FrameState, String> + 'static,
-    {
-        Ok(Box::new(|mut app: App, mut state: S, mut cb: R| {
-            // This function should block with a loop or raf in the platform specific backends
-            // while !app.closed {
-            if let Err(e) = cb(&mut app, &mut state) {
+struct DefaultRunner;
+
+impl BackendRunner for DefaultRunner {
+    fn run(
+        &mut self,
+        app_loader: Box<dyn crate::AppLoader>,
+        _config: WindowConfig,
+    ) -> Result<(), String> {
+        let mut runner = app_loader.load()?;
+        while !runner.app().closed {
+            if let Err(e) = runner.run() {
                 log::error!("{}", e);
             }
-            // }
-            Ok(())
-        }))
+        }
+        Ok(())
+    }
+}
+
+impl BackendSystem for EmptyBackend {
+    fn runner(&self) -> Box<dyn BackendRunner> {
+        Box::new(DefaultRunner)
     }
 
     fn get_graphics_backend(&self) -> Box<dyn DeviceBackend> {
