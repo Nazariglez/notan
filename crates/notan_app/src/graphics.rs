@@ -117,7 +117,7 @@ impl Graphics {
     #[inline]
     pub fn render<G: GfxRenderer>(&mut self, renderer: &G) {
         if let Err(err) = renderer.render(&mut self.device, &mut self.extensions, None) {
-            log::error!("{}", err);
+            log::error!("{err}");
             panic!("{}", err);
         }
     }
@@ -126,7 +126,7 @@ impl Graphics {
     #[inline]
     pub fn render_to<G: GfxRenderer>(&mut self, target: &RenderTexture, renderer: &G) {
         if let Err(err) = renderer.render(&mut self.device, &mut self.extensions, Some(target)) {
-            log::error!("{}", err);
+            log::error!("{err}");
             panic!("{}", err);
         }
     }

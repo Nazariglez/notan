@@ -239,7 +239,7 @@ impl InnerBackend {
                     oddio::run(&mixer, sample_rate.0, frames);
                 },
                 |err| {
-                    log::error!("{:?}", err);
+                    log::error!("{err:?}");
                 },
                 None,
             )
@@ -307,21 +307,21 @@ impl InnerBackend {
 
     fn pause(&mut self, sound: u64) {
         match self.sounds.get_mut(&sound) {
-            None => log::warn!("Cannot pause sound, invalid id: {}", sound),
+            None => log::warn!("Cannot pause sound, invalid id: {sound}"),
             Some(s) => s.handle.as_stop().pause(),
         }
     }
 
     fn resume(&mut self, sound: u64) {
         match self.sounds.get_mut(&sound) {
-            None => log::warn!("Cannot resume sound, invalid id: {}", sound),
+            None => log::warn!("Cannot resume sound, invalid id: {sound}"),
             Some(s) => s.handle.as_stop().resume(),
         }
     }
 
     fn stop(&mut self, sound: u64) {
         match self.sounds.get_mut(&sound) {
-            None => log::warn!("Cannot stop sound, invalid id: {}", sound),
+            None => log::warn!("Cannot stop sound, invalid id: {sound}"),
             Some(s) => s.handle.as_stop().stop(),
         }
     }
@@ -344,7 +344,7 @@ impl InnerBackend {
 
     fn set_volume(&mut self, sound: u64, volume: f32) {
         match self.sounds.get_mut(&sound) {
-            None => log::warn!("Cannot set volume for sound: {}", sound),
+            None => log::warn!("Cannot set volume for sound: {sound}"),
             Some(s) => {
                 s.volume = volume;
                 s.handle.as_gain().set_gain(volume_as_gain(volume));
@@ -368,11 +368,7 @@ impl InnerBackend {
             self.sounds.remove(id);
         });
 
-        log::trace!(
-            "Audio resources cleaned: Sources({:?}) - Sounds({:?})",
-            sources,
-            sounds,
-        );
+        log::trace!("Audio resources cleaned: Sources({sources:?}) - Sounds({sounds:?})",);
     }
 }
 

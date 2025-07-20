@@ -53,10 +53,7 @@ impl Backend for WinitBackend {
 
         #[cfg(not(feature = "clipboard"))]
         {
-            log::warn!(
-                "Cannot set {} to clipboard without the feature 'clipboard' enabled.",
-                text
-            );
+            log::warn!("Cannot set {text} to clipboard without the feature 'clipboard' enabled.");
         }
     }
 
@@ -80,13 +77,13 @@ impl Backend for WinitBackend {
         #[cfg(feature = "links")]
         {
             if let Err(err) = webbrowser::open(url) {
-                log::error!("Error opening {}: {}", url, err);
+                log::error!("Error opening {url}: {err}");
             }
         }
 
         #[cfg(not(feature = "links"))]
         {
-            log::warn!("Cannot {} link without the feature 'links' enabled.", url);
+            log::warn!("Cannot {url} link without the feature 'links' enabled.");
         }
     }
 }
@@ -279,7 +276,7 @@ impl RunState {
                         // no-op
                     }
                     Err(e) => {
-                        log::error!("{}", e);
+                        log::error!("{e}");
                     }
                 }
             }

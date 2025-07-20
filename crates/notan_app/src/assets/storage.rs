@@ -61,7 +61,7 @@ impl AssetStorage {
                 stored_asset.loaded.done();
             })
             .map_err(|e| {
-                log::error!("{}", e);
+                log::error!("{e}");
                 e
             })
     }

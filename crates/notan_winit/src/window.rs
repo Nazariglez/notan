@@ -138,12 +138,7 @@ impl WindowBackend for WinitWindowBackend {
             .window()
             .set_cursor_position(LogicalPosition::new(x, y))
         {
-            log::error!(
-                "Error setting mouse cursor position to x: {0} y: {1} error: {2}",
-                x,
-                y,
-                e
-            );
+            log::error!("Error setting mouse cursor position to x: {x} y: {y} error: {e}");
         }
     }
 

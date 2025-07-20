@@ -10,6 +10,6 @@ pub fn create_audio_parser() -> AssetLoader {
 
 fn parse_audio(id: &str, data: Vec<u8>, app: &mut App) -> Result<AudioSource, String> {
     let source = app.audio.create_source(&data)?;
-    log::debug!("Asset '{}' parsed as AudioSource", id);
+    log::debug!("Asset '{id}' parsed as AudioSource");
     Ok(source)
 }
