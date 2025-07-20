@@ -10,7 +10,7 @@ use glutin_winit::DisplayBuilder;
 use notan_app::WindowConfig;
 use raw_window_handle::HasWindowHandle;
 use std::num::NonZeroU32;
-use winit::event_loop::EventLoop;
+use winit::event_loop::ActiveEventLoop;
 use winit::window::Fullscreen::Borderless;
 use winit::window::{Window, WindowAttributes};
 
@@ -30,7 +30,7 @@ pub(crate) struct GlManager {
 impl GlManager {
     pub fn new(
         builder: WindowAttributes,
-        event_loop: &EventLoop<()>,
+        event_loop: &ActiveEventLoop,
         config: &WindowConfig,
     ) -> Result<Self, String> {
         let mut template = ConfigTemplateBuilder::new().with_transparency(config.transparent);

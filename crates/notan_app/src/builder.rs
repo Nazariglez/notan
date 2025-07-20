@@ -1,7 +1,6 @@
 #![allow(clippy::type_complexity)]
 
 use crate::assets::{AssetLoader, Assets};
-use crate::config::*;
 use crate::graphics::Graphics;
 use crate::handlers::{
     AppCallback, AppHandler, DrawCallback, DrawHandler, EventCallback, EventHandler,
@@ -9,6 +8,7 @@ use crate::handlers::{
 };
 use crate::parsers::*;
 use crate::plugins::*;
+use crate::{config::*, AppLoader, AppRunner};
 use crate::{App, Backend, BackendSystem, FrameState, GfxExtension, GfxRenderer};
 use indexmap::IndexMap;
 #[cfg(feature = "audio")]
@@ -57,6 +57,258 @@ pub struct AppBuilder<S, B> {
     use_touch_as_mouse: bool,
 
     pub(crate) window: WindowConfig,
+}
+
+struct Runner<S> {
+    app: App,
+    graphics: Graphics,
+    plugins: Plugins,
+    assets: Assets,
+    state: S,
+    current_touch_id: Option<u64>,
+    event_callback: Option<EventCallback<S>>,
+    update_callback: Option<AppCallback<S>>,
+    draw_callback: Option<DrawCallback<S>>,
+    first_loop: bool,
+}
+
+impl<S: 'static, B: BackendSystem + 'static> AppLoader for AppBuilder<S, B> {
+    fn backend(&mut self) -> &mut dyn Backend {
+        &mut self.backend
+    }
+
+    fn load(self: Box<Self>) -> Result<Box<dyn AppRunner>, String> {
+        let AppBuilder {
+            backend,
+            setup_callback,
+            mut plugins,
+            mut assets,
+
+            init_callback,
+            update_callback,
+            draw_callback,
+            event_callback,
+            mut plugin_callbacks,
+            mut extension_callbacks,
+            use_touch_as_mouse,
+            ..
+        } = *self;
+
+        let mut graphics = Graphics::new(backend.get_graphics_backend())?;
+
+        #[cfg(feature = "audio")]
+        let audio = Audio::new(backend.get_audio_backend())?;
+        #[cfg(feature = "audio")]
+        let mut app = App::new(Box::new(backend), audio);
+
+        #[cfg(not(feature = "audio"))]
+        let mut app = App::new(Box::new(backend));
+
+        app.window().set_touch_as_mouse(use_touch_as_mouse);
+
+        let (width, height) = app.window().size();
+        let win_dpi = app.window().dpi();
+        graphics.set_size(width, height);
+        graphics.set_dpi(win_dpi);
+
+        // add graphics extensions
+        extension_callbacks.reverse();
+        while let Some(cb) = extension_callbacks.pop() {
+            cb(&mut app, &mut assets, &mut graphics, &mut plugins);
+        }
+
+        // add plugins
+        plugin_callbacks.reverse();
+        while let Some(cb) = plugin_callbacks.pop() {
+            cb(&mut app, &mut assets, &mut graphics, &mut plugins);
+        }
+
+        // create the state
+        let mut state = setup_callback.exec(&mut app, &mut assets, &mut graphics, &mut plugins);
+
+        // init callback from plugins
+        let _ = plugins.init(&mut app, &mut assets, &mut graphics).map(|flow| match flow {
+            AppFlow::Next => Ok(()),
+            _ => Err(format!(
+                "Aborted application loop because a plugin returns on the init method AppFlow::{flow:?} instead of AppFlow::Next",
+            )),
+        })?;
+
+        // app init life event
+        if let Some(cb) = init_callback {
+            cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
+        }
+
+        Ok(Box::new(Runner {
+            app,
+            graphics,
+            plugins,
+            assets,
+            state,
+            current_touch_id: None,
+            event_callback,
+            update_callback,
+            draw_callback,
+            first_loop: true,
+        }))
+    }
+}
+
+impl<S> AppRunner for Runner<S> {
+    fn run(&mut self) -> Result<FrameState, String> {
+        self.app.system_timer.update();
+
+        let win_size = self.app.window().size();
+        if self.graphics.size() != win_size {
+            let (width, height) = win_size;
+            self.graphics.set_size(width, height);
+        }
+
+        let win_dpi = self.app.window().dpi();
+        if (self.graphics.dpi() - win_dpi).abs() > f64::EPSILON {
+            self.graphics.set_dpi(win_dpi);
+        }
+
+        // Manage pre frame events
+        if let AppFlow::SkipFrame =
+            self.plugins
+                .pre_frame(&mut self.app, &mut self.assets, &mut self.graphics)?
+        {
+            return Ok(FrameState::Skip);
+        }
+
+        // update delta time and fps here
+        self.app.timer.update();
+
+        self.assets.tick((
+            &mut self.app,
+            &mut self.graphics,
+            &mut self.plugins,
+            &mut self.state,
+        ))?;
+
+        let delta = self.app.timer.delta_f32();
+
+        let use_touch_as_mouse = self.app.window().touch_as_mouse();
+
+        // Manage each event
+        let mut events = self.app.backend.events_iter();
+        while let Some(evt) = events.next() {
+            if use_touch_as_mouse {
+                touch_as_mouse(&mut self.current_touch_id, &mut events, &evt);
+            }
+
+            process_keyboard_events(&mut self.app.keyboard, &evt, delta);
+            process_mouse_events(&mut self.app.mouse, &evt, delta);
+            process_touch_events(&mut self.app.touch, &evt, delta);
+
+            match self.plugins.event(&mut self.app, &mut self.assets, &evt)? {
+                AppFlow::Skip => {}
+                AppFlow::Next => {
+                    if let Some(cb) = &self.event_callback {
+                        cb.exec(
+                            &mut self.app,
+                            &mut self.assets,
+                            &mut self.plugins,
+                            &mut self.state,
+                            evt,
+                        );
+                    }
+                }
+                AppFlow::SkipFrame => return Ok(FrameState::Skip),
+            }
+        }
+
+        // Manage update callback
+        match self.plugins.update(&mut self.app, &mut self.assets)? {
+            AppFlow::Skip => {}
+            AppFlow::Next => {
+                if let Some(cb) = &self.update_callback {
+                    cb.exec(
+                        &mut self.app,
+                        &mut self.assets,
+                        &mut self.plugins,
+                        &mut self.state,
+                    );
+                }
+            }
+            AppFlow::SkipFrame => return Ok(FrameState::Skip),
+        }
+
+        // Manage draw callback
+        match self
+            .plugins
+            .draw(&mut self.app, &mut self.assets, &mut self.graphics)?
+        {
+            AppFlow::Skip => {}
+            AppFlow::Next => {
+                if let Some(cb) = &self.draw_callback {
+                    cb.exec(
+                        &mut self.app,
+                        &mut self.assets,
+                        &mut self.graphics,
+                        &mut self.plugins,
+                        &mut self.state,
+                    );
+                }
+            }
+            AppFlow::SkipFrame => return Ok(FrameState::Skip),
+        }
+
+        // call next frame in lazy mode if user is pressing mouse or keyboard
+        if self.app.window().lazy_loop() {
+            let mouse_down = !self.app.mouse.down.is_empty();
+            let key_down = !self.app.keyboard.down.is_empty();
+            if mouse_down || key_down {
+                self.app.window().request_frame();
+            }
+        }
+
+        clear_mouse(&mut self.app.mouse);
+        clear_keyboard(&mut self.app.keyboard);
+
+        // Manage post frame event
+        let _ = self
+            .plugins
+            .post_frame(&mut self.app, &mut self.assets, &mut self.graphics)?;
+
+        // Clean possible dropped resources on the backend
+        self.graphics.clean();
+        #[cfg(feature = "audio")]
+        self.app.audio.clean();
+
+        // dispatch Event::Exit before close the app
+        if self.app.closed {
+            let evt = Event::Exit;
+            let _ = self.plugins.event(&mut self.app, &mut self.assets, &evt)?;
+            if let Some(cb) = &self.event_callback {
+                cb.exec(
+                    &mut self.app,
+                    &mut self.assets,
+                    &mut self.plugins,
+                    &mut self.state,
+                    evt,
+                );
+            }
+        }
+
+        // Using lazy loop we need to draw 2 frames at the beginning to avoid
+        // a blank window when the buffer is swapped
+        if !self.app.closed && self.app.window().lazy_loop() && self.first_loop {
+            self.first_loop = false;
+            self.app.window().request_frame();
+        }
+
+        Ok(FrameState::End)
+    }
+
+    fn app(&self) -> &App {
+        &self.app
+    }
+
+    fn app_mut(&mut self) -> &mut App {
+        &mut self.app
+    }
 }
 
 impl<S, B> AppBuilder<S, B>
@@ -214,188 +466,9 @@ where
             }
         }
 
-        let AppBuilder {
-            mut backend,
-            setup_callback,
-            mut plugins,
-            mut assets,
-
-            init_callback,
-            update_callback,
-            draw_callback,
-            event_callback,
-            mut plugin_callbacks,
-            mut extension_callbacks,
-            window,
-            use_touch_as_mouse,
-            ..
-        } = builder;
-
-        let initialize = backend.initialize(window)?;
-
-        let mut graphics = Graphics::new(backend.get_graphics_backend())?;
-
-        #[cfg(feature = "audio")]
-        let audio = Audio::new(backend.get_audio_backend())?;
-        #[cfg(feature = "audio")]
-        let mut app = App::new(Box::new(backend), audio);
-
-        #[cfg(not(feature = "audio"))]
-        let mut app = App::new(Box::new(backend));
-
-        app.window().set_touch_as_mouse(use_touch_as_mouse);
-
-        let (width, height) = app.window().size();
-        let win_dpi = app.window().dpi();
-        graphics.set_size(width, height);
-        graphics.set_dpi(win_dpi);
-
-        // add graphics extensions
-        extension_callbacks.reverse();
-        while let Some(cb) = extension_callbacks.pop() {
-            cb(&mut app, &mut assets, &mut graphics, &mut plugins);
-        }
-
-        // add plugins
-        plugin_callbacks.reverse();
-        while let Some(cb) = plugin_callbacks.pop() {
-            cb(&mut app, &mut assets, &mut graphics, &mut plugins);
-        }
-
-        // create the state
-        let mut state = setup_callback.exec(&mut app, &mut assets, &mut graphics, &mut plugins);
-
-        // init callback from plugins
-        let _ = plugins.init(&mut app, &mut assets, &mut graphics).map(|flow| match flow {
-            AppFlow::Next => Ok(()),
-            _ => Err(format!(
-                "Aborted application loop because a plugin returns on the init method AppFlow::{flow:?} instead of AppFlow::Next",
-            )),
-        })?;
-
-        // app init life event
-        if let Some(cb) = init_callback {
-            cb.exec(&mut app, &mut assets, &mut plugins, &mut state);
-        }
-
-        let mut current_touch_id: Option<u64> = None;
-
-        let mut first_loop = true;
-        if let Err(e) = initialize(app, state, move |app, mut state| {
-            // update system delta time and fps here
-            app.system_timer.update();
-
-            let win_size = app.window().size();
-            if graphics.size() != win_size {
-                let (width, height) = win_size;
-                graphics.set_size(width, height);
-            }
-
-            let win_dpi = app.window().dpi();
-            if (graphics.dpi() - win_dpi).abs() > f64::EPSILON {
-                graphics.set_dpi(win_dpi);
-            }
-
-            // Manage pre frame events
-            if let AppFlow::SkipFrame = plugins.pre_frame(app, &mut assets, &mut graphics)? {
-                return Ok(FrameState::Skip);
-            }
-
-            // update delta time and fps here
-            app.timer.update();
-
-            assets.tick((app, &mut graphics, &mut plugins, &mut state))?;
-
-            let delta = app.timer.delta_f32();
-
-            let use_touch_as_mouse = app.window().touch_as_mouse();
-
-            // Manage each event
-            let mut events = app.backend.events_iter();
-            while let Some(evt) = events.next() {
-                if use_touch_as_mouse {
-                    touch_as_mouse(&mut current_touch_id, &mut events, &evt);
-                }
-
-                process_keyboard_events(&mut app.keyboard, &evt, delta);
-                process_mouse_events(&mut app.mouse, &evt, delta);
-                process_touch_events(&mut app.touch, &evt, delta);
-
-                match plugins.event(app, &mut assets, &evt)? {
-                    AppFlow::Skip => {}
-                    AppFlow::Next => {
-                        if let Some(cb) = &event_callback {
-                            cb.exec(app, &mut assets, &mut plugins, state, evt);
-                        }
-                    }
-                    AppFlow::SkipFrame => return Ok(FrameState::Skip),
-                }
-            }
-
-            // Manage update callback
-            match plugins.update(app, &mut assets)? {
-                AppFlow::Skip => {}
-                AppFlow::Next => {
-                    if let Some(cb) = &update_callback {
-                        cb.exec(app, &mut assets, &mut plugins, state);
-                    }
-                }
-                AppFlow::SkipFrame => return Ok(FrameState::Skip),
-            }
-
-            // Manage draw callback
-            match plugins.draw(app, &mut assets, &mut graphics)? {
-                AppFlow::Skip => {}
-                AppFlow::Next => {
-                    if let Some(cb) = &draw_callback {
-                        cb.exec(app, &mut assets, &mut graphics, &mut plugins, state);
-                    }
-                }
-                AppFlow::SkipFrame => return Ok(FrameState::Skip),
-            }
-
-            // call next frame in lazy mode if user is pressing mouse or keyboard
-            if app.window().lazy_loop() {
-                let mouse_down = !app.mouse.down.is_empty();
-                let key_down = !app.keyboard.down.is_empty();
-                if mouse_down || key_down {
-                    app.window().request_frame();
-                }
-            }
-
-            clear_mouse(&mut app.mouse);
-            clear_keyboard(&mut app.keyboard);
-
-            // Manage post frame event
-            let _ = plugins.post_frame(app, &mut assets, &mut graphics)?;
-
-            // Clean possible dropped resources on the backend
-            graphics.clean();
-            #[cfg(feature = "audio")]
-            app.audio.clean();
-
-            // dispatch Event::Exit before close the app
-            if app.closed {
-                let evt = Event::Exit;
-                let _ = plugins.event(app, &mut assets, &evt)?;
-                if let Some(cb) = &event_callback {
-                    cb.exec(app, &mut assets, &mut plugins, state, evt);
-                }
-            }
-
-            // Using lazy loop we need to draw 2 frames at the beginning to avoid
-            // a blank window when the buffer is swapped
-            if !app.closed && app.window().lazy_loop() && first_loop {
-                first_loop = false;
-                app.window().request_frame();
-            }
-
-            Ok(FrameState::End)
-        }) {
-            log::error!("{}", e);
-        }
-
-        Ok(())
+        let mut runner = builder.backend.runner();
+        let window_config = builder.window.clone();
+        runner.run(Box::new(builder), window_config)
     }
 }
 

@@ -4,7 +4,7 @@ use crate::gl_manager::GlManager;
 use notan_app::WindowConfig;
 use notan_app::{CursorIcon, WindowBackend};
 use winit::dpi::{LogicalPosition, LogicalSize, PhysicalPosition};
-use winit::event_loop::EventLoop;
+use winit::event_loop::ActiveEventLoop;
 use winit::window::Fullscreen::Borderless;
 use winit::window::{CursorGrabMode, CursorIcon as WCursorIcon, Icon, Window, WindowLevel};
 
@@ -252,7 +252,7 @@ fn load_icon_from_data(data: &'static [u8]) -> Icon {
 }
 
 impl WinitWindowBackend {
-    pub(crate) fn new(config: WindowConfig, event_loop: &EventLoop<()>) -> Result<Self, String> {
+    pub(crate) fn new(config: WindowConfig, event_loop: &ActiveEventLoop) -> Result<Self, String> {
         let level = if config.always_on_top {
             WindowLevel::AlwaysOnTop
         } else {
