@@ -308,13 +308,12 @@ impl WinitWindowBackend {
         }
 
         if let Some((x, y)) = config.position {
-            //#[cfg(not(windows))]
+            #[cfg(not(windows))]
             let (safe_x, safe_y) = (x, y);
 
             // This is already done by the OS in Linux/MacOS
             // Winit no longer allows getting monitors from the event loop, so commenting this out
             // until the code can be refactored.
-            /*
             #[cfg(windows)]
             let (safe_x, safe_y) = {
                 let clamped_position =
@@ -322,7 +321,6 @@ impl WinitWindowBackend {
 
                 (clamped_position.0, clamped_position.1)
             };
-            */
 
             builder = builder.with_position(LogicalPosition::new(safe_x as f64, safe_y as f64));
         }
@@ -425,14 +423,13 @@ fn winit_cursor(cursor: CursorIcon) -> Option<WCursorIcon> {
     })
 }
 
-/*
 #[cfg(windows)]
 fn clamp_window_to_sane_position(
     width: u32,
     height: u32,
     x: i32,
     y: i32,
-    event_loop: &EventLoop<()>,
+    event_loop: &ActiveEventLoop,
 ) -> (i32, i32) {
     let monitors = event_loop.available_monitors();
     // default to primary monitor, in case the correct monitor was disconnected.
@@ -487,4 +484,3 @@ fn clamp_window_to_sane_position(
 
     (clamped_x, clamped_y)
 }
-*/
