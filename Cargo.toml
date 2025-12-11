@@ -49,7 +49,7 @@ notan_glow = { path = "crates/notan_glow", version = "0.13.0" }
 notan_oddio = { path = "crates/notan_oddio", version = "0.13.0" }
 
 log = "0.4.25"
-hashbrown = "0.15.2"
+hashbrown = "0.16.1"
 parking_lot = "0.12.3"
 bytemuck = "1.21.0"
 serde = { version = "1.0", features = ["serde_derive"] }
@@ -81,7 +81,7 @@ notan_extra = { workspace = true, optional = true }
 notan_random = { workspace = true, optional = true }
 
 [features]
-default = ["backend", "log", "draw", "random", "glsl-to-spirv"]
+default = ["backend", "log", "draw", "random", "shaderc"]
 backend = ["notan_backend"]
 log = ["notan_log"]
 glyph = ["notan_glyph"]

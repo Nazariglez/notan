@@ -37,7 +37,7 @@ impl DerefMut for Random {
 impl Default for Random {
     fn default() -> Self {
         Self {
-            rng: Pcg32::from_entropy(),
+            rng: Pcg32::from_os_rng(),
         }
     }
 }
