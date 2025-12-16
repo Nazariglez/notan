@@ -103,7 +103,7 @@ fn wasm_bindgen(input: &str, output: &str, debug: bool) -> Result<ExitStatus, Er
     Command::new("wasm-bindgen")
         .current_dir(project_root())
         .args(
-            &[
+            [
                 [input, "--out-dir", output, "--no-modules", "--browser"].as_slice(),
                 match debug {
                     true => ["--keep-debug", "--debug"].as_slice(),
