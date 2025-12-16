@@ -22,6 +22,7 @@ enum AudioHandle {
     Cycle(CycleHandle),
 }
 
+#[allow(mismatched_lifetime_syntaxes)]
 impl AudioHandle {
     fn as_stop(&mut self) -> StopControl<'_> {
         match self {

@@ -20,6 +20,7 @@ impl std::cmp::PartialEq for CustomPipeline {
     }
 }
 
+#[allow(mismatched_lifetime_syntaxes)]
 pub trait DrawCustomPipeline {
     fn image_pipeline(&mut self) -> CustomPipelineBuilder<'_>;
     fn shape_pipeline(&mut self) -> CustomPipelineBuilder<'_>;
@@ -27,6 +28,7 @@ pub trait DrawCustomPipeline {
     fn text_pipeline(&mut self) -> CustomPipelineBuilder<'_>;
 }
 
+#[allow(mismatched_lifetime_syntaxes)]
 impl DrawCustomPipeline for Draw {
     fn image_pipeline(&mut self) -> CustomPipelineBuilder<'_> {
         CustomPipelineBuilder::new(self, CustomPipelineType::Image)

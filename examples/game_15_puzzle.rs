@@ -1,6 +1,7 @@
 use notan::draw::*;
 use notan::prelude::*;
 use notan::random::rand::prelude::*;
+use notan_random::rand;
 
 const COLS: usize = 4;
 const NUMBERS: usize = COLS * COLS;
@@ -172,7 +173,7 @@ impl Board {
 
         for _ in 0..1000 {
             const DIRS: [(i32, i32); 4] = [(0, -1), (-1, 0), (1, 0), (0, 1)];
-            let (dx, dy) = DIRS.choose(&mut thread_rng()).unwrap();
+            let (dx, dy) = DIRS.choose(&mut rand::rng()).unwrap();
             let x_nxt = x + dx;
             let y_nxt = y + dy;
 

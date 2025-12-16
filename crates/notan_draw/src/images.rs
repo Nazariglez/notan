@@ -14,6 +14,7 @@ use notan_graphics::Texture;
 pub use painter::create_image_pipeline;
 pub(crate) use painter::*;
 
+#[allow(mismatched_lifetime_syntaxes)]
 pub trait DrawImages {
     fn image<'a>(&mut self, texture: &'a Texture) -> DrawBuilder<'_, Image<'a>>;
     fn nine_slice<'a>(&mut self, texture: &'a Texture) -> DrawBuilder<'_, NineSlice<'a>>;
@@ -30,6 +31,7 @@ pub trait DrawImages {
     //fn instanced_image<'a>(&mut self, texture: &'a Texture) -> DrawBuilder<InstancedImage<'a>>;
 }
 
+#[allow(mismatched_lifetime_syntaxes)]
 impl DrawImages for Draw {
     fn image<'a>(&mut self, texture: &'a Texture) -> DrawBuilder<'_, Image<'a>> {
         DrawBuilder::new(self, Image::new(texture))

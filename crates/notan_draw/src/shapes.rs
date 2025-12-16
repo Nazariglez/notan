@@ -25,6 +25,7 @@ pub use rect::Rectangle;
 pub use star::Star;
 pub use triangle::Triangle;
 
+#[allow(mismatched_lifetime_syntaxes)]
 pub trait DrawShapes {
     fn point(&mut self, x: f32, y: f32) -> DrawBuilder<'_, Point>;
     fn line(&mut self, p1: (f32, f32), p2: (f32, f32)) -> DrawBuilder<'_, Line>;
@@ -42,6 +43,7 @@ pub trait DrawShapes {
     fn polygon(&mut self, sides: u8, radius: f32) -> DrawBuilder<'_, Polygon>;
 }
 
+#[allow(mismatched_lifetime_syntaxes)]
 impl DrawShapes for Draw {
     fn point(&mut self, x: f32, y: f32) -> DrawBuilder<'_, Point> {
         DrawBuilder::new(self, Point::new(x, y))
