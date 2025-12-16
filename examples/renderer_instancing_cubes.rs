@@ -145,9 +145,9 @@ fn setup(gfx: &mut Graphics) -> State {
     let colors = (0..INSTANCES)
         .flat_map(|_| {
             [
-                rng.gen_range(0.0..1.0),
-                rng.gen_range(0.0..1.0),
-                rng.gen_range(0.0..1.0),
+                rng.random_range(0.0..1.0),
+                rng.random_range(0.0..1.0),
+                rng.random_range(0.0..1.0),
                 1.0,
             ]
         })
