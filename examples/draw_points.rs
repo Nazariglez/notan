@@ -17,7 +17,7 @@ fn main() -> Result<(), String> {
         .build()
 }
 
-fn setup(_gfx: &mut Graphics) -> State {
+fn setup(gfx: &mut Graphics) -> State {
     #[cfg(feature = "notan_text")]
     {
         let font = gfx
@@ -29,7 +29,7 @@ fn setup(_gfx: &mut Graphics) -> State {
     State {}
 }
 
-fn draw(gfx: &mut Graphics, _state: &mut State) {
+fn draw(gfx: &mut Graphics, state: &mut State) {
     let mut draw = gfx.create_draw();
     draw.clear(Color::BLACK);
 
