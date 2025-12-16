@@ -26,6 +26,7 @@ pub struct Rectangle {
     stroke_color: Option<Color>,
 }
 
+#[allow(unused_assignments)]
 impl Rectangle {
     pub fn new(position: (f32, f32), size: (f32, f32)) -> Self {
         Self {
