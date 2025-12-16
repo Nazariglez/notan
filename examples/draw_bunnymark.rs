@@ -39,7 +39,10 @@ impl State {
         (0..n).for_each(|_| {
             self.bunnies.push(Bunny {
                 pos: Vec2::ZERO,
-                speed: vec2(self.rng.random_range(0.0..10.0), self.rng.random_range(-5.0..5.0)),
+                speed: vec2(
+                    self.rng.random_range(0.0..10.0),
+                    self.rng.random_range(-5.0..5.0),
+                ),
             })
         });
     }
