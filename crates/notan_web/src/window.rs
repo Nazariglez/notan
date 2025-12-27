@@ -305,7 +305,7 @@ impl WindowBackend for WebWindowBackend {
             return false;
         }
 
-        self.documen
+        self.document
             .active_element()
             .is_some_and(|el| el.id() == self.canvas.id())
     }
