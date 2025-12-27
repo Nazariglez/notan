@@ -1,7 +1,19 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## v0.13.0 - UNRELEASED
+## v0.13.0 - 29/03/2025
+
+- Updated EGUI up to `0.31`.
+- Fixed EGUI input scaling when the browser is zoomed in/out.
+- Added support for `GL_POINTS` and `gl_PointSize` (point rendering).
+- Renamed the point size flags (`point_size` -> `point_size_enabled` -> `point_size_available`) and enabled it by default.
+- Added `Rgb24` texture format.
+- Added `Rect::contains`.
+- Limited `InnerBuffer::global_ubo` size to avoid blowing up the UBO.
+- WebGL power preferences now try to pick the best GPU available.
+- Removed `Send + Sync` from plugins (they’re not sent across threads anyway).
+- Fixed a text transform order issue.
+- Lots of dependency updates, formatting and clippy fixes.
 
 ## v0.12.1 - 08/06/2024
 
