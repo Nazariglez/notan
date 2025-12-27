@@ -24,5 +24,6 @@ egui = { version = "0.31.0", features = ["bytemuck"] }
 [features]
 links = []
 drop_files = []
+glsl-to-spirv = ["notan_macro/glsl-to-spirv"]
 shaderc = ["notan_macro/shaderc"]
 serde = ["egui/serde"]

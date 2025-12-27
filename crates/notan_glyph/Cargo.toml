@@ -23,4 +23,5 @@ bytemuck.workspace = true
 glyph_brush = "0.7.11"
 
 [features]
+glsl-to-spirv = ["notan_macro/glsl-to-spirv"]
 shaderc = ["notan_macro/shaderc"]
