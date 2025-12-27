@@ -2,12 +2,12 @@ extern crate proc_macro;
 use proc_macro::*;
 use quote::quote;
 use syn::DeriveInput;
-#[cfg(feature = "shaderc")]
+#[cfg(shader_compilation)]
 use syn::{parse_macro_input, LitStr};
 use syn::{ItemFn, ReturnType};
 
 mod handlers;
-#[cfg(feature = "shaderc")]
+#[cfg(shader_compilation)]
 mod shaders;
 mod state;
 
@@ -66,7 +66,7 @@ pub fn state_derive(input: TokenStream) -> TokenStream {
     state::impl_state_derive(&ast)
 }
 
-#[cfg(feature = "shaderc")]
+#[cfg(shader_compilation)]
 #[proc_macro]
 pub fn vertex_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
@@ -76,7 +76,7 @@ pub fn vertex_shader(input: TokenStream) -> TokenStream {
     shaders::source_from_spirv(spirv).unwrap()
 }
 
-#[cfg(feature = "shaderc")]
+#[cfg(shader_compilation)]
 #[proc_macro]
 pub fn include_vertex_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
@@ -86,7 +86,7 @@ pub fn include_vertex_shader(input: TokenStream) -> TokenStream {
     shaders::source_from_spirv(spirv).unwrap()
 }
 
-#[cfg(feature = "shaderc")]
+#[cfg(shader_compilation)]
 #[proc_macro]
 pub fn fragment_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);
@@ -96,7 +96,7 @@ pub fn fragment_shader(input: TokenStream) -> TokenStream {
     shaders::source_from_spirv(spirv).unwrap()
 }
 
-#[cfg(feature = "shaderc")]
+#[cfg(shader_compilation)]
 #[proc_macro]
 pub fn include_fragment_shader(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr);

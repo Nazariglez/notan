@@ -1,5 +1,9 @@
 [alias]
 xtask = "run --package xtask --"
 
+[env]
+# needed for glsl-to-spirv
+CMAKE_POLICY_VERSION_MINIMUM = "3.5"
+
 [target.wasm32-unknown-unknown]
 rustflags = ["--cfg=web_sys_unstable_apis"]

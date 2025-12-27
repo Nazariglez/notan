@@ -101,6 +101,13 @@ clipboard = ["notan_app/clipboard", "notan_backend?/clipboard"]
 save_file = ["notan_utils/save_file"]
 texture_to_file = ["notan_graphics/texture_to_file"]
 random = ["notan_random"]
+glsl-to-spirv = [
+    "notan_macro/glsl-to-spirv",
+    "notan_glyph?/glsl-to-spirv",
+    "notan_draw?/glsl-to-spirv",
+    "notan_egui?/glsl-to-spirv",
+    "notan_text?/glsl-to-spirv",
+]
 shaderc = [
     "notan_macro/shaderc",
     "notan_glyph?/shaderc",
