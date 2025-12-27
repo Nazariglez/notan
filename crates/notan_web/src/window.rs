@@ -300,16 +300,14 @@ impl WindowBackend for WebWindowBackend {
     }
 
     fn is_focused(&self) -> bool {
-        self.document
-            .has_focus()
-            .ok()
-            .unwrap_or(false)
-            .then(|| {
-                self.document
-                    .active_element()
-                    .is_some_and(|el| el.id() == self.canvas.id())
-            })
-            .unwrap_or(false)
+        let has_focus = self.document.has_focus().ok().unwrap_or_default();
+        if !has_focus {
+            return false;
+        }
+
+        self.documen
+            .active_element()
+            .is_some_and(|el| el.id() == self.canvas.id())
     }
 
     // No operation, as unsupported in browser
