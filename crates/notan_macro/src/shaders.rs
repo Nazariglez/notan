@@ -14,17 +14,6 @@ pub(crate) enum ShaderType {
     //TODO more types
 }
 
-#[cfg(use_glsl_to_spirv)]
-impl From<ShaderType> for glsl_to_spirv::ShaderType {
-    fn from(value: ShaderType) -> Self {
-        match value {
-            ShaderType::Vertex => glsl_to_spirv::ShaderType::Vertex,
-            ShaderType::Fragment => glsl_to_spirv::ShaderType::Fragment,
-        }
-    }
-}
-
-#[cfg(use_shaderc)]
 impl From<ShaderType> for shaderc::ShaderKind {
     fn from(value: ShaderType) -> Self {
         match value {
@@ -53,24 +42,6 @@ pub(crate) fn spirv_from_file(relative_path: &str, typ: ShaderType) -> Result<Ve
     spirv_from(&read_file(&full_path)?, typ, Some(full_path))
 }
 
-#[cfg(use_glsl_to_spirv)]
-pub(crate) fn spirv_from(
-    source: &str,
-    typ: ShaderType,
-    _file_path: Option<PathBuf>,
-) -> Result<Vec<u8>, String> {
-    let source = source.trim();
-    let mut spirv_output = glsl_to_spirv::compile(source, typ.into())
-        .unwrap_or_else(|e| panic!("Invalid {typ:#?} shader: \n{e}"));
-
-    let mut spirv = vec![];
-    spirv_output
-        .read_to_end(&mut spirv)
-        .map_err(|e| e.to_string())?;
-    Ok(spirv)
-}
-
-#[cfg(use_shaderc)]
 pub(crate) fn spirv_from(
     source: &str,
     typ: ShaderType,

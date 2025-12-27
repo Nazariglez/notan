@@ -13,10 +13,7 @@ readme = "README.md"
 description = "A simple portable multimedia layer to create apps or games easily"
 
 [workspace]
-members = [
-    "crates/*",
-    "xtask"
-]
+members = ["crates/*", "xtask"]
 
 [workspace.package]
 version = "0.13.0"
@@ -53,7 +50,11 @@ hashbrown = "0.16.1"
 parking_lot = "0.12.3"
 bytemuck = "1.21.0"
 serde = { version = "1.0", features = ["serde_derive"] }
-image = { version = "0.25.5", default-features = false, features = ["jpeg", "png", "ico"] }
+image = { version = "0.25.5", default-features = false, features = [
+    "jpeg",
+    "png",
+    "ico",
+] }
 
 # wasm deps
 wasm-bindgen = "0.2.100"
@@ -91,17 +92,45 @@ text = ["notan_text"]
 extra = ["notan_extra"]
 audio = ["notan_audio", "notan_app/audio", "notan_backend?/audio"]
 links = ["notan_app/links", "notan_backend?/links", "notan_egui?/links"]
-drop_files = ["notan_app/drop_files", "notan_backend?/drop_files", "notan_egui?/drop_files"]
+drop_files = [
+    "notan_app/drop_files",
+    "notan_backend?/drop_files",
+    "notan_egui?/drop_files",
+]
 clipboard = ["notan_app/clipboard", "notan_backend?/clipboard"]
 save_file = ["notan_utils/save_file"]
 texture_to_file = ["notan_graphics/texture_to_file"]
 random = ["notan_random"]
-glsl-to-spirv = ["notan_macro/glsl-to-spirv", "notan_glyph?/glsl-to-spirv", "notan_draw?/glsl-to-spirv", "notan_egui?/glsl-to-spirv", "notan_text?/glsl-to-spirv"]
-shaderc = ["notan_macro/shaderc", "notan_glyph?/shaderc", "notan_draw?/shaderc", "notan_egui?/shaderc", "notan_text?/shaderc"]
-serde = ["notan_app/serde", "notan_math/serde", "notan_core/serde", "notan_input/serde", "notan_graphics/serde", "notan_egui?/serde"]
+shaderc = [
+    "notan_macro/shaderc",
+    "notan_glyph?/shaderc",
+    "notan_draw?/shaderc",
+    "notan_egui?/shaderc",
+    "notan_text?/shaderc",
+]
+serde = [
+    "notan_app/serde",
+    "notan_math/serde",
+    "notan_core/serde",
+    "notan_input/serde",
+    "notan_graphics/serde",
+    "notan_egui?/serde",
+]
 
 [package.metadata.docs.rs]
-features = ["default", "glyph", "egui", "text", "extra", "audio", "links", "drop_files", "clipboard", "save_file", "texture_to_file"]
+features = [
+    "default",
+    "glyph",
+    "egui",
+    "text",
+    "extra",
+    "audio",
+    "links",
+    "drop_files",
+    "clipboard",
+    "save_file",
+    "texture_to_file",
+]
 
 [profile.release]
 lto = true
