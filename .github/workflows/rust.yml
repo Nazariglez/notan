@@ -6,6 +6,8 @@ jobs:
   fmt-clippy-check-test:
     name: Format + clippy + check + test
     runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-C link-arg=-Wl,--threads=1"
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
