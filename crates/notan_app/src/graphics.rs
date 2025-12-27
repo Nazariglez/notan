@@ -47,7 +47,7 @@ impl Graphics {
 
     /// Returns the extension as mutable reference
     #[inline]
-    pub fn extension_mut<R, T>(&self) -> Option<RefMut<T>>
+    pub fn extension_mut<R, T>(&self) -> Option<RefMut<'_, T>>
     where
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
@@ -57,7 +57,7 @@ impl Graphics {
 
     /// Returns the extension as reference
     #[inline]
-    pub fn extension<R, T>(&self) -> Option<Ref<T>>
+    pub fn extension<R, T>(&self) -> Option<Ref<'_, T>>
     where
         R: GfxRenderer,
         T: GfxExtension<R> + 'static,
@@ -67,37 +67,37 @@ impl Graphics {
 
     /// Creates a Pipeline builder
     #[inline]
-    pub fn create_pipeline(&mut self) -> PipelineBuilder {
+    pub fn create_pipeline(&mut self) -> PipelineBuilder<'_, '_> {
         self.device.create_pipeline()
     }
 
     /// Creates a texture builder
     #[inline]
-    pub fn create_texture(&mut self) -> TextureBuilder {
+    pub fn create_texture(&mut self) -> TextureBuilder<'_, '_> {
         self.device.create_texture()
     }
 
     /// Creates a render texture builder
     #[inline]
-    pub fn create_render_texture(&mut self, width: u32, height: u32) -> RenderTextureBuilder {
+    pub fn create_render_texture(&mut self, width: u32, height: u32) -> RenderTextureBuilder<'_> {
         self.device.create_render_texture(width, height)
     }
 
     /// Creates a vertex buffer builder
     #[inline]
-    pub fn create_vertex_buffer(&mut self) -> VertexBufferBuilder {
+    pub fn create_vertex_buffer(&mut self) -> VertexBufferBuilder<'_> {
         self.device.create_vertex_buffer()
     }
 
     /// Creates a index buffer builder
     #[inline]
-    pub fn create_index_buffer(&mut self) -> IndexBufferBuilder {
+    pub fn create_index_buffer(&mut self) -> IndexBufferBuilder<'_> {
         self.device.create_index_buffer()
     }
 
     /// Creates a uniform buffer builder
     #[inline]
-    pub fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> UniformBufferBuilder {
+    pub fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> UniformBufferBuilder<'_> {
         self.device.create_uniform_buffer(slot, name)
     }
 

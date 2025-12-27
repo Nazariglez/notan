@@ -140,7 +140,7 @@ impl Plugins {
     }
 
     /// Returns the plugin of the type passed
-    pub fn get<T: Plugin + 'static>(&self) -> Option<Ref<T>> {
+    pub fn get<T: Plugin + 'static>(&self) -> Option<Ref<'_, T>> {
         self.map
             .get(&TypeId::of::<T>())?
             .downcast_ref::<RefCell<T>>()
@@ -148,7 +148,7 @@ impl Plugins {
     }
 
     /// Returns the plugin of the type passed as mutable reference
-    pub fn get_mut<T: Plugin + 'static>(&self) -> Option<RefMut<T>> {
+    pub fn get_mut<T: Plugin + 'static>(&self) -> Option<RefMut<'_, T>> {
         self.map
             .get(&TypeId::of::<T>())?
             .downcast_ref::<RefCell<T>>()

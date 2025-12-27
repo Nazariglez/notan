@@ -9,11 +9,11 @@ pub(crate) use painter::*;
 pub use pattern::*;
 
 pub trait DrawPattern {
-    fn pattern<'a>(&mut self, texture: &'a Texture) -> DrawBuilder<Pattern<'a>>;
+    fn pattern<'a>(&mut self, texture: &'a Texture) -> DrawBuilder<'_, Pattern<'a>>;
 }
 
 impl DrawPattern for Draw {
-    fn pattern<'a>(&mut self, texture: &'a Texture) -> DrawBuilder<Pattern<'a>> {
+    fn pattern<'a>(&mut self, texture: &'a Texture) -> DrawBuilder<'_, Pattern<'a>> {
         DrawBuilder::new(self, Pattern::new(texture))
     }
 }

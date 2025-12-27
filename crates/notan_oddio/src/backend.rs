@@ -23,14 +23,14 @@ enum AudioHandle {
 }
 
 impl AudioHandle {
-    fn as_stop(&mut self) -> StopControl {
+    fn as_stop(&mut self) -> StopControl<'_> {
         match self {
             AudioHandle::Frame(h) => h.control::<Stop<_>, _>(),
             AudioHandle::Cycle(h) => h.control::<Stop<_>, _>(),
         }
     }
 
-    fn as_gain(&mut self) -> GainControl {
+    fn as_gain(&mut self) -> GainControl<'_> {
         match self {
             AudioHandle::Frame(h) => h.control::<Gain<_>, _>(),
             AudioHandle::Cycle(h) => h.control::<Gain<_>, _>(),
