@@ -153,7 +153,7 @@ fn draw_polygon(
         let i = n as f32;
 
         let pi_sides = PI / sides as f32;
-        let is_even = sides % 2 == 0;
+        let is_even = sides.is_multiple_of(2);
         let offset = if is_even { pi_sides } else { pi_sides * 0.5 };
 
         let angle = i * 2.0 * pi_sides - offset;
