@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## v0.14.0 - 27/12/2025
+
+- Updated `winit` to `0.30`.
+- Fixed build issues on Windows and macOS.
+- Fixed compatibility with CMake 4.0+.
+- Removed the `glsl-to-spirv` dependency.
+- Propagated the `serde` feature to `notan_egui`.
+- Set `shaderc` as default (and only) shader transpiler.
+
 ## v0.13.0 - 29/03/2025
 
 - Updated EGUI up to `0.31`.
