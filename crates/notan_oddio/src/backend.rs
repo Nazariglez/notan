@@ -380,7 +380,7 @@ impl InnerBackend {
 // with headphones I can hear -90, so I opted to to -100
 fn volume_as_gain(volume: f32) -> f32 {
     let v = 1.0 - volume;
-    v * 100.0 * -1.0
+    -(v * 100.0)
 }
 
 #[cfg(test)]
