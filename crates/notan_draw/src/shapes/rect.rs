@@ -59,24 +59,28 @@ impl Rectangle {
     pub fn top_left_radius(&mut self, radius: f32) -> &mut Self {
         let mut corners = self.rounded_corners.unwrap_or([0.0, 0.0, 0.0, 0.0]);
         corners[0] = radius;
+        self.rounded_corners = Some(corners);
         self
     }
 
     pub fn top_right_radius(&mut self, radius: f32) -> &mut Self {
         let mut corners = self.rounded_corners.unwrap_or([0.0, 0.0, 0.0, 0.0]);
         corners[1] = radius;
+        self.rounded_corners = Some(corners);
         self
     }
 
     pub fn bottom_left_radius(&mut self, radius: f32) -> &mut Self {
         let mut corners = self.rounded_corners.unwrap_or([0.0, 0.0, 0.0, 0.0]);
         corners[2] = radius;
+        self.rounded_corners = Some(corners);
         self
     }
 
     pub fn bottom_right_radius(&mut self, radius: f32) -> &mut Self {
         let mut corners = self.rounded_corners.unwrap_or([0.0, 0.0, 0.0, 0.0]);
         corners[3] = radius;
+        self.rounded_corners = Some(corners);
         self
     }
 

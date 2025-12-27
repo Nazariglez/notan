@@ -206,37 +206,37 @@ impl Device {
 
     /// Creates a Pipeline builder
     #[inline]
-    pub fn create_pipeline(&mut self) -> PipelineBuilder {
+    pub fn create_pipeline(&mut self) -> PipelineBuilder<'_, '_> {
         PipelineBuilder::new(self)
     }
 
     /// Creates a texture builder
     #[inline]
-    pub fn create_texture(&mut self) -> TextureBuilder {
+    pub fn create_texture(&mut self) -> TextureBuilder<'_, '_> {
         TextureBuilder::new(self)
     }
 
     /// Creates a render texture builder
     #[inline]
-    pub fn create_render_texture(&mut self, width: u32, height: u32) -> RenderTextureBuilder {
+    pub fn create_render_texture(&mut self, width: u32, height: u32) -> RenderTextureBuilder<'_> {
         RenderTextureBuilder::new(self, width, height)
     }
 
     /// Creates a vertex buffer builder
     #[inline]
-    pub fn create_vertex_buffer(&mut self) -> VertexBufferBuilder {
+    pub fn create_vertex_buffer(&mut self) -> VertexBufferBuilder<'_> {
         VertexBufferBuilder::new(self)
     }
 
     /// Creates a index buffer builder
     #[inline]
-    pub fn create_index_buffer(&mut self) -> IndexBufferBuilder {
+    pub fn create_index_buffer(&mut self) -> IndexBufferBuilder<'_> {
         IndexBufferBuilder::new(self)
     }
 
     /// Creates a uniform buffer builder
     #[inline]
-    pub fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> UniformBufferBuilder {
+    pub fn create_uniform_buffer(&mut self, slot: u32, name: &str) -> UniformBufferBuilder<'_> {
         UniformBufferBuilder::new(self, slot, name)
     }
 
