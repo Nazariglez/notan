@@ -24,5 +24,4 @@ hashbrown.workspace = true
 lazy_static = "1.5.0"
 
 [features]
-glsl-to-spirv = ["notan_glyph/glsl-to-spirv"]
 shaderc = ["notan_glyph/shaderc"]
