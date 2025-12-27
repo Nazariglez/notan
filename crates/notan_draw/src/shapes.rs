@@ -28,7 +28,12 @@ pub use triangle::Triangle;
 pub trait DrawShapes {
     fn point(&mut self, x: f32, y: f32) -> DrawBuilder<'_, Point>;
     fn line(&mut self, p1: (f32, f32), p2: (f32, f32)) -> DrawBuilder<'_, Line>;
-    fn triangle(&mut self, a: (f32, f32), b: (f32, f32), c: (f32, f32)) -> DrawBuilder<'_, Triangle>;
+    fn triangle(
+        &mut self,
+        a: (f32, f32),
+        b: (f32, f32),
+        c: (f32, f32),
+    ) -> DrawBuilder<'_, Triangle>;
     fn path(&mut self) -> DrawBuilder<'_, Path>;
     fn rect(&mut self, position: (f32, f32), size: (f32, f32)) -> DrawBuilder<'_, Rectangle>;
     fn circle(&mut self, radius: f32) -> DrawBuilder<'_, Circle>;
@@ -46,7 +51,12 @@ impl DrawShapes for Draw {
         DrawBuilder::new(self, Line::new(p1, p2))
     }
 
-    fn triangle(&mut self, a: (f32, f32), b: (f32, f32), c: (f32, f32)) -> DrawBuilder<'_, Triangle> {
+    fn triangle(
+        &mut self,
+        a: (f32, f32),
+        b: (f32, f32),
+        c: (f32, f32),
+    ) -> DrawBuilder<'_, Triangle> {
         DrawBuilder::new(self, Triangle::new(a, b, c))
     }
 
