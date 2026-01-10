@@ -15,7 +15,6 @@ pub struct WinitWindowBackend {
     cursor: CursorIcon,
     captured: bool,
     visible: bool,
-    high_dpi: bool,
     is_always_on_top: bool,
     mouse_passthrough: bool,
     title: String,
@@ -33,10 +32,6 @@ impl WindowBackend for WinitWindowBackend {
     }
 
     fn dpi(&self) -> f64 {
-        if cfg!(target_os = "macos") && !self.high_dpi {
-            return 1.0;
-        }
-
         self.scale_factor
     }
 
@@ -356,7 +351,6 @@ impl WinitWindowBackend {
             cursor: CursorIcon::Default,
             captured: false,
             visible,
-            high_dpi,
             is_always_on_top: false,
             mouse_passthrough,
             title,
