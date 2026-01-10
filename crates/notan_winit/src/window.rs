@@ -338,7 +338,6 @@ impl WinitWindowBackend {
         let WindowConfig {
             lazy_loop,
             visible,
-            high_dpi,
             title,
             mouse_passthrough,
             ..

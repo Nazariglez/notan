@@ -195,12 +195,9 @@ impl RunState {
             }
             WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
                 if let Some(win) = &mut b.window {
-                    //win.resize(size.width, size.height);
                     self.dpi_scale = scale_factor;
                     win.scale_factor = self.dpi_scale;
                 }
-
-                //let logical_size = size.to_logical::<f64>(dpi_scale);
 
                 add_event(
                     b,
